@@ -20,9 +20,12 @@
 #include "cinder/Cinder.h"
 #include "cinder/app/AppBasic.h"
 #include "cinder/gl/gl.h"
-#include "cinder/params/Params.h"
+#include "cinder/gl/DisplayList.h"
 #include "cinder/Camera.h"
 #include "cinder/MayaCamUI.h"
+#include "cinder/TriMesh.h"
+
+#include "mndlkit/params/PParams.h"
 
 #include "AssimpLoader.h"
 
@@ -37,6 +40,7 @@ class AIamCaptureTest : public AppBasic
 		void prepareSettings( Settings *settings );
 		void setup();
 
+		void shutdown();
 		void keyDown( KeyEvent event );
 		void mouseDown( MouseEvent event );
 		void mouseDrag( MouseEvent event );
@@ -46,7 +50,7 @@ class AIamCaptureTest : public AppBasic
 		void draw();
 
 	private:
-		params::InterfaceGl mParams;
+		mndl::params::PInterfaceGl mParams;
 
 		float mFps;
 		bool mVerticalSyncEnabled = false;
@@ -65,6 +69,17 @@ class AIamCaptureTest : public AppBasic
 		bool mAllBvhsLoaded = false;
 		float mLoadingProgress;
 		vector< string > mMotionNames;
+
+		static const int PLANE_SIZE = 1024;
+		TriMesh createSquare( const Vec2i &resolution );
+		TriMesh mTriMeshPlane;
+		void createGrid();
+		gl::DisplayList mGrid;
+
+		bool mDrawAxes;
+		bool mDrawPlane;
+		bool mDrawGrid;
+		int mGridSize;
 };
 
 void AIamCaptureTest::prepareSettings( Settings *settings )
@@ -74,22 +89,31 @@ void AIamCaptureTest::prepareSettings( Settings *settings )
 
 void AIamCaptureTest::setup()
 {
-	mParams = params::InterfaceGl( "Parameters", Vec2i( 200, 300 ) );
+	mndl::params::PInterfaceGl::load( "params.xml" );
+	mParams = mndl::params::PInterfaceGl( "Parameters", Vec2i( 200, 300 ) );
+	mParams.addPersistentSizeAndPosition();
 	mParams.addParam( "Fps", &mFps, "", true );
 	mParams.addParam( "Vertical sync", &mVerticalSyncEnabled );
 	mParams.addSeparator();
 
 	CameraPersp cam;
 	cam.setPerspective( 60, getWindowAspectRatio(), 0.1f, 1000.0f );
-	cam.setEyePoint( Vec3f( 0, 30, 200 ) );
+	cam.setEyePoint( Vec3f( 0, 30, 260 ) );
 	cam.setCenterOfInterestPoint( Vec3f( 0, 70, 0 ) );
 	mMayaCam.setCurrentCam( cam );
+
+	mParams.addPersistentParam( "Draw axes", &mDrawAxes, true );
+	mParams.addPersistentParam( "Draw plane", &mDrawPlane, true );
+	mParams.addPersistentParam( "Draw grid", &mDrawGrid, true );
+	mParams.addPersistentParam( "Grid size", &mGridSize, 50, "min=1 max=512" );
+	mParams.addSeparator();
+
+	mTriMeshPlane = createSquare( Vec2i( 64, 64 ) );
 
 	mMotions.push_back( AssimpLoaderRef() );
 	mMotionNames.push_back( "no motion" );
 	mBvhPaths = getBvhs( "motions" );
 }
-
 
 vector< fs::path > AIamCaptureTest::getBvhs( const fs::path &relativeDir )
 {
@@ -171,6 +195,13 @@ void AIamCaptureTest::update()
 		mMotions[ mMotionIndex ]->setTime( currentMotionTime );
 		mMotions[ mMotionIndex ]->update();
 	}
+
+	static int lastGridSize = -1;
+	if ( lastGridSize != mGridSize )
+	{
+		createGrid();
+		lastGridSize = mGridSize;
+	}
 }
 
 void AIamCaptureTest::draw()
@@ -201,14 +232,36 @@ void AIamCaptureTest::draw()
 		gl::enableDepthWrite();
 		gl::enableDepthRead();
 
-		gl::color( Color::white() );
-		gl::drawCoordinateFrame( 10.f, 2.f, 0.5f );
+		if ( mDrawAxes )
+			gl::drawCoordinateFrame( 10.f, 2.f, 0.5f );
 
+		glPolygonOffset( 1.0f, 1.0f );
+		gl::enable( GL_POLYGON_OFFSET_FILL );
 		if ( mMotions[ mMotionIndex ] )
+		{
 			mMotions[ mMotionIndex ]->draw();
+		}
+
+		if ( mDrawPlane )
+		{
+			gl::pushModelView();
+			gl::color( Color::gray( .8f ) );
+			gl::scale( Vec3f( PLANE_SIZE, 1.f, PLANE_SIZE ) );
+			gl::draw( mTriMeshPlane );
+			gl::popModelView();
+		}
+		gl::disable( GL_POLYGON_OFFSET_FILL );
+
+		if ( mDrawGrid && mGrid )
+		{
+			gl::pushModelView();
+			gl::color( Color::black() );
+			mGrid.draw();
+			gl::popModelView();
+		}
 	}
 
-	params::InterfaceGl::draw();
+	mndl::params::PInterfaceGl::draw();
 }
 
 void AIamCaptureTest::mouseDown( MouseEvent event )
@@ -228,6 +281,103 @@ void AIamCaptureTest::resize()
 	mMayaCam.setCurrentCam( cam );
 }
 
+// based on Cinder-MeshHelper by Ban the Rewind
+// https://github.com/BanTheRewind/Cinder-MeshHelper/
+TriMesh AIamCaptureTest::createSquare( const Vec2i &resolution )
+{
+	vector< uint32_t > indices;
+	vector< Vec3f > normals;
+	vector< Vec3f > positions;
+	vector< Vec2f > texCoords;
+
+	Vec3f norm0( 0.0f, 1.0f, 0.0f );
+
+	Vec2f scale( 1.0f / math< float >::max( (float)resolution.x, 1.0f ),
+				 1.0f / math<float>::max( (float)resolution.y, 1.0f ) );
+	uint32_t index = 0;
+	for ( int32_t y = 0; y < resolution.y; ++y )
+	{
+		for ( int32_t x = 0; x < resolution.x; ++x, ++index )
+		{
+			float x1 = (float)x * scale.x;
+			float y1 = (float)y * scale.y;
+			float x2 = (float)( x + 1 ) * scale.x;
+			float y2 = (float)( y + 1 ) * scale.y;
+
+			Vec3f pos0( x1 - 0.5f, 0.0f, y1 - 0.5f );
+			Vec3f pos1( x2 - 0.5f, 0.0f, y1 - 0.5f );
+			Vec3f pos2( x1 - 0.5f, 0.0f, y2 - 0.5f );
+			Vec3f pos3( x2 - 0.5f, 0.0f, y2 - 0.5f );
+
+			Vec2f texCoord0( x1, y1 );
+			Vec2f texCoord1( x2, y1 );
+			Vec2f texCoord2( x1, y2 );
+			Vec2f texCoord3( x2, y2 );
+
+			positions.push_back( pos2 );
+			positions.push_back( pos1 );
+			positions.push_back( pos0 );
+			positions.push_back( pos1 );
+			positions.push_back( pos2 );
+			positions.push_back( pos3 );
+
+			texCoords.push_back( texCoord2 );
+			texCoords.push_back( texCoord1 );
+			texCoords.push_back( texCoord0 );
+			texCoords.push_back( texCoord1 );
+			texCoords.push_back( texCoord2 );
+			texCoords.push_back( texCoord3 );
+
+			for ( uint32_t i = 0; i < 6; ++i )
+			{
+				indices.push_back( index * 6 + i );
+				normals.push_back( norm0 );
+			}
+		}
+	}
+
+	TriMesh mesh;
+
+	mesh.appendIndices( &indices[ 0 ], indices.size() );
+	for ( auto normal: normals )
+	{
+		mesh.appendNormal( normal );
+	}
+
+	mesh.appendVertices( &positions[ 0 ], positions.size() );
+
+	for ( auto texCoord: texCoords )
+	{
+		mesh.appendTexCoord( texCoord );
+	}
+
+	return mesh;
+}
+
+void AIamCaptureTest::createGrid()
+{
+	mGrid = gl::DisplayList( GL_COMPILE );
+	mGrid.newList();
+	gl::color( Color::black() );
+	int n = PLANE_SIZE / mGridSize;
+	Vec3f step( mGridSize, 0, 0 );
+	Vec3f p( 0, 0, -PLANE_SIZE * .5f );
+	p -= step * n / 2;
+	for ( int i = 0; i < n; i++ )
+	{
+		gl::drawLine( p, p + Vec3f( 0, 0, PLANE_SIZE ) );
+		p += step;
+	}
+	step = Vec3f( 0, 0, mGridSize );
+	p = Vec3f( -PLANE_SIZE * .5f, 0, 0 );
+	p -= step * n / 2;
+	for ( int i = 0; i < n; i++ )
+	{
+		gl::drawLine( p, p + Vec3f( PLANE_SIZE, 0, 0 ) );
+		p += step;
+	}
+	mGrid.endList();
+}
 
 void AIamCaptureTest::keyDown( KeyEvent event )
 {
@@ -271,6 +421,11 @@ void AIamCaptureTest::keyDown( KeyEvent event )
 		default:
 			break;
 	}
+}
+
+void AIamCaptureTest::shutdown()
+{
+	mndl::params::PInterfaceGl::save();
 }
 
 CINDER_APP_BASIC( AIamCaptureTest, RendererGl )

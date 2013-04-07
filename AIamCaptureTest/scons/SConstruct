@@ -3,8 +3,9 @@ env = Environment()
 env['APP_TARGET'] = 'AIamCaptureTest'
 env['APP_SOURCES'] = ['AIamCaptureTest.cpp']
 env['ASSETS'] = ['motions/*.bvh']
-env['DEBUG'] = 1
+env['DEBUG'] = 0
 
+env = SConscript('../../../../blocks/MndlKit/scons/SConscript', exports = 'env')
 env = SConscript('../../../../blocks/Cinder-Assimp/scons/SConscript', exports = 'env')
 SConscript('../../../../scons/SConscript', exports = 'env')
 
