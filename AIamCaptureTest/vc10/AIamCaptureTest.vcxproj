@@ -12,9 +12,8 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{E32B9B54-DA64-4AD7-AC9E-009E012A3F32}</ProjectGuid>
-    <RootNamespace>BulletTest</RootNamespace>
+    <RootNamespace>AIamCaptureTest</RootNamespace>
     <Keyword>Win32Proj</Keyword>
-    <ProjectName>BulletAssimpModel</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
