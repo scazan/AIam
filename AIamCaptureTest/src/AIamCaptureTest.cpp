@@ -97,7 +97,7 @@ void AIamCaptureTest::setup()
 	mParams.addSeparator();
 
 	CameraPersp cam;
-	cam.setPerspective( 60, getWindowAspectRatio(), 0.1f, 1000.0f );
+	cam.setPerspective( 60, getWindowAspectRatio(), 0.1f, 10000.0f );
 	cam.setEyePoint( Vec3f( 0, 30, 260 ) );
 	cam.setCenterOfInterestPoint( Vec3f( 0, 70, 0 ) );
 	mMayaCam.setCurrentCam( cam );
