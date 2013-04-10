@@ -53,7 +53,6 @@ class AIamCaptureTest : public AppBasic
 		mndl::params::PInterfaceGl mParams;
 
 		float mFps;
-//		bool mVerticalSyncEnabled = false;
 		bool mVerticalSyncEnabled;
 
 		typedef shared_ptr< assimp::AssimpLoader > AssimpLoaderRef;
@@ -67,13 +66,11 @@ class AIamCaptureTest : public AppBasic
 		vector< fs::path > mBvhPaths; //< all bvh paths
 		//! Loads some bvh files.
 		void loadSomeBvhs();
-//		bool mAllBvhsLoaded = false;
 		bool mAllBvhsLoaded;
 		float mLoadingProgress;
 		vector< string > mMotionNames;
 
 		static const int PLANE_SIZE = 1024;
-//		static const int PLANE_SIZE = 1024;
 		TriMesh createSquare( const Vec2i &resolution );
 		TriMesh mTriMeshPlane;
 		void createGrid();
@@ -345,8 +342,7 @@ TriMesh AIamCaptureTest::createSquare( const Vec2i &resolution )
 	TriMesh mesh;
 
 	mesh.appendIndices( &indices[ 0 ], indices.size() );
-//	for( auto normal: normals )
-	for ( vector< Vec3f >::const_iterator it = normals.begin(); it != normals.end(); ++it )
+	for ( vector< Vec3f >::const_iterator it = normals.cbegin(); it != normals.cend(); ++it )
 	{
 		Vec3f normal = *it;
 		mesh.appendNormal( normal );
@@ -354,8 +350,7 @@ TriMesh AIamCaptureTest::createSquare( const Vec2i &resolution )
 
 	mesh.appendVertices( &positions[ 0 ], positions.size() );
 
-//	for ( auto texCoord: texCoords )
-	for ( vector< Vec2f >::const_iterator it = texCoords.begin(); it != texCoords.end(); ++it )
+	for ( vector< Vec2f >::const_iterator it = texCoords.cbegin(); it != texCoords.cend(); ++it )
 	{
 		Vec2f texCoord = *it;
 		mesh.appendTexCoord( texCoord );
