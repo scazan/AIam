@@ -1,11 +1,6 @@
 import numpy
 from vector import Vector
-
-class InterStatePosition:
-    def __init__(self, source_state, destination_state, relative_position):
-        self.source_state = source_state
-        self.destination_state = destination_state
-        self.relative_position = relative_position
+from states import InterStatePosition
 
 class Follower:
     def __init__(self, state_machine):

@@ -16,7 +16,8 @@ class State:
         self.name = name
         self.position = Vector3d(*position)
         self.output_names = output_names
-        self.outputs = set()
+        self.outputs = []
+        self.inputs = []
 
     def __repr__(self):
         return "State(%r, %r, %r)" % (self.name, self.position, self.output_names)
@@ -36,13 +37,21 @@ class StateMachine:
                 if output_name == input_name:
                     raise Exception("transition from %s to itself!" % input_name)
                 output_state = self.states[output_name]
-                input_state.outputs.add(output_state)
+                input_state.outputs.append(output_state)
                 self.transitions.add((input_state, output_state))
+                if input_state not in output_state.inputs:
+                    output_state.inputs.append(input_state)
 
     def inter_state_to_euclidian_position(self, inter_state_position):
         pos1 = inter_state_position.source_state.position
         pos2 = inter_state_position.destination_state.position
         return pos1 + (pos2 - pos1) * inter_state_position.relative_position
+
+class InterStatePosition:
+    def __init__(self, source_state, destination_state, relative_position):
+        self.source_state = source_state
+        self.destination_state = destination_state
+        self.relative_position = relative_position
 
 state_machine = StateMachine()
 state_machine.add(MC,  (0,0,0),   [MLB, ML , HB, MB, MLF, MRF, MRB, LLF, HRF])
