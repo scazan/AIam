@@ -29,8 +29,11 @@ class StateMachine:
         assert name not in self.states
         self.states[name] = State(name, position, output_names)
 
-    # def compile(self):
-    #     for state in self.states:
+    def compile(self):
+        for state in self.states.values():
+            for output_name in state.output_names:
+                output_state = self.states[output_name]
+                state.outputs.add(output_state)
 
 state_machine = StateMachine()
 state_machine.add(MC,  (0,0,0),   [MLB, ML , HB, MB, MLF, MRF, MRB, LLF, HRF])
@@ -43,6 +46,6 @@ state_machine.add(MRF, (0,1,-1),  [MC])
 state_machine.add(MRB, (0,1,1),   [MC])
 state_machine.add(LLF, (-1,1,-1), [MC])
 state_machine.add(HRF, (1,1,-1),  [MC])
+state_machine.compile()
 
-# states.compile()
 # print states.states

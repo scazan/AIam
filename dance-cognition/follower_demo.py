@@ -18,9 +18,6 @@ class FollowerDemo(window.Window):
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-    def _clamp(self, value):
-        return max(min(value, 1.0), -1.0)
-
     def render(self):
         self._draw_input()
         self._draw_output()
@@ -28,9 +25,12 @@ class FollowerDemo(window.Window):
     def _draw_output(self):
         glPushMatrix()
         self.configure_3d_projection(100, 0)
-
         self._draw_unit_cube()
+        self._draw_states_as_points()
+        self._draw_transitions_as_lines()
+        glPopMatrix()
 
+    def _draw_states_as_points(self):
         glColor3f(0,0,0)
         glPointSize(5.0)
         glBegin(GL_POINTS)
@@ -38,7 +38,14 @@ class FollowerDemo(window.Window):
             glVertex3f(*state.position)
         glEnd()
 
-        glPopMatrix()
+    def _draw_transitions_as_lines(self):
+        glColor4f(0,0,0,0.2)
+        glBegin(GL_LINES)
+        for state in state_machine.states.values():
+            for output_state in state.outputs:
+                glVertex3f(*state.position)
+                glVertex3f(*output_state.position)
+        glEnd()
 
     def _draw_input(self):
         glPushMatrix()
