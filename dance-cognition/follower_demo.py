@@ -1,54 +1,29 @@
 import window
-from vector import Vector3d, DirectionalVector
-import random
+from vector import *
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from states import state_machine
+from osc_receiver import OscReceiver
 
 MOUSE_REACTIVITY = 5.0
 
 class FollowerDemo(window.Window):
     def __init__(self, *args):
         window.Window.__init__(self, *args)
-        self.input = Vector3d(0, 0, 0)
 
     def InitGL(self):
         window.Window.InitGL(self)
-        glutMouseFunc(self._mouse_clicked)
-        glutMotionFunc(self._mouse_moved)
         glEnable(GL_POINT_SMOOTH)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-
-    def _mouse_clicked(self, button, state, x, y):
-        if state == GLUT_DOWN:
-            self._drag_x_previous = x
-            self._drag_y_previous = y
-
-    def _mouse_moved(self, x, y):
-        movement = Vector2d(float(x - self._drag_x_previous),
-                            float(y - self._drag_y_previous)) / self.min_dimension
-        self.input += movement * MOUSE_REACTIVITY
-        self.input.x = self._clamp(self.input.x)
-        self.input.y = self._clamp(self.input.y)
-        self._drag_x_previous = x
-        self._drag_y_previous = y
 
     def _clamp(self, value):
         return max(min(value, 1.0), -1.0)
 
     def render(self):
-        self.input += self._input_noise()
         self._draw_input()
         self._draw_output()
-
-    def _input_noise(self):
-        mag = random.normalvariate(0.0, 0.5) * 0.001
-        return Vector3d(
-            random.uniform(-1,1),
-            random.uniform(-1,1),
-            random.uniform(-1,1)) * mag
 
     def _draw_output(self):
         glPushMatrix()
@@ -74,7 +49,7 @@ class FollowerDemo(window.Window):
         glColor3f(0,0,0)
         glPointSize(5.0)
         glBegin(GL_POINTS)
-        glVertex3f(*self.input)
+        glVertex3f(*input_position)
         glEnd()
 
         glPopMatrix()
@@ -83,4 +58,14 @@ class FollowerDemo(window.Window):
         glColor4f(0,0,0,0.2)
         glutWireCube(2.0)
 
+
+def receive_input(path, args, types, src, user_data):
+    global input_position
+    position_tuple = args
+    input_position = Vector3d(*position_tuple)
+
+input_position = Vector3d(0, 0, 0)
+osc_receiver = OscReceiver(50001)
+osc_receiver.add_method("/input_position", "fff", receive_input)
+osc_receiver.start()
 window.run(FollowerDemo)
