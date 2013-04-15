@@ -5,13 +5,11 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from states import state_machine
 from osc_receiver import OscReceiver
+from follower import Follower
 
 MOUSE_REACTIVITY = 5.0
 
 class FollowerDemo(window.Window):
-    def __init__(self, *args):
-        window.Window.__init__(self, *args)
-
     def InitGL(self):
         window.Window.InitGL(self)
         glEnable(GL_POINT_SMOOTH)
@@ -28,6 +26,7 @@ class FollowerDemo(window.Window):
         self._draw_unit_cube()
         self._draw_states_as_points()
         self._draw_transitions_as_lines()
+        self._draw_follower()
         glPopMatrix()
 
     def _draw_states_as_points(self):
@@ -41,11 +40,18 @@ class FollowerDemo(window.Window):
     def _draw_transitions_as_lines(self):
         glColor4f(0,0,0,0.2)
         glBegin(GL_LINES)
-        for state in state_machine.states.values():
-            for output_state in state.outputs:
-                glVertex3f(*state.position)
-                glVertex3f(*output_state.position)
+        for input_state, output_state in state_machine.transitions:
+            glVertex3f(*input_state.position)
+            glVertex3f(*output_state.position)
         glEnd()
+
+    def _draw_follower(self):
+        if follower.inter_state_position:
+            glColor3f(1,0,0)
+            glPointSize(5.0)
+            glBegin(GL_POINTS)
+            glVertex3f(*state_machine.inter_state_to_euclidian_position(follower.inter_state_position))
+            glEnd()
 
     def _draw_input(self):
         glPushMatrix()
@@ -70,8 +76,10 @@ def receive_input(path, args, types, src, user_data):
     global input_position
     position_tuple = args
     input_position = Vector3d(*position_tuple)
+    follower.follow(input_position)
 
 input_position = Vector3d(0, 0, 0)
+follower = Follower(state_machine)
 osc_receiver = OscReceiver(50001)
 osc_receiver.add_method("/input_position", "fff", receive_input)
 osc_receiver.start()
