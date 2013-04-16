@@ -1,6 +1,10 @@
 # scons
 .sconsign.dblite
+.sconf_temp
+config.log
 *.o
 
 # vim
 *.sw[a-z]
+
+*.oni
