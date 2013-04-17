@@ -46,7 +46,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\include;..\..\..\..\cinder_0.8.5\include;..\..\..\..\cinder_0.8.5\boost;..\..\..\..\cinder_0.8.5\src\AntTweakBar;..\..\..\..\cinder_0.8.5\blocks\MndlKit\src;..\..\..\..\cinder_0.8.5\blocks\Cinder-NI\src;..\..\..\..\OpenNI\Include;..\..\..\..\cinder_0.8.5\blocks\Cinder-Osc\src;..\..\..\..\liblo-0.26;..\..\..\..\pthread\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;..\..\..\..\cinder_0.8.5\include;..\..\..\..\cinder_0.8.5\boost;..\..\..\..\cinder_0.8.5\src\AntTweakBar;..\..\..\..\cinder_0.8.5\blocks\MndlKit\src;..\..\..\..\cinder_0.8.5\blocks\Cinder-NI\src;..\..\..\..\OpenNI\Include;..\..\..\..\cinder_0.8.5\blocks\Cinder-Osc\src;..\..\..\..\cinder_0.8.5\blocks\Cinder-Osc\src\pthread</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -62,7 +62,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>cinder_d.lib;Cinder-NId.lib;openNI.lib;liblo_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\cinder_0.8.5\lib;..\..\..\..\cinder_0.8.5\lib\msw;..\..\..\..\cinder_0.8.5\blocks\Cinder-NI\lib\vc10;..\..\..\..\OpenNI\Lib;..\..\..\..\liblo-0.26\lib\DebugDLL</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\cinder_0.8.5\lib;..\..\..\..\cinder_0.8.5\lib\msw;..\..\..\..\cinder_0.8.5\blocks\Cinder-NI\lib\vc10;..\..\..\..\OpenNI\Lib;..\..\..\..\cinder_0.8.5\blocks\Cinder-Osc\lib\vc10</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -73,7 +73,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\include;..\..\..\..\cinder_0.8.5\include;..\..\..\..\cinder_0.8.5\boost;..\..\..\..\cinder_0.8.5\src\AntTweakBar;..\..\..\..\cinder_0.8.5\blocks\MndlKit\src;..\..\..\..\cinder_0.8.5\blocks\Cinder-NI\src;..\..\..\..\OpenNI\Include;..\..\..\..\cinder_0.8.5\blocks\Cinder-Osc\src;..\..\..\..\liblo-0.26;..\..\..\..\pthread\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;..\..\..\..\cinder_0.8.5\include;..\..\..\..\cinder_0.8.5\boost;..\..\..\..\cinder_0.8.5\src\AntTweakBar;..\..\..\..\cinder_0.8.5\blocks\MndlKit\src;..\..\..\..\cinder_0.8.5\blocks\Cinder-NI\src;..\..\..\..\OpenNI\Include;..\..\..\..\cinder_0.8.5\blocks\Cinder-Osc\src;..\..\..\..\cinder_0.8.5\blocks\Cinder-Osc\src\pthread</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader />
@@ -90,7 +90,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>cinder.lib;Cinder-NI.lib;openNI.lib;liblo.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\cinder_0.8.5\lib;..\..\..\..\cinder_0.8.5\lib\msw;..\..\..\..\cinder_0.8.5\blocks\Cinder-NI\lib\vc10;..\..\..\..\OpenNI\Lib;..\..\..\..\liblo-0.26\lib\ReleaseDLL</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\cinder_0.8.5\lib;..\..\..\..\cinder_0.8.5\lib\msw;..\..\..\..\cinder_0.8.5\blocks\Cinder-NI\lib\vc10;..\..\..\..\OpenNI\Lib;..\..\..\..\cinder_0.8.5\blocks\Cinder-Osc\lib\vc10</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <GenerateMapFile>true</GenerateMapFile>
       <SubSystem>Windows</SubSystem>
