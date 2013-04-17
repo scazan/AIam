@@ -146,7 +146,8 @@ void AIInputApp::loadOniCB()
 #ifdef CINDER_MAC
 	appPath = appPath.parent_path();
 #endif
-	vector< string > extensions = { "oni" };
+	vector< string > extensions;
+	extensions.push_back( "oni" );
 	ci::fs::path oniPath = ci::app::getOpenFilePath( appPath, extensions );
 
 	if ( !oniPath.empty() )
