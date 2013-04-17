@@ -137,7 +137,7 @@ void AIInputApp::draw()
 		}
 	}
 
-	mndl::params::PInterfaceGl::draw();
+	mParams.draw();
 }
 
 void AIInputApp::loadOniCB()

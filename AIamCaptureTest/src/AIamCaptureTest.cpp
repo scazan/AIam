@@ -264,7 +264,7 @@ void AIamCaptureTest::draw()
 		}
 	}
 
-	mndl::params::PInterfaceGl::draw();
+	mParams.draw();
 }
 
 void AIamCaptureTest::mouseDown( MouseEvent event )
