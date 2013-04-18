@@ -52,6 +52,7 @@ class InterStatePosition:
         self.source_state = source_state
         self.destination_state = destination_state
         self.relative_position = relative_position
+        self.transition_length = (destination_state.position - source_state.position).mag()
 
     def __repr__(self):
         return "InterStatePosition(%r, %r, %r)" % (

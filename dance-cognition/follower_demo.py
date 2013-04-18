@@ -6,6 +6,7 @@ from OpenGL.GLU import *
 from states import state_machine
 from osc_receiver import OscReceiver
 from follower import Follower
+import time
 
 MOUSE_REACTIVITY = 5.0
 
@@ -73,13 +74,20 @@ class FollowerDemo(window.Window):
 
 
 def receive_input(path, args, types, src, user_data):
-    global input_position
+    global input_position, last_input_time
+    now = time.time()
+    if last_input_time is None:
+        time_increment = 0.0
+    else:
+        time_increment = now - last_input_time
     position_tuple = args
     input_position = Vector3d(*position_tuple)
-    follower.follow(input_position)
+    follower.follow(input_position, time_increment)
+    last_input_time = now
 
 input_position = Vector3d(0, 0, 0)
 follower = Follower(state_machine)
+last_input_time = None
 osc_receiver = OscReceiver(50001)
 osc_receiver.add_method("/input_position", "fff", receive_input)
 osc_receiver.start()
