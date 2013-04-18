@@ -24,14 +24,19 @@ class Follower:
         input_state, output_state = transition
         pos1 = input_state.position
         pos2 = output_state.position
-        intersection = self._cross_product(v - pos1, pos2 - pos1) + pos1
+        intersection = self._perpendicular(pos1, pos2, v)
         relative_position = (intersection - pos1).mag() / (pos2 - pos1).mag()
         relative_position = self._clamp(relative_position, 0, 1)
         return InterStatePosition(input_state, output_state, relative_position)
 
-    def _cross_product(self, v1, v2):
-        c = numpy.cross(v1.v, v2.v)
-        return Vector(3, c)
+    def _perpendicular(self, p1, p2, q):
+        u = p2 - p1
+        pq = q - p1
+        w2 = pq - u * (self._dot_product(pq, u) / pow(u.mag(), 2))
+        return q - w2
+
+    def _dot_product(self, a, b):
+        return numpy.dot(a.v, b.v)
 
     def _clamp(self, v, v_min, v_max):
         return max(min(v, v_max), v_min)

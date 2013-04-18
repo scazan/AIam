@@ -53,7 +53,12 @@ class InterStatePosition:
         self.destination_state = destination_state
         self.relative_position = relative_position
 
+    def __repr__(self):
+        return "InterStatePosition(%r, %r, %r)" % (
+            self.source_state.name, self.destination_state.name, self.relative_position)
+
 state_machine = StateMachine()
+
 state_machine.add(MC,  (0,0,0),   [MLB, ML , HB, MB, MLF, MRF, MRB, LLF, HRF])
 state_machine.add(MLB, (0,-1,-1), [MC,  ML,  HB, MB, MLF, MRF, MRB, LLF, HRF])
 state_machine.add(ML,  (0,-1,0),  [MLB, MLB, HB, MB, MLF, MRF, MRB, LLF, HRF])
@@ -66,4 +71,10 @@ state_machine.add(LLF, (-1,1,-1), [])
 state_machine.add(HRF, (1,1,-1),  [])
 state_machine.compile()
 
-# print states.states
+# state_machine.add(MC,  (0,0,0),   [MLB])
+# state_machine.add(MLB, (0,1,1), [])
+# state_machine.compile()
+
+# state_machine.add(MB, (0,0,-1),  [MRF])
+# state_machine.add(MRF, (0,1,-1),  [])
+# state_machine.compile()
