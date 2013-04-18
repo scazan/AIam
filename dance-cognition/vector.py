@@ -161,3 +161,7 @@ class DirectionalVector(Vector2d):
         Vector2d.__init__(self,
                           math.cos(angle) * magnitude,
                           math.sin(angle) * magnitude)
+
+def dot_product(a, b):
+    assert a.n == b.n
+    return sum([a[i] * b[i] for i in range(a.n)])

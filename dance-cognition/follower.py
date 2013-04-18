@@ -1,5 +1,4 @@
-import numpy
-from vector import Vector
+from vector import *
 from states import InterStatePosition
 
 class Follower:
@@ -32,11 +31,8 @@ class Follower:
     def _perpendicular(self, p1, p2, q):
         u = p2 - p1
         pq = q - p1
-        w2 = pq - u * (self._dot_product(pq, u) / pow(u.mag(), 2))
+        w2 = pq - u * (dot_product(pq, u) / pow(u.mag(), 2))
         return q - w2
-
-    def _dot_product(self, a, b):
-        return numpy.dot(a.v, b.v)
 
     def _clamp(self, v, v_min, v_max):
         return max(min(v, v_max), v_min)

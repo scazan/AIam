@@ -3,7 +3,6 @@ from vector import *
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
-import numpy
 
 line_pos1 = Vector2d(0.1, 0.2)
 line_pos2 = Vector2d(0.5, 0.1)
@@ -37,11 +36,8 @@ class Test(window.Window):
     def _perpendicular(self, p1, p2, q):
         u = p2 - p1
         pq = q - p1
-        w2 = pq - u * (self._dot_product(pq, u) / pow(u.mag(), 2))
+        w2 = pq - u * (dot_product(pq, u) / pow(u.mag(), 2))
         return q - w2
-
-    def _dot_product(self, a, b):
-        return numpy.dot(a.v, b.v)
 
     def _scale(self, v):
         return v * self.min_dimension
