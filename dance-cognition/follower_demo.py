@@ -7,6 +7,8 @@ from states import state_machine
 from simple_osc_receiver import OscReceiver
 from follower import Follower
 import time
+from argparse import ArgumentParser
+import imp
 
 MOUSE_REACTIVITY = 5.0
 
@@ -81,14 +83,31 @@ def receive_input(path, args, types, src, user_data):
     else:
         time_increment = now - last_input_time
     position_tuple = args
-    input_position = Vector3d(*position_tuple)
+    position_relative_to_camera = Vector3d(*position_tuple)
+    input_position = position_in_unit_cube(position_relative_to_camera)
     follower.follow(input_position, time_increment)
     last_input_time = now
+
+def position_in_unit_cube(position_relative_to_camera):
+    global config
+    p = position_relative_to_camera - config.center
+    p.x /= config.size.x
+    p.y /= config.size.y
+    p.z /= config.size.z
+    return p
+
+parser = ArgumentParser()
+parser.add_argument("-config", type=str, default="default")
+window.Window.add_parser_arguments(parser)
+args = parser.parse_args()
+config = imp.load_source("config", "input_data/%s/config.py" % args.config)
+config.center = Vector3d(*config.center)
+config.size = Vector3d(*config.size)
 
 input_position = Vector3d(0, 0, 0)
 follower = Follower(state_machine)
 last_input_time = None
-osc_receiver = OscReceiver(50001)
-osc_receiver.add_method("/input_position", "fff", receive_input)
+osc_receiver = OscReceiver(7891, listen="localhost")
+osc_receiver.add_method("/joint/torso", "fff", receive_input)
 osc_receiver.start()
-window.run(FollowerDemo)
+window.run(FollowerDemo, args)

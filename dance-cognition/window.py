@@ -234,11 +234,6 @@ class Frame:
     def render(self):
         pass
 
-def run(visualizer_class):
+def run(visualizer_class, args):
     print "Hit ESC key to quit."
-
-    parser = argparse.ArgumentParser()
-    visualizer_class.add_parser_arguments(parser)
-    args = parser.parse_args()
-
     visualizer_class(args).run()
