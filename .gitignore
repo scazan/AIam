@@ -7,4 +7,13 @@ config.log
 # vim
 *.sw[a-z]
 
+# emacs
+*~
+
 *.oni
+*.pyc
+
+AIInput/AIInput.exe
+AIInput/assets/params.xml
+AIInput/liblo.dll
+AIInput/pthreadVC2.dll

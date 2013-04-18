@@ -4,7 +4,7 @@ from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from states import state_machine
-from osc_receiver import OscReceiver
+from simple_osc_receiver import OscReceiver
 from follower import Follower
 import time
 

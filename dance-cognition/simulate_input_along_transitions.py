@@ -1,4 +1,4 @@
-from osc_sender import OscSender
+from simple_osc_sender import OscSender
 from states import state_machine, InterStatePosition
 import time
 import random
