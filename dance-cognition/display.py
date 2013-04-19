@@ -17,6 +17,7 @@ class Display(window.Window):
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
     def render(self):
+        osc_receiver.serve()
         self._draw_input()
         self._draw_output()
 

@@ -9,6 +9,8 @@ import traceback_printer
 from stopwatch import Stopwatch
 from vector import Vector
 import math
+import collections
+import sys
 
 ESCAPE = '\033'
 CAMERA_POSITION = Vector(3, [-8, -0.5, -1.35])
@@ -21,6 +23,7 @@ class Window:
         self.width = args.width
         self.height = args.height
         self.margin = args.margin
+        self.show_fps = args.show_fps
         self.gl_display_mode = GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH
         self._fullscreen = False
         self.exiting = False
@@ -33,6 +36,10 @@ class Window:
         self.fovy = 45
         self.near = 0.1
         self.far = 100.0
+
+        if self.show_fps:
+            self.fps_history = collections.deque(maxlen=10)
+            self.previous_shown_fps_time = None
 
     def run(self):
         self.window_width = self.width + self.margin*2
@@ -159,6 +166,9 @@ class Window:
             glTranslatef(self.margin, self.margin, 0)
             self._render_frames()
             self.render()
+            if self.show_fps:
+                self.update_fps_history()
+                self.show_fps_if_timely()
 
         glutSwapBuffers()
         self.previous_frame_time = self.now
@@ -166,6 +176,22 @@ class Window:
 
     def current_time(self):
         return self.stopwatch.get_elapsed_time()
+
+    def update_fps_history(self):
+        if self.time_increment > 0:
+            fps = 1.0 / self.time_increment
+            self.fps_history.append(fps)
+
+    def show_fps_if_timely(self):
+        if self.previous_shown_fps_time:
+            if (self.now - self.previous_shown_fps_time) > 1.0:
+                self.calculate_and_show_fps()
+        else:
+            self.calculate_and_show_fps()
+
+    def calculate_and_show_fps(self):
+        print sum(self.fps_history) / len(self.fps_history)
+        self.previous_shown_fps_time = self.now
 
     def keyPressed(self, key, x, y):
         if key == ESCAPE:
@@ -198,6 +224,7 @@ class Window:
         parser.add_argument("-left", type=int)
         parser.add_argument("-top", type=int)
         parser.add_argument("-fullscreen", action="store_true")
+        parser.add_argument('-show-fps', dest='show_fps', action='store_true')
 
     def add_frame(self, frame):
         self._frames.append(frame)
