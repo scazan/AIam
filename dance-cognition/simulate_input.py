@@ -3,22 +3,24 @@ from simple_osc_sender import OscSender
 import time
 import random
 from vector import Vector3d
-from input_generators.dataset_transitions import Generator
+import imp
 
 def noise():
     return Vector3d(
         random.uniform(-1.0, 1.0),
         random.uniform(-1.0, 1.0),
-        random.uniform(-1.0, 1.0)) * 0.01
+        random.uniform(-1.0, 1.0)) * args.noise
 
 parser = ArgumentParser()
+parser.add_argument("-generator", type=str, default="dataset_transitions")
 parser.add_argument("-refresh-rate", type=float, default=60.0)
+parser.add_argument("-noise", type=float, default=0.01)
 args = parser.parse_args()
 
+generator_module = imp.load_source("generator", "input_generators/%s.py" % args.generator)
+generator = generator_module.Generator()
 osc_sender = OscSender(7891)
-
 refresh_interval = 1.0 / args.refresh_rate
-generator = Generator()
 while True:
     generator.update(refresh_interval)
     input_position = generator.position() + noise()
