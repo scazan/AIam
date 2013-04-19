@@ -30,17 +30,21 @@ class OscReceiver:
         if listen:
             hostname = listen
         else:
-            hostname = socket.gethostbyname(socket.gethostname())
+            hostname = "127.0.0.1"
         self._socket.bind((hostname, port))
+        self._socket.setblocking(True)
         if proto == osc.TCP:
             self._socket.listen(5)
         self.port = self._socket.getsockname()[1]
         print "listening at %s:%s" % (hostname, self.port)
+        self._queue = []
+        self._lock = threading.Lock()
 
     def add_method(self, path, typespec, callback_func, user_data=None):
         self._handlers[path] = Handler(typespec, callback_func, user_data)
 
-    def start(self):
+    def start(self, auto_serve=False):
+        self._auto_serve = auto_serve
         serve_thread = threading.Thread(name="%s.serve_thread" % self._name,
                                         target=self._serve)
         serve_thread.daemon = True
@@ -50,15 +54,16 @@ class OscReceiver:
         if self._proto == osc.TCP:
             client_socket, client_address = self._socket.accept()
             self._client_socket_file = client_socket.makefile("rb")
-        elif self._proto == osc.UDP:
-            self._client_socket_file = self._socket.makefile("rb")
         while True:
             self._serve_once()
 
     def _serve_once(self):
-        size_int32 = self._client_socket_file.read(4)
-        size = struct.unpack(">i", size_int32)[0]
-        self._data = self._client_socket_file.read(size)
+        if self._proto == osc.TCP:
+            size_int32 = self._client_socket_file.read(4)
+            size = struct.unpack(">i", size_int32)[0]
+            self._data = self._client_socket_file.read(size)
+        elif self._proto == osc.UDP:
+            self._data, addr = self._socket.recvfrom(1024)
         address_pattern = self._consume_osc_string()
         assert address_pattern.startswith("/")
 
@@ -81,8 +86,11 @@ class OscReceiver:
             args.append(arg)
 
         src = None
-        self._fire_callback_with_exception_handler(
-            address_pattern, args, type_tags, src, handler.callback_func, handler.user_data)
+        with self._lock:
+            self._queue.append((address_pattern, args, type_tags, src,
+                                handler.callback_func, handler.user_data))
+        if self._auto_serve:
+            self.serve()
 
     def _read_arg(self, type_tag):
         if type_tag == 'i':
@@ -120,6 +128,13 @@ class OscReceiver:
             num_string_bytes += 1
         self._data = self._data[num_string_bytes:]
         return result
+
+    def serve(self):
+        with self._lock:
+            for path, args, types, src, callback_func, user_data in self._queue:
+                self._fire_callback_with_exception_handler(
+                    path, args, types, src, callback_func, user_data)
+            self._queue = []
 
     def _fire_callback_with_exception_handler(self, path, args, types, src, callback, user_data):
         try:

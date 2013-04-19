@@ -5,15 +5,18 @@ import osc
 
 class OscSender:
     def __init__(self, port, host=None, log_filename=None, proto=osc.UDP):
+        self._proto = proto
         if log_filename:
             raise Exception("log_filename not supported")
         if host is None:
-            host = socket.gethostbyname(socket.gethostname())
+            host = "127.0.0.1"
         if proto == osc.TCP:
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._socket.connect((host, port))
         elif proto == osc.UDP:
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self._socket.connect((host, port))
+            self._host = host
+            self._port = port
         self._lock = threading.Lock()
 
     def send(self, address_pattern, *args):
@@ -23,9 +26,11 @@ class OscSender:
     def _send(self, address_pattern, *args):
         message = self._generate_message(address_pattern, *args)
         message = self._ensure_size_is_multiple_of_4(message)
-        size_int32 = struct.pack(">i", len(message))
-        self._socket.send(size_int32)
-        self._socket.send(message)
+        if self._proto == osc.TCP:
+            size_int32 = struct.pack(">i", len(message))
+            self._socket.send(size_int32)
+        elif self._proto == osc.UDP:
+            self._socket.sendto(message, (self._host, self._port))
 
     def _generate_message(self, address_pattern, *args):
         message = self._osc_string(address_pattern)

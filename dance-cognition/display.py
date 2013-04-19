@@ -3,14 +3,13 @@ from vector import *
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
-from states import state_machine
+from states import state_machine, InterStatePosition
 from simple_osc_receiver import OscReceiver
-from follower import Follower
-import time
+from argparse import ArgumentParser
 
 MOUSE_REACTIVITY = 5.0
 
-class FollowerDemo(window.Window):
+class Display(window.Window):
     def InitGL(self):
         window.Window.InitGL(self)
         glEnable(GL_POINT_SMOOTH)
@@ -18,6 +17,7 @@ class FollowerDemo(window.Window):
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
     def render(self):
+        osc_receiver.serve()
         self._draw_input()
         self._draw_output()
 
@@ -27,7 +27,7 @@ class FollowerDemo(window.Window):
         self._draw_unit_cube()
         self._draw_states_as_points()
         self._draw_transitions_as_lines()
-        self._draw_follower()
+        self._draw_output_position()
         glPopMatrix()
 
     def _draw_states_as_points(self):
@@ -46,12 +46,12 @@ class FollowerDemo(window.Window):
             glVertex3f(*output_state.position)
         glEnd()
 
-    def _draw_follower(self):
-        if follower.inter_state_position:
+    def _draw_output_position(self):
+        if output_inter_state_position:
             glColor3f(1,0,0)
             glPointSize(5.0)
             glBegin(GL_POINTS)
-            glVertex3f(*state_machine.inter_state_to_euclidian_position(follower.inter_state_position))
+            glVertex3f(*state_machine.inter_state_to_euclidian_position(output_inter_state_position))
             glEnd()
 
     def _draw_input(self):
@@ -72,23 +72,28 @@ class FollowerDemo(window.Window):
         glColor4f(0,0,0,0.2)
         glutWireCube(2.0)
 
-
-def receive_input(path, args, types, src, user_data):
-    global input_position, last_input_time
-    now = time.time()
-    if last_input_time is None:
-        time_increment = 0.0
-    else:
-        time_increment = now - last_input_time
+def receive_input_position(path, args, types, src, user_data):
+    global input_position
     position_tuple = args
     input_position = Vector3d(*position_tuple)
-    follower.follow(input_position, time_increment)
-    last_input_time = now
+
+def receive_output_position(path, args, types, src, user_data):
+    global output_inter_state_position
+    source_state_name, output_state_name, relative_position = args
+    source_state = state_machine.states[source_state_name]
+    output_state = state_machine.states[output_state_name]
+    output_inter_state_position = InterStatePosition(
+        source_state, output_state, relative_position)
 
 input_position = Vector3d(0, 0, 0)
-follower = Follower(state_machine)
-last_input_time = None
-osc_receiver = OscReceiver(50001)
-osc_receiver.add_method("/input_position", "fff", receive_input)
+osc_receiver = OscReceiver(7892, listen="localhost")
+osc_receiver.add_method("/input_position", "fff", receive_input_position)
+osc_receiver.add_method("/position", "ssf", receive_output_position)
 osc_receiver.start()
-window.run(FollowerDemo)
+
+output_inter_state_position = None
+
+parser = ArgumentParser()
+window.Window.add_parser_arguments(parser)
+args = parser.parse_args()
+window.run(Display, args)

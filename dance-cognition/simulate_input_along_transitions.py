@@ -13,7 +13,7 @@ def noise():
         random.uniform(-1.0, 1.0),
         random.uniform(-1.0, 1.0)) * 0.01
 
-osc_sender = OscSender(50001)
+osc_sender = OscSender(7891)
 stopwatch = Stopwatch()
 
 source_state = random.choice(state_machine.states.values())
@@ -28,6 +28,6 @@ while True:
         inter_state_position.relative_position = stopwatch.get_elapsed_time() / duration
         p = state_machine.inter_state_to_euclidian_position(inter_state_position)
         p += noise()
-        osc_sender.send("/input_position", *p)
+        osc_sender.send("/joint/torso", *p)
         time.sleep(0.01)
     source_state = destination_state
