@@ -47,7 +47,7 @@ config.center = Vector3d(*config.center)
 config.size = Vector3d(*config.size)
 
 osc_sender = OscSender(7892)
-input_position = Vector3d(0, 0, 0)
+input_position = Vector3d(0.0, 0.0, 0.0)
 follower = Follower(state_machine)
 last_refresh_time = None
 osc_receiver = OscReceiver(7891, listen="localhost")
