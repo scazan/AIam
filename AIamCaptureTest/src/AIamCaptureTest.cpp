@@ -23,6 +23,7 @@
 #include "cinder/gl/DisplayList.h"
 #include "cinder/Camera.h"
 #include "cinder/MayaCamUI.h"
+#include "cinder/Timeline.h"
 #include "cinder/TriMesh.h"
 
 #include "mndlkit/params/PParams.h"
@@ -58,6 +59,8 @@ class AIamCaptureTest : public AppBasic
 		typedef shared_ptr< assimp::AssimpLoader > AssimpLoaderRef;
 		vector< AssimpLoaderRef > mMotions;
 		int mMotionIndex;
+		int mCurrentMotion;
+		Anim< double > mMotionTime;
 
 		MayaCamUI mMayaCam;
 
@@ -114,6 +117,7 @@ void AIamCaptureTest::setup()
 	mTriMeshPlane = createSquare( Vec2i( 64, 64 ) );
 
 	mMotions.push_back( AssimpLoaderRef() );
+	mParams.addText( "Motions" );
 	mMotionNames.push_back( "no motion" );
 	mBvhPaths = getBvhs( "motions" );
 }
@@ -158,8 +162,19 @@ void AIamCaptureTest::loadSomeBvhs()
 	if ( ( mLoadingProgress > .999f ) && mBvhPaths.empty() )
 	{
 		mAllBvhsLoaded = true;
-		mMotionIndex = 0;
-		mParams.addParam( "Motions", mMotionNames, &mMotionIndex );
+		mMotionIndex = mCurrentMotion = 0;
+		mParams.addParam( "Motion files", mMotionNames, &mMotionIndex );
+		mParams.addButton( "Play motion", [&]() {
+				mCurrentMotion = mMotionIndex;
+				if ( mMotions[ mCurrentMotion ] )
+				{
+					mMotionTime = 0.;
+					double motionDuration = mMotions[ mCurrentMotion ]->getAnimationDuration( 0 );
+					timeline().apply( &mMotionTime, motionDuration, motionDuration );
+				}
+		} );
+		mMotionTime = 0.;
+		mParams.addSeparator();
 	}
 
 	if ( bvhNum )
@@ -182,21 +197,10 @@ void AIamCaptureTest::update()
 		return;
 	}
 
-	static int lastMotionIndex = -1;
-	static double lastStartTime;
-
-	if ( mMotions[ mMotionIndex ] )
+	if ( mMotions[ mCurrentMotion ] )
 	{
-		if ( mMotionIndex != lastMotionIndex ) // change motion
-		{
-			lastStartTime = getElapsedSeconds();
-			lastMotionIndex = mMotionIndex;
-		}
-
-		double motionDuration = mMotions[ mMotionIndex ]->getAnimationDuration( 0 );
-		double currentMotionTime = math< double >::clamp( getElapsedSeconds() - lastStartTime, 0., motionDuration );
-		mMotions[ mMotionIndex ]->setTime( currentMotionTime );
-		mMotions[ mMotionIndex ]->update();
+		mMotions[ mCurrentMotion ]->setTime( mMotionTime );
+		mMotions[ mCurrentMotion ]->update();
 	}
 
 	static int lastGridSize = -1;
@@ -240,9 +244,12 @@ void AIamCaptureTest::draw()
 
 		glPolygonOffset( 1.0f, 1.0f );
 		gl::enable( GL_POLYGON_OFFSET_FILL );
-		if ( mMotions[ mMotionIndex ] )
+		if ( mMotions[ mCurrentMotion ] )
 		{
-			mMotions[ mMotionIndex ]->draw();
+			gl::pushModelView();
+			gl::rotate( Vec3f( -90, 0, 0 ) );
+			mMotions[ mCurrentMotion ]->draw();
+			gl::popModelView();
 		}
 
 		if ( mDrawPlane )
