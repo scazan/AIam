@@ -8,6 +8,8 @@ from simple_osc_receiver import OscReceiver
 from argparse import ArgumentParser
 
 MOUSE_REACTIVITY = 5.0
+INPUT_COLOR = (0,0,1)
+OUTPUT_COLOR = (1,0,0)
 
 class Display(window.Window):
     def InitGL(self):
@@ -33,6 +35,7 @@ class Display(window.Window):
         self._draw_unit_cube()
         self._draw_states_as_points()
         self._draw_transitions_as_lines()
+        self._draw_input_position()
         self._draw_output_position()
         glPopMatrix()
 
@@ -54,7 +57,7 @@ class Display(window.Window):
 
     def _draw_output_position(self):
         if output_inter_state_position:
-            glColor3f(1,0,0)
+            glColor3f(*OUTPUT_COLOR)
             glPointSize(5.0)
             glBegin(GL_POINTS)
             glVertex3f(*state_machine.inter_state_to_euclidian_position(output_inter_state_position))
@@ -63,16 +66,16 @@ class Display(window.Window):
     def _draw_input(self):
         glPushMatrix()
         self.configure_3d_projection(-300, 0)
-
         self._draw_unit_cube()
+        self._draw_input_position()
+        glPopMatrix()
 
-        glColor3f(0,0,0)
+    def _draw_input_position(self):
+        glColor3f(*INPUT_COLOR)
         glPointSize(5.0)
         glBegin(GL_POINTS)
         glVertex3f(*input_position)
         glEnd()
-
-        glPopMatrix()
 
     def _draw_unit_cube(self):
         glColor4f(0,0,0,0.2)
