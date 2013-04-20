@@ -9,6 +9,7 @@ config.log
 
 # emacs
 *~
+*#
 
 *.oni
 *.pyc

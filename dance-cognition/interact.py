@@ -46,7 +46,7 @@ config = imp.load_source("config", "input_data/%s/config.py" % args.config)
 config.center = Vector3d(*config.center)
 config.size = Vector3d(*config.size)
 
-behaviour_module = imp.load_source("behaviour", "behaviours/%s.py" % args.behaviour)
+behaviour_module = imp.load_source(args.behaviour, "behaviours/%s.py" % args.behaviour)
 behaviour = behaviour_module.Behaviour(state_machine)
 
 osc_sender = OscSender(7892)

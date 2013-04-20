@@ -1,12 +1,13 @@
 from vector import *
 from states import InterStatePosition
+import behaviour
 
 SPEED = 1.0
 THRESHOLD = 0.01
 
-class Behaviour:
-    def __init__(self, state_machine):
-        self._state_machine = state_machine
+class Behaviour(behaviour.Behaviour):
+    def __init__(self, *args):
+        behaviour.Behaviour.__init__(self, *args)
         self._inter_state_position = None
 
     def process_input(self, input_position, time_increment):
