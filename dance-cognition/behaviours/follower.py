@@ -4,79 +4,82 @@ from states import InterStatePosition
 SPEED = 1.0
 THRESHOLD = 0.01
 
-class Follower:
+class Behaviour:
     def __init__(self, state_machine):
-        self.state_machine = state_machine
-        self.inter_state_position = None
+        self._state_machine = state_machine
+        self._inter_state_position = None
 
-    def follow(self, v, time_increment):
+    def process_input(self, input_position, time_increment):
         self._time_increment = time_increment
-        desired_inter_state_position = self._nearest_inter_state_position(v)
-        if self.inter_state_position is None:
-            self.inter_state_position = desired_inter_state_position
-        elif self.inter_state_position.source_state == desired_inter_state_position.source_state and \
-                self.inter_state_position.destination_state == desired_inter_state_position.destination_state:
+        desired_inter_state_position = self._nearest_inter_state_position(input_position)
+        if self._inter_state_position is None:
+            self._inter_state_position = desired_inter_state_position
+        elif self._inter_state_position.source_state == desired_inter_state_position.source_state and \
+                self._inter_state_position.destination_state == desired_inter_state_position.destination_state:
             self._move_along_transition_towards_relative_position(
                 desired_inter_state_position.relative_position)
         else:
             nearest_state = self._nearest_transition_state(desired_inter_state_position)
             self._move_along_transition_towards_state(nearest_state)
 
-            euclidian = self.state_machine.inter_state_to_euclidian_position(self.inter_state_position)
+            euclidian = self._state_machine.inter_state_to_euclidian_position(self._inter_state_position)
             if (euclidian - nearest_state.position).mag() < THRESHOLD:
-                self._select_best_transition(v, nearest_state)
+                self._select_best_transition(input_position, nearest_state)
+
+    def output(self):
+        return self._inter_state_position
 
     def _move_along_transition_towards_relative_position(self, desired_relative_position):
-        allowed_relative_distance = self._time_increment * SPEED / self.inter_state_position.transition_length
+        allowed_relative_distance = self._time_increment * SPEED / self._inter_state_position.transition_length
         actual_relative_distance = abs(
-            desired_relative_position - self.inter_state_position.relative_position)
+            desired_relative_position - self._inter_state_position.relative_position)
         if allowed_relative_distance >= actual_relative_distance:
             new_relative_position = desired_relative_position
         else:
-            if desired_relative_position > self.inter_state_position.relative_position:
+            if desired_relative_position > self._inter_state_position.relative_position:
                 sign = 1
             else:
                 sign = -1
-            new_relative_position = self.inter_state_position.relative_position + sign * \
+            new_relative_position = self._inter_state_position.relative_position + sign * \
                 allowed_relative_distance
         new_relative_position = self._clamp(new_relative_position, 0, 1)
-        self.inter_state_position.relative_position = new_relative_position
+        self._inter_state_position.relative_position = new_relative_position
 
     def _move_along_transition_towards_state(self, target_state):
-        if target_state == self.inter_state_position.source_state:
+        if target_state == self._inter_state_position.source_state:
             desired_relative_position = 0.0
-        elif target_state == self.inter_state_position.destination_state:
+        elif target_state == self._inter_state_position.destination_state:
             desired_relative_position = 1.0
         else:
             raise Exception("unexpected target_state")
         self._move_along_transition_towards_relative_position(desired_relative_position)
 
     def _nearest_transition_state(self, target_inter_state_position):
-        target_euclidian = self.state_machine.inter_state_to_euclidian_position(target_inter_state_position)
+        target_euclidian = self._state_machine.inter_state_to_euclidian_position(target_inter_state_position)
         distance_from_source = (
-            target_euclidian - self.inter_state_position.source_state.position).mag()
+            target_euclidian - self._inter_state_position.source_state.position).mag()
         distance_from_destination = (
-            target_euclidian - self.inter_state_position.destination_state.position).mag()
+            target_euclidian - self._inter_state_position.destination_state.position).mag()
         if distance_from_source < distance_from_destination:
-            return self.inter_state_position.source_state
+            return self._inter_state_position.source_state
         else:
-            return self.inter_state_position.destination_state
+            return self._inter_state_position.destination_state
 
     def _select_best_transition(self, v, input_state):
         min_distance = None
         for output_state in input_state.inputs + input_state.outputs:
             inter_state_position = self._perpendicular_inter_state_position(v, input_state, output_state)
-            distance = (v - self.state_machine.inter_state_to_euclidian_position(inter_state_position)).mag()
+            distance = (v - self._state_machine.inter_state_to_euclidian_position(inter_state_position)).mag()
             if min_distance is None or distance < min_distance:
                 nearest_output_state = output_state
                 min_distance = distance
-        self.inter_state_position = InterStatePosition(input_state, nearest_output_state, 0.0)
+        self._inter_state_position = InterStatePosition(input_state, nearest_output_state, 0.0)
 
     def _nearest_inter_state_position(self, v):
         min_distance = None
-        for input_state, output_state in self.state_machine.transitions:
+        for input_state, output_state in self._state_machine.transitions:
             inter_state_position = self._perpendicular_inter_state_position(v, input_state, output_state)
-            distance = (v - self.state_machine.inter_state_to_euclidian_position(inter_state_position)).mag()
+            distance = (v - self._state_machine.inter_state_to_euclidian_position(inter_state_position)).mag()
             if min_distance is None or distance < min_distance:
                 nearest_inter_state_position = inter_state_position
                 min_distance = distance

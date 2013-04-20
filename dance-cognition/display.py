@@ -12,9 +12,13 @@ MOUSE_REACTIVITY = 5.0
 class Display(window.Window):
     def InitGL(self):
         window.Window.InitGL(self)
+        glutMouseFunc(self._mouse_clicked)
+        glutMotionFunc(self._mouse_moved)
         glEnable(GL_POINT_SMOOTH)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        self._y_orientation = 0.0
+        self._x_orientation = 0.0
 
     def render(self):
         osc_receiver.serve()
@@ -24,6 +28,8 @@ class Display(window.Window):
     def _draw_output(self):
         glPushMatrix()
         self.configure_3d_projection(100, 0)
+        glRotatef(self._x_orientation, 1.0, 0.0, 0.0)
+        glRotatef(self._y_orientation, 0.0, 1.0, 0.0)
         self._draw_unit_cube()
         self._draw_states_as_points()
         self._draw_transitions_as_lines()
@@ -56,7 +62,7 @@ class Display(window.Window):
 
     def _draw_input(self):
         glPushMatrix()
-        self.configure_3d_projection(-400, 0)
+        self.configure_3d_projection(-300, 0)
 
         self._draw_unit_cube()
 
@@ -71,6 +77,18 @@ class Display(window.Window):
     def _draw_unit_cube(self):
         glColor4f(0,0,0,0.2)
         glutWireCube(2.0)
+
+    def _mouse_clicked(self, button, state, x, y):
+        if button == GLUT_LEFT_BUTTON:
+            self._dragging_orientation = (state == GLUT_DOWN)
+        if state == GLUT_DOWN:
+            self._drag_x_previous = x
+            self._drag_y_previous = y
+
+    def _mouse_moved(self, x, y):
+        if self._dragging_orientation:
+            self._y_orientation += x - self._drag_x_previous
+            self._x_orientation -= y - self._drag_y_previous
 
 def receive_input_position(path, args, types, src, user_data):
     global input_position
