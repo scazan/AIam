@@ -2,11 +2,14 @@ from vector import *
 from states import InterStatePosition
 import random
 import behaviour
+import math
 
 SPATIAL_THRESHOLD = 0.04
 TEMPORAL_THRESHOLD = 0.2
 
 class Behaviour(behaviour.Behaviour):
+    max_amplitude = math.sqrt(2)
+
     def __init__(self, *args):
         behaviour.Behaviour.__init__(self, *args)
         self._target_state = None
@@ -34,7 +37,7 @@ class Behaviour(behaviour.Behaviour):
         if self._in_center:
             self._output = self._center_output
         else:
-            amplitude = max(input_position.mag() - SPATIAL_THRESHOLD, 0.0)
+            amplitude = max(input_position.mag() - SPATIAL_THRESHOLD, 0.0) / self.max_amplitude
             self._output.relative_position = amplitude
 
     def output(self):
