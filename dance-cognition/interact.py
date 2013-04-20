@@ -5,12 +5,13 @@ from argparse import ArgumentParser
 import imp
 from vector import *
 from states import state_machine
+from sensory_adaptation import SensoryAdapter
 
 def receive_torso_position(path, args, types, src, user_data):
-    global input_position
+    global raw_input_position
     position_tuple = args
     position_relative_to_camera = Vector3d(*position_tuple)
-    input_position = position_in_unit_cube(position_relative_to_camera)
+    raw_input_position = position_in_unit_cube(position_relative_to_camera)
 
 def position_in_unit_cube(position_relative_to_camera):
     global config
@@ -21,6 +22,9 @@ def position_in_unit_cube(position_relative_to_camera):
     return p
 
 def refresh():
+    if raw_input_position is None:
+        return
+
     global last_refresh_time
     now = time.time()
     if last_refresh_time is None:
@@ -29,7 +33,8 @@ def refresh():
         time_increment = now - last_refresh_time
     last_refresh_time = now
 
-    behaviour.process_input(input_position, time_increment)
+    sensed_input_position = sensory_adapter.process(raw_input_position, time_increment)
+    behaviour.process_input(sensed_input_position, time_increment)
     output_inter_state_position = behaviour.output()
 
     if output_inter_state_position.relative_position < 0 or \
@@ -37,7 +42,8 @@ def refresh():
         print "WARNING: illegal relative_position in output: %r" % \
             output_inter_state_position.relative_position
 
-    osc_sender.send("/input_position", *input_position)
+    osc_sender.send("/raw_input_position", *raw_input_position)
+    osc_sender.send("/sensed_input_position", *sensed_input_position)
     osc_sender.send("/position",
                     output_inter_state_position.source_state.name,
                     output_inter_state_position.destination_state.name,
@@ -56,8 +62,9 @@ config.size = Vector3d(*config.size)
 behaviour_module = imp.load_source(args.behaviour, "behaviours/%s.py" % args.behaviour)
 behaviour = behaviour_module.Behaviour(state_machine)
 
+sensory_adapter = SensoryAdapter()
 osc_sender = OscSender(7892)
-input_position = Vector3d(0.0, 0.0, 0.0)
+raw_input_position = None
 last_refresh_time = None
 osc_receiver = OscReceiver(7891, listen="localhost")
 osc_receiver.add_method("/joint/torso", "fff", receive_torso_position)

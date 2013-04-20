@@ -19,6 +19,7 @@ class Behaviour(behaviour.Behaviour):
             0.0)
         self._in_center = True
         self._duration_in_center = 0
+        self._output = self._center_output
 
     def process_input(self, input_position, time_increment):
         input_in_center = input_position.mag() < SPATIAL_THRESHOLD

@@ -35,7 +35,7 @@ class Display(window.Window):
         self._draw_unit_cube()
         self._draw_states_as_points()
         self._draw_transitions_as_lines()
-        self._draw_input_position()
+        self._draw_sensed_input_position()
         self._draw_output_position()
         glPopMatrix()
 
@@ -57,24 +57,29 @@ class Display(window.Window):
 
     def _draw_output_position(self):
         if output_inter_state_position:
-            glColor3f(*OUTPUT_COLOR)
-            glPointSize(5.0)
-            glBegin(GL_POINTS)
-            glVertex3f(*state_machine.inter_state_to_euclidian_position(output_inter_state_position))
-            glEnd()
+            output_position = state_machine.inter_state_to_euclidian_position(output_inter_state_position)
+            self._draw_position(output_position, OUTPUT_COLOR)
 
     def _draw_input(self):
         glPushMatrix()
         self.configure_3d_projection(-300, 0)
         self._draw_unit_cube()
-        self._draw_input_position()
+        self._draw_raw_input_position()
         glPopMatrix()
 
-    def _draw_input_position(self):
-        glColor3f(*INPUT_COLOR)
+    def _draw_raw_input_position(self):
+        self._draw_position(raw_input_position, INPUT_COLOR)
+
+    def _draw_sensed_input_position(self):
+        self._draw_position(sensed_input_position, INPUT_COLOR)
+
+    def _draw_position(self, position, color):
+        if position is None:
+            return
+        glColor3f(*color)
         glPointSize(5.0)
         glBegin(GL_POINTS)
-        glVertex3f(*input_position)
+        glVertex3f(*position)
         glEnd()
 
     def _draw_unit_cube(self):
@@ -93,10 +98,15 @@ class Display(window.Window):
             self._y_orientation += x - self._drag_x_previous
             self._x_orientation -= y - self._drag_y_previous
 
-def receive_input_position(path, args, types, src, user_data):
-    global input_position
+def receive_raw_input_position(path, args, types, src, user_data):
+    global raw_input_position
     position_tuple = args
-    input_position = Vector3d(*position_tuple)
+    raw_input_position = Vector3d(*position_tuple)
+
+def receive_sensed_input_position(path, args, types, src, user_data):
+    global sensed_input_position
+    position_tuple = args
+    sensed_input_position = Vector3d(*position_tuple)
 
 def receive_output_position(path, args, types, src, user_data):
     global output_inter_state_position
@@ -106,9 +116,11 @@ def receive_output_position(path, args, types, src, user_data):
     output_inter_state_position = InterStatePosition(
         source_state, output_state, relative_position)
 
-input_position = Vector3d(0, 0, 0)
+raw_input_position = None
+sensed_input_position = None
 osc_receiver = OscReceiver(7892, listen="localhost")
-osc_receiver.add_method("/input_position", "fff", receive_input_position)
+osc_receiver.add_method("/raw_input_position", "fff", receive_raw_input_position)
+osc_receiver.add_method("/sensed_input_position", "fff", receive_sensed_input_position)
 osc_receiver.add_method("/position", "ssf", receive_output_position)
 osc_receiver.start()
 
