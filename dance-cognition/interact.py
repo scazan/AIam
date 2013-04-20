@@ -27,14 +27,21 @@ def refresh():
         time_increment = 0.0
     else:
         time_increment = now - last_refresh_time
+    last_refresh_time = now
+
     behaviour.process_input(input_position, time_increment)
     output_inter_state_position = behaviour.output()
+
+    if output_inter_state_position.relative_position < 0 or \
+       output_inter_state_position.relative_position > 1:
+        print "WARNING: illegal relative_position in output: %r" % \
+            output_inter_state_position.relative_position
+
     osc_sender.send("/input_position", *input_position)
     osc_sender.send("/position",
                     output_inter_state_position.source_state.name,
                     output_inter_state_position.destination_state.name,
                     output_inter_state_position.relative_position)
-    last_refresh_time = now
 
 parser = ArgumentParser()
 parser.add_argument("-behaviour", type=str, default="follower")
