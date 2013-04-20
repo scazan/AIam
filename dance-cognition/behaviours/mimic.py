@@ -2,9 +2,6 @@ from vector import *
 from states import InterStatePosition
 from behaviours import sync
 
-SPATIAL_THRESHOLD = 0.04
-TEMPORAL_THRESHOLD = 0.2
-
 class Behaviour(sync.Behaviour):
     def _select_transition(self, input_position):
         mc = self._state_machine.states["MC"]
