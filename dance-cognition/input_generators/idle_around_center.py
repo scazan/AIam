@@ -1,9 +1,15 @@
 from vector import *
 import random
 import math
+import input_generator
 
-class Generator:
-    def __init__(self):
+class Generator(input_generator.Generator):
+    @staticmethod
+    def add_parser_arguments(parser):
+        parser.add_argument("-magnitude", type=float, default=0.1)
+
+    def __init__(self, args):
+        self._magnitude = args.magnitude
         self._position = Vector3d(0, 0, 0)
         self._t = 0
         self._sway_duration = 1.0
@@ -15,7 +21,7 @@ class Generator:
             self._sway_target = Vector3d(
                 random.uniform(-1, 1),
                 random.uniform(-1, 1),
-                random.uniform(-1, 1)) * 0.1
+                random.uniform(-1, 1)) * self._magnitude
             self._t = 0
 
     def position(self):

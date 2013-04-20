@@ -1,10 +1,11 @@
 from states import state_machine, InterStatePosition
 import random
+import input_generator
 
 SPEED = 1.0
 
-class Generator:
-    def __init__(self):
+class Generator(input_generator.Generator):
+    def __init__(self, args):
         self._destination_state = random.choice(state_machine.states.values())
         self._t = 0.0
         self._transition_duration = 0
