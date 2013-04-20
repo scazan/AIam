@@ -15,6 +15,8 @@
  along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "boost/date_time.hpp"
+
 #include "cinder/Cinder.h"
 #include "cinder/app/AppBasic.h"
 #include "cinder/gl/gl.h"
@@ -48,15 +50,26 @@ class AIInputApp : public AppBasic
 		bool mVerticalSyncEnabled;
 
 		void loadOniCB();
+		void saveOniCB();
+		void openKinectCB();
 		std::shared_ptr< std::thread > mThreadRef;
 		std::mutex mNIMutex;
-		void openOni( const fs::path &path );
+		void openKinect( const fs::path &path = fs::path() );
 		mndl::ni::OpenNI mNI;
 		mndl::ni::UserTracker mNIUserTracker;
 
 		string mNIProgress;
 
 		gl::Texture mDepthTexture;
+
+		enum
+		{
+			SOURCE_RECORDING = 0,
+			SOURCE_KINECT
+		};
+		int mSource;
+		void setupParams();
+		bool mMirrored;
 
 		mndl::osc::Client mSender;
 };
@@ -70,14 +83,33 @@ void AIInputApp::setup()
 {
 	mndl::params::PInterfaceGl::load( "params.xml" );
 	mParams = mndl::params::PInterfaceGl( "Parameters", Vec2i( 200, 300 ) );
+	mParams.addPersistentSizeAndPosition();
+	setupParams();
+
+	mSender = mndl::osc::Client( "127.0.0.1", 7891 );
+}
+
+void AIInputApp::setupParams()
+{
+	mndl::params::PInterfaceGl::save();
+	mParams.clear();
+
 	mParams.addParam( "Fps", &mFps, "", true );
 	mParams.addPersistentParam( "Vertical sync", &mVerticalSyncEnabled, false );
 	mParams.addSeparator();
-	mNIProgress = "Not loaded";
-	mParams.addButton( "Load video", std::bind( &AIInputApp::loadOniCB, this ) );
+
+	// FIXME: switching often hangs up, Cinder-NI or OpenNI problem?
+	vector< string > enumNames = { "Recording", "Kinect" };
+	mParams.addPersistentParam( "Source", enumNames, &mSource, SOURCE_RECORDING );
+	mParams.addPersistentParam( "Mirror", &mMirrored, false );
+
+	mNIProgress = "";
+	if ( mSource == SOURCE_RECORDING )
+		mParams.addButton( "Load video", std::bind( &AIInputApp::loadOniCB, this ) );
+	else
+		mParams.addButton( "Save video", std::bind( &AIInputApp::saveOniCB, this ) );
 	mParams.addParam( "Progress", &mNIProgress, "", true );
 
-	mSender = mndl::osc::Client( "127.0.0.1", 7891 );
 }
 
 void AIInputApp::update()
@@ -87,6 +119,16 @@ void AIInputApp::update()
 	if ( mVerticalSyncEnabled != gl::isVerticalSyncEnabled() )
 		gl::enableVerticalSync( mVerticalSyncEnabled );
 
+	static int lastSource = -1;
+	if ( mSource != lastSource )
+	{
+		setupParams();
+		if ( mSource == SOURCE_KINECT )
+			openKinectCB();
+
+		lastSource = mSource;
+	}
+
 	{
 		std::lock_guard< std::mutex > lock( mNIMutex );
 
@@ -94,6 +136,9 @@ void AIInputApp::update()
 		{
 			if ( mNI.checkNewDepthFrame() )
 				mDepthTexture = mNI.getDepthImage();
+
+			if ( mMirrored != mNI.isMirrored() )
+				mNI.setMirrored( mMirrored );
 		}
 	}
 }
@@ -154,20 +199,64 @@ void AIInputApp::loadOniCB()
 	{
 		if ( mThreadRef )
 			mThreadRef->join();
+		mNIUserTracker.reset();
+		mNI.reset();
 		mNIProgress = "Loading";
-		mThreadRef = shared_ptr< thread >( new thread( bind( &AIInputApp::openOni, this, oniPath ) ) );
+		mThreadRef = shared_ptr< thread >( new thread( bind( &AIInputApp::openKinect, this, oniPath ) ) );
 	}
 }
 
-void AIInputApp::openOni( const fs::path &path )
+void AIInputApp::saveOniCB()
+{
+	if ( !mNI )
+		return;
+
+	if ( mNI.isRecording() )
+	{
+		mParams.setOptions( "Save video", "label=`Save video`" );
+		mNI.stopRecording();
+	}
+	else
+	{
+		mParams.setOptions( "Save video", "label=`Finish saving`" );
+
+		ci::fs::path appPath = ci::app::getAppPath();
+#ifdef CINDER_MAC
+		appPath = appPath.parent_path();
+#endif
+		boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
+		string timestamp = boost::posix_time::to_iso_string( now );
+
+		mNI.startRecording( appPath / ci::fs::path( "capture-" + timestamp + ".oni" ) );
+	}
+}
+
+void AIInputApp::openKinectCB()
+{
+	if ( mThreadRef )
+		mThreadRef->join();
+	mNIUserTracker.reset();
+	mNI.reset();
+	mNIProgress = "Connecting";
+	mThreadRef = shared_ptr< thread >( new thread( bind( &AIInputApp::openKinect, this, fs::path() ) ) );
+}
+
+void AIInputApp::openKinect( const fs::path &path )
 {
 	if ( mNI )
 		mNI.stop();
 
     try
     {
-        mndl::ni::OpenNI kinect;
-		kinect = mndl::ni::OpenNI( path );
+		mndl::ni::OpenNI kinect;
+		mndl::ni::OpenNI::Options options;
+		options.enableDepth( true ).enableUserTracker( true ).enableImage( false ).enableIR( false );
+
+
+		if ( path.empty() )
+			kinect = mndl::ni::OpenNI( mndl::ni::OpenNI::Device(), options );
+		else
+			kinect = mndl::ni::OpenNI( path );
         {
             std::lock_guard< std::mutex > lock( mNIMutex );
             mNI = kinect;
@@ -175,12 +264,17 @@ void AIInputApp::openOni( const fs::path &path )
     }
     catch ( const mndl::ni::OpenNIExc &exc )
     {
-		mNIProgress = "Could not load recording";
+		if ( path.empty() )
+			mNIProgress = "No device detected";
+		else
+			mNIProgress = "Could not load recording";
         return;
     }
 
-	mNIProgress = "Recording loaded";
-
+	if ( path.empty() )
+		mNIProgress = "Connected";
+	else
+		mNIProgress = "Recording loaded";
     {
         std::lock_guard< std::mutex > lock( mNIMutex );
         mNI.start();
