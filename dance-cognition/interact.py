@@ -5,7 +5,6 @@ from argparse import ArgumentParser
 import imp
 from vector import *
 from states import state_machine
-from sensory_adaptation import SensoryAdapter
 
 def receive_torso_position(path, args, types, src, user_data):
     global raw_input_position
@@ -33,7 +32,7 @@ def refresh():
         time_increment = now - last_refresh_time
     last_refresh_time = now
 
-    sensed_input_position = sensory_adapter.process(raw_input_position, time_increment)
+    sensed_input_position = behaviour.process_raw_input(raw_input_position, time_increment)
     behaviour.process_input(sensed_input_position, time_increment)
 
     osc_sender.send("/raw_input_position", *raw_input_position)
@@ -60,7 +59,6 @@ parser = ArgumentParser()
 parser.add_argument("-behaviour", type=str, default="follower")
 parser.add_argument("-config", type=str, default="default")
 parser.add_argument("-refresh-rate", type=float, default=60.0)
-parser.add_argument("-adaptation-factor", type=float, default=0.1)
 args = parser.parse_args()
 
 config = imp.load_source("config", "input_data/%s/config.py" % args.config)
@@ -70,7 +68,6 @@ config.size = Vector3d(*config.size)
 behaviour_module = imp.load_source(args.behaviour, "behaviours/%s.py" % args.behaviour)
 behaviour = behaviour_module.Behaviour(state_machine)
 
-sensory_adapter = SensoryAdapter(args.adaptation_factor)
 osc_sender = OscSender(7892)
 raw_input_position = None
 last_refresh_time = None

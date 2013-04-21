@@ -1,3 +1,6 @@
+# mirror: Mirrors the dynamics of the input, like sync, but also tries to mirror the move itself.
+# Works best when input is near center.
+
 from vector import *
 from states import InterStatePosition
 from behaviours import sync
