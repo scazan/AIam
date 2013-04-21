@@ -10,7 +10,7 @@ class Behaviour(behaviour.Behaviour):
         behaviour.Behaviour.__init__(self, *args)
         self._state_hypothesis = None
         self._observed_state = None
-        self._output_queue = []
+        self._next_output_transition = None
         self._output_transition = None
         self._time = 0.0
 
@@ -32,8 +32,9 @@ class Behaviour(behaviour.Behaviour):
             if self._output_transition_time > self._output_transition["duration"]:
                 self._output_transition = None
 
-        if not self._output_transition and len(self._output_queue) > 0:
-            self._output_transition = self._output_queue.pop(0)
+        if not self._output_transition and self._next_output_transition:
+            self._output_transition = self._next_output_transition
+            self._next_output_transition = None
             self._output_transition_time = 0.0
 
     def _nearest_state(self):
@@ -53,9 +54,10 @@ class Behaviour(behaviour.Behaviour):
         return destination_state in source_state.inputs + source_state.outputs
 
     def _transition_observed(self, source_state, destination_state, duration):
-        self._output_queue.append({"source_state": source_state,
-                                   "destination_state": destination_state,
-                                   "duration": duration})
+        self._next_output_transition = {
+            "source_state": source_state,
+            "destination_state": destination_state,
+            "duration": duration}
 
     def output(self):
         if self._output_transition:
