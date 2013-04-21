@@ -3,51 +3,66 @@ import random
 import math
 import input_generator
 
-class Generator(input_generator.Generator):
-    center = Vector3d(0.0, 0.0, 0.0)
+PAUSE, SWAY_OUT, SWAY_IN = range(3)
 
+class Generator(input_generator.Generator):
     @staticmethod
     def add_parser_arguments(parser):
-        parser.add_argument("-magnitude", type=float, default=0.1)
+        parser.add_argument("-magnitude", type=float, default=0.2)
         parser.add_argument("-pause-duration", type=float, default=0.2)
-        parser.add_argument("-sway-duration", type=float, default=1.0)
+        parser.add_argument("-sway-duration", type=float, default=0.5)
+        parser.add_argument("-fluctuation", type=float, default=0.1)
 
     def __init__(self, args):
         self._magnitude = args.magnitude
-        self._position = Vector3d(0, 0, 0)
-        self._t = 0
         self._sway_duration = args.sway_duration
         self._pause_duration = args.pause_duration
-        self._sway_target = None
-        self._pausing = True
+        self._fluctuation_magnitude = args.fluctuation
+        self._enter_sway_in_state()
+        self._enter_pause_state()
 
     def update(self, time_increment):
         self._t += time_increment
 
-        if self._pausing:
-            if self._t > self._pause_duration:
-                self._pausing = False
-                self._t = 0
-                self._sway_target = Vector3d(
-                    random.uniform(-1, 1),
-                    random.uniform(-1, 1),
-                    random.uniform(-1, 1)) * self._magnitude
-        else:
-            if self._t > self._sway_duration:
-                self._pausing = True
-                self._t = 0
+        if self._state == PAUSE and self._t > self._pause_duration:
+            self._enter_sway_out_state()
+        elif self._state == SWAY_OUT and self._t > self._sway_duration:
+            self._enter_sway_in_state()
+        elif self._state == SWAY_IN and self._t > self._sway_duration:
+            self._enter_pause_state()
+
+    def _enter_pause_state(self):
+        self._state = PAUSE
+        self._t = 0
+
+    def _enter_sway_out_state(self):
+        self._state = SWAY_OUT
+        self._t = 0
+        self._sway_target = Vector3d(
+            random.uniform(-1, 1),
+            random.uniform(-1, 1),
+            random.uniform(-1, 1)) * self._magnitude
+
+    def _enter_sway_in_state(self):
+        self._state = SWAY_IN
+        self._t = 0
+        self._center = Vector3d(0.0, 0.0, 0.0) + self._fluctuation()
 
     def position(self):
-        if self._pausing:
-            return self.center
-        else:
-            return self._sway_target * self._envelope(self._t / self._sway_duration)
-
-    def _envelope(self, x):
-        if x < 0.5:
-            return self._sigmoid(x*2)
-        else:
-            return 1 - self._sigmoid(1 - x*2)
+        if self._state == PAUSE:
+            return self._center
+        elif self._state == SWAY_OUT:
+            return self._center + (self._sway_target - self._center) * \
+                self._sigmoid(self._t / self._sway_duration)
+        elif self._state == SWAY_IN:
+            return self._center + (self._sway_target - self._center) * \
+                (1 - self._sigmoid((1 - self._t) / self._sway_duration))
 
     def _sigmoid(self, x):
         return 1 - (math.cos(x * math.pi) + 1) / 2
+
+    def _fluctuation(self):
+        return Vector3d(
+            random.uniform(-1, 1),
+            random.uniform(-1, 1),
+            random.uniform(-1, 1)) * self._fluctuation_magnitude
