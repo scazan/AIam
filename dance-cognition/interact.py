@@ -35,19 +35,26 @@ def refresh():
 
     sensed_input_position = sensory_adapter.process(raw_input_position, time_increment)
     behaviour.process_input(sensed_input_position, time_increment)
-    output_inter_state_position = behaviour.output()
-
-    if output_inter_state_position.relative_position < 0 or \
-       output_inter_state_position.relative_position > 1:
-        print "WARNING: illegal relative_position in output: %r" % \
-            output_inter_state_position.relative_position
 
     osc_sender.send("/raw_input_position", *raw_input_position)
     osc_sender.send("/sensed_input_position", *sensed_input_position)
-    osc_sender.send("/position",
-                    output_inter_state_position.source_state.name,
-                    output_inter_state_position.destination_state.name,
-                    output_inter_state_position.relative_position)
+
+    output_inter_state_position = behaviour.output()
+    if output_inter_state_position:
+        if output_inter_state_position.relative_position < 0 or \
+           output_inter_state_position.relative_position > 1:
+            print "WARNING: illegal relative_position in output: %r" % \
+                output_inter_state_position.relative_position
+        osc_sender.send("/position",
+                        output_inter_state_position.source_state.name,
+                        output_inter_state_position.destination_state.name,
+                        output_inter_state_position.relative_position)
+
+    observed_state = behaviour.observed_state()
+    if observed_state:
+        osc_sender.send("/observed_state", observed_state.name)
+    else:
+        osc_sender.send("/observed_state", "")
 
 parser = ArgumentParser()
 parser.add_argument("-behaviour", type=str, default="follower")
