@@ -10,6 +10,7 @@ from argparse import ArgumentParser
 MOUSE_REACTIVITY = 5.0
 INPUT_COLOR = (0,0,1)
 OUTPUT_COLOR = (1,0,0)
+OBSERVED_STATE_COLOR = (0,1,0)
 
 class Display(window.Window):
     def InitGL(self):
@@ -33,22 +34,26 @@ class Display(window.Window):
         glRotatef(self._x_orientation, 1.0, 0.0, 0.0)
         glRotatef(self._y_orientation, 0.0, 1.0, 0.0)
         self._draw_unit_cube()
-        self._draw_states_as_points()
         self._draw_transitions_as_lines()
+        self._draw_states_as_points()
         self._draw_sensed_input_position()
         self._draw_output_position()
         glPopMatrix()
 
     def _draw_states_as_points(self):
-        glColor3f(0,0,0)
         glPointSize(5.0)
-        glBegin(GL_POINTS)
         for state in state_machine.states.values():
+            glBegin(GL_POINTS)
+            if state == observed_state:
+                glColor3f(*OBSERVED_STATE_COLOR)
+            else:
+                glColor3f(0,0,0)
             glVertex3f(*state.position)
-        glEnd()
+            glEnd()
 
     def _draw_transitions_as_lines(self):
         glColor4f(0,0,0,0.2)
+        glLineWidth(1.0)
         glBegin(GL_LINES)
         for input_state, output_state in state_machine.transitions:
             glVertex3f(*input_state.position)
@@ -116,12 +121,22 @@ def receive_output_position(path, args, types, src, user_data):
     output_inter_state_position = InterStatePosition(
         source_state, output_state, relative_position)
 
+def receive_observed_state(path, args, types, src, user_data):
+    global observed_state
+    observed_state_name = args[0]
+    if observed_state_name:
+        observed_state = state_machine.states[observed_state_name]
+    else:
+        observed_state = None
+
 raw_input_position = None
 sensed_input_position = None
+observed_state = None
 osc_receiver = OscReceiver(7892, listen="localhost")
 osc_receiver.add_method("/raw_input_position", "fff", receive_raw_input_position)
 osc_receiver.add_method("/sensed_input_position", "fff", receive_sensed_input_position)
 osc_receiver.add_method("/position", "ssf", receive_output_position)
+osc_receiver.add_method("/observed_state", "s", receive_observed_state)
 osc_receiver.start()
 
 output_inter_state_position = None
