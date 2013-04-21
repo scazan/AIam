@@ -53,6 +53,7 @@ parser = ArgumentParser()
 parser.add_argument("-behaviour", type=str, default="follower")
 parser.add_argument("-config", type=str, default="default")
 parser.add_argument("-refresh-rate", type=float, default=60.0)
+parser.add_argument("-adaptation-factor", type=float, default=0.1)
 args = parser.parse_args()
 
 config = imp.load_source("config", "input_data/%s/config.py" % args.config)
@@ -62,7 +63,7 @@ config.size = Vector3d(*config.size)
 behaviour_module = imp.load_source(args.behaviour, "behaviours/%s.py" % args.behaviour)
 behaviour = behaviour_module.Behaviour(state_machine)
 
-sensory_adapter = SensoryAdapter()
+sensory_adapter = SensoryAdapter(args.adaptation_factor)
 osc_sender = OscSender(7892)
 raw_input_position = None
 last_refresh_time = None
