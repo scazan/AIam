@@ -10,8 +10,8 @@ class Generator(input_generator.Generator):
     @staticmethod
     def add_parser_arguments(parser):
         parser.add_argument("-magnitude", type=float, default=0.2)
-        parser.add_argument("-pause-duration", type=float, default=0.2)
-        parser.add_argument("-sway-duration", type=float, default=0.5)
+        parser.add_argument("-pause-duration", type=float, default=1.0)
+        parser.add_argument("-sway-duration", type=float, default=5.0)
         parser.add_argument("-fluctuation", type=float, default=0.1)
 
     def __init__(self, args):
@@ -57,7 +57,7 @@ class Generator(input_generator.Generator):
                 self._sigmoid(self._t / self._sway_duration)
         elif self._state == SWAY_IN:
             return self._center + (self._sway_target - self._center) * \
-                (1 - self._sigmoid((1 - self._t) / self._sway_duration))
+                self._sigmoid((self._sway_duration - self._t) / self._sway_duration)
 
     def _sigmoid(self, x):
         return 1 - (math.cos(x * math.pi) + 1) / 2

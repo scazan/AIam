@@ -14,7 +14,9 @@ config.log
 *.oni
 *.pyc
 
-AIInput/AIInput.exe
+AIInput/*.exe
+AIInput/*.dll
 AIInput/assets/params.xml
-AIInput/liblo.dll
-AIInput/pthreadVC2.dll
+
+AIamCaptureTest/*.exe
+AIamCaptureTest/*.dll
