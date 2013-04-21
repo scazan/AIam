@@ -67,14 +67,14 @@ class Behaviour(behaviour.Behaviour):
             return self._inter_state_position.destination_state
 
     def _select_best_transition(self, v, input_state):
-        min_distance = None
-        for output_state in input_state.inputs + input_state.outputs:
-            inter_state_position = self._perpendicular_inter_state_position(v, input_state, output_state)
-            distance = (v - self._state_machine.inter_state_to_euclidian_position(inter_state_position)).mag()
-            if min_distance is None or distance < min_distance:
-                nearest_output_state = output_state
-                min_distance = distance
+        nearest_output_state = min(
+            input_state.inputs + input_state.outputs,
+            key=lambda output_state: self._distance_to_transition(v, input_state, output_state))
         self._inter_state_position = InterStatePosition(input_state, nearest_output_state, 0.0)
+
+    def _distance_to_transition(self, v, input_state, output_state):
+        inter_state_position = self._perpendicular_inter_state_position(v, input_state, output_state)
+        return (v - self._state_machine.inter_state_to_euclidian_position(inter_state_position)).mag()
 
     def _nearest_inter_state_position(self, v):
         min_distance = None

@@ -6,15 +6,15 @@ class Behaviour(sync.Behaviour):
     def _select_transition(self, input_position):
         mc = self._state_machine.states["MC"]
 
-        min_distance = None
-        for output_state in mc.inputs + mc.outputs:
-            inter_state_position = self._perpendicular_inter_state_position(input_position, mc, output_state)
-            distance = (input_position - self._state_machine.inter_state_to_euclidian_position(inter_state_position)).mag()
-            if min_distance is None or distance < min_distance:
-                nearest_output_state = output_state
-                min_distance = distance
+        nearest_output_state = min(
+            mc.inputs + mc.outputs,
+            key=lambda output_state: self._distance_to_transition(input_position, mc, output_state))
 
         self._output = InterStatePosition(mc, nearest_output_state, 0.0)
+
+    def _distance_to_transition(self, position, input_state, output_state):
+        inter_state_position = self._perpendicular_inter_state_position(position, input_state, output_state)
+        return (position - self._state_machine.inter_state_to_euclidian_position(inter_state_position)).mag()
 
     def _perpendicular_inter_state_position(self, v, input_state, output_state):
         pos1 = input_state.position
