@@ -1,15 +1,11 @@
 from argparse import ArgumentParser
 from simple_osc_sender import OscSender
 import time
-import random
-from vector import Vector3d
 import imp
+from utils import random_unit_sphere_position
 
 def noise():
-    return Vector3d(
-        random.uniform(-1.0, 1.0),
-        random.uniform(-1.0, 1.0),
-        random.uniform(-1.0, 1.0)) * args.noise
+    return random_unit_sphere_position() * args.noise
 
 parser = ArgumentParser()
 parser.add_argument("-generator", type=str, default="dataset_transitions")

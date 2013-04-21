@@ -2,6 +2,7 @@ from vector import *
 import random
 import math
 import input_generator
+from utils import random_unit_sphere_position
 
 PAUSE, SWAY_OUT, SWAY_IN = range(3)
 
@@ -62,7 +63,4 @@ class Generator(input_generator.Generator):
         return 1 - (math.cos(x * math.pi) + 1) / 2
 
     def _fluctuation(self):
-        return Vector3d(
-            random.uniform(-1, 1),
-            random.uniform(-1, 1),
-            random.uniform(-1, 1)) * self._fluctuation_magnitude
+        return random_unit_sphere_position() * self._fluctuation_magnitude
