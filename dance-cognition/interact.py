@@ -5,6 +5,7 @@ from argparse import ArgumentParser
 import imp
 from vector import *
 from states import state_machine
+import interpret
 
 def receive_torso_position(path, args, types, src, user_data):
     global normalized_torso_position
@@ -45,6 +46,7 @@ def refresh():
     last_refresh_time = now
 
     sensed_input_position = behaviour.process_raw_input(normalized_torso_position, time_increment)
+    interpreter.process_input(sensed_input_position, time_increment)
     behaviour.process_input(sensed_input_position, time_increment)
 
     osc_sender.send("/normalized_torso_position", *normalized_torso_position)
@@ -61,11 +63,8 @@ def refresh():
                         output_inter_state_position.destination_state.name,
                         output_inter_state_position.relative_position)
 
-    observed_state = behaviour.observed_state()
-    if observed_state:
-        osc_sender.send("/observed_state", observed_state.name)
-    else:
-        osc_sender.send("/observed_state", "")
+def observed_state(state):
+    osc_sender.send("/observed_state", state.name)
 
 parser = ArgumentParser()
 parser.add_argument("-behaviour", type=str, default="follower")
@@ -79,8 +78,11 @@ config = imp.load_source("config", "input_data/%s/config.py" % args.config)
 config.center = Vector3d(*config.center)
 config.size = Vector3d(*config.size)
 
+interpreter = interpret.Interpreter()
+interpreter.add_callback(interpret.STATE, observed_state)
+
 behaviour_module = imp.load_source(args.behaviour, "behaviours/%s.py" % args.behaviour)
-behaviour = behaviour_module.Behaviour(state_machine)
+behaviour = behaviour_module.Behaviour(state_machine, interpreter)
 
 osc_sender = OscSender(7892)
 normalized_torso_position = None
