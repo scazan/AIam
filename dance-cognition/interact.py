@@ -11,6 +11,9 @@ def receive_torso_position(path, args, types, src, user_data):
     position_tuple = args
     position_relative_to_camera = Vector3d(*position_tuple)
     raw_input_position = position_in_unit_cube(position_relative_to_camera)
+    if verbose:
+        print "torso", position_tuple
+        print " =>", raw_input_position
 
 def position_in_unit_cube(position_relative_to_camera):
     global config
@@ -59,7 +62,9 @@ parser = ArgumentParser()
 parser.add_argument("-behaviour", type=str, default="follower")
 parser.add_argument("-config", type=str, default="default")
 parser.add_argument("-refresh-rate", type=float, default=60.0)
+parser.add_argument("-verbose", action="store_true")
 args = parser.parse_args()
+verbose = args.verbose
 
 config = imp.load_source("config", "input_data/%s/config.py" % args.config)
 config.center = Vector3d(*config.center)
