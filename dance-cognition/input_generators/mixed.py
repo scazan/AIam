@@ -6,8 +6,11 @@ from utils import random_unit_sphere_position
 import math
 
 PAUSE, MOVE, SWAY_IN, SWAY_OUT = range(4)
+PROBABILITY_TO_CENTER = 0.8
 
 class Generator(input_generator.Generator):
+    MC = state_machine.states["MC"]
+
     @staticmethod
     def add_parser_arguments(parser):
         parser.add_argument("-sway-magnitude", type=float, default=0.2)
@@ -24,7 +27,7 @@ class Generator(input_generator.Generator):
         self._move_fluctuation_magnitude = args.move_fluctuation
         self._idle_fluctuation_magnitude = args.idle_fluctuation
         self._move_duration = args.move_duration
-        self._destination_state = state_machine.states["MC"]
+        self._destination_state = self.MC
         self._destination_position = self._destination_state.position
         self._enter_sway_in_state()
         self._enter_pause_state()
@@ -33,7 +36,7 @@ class Generator(input_generator.Generator):
         self._t += time_increment
 
         if self._state == PAUSE and self._t > self._pause_duration:
-            if self._source_state.name == "MC" and random.random() < 0.8:
+            if self._source_state == self.MC and random.random() < 0.8:
                 print "sway"
                 self._enter_sway_out_state()
             else:
@@ -63,18 +66,25 @@ class Generator(input_generator.Generator):
     def _enter_sway_in_state(self):
         self._state = SWAY_IN
         self._t = 0
-        self._source_position = state_machine.states["MC"].position + self._idle_fluctuation()
+        self._source_position = self.MC.position + self._idle_fluctuation()
 
     def _enter_move_state(self):
         self._state = MOVE
-        self._destination_state = random.choice(self._source_state.outputs + self._source_state.inputs)
-        if self._destination_state.name == "MC":
-            self._destination_position = state_machine.states["MC"].position + self._idle_fluctuation()
+        self._destination_state = self._select_destination()
+        if self._destination_state == self.MC:
+            self._destination_position = self.MC.position + self._idle_fluctuation()
         else:
             self._destination_position = self._destination_state.position + self._move_fluctuation()
         print "%s -> %s" % (self._source_state.name, self._destination_state.name)
         distance = (self._destination_position - self._source_state.position).mag()
         self._t = 0.0
+
+    def _select_destination(self):
+        choices = self._source_state.outputs + self._source_state.inputs
+        if self.MC in choices and random.random() < PROBABILITY_TO_CENTER:
+            return self.MC
+        else:
+            return random.choice(choices)
 
     def position(self):
         if self._state == PAUSE:
