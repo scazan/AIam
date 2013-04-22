@@ -11,11 +11,17 @@ from vector import Vector
 import math
 import collections
 import sys
+text_renderer_module = __import__("text_renderer")
 
 ESCAPE = '\033'
 CAMERA_POSITION = Vector(3, [-8, -0.5, -1.35])
 CAMERA_Y_ORIENTATION = -88
 CAMERA_X_ORIENTATION = 9
+
+TEXT_RENDERERS = {
+    "glut": "GlutTextRenderer",
+    "ftgl": "FtglTextRenderer"
+}
 
 class Window:
     def __init__(self, args):
@@ -36,6 +42,7 @@ class Window:
         self.fovy = 45
         self.near = 0.1
         self.far = 100.0
+        self._text_renderer_class = getattr(text_renderer_module, TEXT_RENDERERS[args.text_renderer])
 
         if self.show_fps:
             self.fps_history = collections.deque(maxlen=10)
@@ -216,6 +223,17 @@ class Window:
     def new_display_list_id(self):
         return glGenLists(1)
 
+    def draw_text(self, text, size, x, y, z, font=None, spacing=None,
+                  v_align="left", h_align="top"):
+        if font is None:
+            font = self.args.font
+        self.text_renderer(text, size, font).render(x, y, z, v_align, h_align)
+
+    def text_renderer(self, text, size, font=None):
+        if font is None:
+            font = self.args.font
+        return self._text_renderer_class(self, text, size, font)
+
     @staticmethod
     def add_parser_arguments(parser):
         parser.add_argument('-width', dest='width', type=int, default=1024)
@@ -225,6 +243,8 @@ class Window:
         parser.add_argument("-top", type=int)
         parser.add_argument("-fullscreen", action="store_true")
         parser.add_argument('-show-fps', dest='show_fps', action='store_true')
+        parser.add_argument("--text-renderer", choices=TEXT_RENDERERS.keys(), default="glut")
+        parser.add_argument("--font", type=str)
 
     def add_frame(self, frame):
         self._frames.append(frame)

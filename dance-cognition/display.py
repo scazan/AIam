@@ -11,6 +11,7 @@ MOUSE_REACTIVITY = 5.0
 INPUT_COLOR = (0,0,1)
 OUTPUT_COLOR = (1,0,0)
 OBSERVED_STATE_COLOR = (0,1,0)
+TEXT_SIZE = 0.15
 
 class Display(window.Window):
     def InitGL(self):
@@ -18,6 +19,7 @@ class Display(window.Window):
         glutMouseFunc(self._mouse_clicked)
         glutMotionFunc(self._mouse_moved)
         glEnable(GL_POINT_SMOOTH)
+        glEnable(GL_LINE_SMOOTH)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         self._y_orientation = 0.0
@@ -36,6 +38,7 @@ class Display(window.Window):
         self._draw_unit_cube()
         self._draw_transitions_as_lines()
         self._draw_states_as_points()
+        self._draw_state_name()
         self._draw_sensed_input_position()
         self._draw_output_position()
         glPopMatrix()
@@ -50,6 +53,11 @@ class Display(window.Window):
                 glColor3f(0,0,0)
             glVertex3f(*state.position)
             glEnd()
+
+    def _draw_state_name(self):
+        glColor3f(0,0,0)
+        for state in state_machine.states.values():
+            self.draw_text(state.name, TEXT_SIZE, *state.position)
 
     def _draw_transitions_as_lines(self):
         glColor4f(0,0,0,0.2)
