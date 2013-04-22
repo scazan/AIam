@@ -15,7 +15,7 @@ class Generator(input_generator.Generator):
         parser.add_argument("-pause-duration", type=float, default=0.5)
         parser.add_argument("-move-fluctuation", type=float, default=0.2)
         parser.add_argument("-idle-fluctuation", type=float, default=0.1)
-        parser.add_argument("-speed", type=float, default=1.0)
+        parser.add_argument("-move-duration", type=float, default=3.0)
 
     def __init__(self, args):
         self._sway_magnitude = args.sway_magnitude
@@ -23,7 +23,7 @@ class Generator(input_generator.Generator):
         self._pause_duration = args.pause_duration
         self._move_fluctuation_magnitude = args.move_fluctuation
         self._idle_fluctuation_magnitude = args.idle_fluctuation
-        self._speed = args.speed
+        self._move_duration = args.move_duration
         self._destination_state = state_machine.states["MC"]
         self._destination_position = self._destination_state.position
         self._enter_sway_in_state()
@@ -74,7 +74,6 @@ class Generator(input_generator.Generator):
             self._destination_position = self._destination_state.position + self._move_fluctuation()
         print "%s -> %s" % (self._source_state.name, self._destination_state.name)
         distance = (self._destination_position - self._source_state.position).mag()
-        self._move_duration = distance / self._speed
         self._t = 0.0
 
     def position(self):
