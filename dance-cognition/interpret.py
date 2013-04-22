@@ -1,4 +1,5 @@
-from states import state_machine
+from vector import *
+from states import state_machine, InterStatePosition
 from sensory_adaptation import SensoryAdapter
 
 SPATIAL_THRESHOLD = 0.25
@@ -34,6 +35,11 @@ class Interpreter:
 
     def sensed_center(self):
         return self._sensory_adapter.sensed_center()
+
+    def guess_target_state(self, input_position, source_state):
+        return min(
+            source_state.inputs + source_state.outputs,
+            key=lambda output_state: self._distance_to_transition(input_position, source_state, output_state))
 
     def _detect_whether_leaving_or_entering_center(self, input_position, time_increment):
         sensed_input_position = self._sensory_adapter.process(input_position, time_increment)
@@ -83,3 +89,24 @@ class Interpreter:
     def _fire_callbacks(self, event, *args):
         for callback in self._callbacks[event]:
             callback(*args)
+
+    def _distance_to_transition(self, position, input_state, output_state):
+        inter_state_position = self._perpendicular_inter_state_position(position, input_state, output_state)
+        return (position - state_machine.inter_state_to_euclidian_position(inter_state_position)).mag()
+
+    def _perpendicular_inter_state_position(self, v, input_state, output_state):
+        pos1 = input_state.position
+        pos2 = output_state.position
+        intersection = self._perpendicular(pos1, pos2, v)
+        relative_position = (intersection - pos1).mag() / (pos2 - pos1).mag()
+        relative_position = self._clamp(relative_position, 0, 1)
+        return InterStatePosition(input_state, output_state, relative_position)
+
+    def _perpendicular(self, p1, p2, q):
+        u = p2 - p1
+        pq = q - p1
+        w2 = pq - u * (dot_product(pq, u) / pow(u.mag(), 2))
+        return q - w2
+
+    def _clamp(self, v, v_min, v_max):
+        return max(min(v, v_max), v_min)
