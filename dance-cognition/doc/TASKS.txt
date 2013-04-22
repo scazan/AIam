@@ -1,9 +1,12 @@
 add input generator that mixes known moves, idling and unknown moves
 
-invent: perform transitions between inter-state positions
+combine mirror+echo
 
-combine mirror+learn
-combine mirror+learn+invent
+combine mirror+improvise
+combine mirror+echo+improvise
+
+invent: perform transitions between inter-state positions
+combine mirror+echo+improvise+invent?
 
 fix bug in sync causing it to sometimes output relative positions greater than 1
 
