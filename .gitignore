@@ -17,6 +17,7 @@ config.log
 AIInput/*.exe
 AIInput/*.dll
 AIInput/assets/params.xml
+AIInput/vc10/*
 
 AIamCaptureTest/*.exe
 AIamCaptureTest/*.dll
