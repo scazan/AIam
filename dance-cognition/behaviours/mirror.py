@@ -7,13 +7,11 @@ from behaviours import sync
 
 class Behaviour(sync.Behaviour):
     def _select_transition(self, input_position):
-        mc = self._state_machine.states["MC"]
-
         nearest_output_state = min(
-            mc.inputs + mc.outputs,
-            key=lambda output_state: self._distance_to_transition(input_position, mc, output_state))
+            self.MC.inputs + self.MC.outputs,
+            key=lambda output_state: self._distance_to_transition(input_position, self.MC, output_state))
 
-        self._output = InterStatePosition(mc, nearest_output_state, 0.0)
+        self._output = InterStatePosition(self.MC, nearest_output_state, 0.0)
 
     def _distance_to_transition(self, position, input_state, output_state):
         inter_state_position = self._perpendicular_inter_state_position(position, input_state, output_state)

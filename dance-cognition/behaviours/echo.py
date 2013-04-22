@@ -1,3 +1,5 @@
+# echo: Observe and repeat moves, one by one, like an echo.
+
 from vector import *
 from states import state_machine, InterStatePosition
 import behaviour

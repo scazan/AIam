@@ -7,6 +7,7 @@ import math
 
 PAUSE, MOVE, SWAY_IN, SWAY_OUT = range(4)
 PROBABILITY_TO_CENTER = 0.8
+SWAY_PROBABILITY = 0.5
 
 class Generator(input_generator.Generator):
     MC = state_machine.states["MC"]
@@ -36,7 +37,7 @@ class Generator(input_generator.Generator):
         self._t += time_increment
 
         if self._state == PAUSE and self._t > self._pause_duration:
-            if self._source_state == self.MC and random.random() < 0.8:
+            if self._source_state == self.MC and random.random() < SWAY_PROBABILITY:
                 print "sway"
                 self._enter_sway_out_state()
             else:
