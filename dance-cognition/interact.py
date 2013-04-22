@@ -45,12 +45,12 @@ def refresh():
         time_increment = now - last_refresh_time
     last_refresh_time = now
 
-    sensed_input_position = behaviour.process_raw_input(normalized_torso_position, time_increment)
-    interpreter.process_input(sensed_input_position, time_increment)
-    behaviour.process_input(sensed_input_position, time_increment)
+    input_position = normalized_torso_position
+    interpreter.process_input(input_position, time_increment)
+    behaviour.process_input(input_position, time_increment)
 
+    osc_sender.send("/input_position", *input_position)
     osc_sender.send("/normalized_torso_position", *normalized_torso_position)
-    osc_sender.send("/sensed_input_position", *sensed_input_position)
 
     output_inter_state_position = behaviour.output()
     if output_inter_state_position:

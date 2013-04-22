@@ -10,3 +10,6 @@ class SensoryAdapter:
         factor = self._adaptation_factor * time_increment / max(output.mag(), 0.0001)
         self._sensed_center += output * min(factor, 1.0)
         return output
+
+    def sensed_center(self):
+        return self._sensed_center

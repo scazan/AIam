@@ -1,24 +1,57 @@
 from states import state_machine
+from sensory_adaptation import SensoryAdapter
 
 SPATIAL_THRESHOLD = 0.25
 TEMPORAL_THRESHOLD = 1.0
 
-MOVE, STATE = range(2)
+CENTER_SPATIAL_THRESHOLD = 0.04
+CENTER_TEMPORAL_THRESHOLD = 0.2
+
+MOVE, STATE, LEAVING_CENTER, ENTERING_CENTER = range(4)
 
 class Interpreter:
     def __init__(self):
         self._state_hypothesis = None
         self._observed_state = None
+        self._sensory_adapter = SensoryAdapter(0.1)
+        self._in_center = True
+        self._duration_in_center = 0
         self._time = 0.0
         self._callbacks = {
             MOVE: [],
-            STATE: []}
+            STATE: [],
+            LEAVING_CENTER: [],
+            ENTERING_CENTER: []
+        }
 
     def add_callback(self, event, callback):
         self._callbacks[event].append(callback)
 
     def process_input(self, input_position, time_increment):
         self._time += time_increment
+        self._detect_whether_leaving_or_entering_center(input_position, time_increment)
+        self._detect_whether_state_changed(input_position, time_increment)
+
+    def sensed_center(self):
+        return self._sensory_adapter.sensed_center()
+
+    def _detect_whether_leaving_or_entering_center(self, input_position, time_increment):
+        sensed_input_position = self._sensory_adapter.process(input_position, time_increment)
+        input_in_center = sensed_input_position.mag() < CENTER_SPATIAL_THRESHOLD
+        if self._in_center:
+            if input_in_center:
+                self._duration_in_center += time_increment
+            else:
+                if self._duration_in_center >= CENTER_TEMPORAL_THRESHOLD:
+                    self._fire_callbacks(LEAVING_CENTER, input_position)
+                    self._in_center = False
+        else:
+            if input_in_center:
+                self._in_center = True
+                self._duration_in_center = 0
+                self._fire_callbacks(ENTERING_CENTER, input_position)
+
+    def _detect_whether_state_changed(self, input_position, time_increment):
         self._input_position = input_position
         nearest_state = self._nearest_state()
         if nearest_state and self._distance_to_state(nearest_state) < SPATIAL_THRESHOLD:

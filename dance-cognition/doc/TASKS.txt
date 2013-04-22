@@ -1,7 +1,6 @@
 add input generator that mixes known moves, idling and unknown moves
 
 combine mirror+echo
-- protect mirror from sensory adaptation
 - handle situation where we are waiting to switch to echo, but dancer stays in middle: perhaps sway while waiting?
 
 combine mirror+improvise
