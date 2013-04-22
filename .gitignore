@@ -17,7 +17,11 @@ config.log
 AIInput/*.exe
 AIInput/*.dll
 AIInput/assets/params.xml
+AIInput/scons/AIInput
+AIInput/scons/AIInput.app/
 
 AIamCaptureTest/*.exe
 AIamCaptureTest/*.dll
 AIamCaptureTest/assets/params.xml
+AIamCaptureTest/scons/AIamCaptureTest
+AIamCaptureTest/scons/AIamCaptureTest.app/
