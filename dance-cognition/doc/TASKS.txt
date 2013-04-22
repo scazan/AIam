@@ -1,0 +1,10 @@
+add input generator that mixes known moves, idling and unknown moves
+
+invent: perform transitions between inter-state positions
+
+combine mirror+learn
+combine mirror+learn+invent
+
+fix bug in sync causing it to sometimes output relative positions greater than 1
+
+learn: perform moves in a manner which reflects statistical patterns in the input (HMM)
