@@ -71,6 +71,8 @@ class AIInputApp : public AppBasic
 		void setupParams();
 		bool mMirrored;
 
+		bool mSendTorso;
+		bool mSendCoM;
 		mndl::osc::Client mSender;
 };
 
@@ -100,7 +102,7 @@ void AIInputApp::setupParams()
 
 	// FIXME: switching often hangs up, Cinder-NI or OpenNI problem?
 	vector< string > enumNames = { "Recording", "Kinect" };
-	mParams.addPersistentParam( "Source", enumNames, &mSource, SOURCE_RECORDING );
+	mParams.addPersistentParam( "Source", enumNames, &mSource, SOURCE_RECORDING, "", true );
 	mParams.addPersistentParam( "Mirror", &mMirrored, false );
 
 	mNIProgress = "";
@@ -109,7 +111,28 @@ void AIInputApp::setupParams()
 	else
 		mParams.addButton( "Save video", std::bind( &AIInputApp::saveOniCB, this ) );
 	mParams.addParam( "Progress", &mNIProgress, "", true );
-
+	if ( mSource == SOURCE_RECORDING )
+	{
+		mParams.addButton( "Stop video", [ this ]()
+			{
+				std::lock_guard< std::mutex > lock( mNIMutex );
+				if ( mNI )
+				{
+					if ( mNI.isCapturing() )
+					{
+						mParams.setOptions( "Stop video", "label=`Start video`" );
+						mNI.stop();
+					}
+					else
+					{
+						mParams.setOptions( "Stop video", "label=`Stop video`" );
+						mNI.start();
+					}
+				}
+			} );
+	}
+	mParams.addPersistentParam( "Send torso", &mSendTorso, true );
+	mParams.addPersistentParam( "Send center of mass", &mSendCoM, false );
 }
 
 void AIInputApp::update()
@@ -155,27 +178,46 @@ void AIInputApp::draw()
 
 	{
 		std::lock_guard< std::mutex > lock( mNIMutex );
-		if ( mNI )
+		if ( mNI && mNI.isCapturing() )
 		{
 			RectMapping mapping( Rectf( 0, 0, 640, 480), getWindowBounds() );
 
-			gl::color( Color( 1, 0, 0 ) );
 			vector< unsigned > users = mNIUserTracker.getUsers();
 			if ( !users.empty() )
 			{
 				unsigned id = users[ 0 ];
 
-				float torsoConf;
-				Vec2f torso2d = mNIUserTracker.getJoint2d( id, XN_SKEL_TORSO, &torsoConf );
-				gl::drawSolidCircle( mapping.map( torso2d ), 3 );
-
-				Vec3f torso3d = mNIUserTracker.getJoint3d( id, XN_SKEL_TORSO, &torsoConf );
-				if ( torsoConf > .9f )
+				if ( mSendTorso )
 				{
-					mndl::osc::Message msg( "/joint/torso" );
-					msg.addArg( torso3d.x );
-					msg.addArg( torso3d.y );
-					msg.addArg( torso3d.z );
+					float torsoConf;
+					Vec2f torso2d = mNIUserTracker.getJoint2d( id, XN_SKEL_TORSO, &torsoConf );
+					gl::color( Color( 1, 0, 0 ) );
+					gl::drawSolidCircle( mapping.map( torso2d ), 3 );
+
+					Vec3f torso3d = mNIUserTracker.getJoint3d( id, XN_SKEL_TORSO, &torsoConf );
+					if ( torsoConf > .9f )
+					{
+						mndl::osc::Message msg( "/joint/torso" );
+						msg.addArg( torso3d.x );
+						msg.addArg( torso3d.y );
+						msg.addArg( torso3d.z );
+						mSender.send( msg );
+					}
+				}
+				if ( mSendCoM )
+				{
+					Vec3f com = mNIUserTracker.getUserCenter( id );
+					gl::color( Color( 1, .9, .1 ) );
+					xn::DepthGenerator &depthGenerator = mNI.getNativeDepthGenerator();
+
+					XnPoint3D pt[ 1 ];
+					pt[ 0 ] = { com.x, com.y, com.z };
+					depthGenerator.ConvertRealWorldToProjective( 1, pt, pt );
+					gl::drawSolidCircle( mapping.map( Vec2f( pt[ 0 ].X, pt[ 0 ].Y ) ), 3 );
+					mndl::osc::Message msg( "/com" );
+					msg.addArg( com.x );
+					msg.addArg( com.y );
+					msg.addArg( com.z );
 					mSender.send( msg );
 				}
 			}
