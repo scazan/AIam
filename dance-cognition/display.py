@@ -8,9 +8,12 @@ from simple_osc_receiver import OscReceiver
 from argparse import ArgumentParser
 
 MOUSE_REACTIVITY = 5.0
+TORSO_COLOR = (0,0.5,1)
+CENTER_OF_MASS_COLOR = (0.5,0,1)
 INPUT_COLOR = (0,0,1)
 OUTPUT_COLOR = (1,0,0)
 OBSERVED_STATE_COLOR = (0,1,0)
+TEXT_SIZE = 0.15
 
 class Display(window.Window):
     def InitGL(self):
@@ -18,6 +21,7 @@ class Display(window.Window):
         glutMouseFunc(self._mouse_clicked)
         glutMotionFunc(self._mouse_moved)
         glEnable(GL_POINT_SMOOTH)
+        glEnable(GL_LINE_SMOOTH)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         self._y_orientation = 0.0
@@ -36,6 +40,7 @@ class Display(window.Window):
         self._draw_unit_cube()
         self._draw_transitions_as_lines()
         self._draw_states_as_points()
+        self._draw_state_names()
         self._draw_sensed_input_position()
         self._draw_output_position()
         glPopMatrix()
@@ -50,6 +55,14 @@ class Display(window.Window):
                 glColor3f(0,0,0)
             glVertex3f(*state.position)
             glEnd()
+
+    def _draw_state_names(self):
+        for state in state_machine.states.values():
+            if state == observed_state:
+                glColor3f(*OBSERVED_STATE_COLOR)
+            else:
+                glColor3f(0,0,0)
+            self.draw_text(state.name, TEXT_SIZE, *state.position)
 
     def _draw_transitions_as_lines(self):
         glColor4f(0,0,0,0.2)
@@ -69,11 +82,15 @@ class Display(window.Window):
         glPushMatrix()
         self.configure_3d_projection(-300, 0)
         self._draw_unit_cube()
-        self._draw_raw_input_position()
+        self._draw_torso_position()
+        self._draw_center_of_mass_position()
         glPopMatrix()
 
-    def _draw_raw_input_position(self):
-        self._draw_position(raw_input_position, INPUT_COLOR)
+    def _draw_torso_position(self):
+        self._draw_position(torso_position, TORSO_COLOR)
+
+    def _draw_center_of_mass_position(self):
+        self._draw_position(center_of_mass_position, CENTER_OF_MASS_COLOR)
 
     def _draw_sensed_input_position(self):
         self._draw_position(sensed_input_position, INPUT_COLOR)
@@ -103,10 +120,15 @@ class Display(window.Window):
             self._y_orientation += x - self._drag_x_previous
             self._x_orientation -= y - self._drag_y_previous
 
-def receive_raw_input_position(path, args, types, src, user_data):
-    global raw_input_position
+def receive_torso_position(path, args, types, src, user_data):
+    global torso_position
     position_tuple = args
-    raw_input_position = Vector3d(*position_tuple)
+    torso_position = Vector3d(*position_tuple)
+
+def receive_center_of_mass_position(path, args, types, src, user_data):
+    global center_of_mass_position
+    position_tuple = args
+    center_of_mass_position = Vector3d(*position_tuple)
 
 def receive_sensed_input_position(path, args, types, src, user_data):
     global sensed_input_position
@@ -129,11 +151,13 @@ def receive_observed_state(path, args, types, src, user_data):
     else:
         observed_state = None
 
-raw_input_position = None
+torso_position = None
+center_of_mass_position = None
 sensed_input_position = None
 observed_state = None
 osc_receiver = OscReceiver(7892, listen="localhost")
-osc_receiver.add_method("/raw_input_position", "fff", receive_raw_input_position)
+osc_receiver.add_method("/normalized_torso_position", "fff", receive_torso_position)
+osc_receiver.add_method("/normalized_center_of_mass_position", "fff", receive_center_of_mass_position)
 osc_receiver.add_method("/sensed_input_position", "fff", receive_sensed_input_position)
 osc_receiver.add_method("/position", "ssf", receive_output_position)
 osc_receiver.add_method("/observed_state", "s", receive_observed_state)

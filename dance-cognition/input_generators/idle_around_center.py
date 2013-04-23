@@ -1,4 +1,5 @@
 from vector import *
+from states import state_machine
 import random
 import math
 import input_generator
@@ -47,16 +48,16 @@ class Generator(input_generator.Generator):
     def _enter_sway_in_state(self):
         self._state = SWAY_IN
         self._t = 0
-        self._center = Vector3d(0.0, 0.0, 0.0) + self._fluctuation()
+        self._source_position = state_machine.states["MC"].position + self._fluctuation()
 
     def position(self):
         if self._state == PAUSE:
-            return self._center
+            return self._source_position
         elif self._state == SWAY_OUT:
-            return self._center + (self._sway_target - self._center) * \
+            return self._source_position + (self._sway_target - self._source_position) * \
                 self._sigmoid(self._t / self._sway_duration)
         elif self._state == SWAY_IN:
-            return self._center + (self._sway_target - self._center) * \
+            return self._source_position + (self._sway_target - self._source_position) * \
                 self._sigmoid((self._sway_duration - self._t) / self._sway_duration)
 
     def _sigmoid(self, x):
