@@ -101,7 +101,10 @@ void AIInputApp::setupParams()
 	mParams.addSeparator();
 
 	// FIXME: switching often hangs up, Cinder-NI or OpenNI problem?
-	vector< string > enumNames = { "Recording", "Kinect" };
+//	vector< string > enumNames = { "Recording", "Kinect" };
+	vector< string > enumNames;
+	enumNames.push_back( "Recording" );
+	enumNames.push_back( "Kinect" );
 	mParams.addPersistentParam( "Source", enumNames, &mSource, SOURCE_RECORDING, "", true );
 	mParams.addPersistentParam( "Mirror", &mMirrored, false );
 
@@ -211,7 +214,11 @@ void AIInputApp::draw()
 					xn::DepthGenerator &depthGenerator = mNI.getNativeDepthGenerator();
 
 					XnPoint3D pt[ 1 ];
-					pt[ 0 ] = { com.x, com.y, com.z };
+//					pt[ 0 ] = { com.x, com.y, com.z };
+					pt[ 0 ].X = com.x;
+					pt[ 0 ].Y = com.y;
+					pt[ 0 ].Z = com.z;
+
 					depthGenerator.ConvertRealWorldToProjective( 1, pt, pt );
 					gl::drawSolidCircle( mapping.map( Vec2f( pt[ 0 ].X, pt[ 0 ].Y ) ), 3 );
 					mndl::osc::Message msg( "/com" );
