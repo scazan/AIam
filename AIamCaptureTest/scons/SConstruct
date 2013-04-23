@@ -2,7 +2,7 @@ env = Environment()
 
 env['APP_TARGET'] = 'AIamCaptureTest'
 env['APP_SOURCES'] = ['AIamCaptureTest.cpp']
-env['ASSETS'] = ['motions/*.bvh']
+env['ASSETS'] = ['motions/*.dae', 'motions/*.bvh']
 env['DEBUG'] = 0
 
 env = SConscript('../../../../blocks/MndlKit/scons/SConscript', exports = 'env')
