@@ -51,6 +51,7 @@ def refresh():
 
     osc_sender.send("/input_position", *input_position)
     osc_sender.send("/normalized_torso_position", *normalized_torso_position)
+    osc_sender.send("/normalized_center_of_mass_position", *normalized_center_of_mass_position)
 
     output_inter_state_position = behaviour.output()
     if output_inter_state_position:
