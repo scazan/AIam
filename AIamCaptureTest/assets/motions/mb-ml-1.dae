@@ -3,10 +3,10 @@
   <asset>
     <contributor>
       <author>Gáspár Hajdu - gase12@gmail.com</author>
-      <authoring_tool>Blender 2.66.0 r54788M</authoring_tool>
+      <authoring_tool>Blender 2.66.6 r56104</authoring_tool>
     </contributor>
-    <created>2013-04-22T20:04:12</created>
-    <modified>2013-04-22T20:04:12</modified>
+    <created>2013-04-23T23:17:20</created>
+    <modified>2013-04-23T23:17:20</modified>
     <unit name="meter" meter="1"/>
     <up_axis>Z_UP</up_axis>
   </asset>
@@ -2150,7 +2150,11 @@
   <library_visual_scenes>
     <visual_scene id="Scene" name="Scene">
       <node id="mb-ml-1" name="mb-ml-1" type="NODE">
-        <matrix sid="transform">0.987767 0.1559371 0 -110.7926 -0.1559371 0.987767 0 -10.56062 0 0 1 0 0 0 0 1</matrix>
+        <translate sid="location">-111.3694 -10.59479 0</translate>
+        <rotate sid="rotationZ">0 0 1 -9.000002</rotate>
+        <rotate sid="rotationY">0 1 0 0</rotate>
+        <rotate sid="rotationX">1 0 0 0</rotate>
+        <scale sid="scale">1 1 1</scale>
         <node id="Hip" name="Hip" sid="Hip" type="JOINT">
           <matrix sid="transform">0.9913222 -0.05034029 0.1214346 27.94997 0.1314553 0.3795866 -0.9157695 -46.22137 5.16698e-6 0.9237857 0.3829101 4.164488 0 0 0 1</matrix>
           <node id="LowerSpine" name="LowerSpine" sid="LowerSpine" type="JOINT">

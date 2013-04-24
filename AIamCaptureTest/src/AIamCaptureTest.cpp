@@ -130,8 +130,18 @@ void AIamCaptureTest::setup()
 	mParams.addPersistentParam( "Grid size", &mGridSize, 50, "min=1 max=512" );
 	mParams.addSeparator();
 
+	mParams.addParam( "Current pose", mPoseNames, &mCurrentPose, "", true );
 	mParams.addParam( "Go to pose", mPoseNames, &mTargetPose );
 	mParams.addButton( "Go", [&]() {
+			if ( mCurrentPose == mTargetPose )
+				return;
+
+			// prevent from staring the same motion again
+			static int lastTargetPose = -1;
+			if ( mTargetPose == lastTargetPose )
+				return;
+			lastTargetPose = mTargetPose;
+
 			mCurrentMotion = mMotionGrid[ mCurrentPose ][ mTargetPose ];
 			if ( mCurrentMotion )
 			{
@@ -220,7 +230,9 @@ void AIamCaptureTest::loadSomeMotions()
 					timeline().apply( &mMotionTime, motionDuration, motionDuration );
 				}
 		} );
+		// start from POSE_MC
 		mMotionTime = 0.;
+		mCurrentMotion = mMotionGrid[ POSE_MC ][ POSE_MLB ];
 		mParams.addSeparator();
 	}
 
