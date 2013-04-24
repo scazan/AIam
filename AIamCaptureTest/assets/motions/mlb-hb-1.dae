@@ -1,0 +1,1957 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  <asset>
+    <contributor>
+      <author>Gáspár Hajdu - gase12@gmail.com</author>
+      <authoring_tool>Blender 2.66.5 r55959M</authoring_tool>
+    </contributor>
+    <created>2013-04-22T16:29:31</created>
+    <modified>2013-04-22T16:29:31</modified>
+    <unit name="meter" meter="1"/>
+    <up_axis>Z_UP</up_axis>
+  </asset>
+  <library_images/>
+  <library_effects/>
+  <library_animations>
+    <animation id="mlb-hb-2_Hip_pose_matrix">
+      <source id="mlb-hb-2_Hip_pose_matrix-input">
+        <float_array id="mlb-hb-2_Hip_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_Hip_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_Hip_pose_matrix-output">
+        <float_array id="mlb-hb-2_Hip_pose_matrix-output-array" count="32">0.5930112 0.118658 0.7964033 3.380736 0.7838559 0.1411207 -0.6046941 44.58645 -0.1841409 0.9828556 -0.009324566 60.83091 0 0 0 1 0.9014013 -0.1248965 -0.4145803 -9.435663 -0.4188932 -0.4938404 -0.7620041 22.2821 -0.1095648 0.8605362 -0.4974665 71.68372 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_Hip_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_Hip_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_Hip_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_Hip_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_Hip_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_Hip_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_Hip_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_Hip_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_Hip_pose_matrix-sampler" target="Hip/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_LowerSpine_pose_matrix">
+      <source id="mlb-hb-2_LowerSpine_pose_matrix-input">
+        <float_array id="mlb-hb-2_LowerSpine_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LowerSpine_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LowerSpine_pose_matrix-output">
+        <float_array id="mlb-hb-2_LowerSpine_pose_matrix-output-array" count="32">1 1.02073e-5 -2.60025e-6 1.08719e-4 -1.05202e-5 0.9047835 -0.4258717 10.67212 -1.86637e-6 0.4258718 0.9047832 -1.547298 0 0 0 1 0.9999999 2.76241e-4 -1.10112e-4 1.08719e-4 -2.97017e-4 0.9046166 -0.4262262 10.67212 -1.80081e-5 0.4262263 0.9046162 -1.547298 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LowerSpine_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LowerSpine_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_LowerSpine_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LowerSpine_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_LowerSpine_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_LowerSpine_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_LowerSpine_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_LowerSpine_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_LowerSpine_pose_matrix-sampler" target="LowerSpine/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_MiddleSpine_pose_matrix">
+      <source id="mlb-hb-2_MiddleSpine_pose_matrix-input">
+        <float_array id="mlb-hb-2_MiddleSpine_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_MiddleSpine_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_MiddleSpine_pose_matrix-output">
+        <float_array id="mlb-hb-2_MiddleSpine_pose_matrix-output-array" count="32">0.9904802 0.1361409 -0.02036478 0 -0.1246568 0.9498334 0.2868402 8.465538 0.05839437 -0.281571 0.9577618 0 0 0 0 1 0.9977046 0.06321059 -0.02429663 0 -0.058989 0.9874299 0.1466375 8.465538 0.03326084 -0.1448677 0.9888917 0 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_MiddleSpine_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_MiddleSpine_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_MiddleSpine_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_MiddleSpine_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_MiddleSpine_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_MiddleSpine_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_MiddleSpine_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_MiddleSpine_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_MiddleSpine_pose_matrix-sampler" target="MiddleSpine/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_Chest_pose_matrix">
+      <source id="mlb-hb-2_Chest_pose_matrix-input">
+        <float_array id="mlb-hb-2_Chest_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_Chest_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_Chest_pose_matrix-output">
+        <float_array id="mlb-hb-2_Chest_pose_matrix-output-array" count="32">0.8963703 0.392103 -0.2068227 1.90735e-6 -0.4296291 0.8833706 -0.1872838 10.67141 0.1092669 0.2567326 0.9602863 0 0 0 0 1 0.9713644 0.124133 -0.2025888 1.90735e-6 -0.2262723 0.7433929 -0.6294188 10.67141 0.07247174 0.6572351 0.7501937 0 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_Chest_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_Chest_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_Chest_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_Chest_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_Chest_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_Chest_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_Chest_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_Chest_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_Chest_pose_matrix-sampler" target="Chest/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_Neck_pose_matrix">
+      <source id="mlb-hb-2_Neck_pose_matrix-input">
+        <float_array id="mlb-hb-2_Neck_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_Neck_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_Neck_pose_matrix-output">
+        <float_array id="mlb-hb-2_Neck_pose_matrix-output-array" count="32">0.976 0.2148418 0.0355891 0 -0.2168385 0.9436645 0.2499567 23.05068 0.02011636 -0.2516751 0.9676027 -4.984367 0 0 0 1 0.9388763 0.3371571 0.06953984 0 -0.3412587 0.8849326 0.3169175 23.05068 0.04531229 -0.3212778 0.9459002 -4.984367 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_Neck_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_Neck_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_Neck_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_Neck_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_Neck_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_Neck_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_Neck_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_Neck_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_Neck_pose_matrix-sampler" target="Neck/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_Head_pose_matrix">
+      <source id="mlb-hb-2_Head_pose_matrix-input">
+        <float_array id="mlb-hb-2_Head_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_Head_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_Head_pose_matrix-output">
+        <float_array id="mlb-hb-2_Head_pose_matrix-output-array" count="32">0.787378 0.603784 0.124423 -3.8147e-6 -0.5580138 0.6122611 0.56014 13.79928 0.2620243 -0.5104717 0.8190008 0 0 0 0 1 0.9995475 0.0297564 0.004436523 -3.8147e-6 -0.02789686 0.8614882 0.5070106 13.79928 0.01126492 -0.506905 0.8619286 0 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_Head_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_Head_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_Head_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_Head_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_Head_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_Head_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_Head_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_Head_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_Head_pose_matrix-sampler" target="Head/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_LClavicle_pose_matrix">
+      <source id="mlb-hb-2_LClavicle_pose_matrix-input">
+        <float_array id="mlb-hb-2_LClavicle_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LClavicle_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LClavicle_pose_matrix-output">
+        <float_array id="mlb-hb-2_LClavicle_pose_matrix-output-array" count="32">0.5493505 0.8163177 0.178435 2.142498 -0.7213879 0.3555649 0.5942837 23.68161 0.4216787 -0.4551915 0.7842116 2.492241 0 0 0 1 0.3719908 0.8896501 0.2648492 2.142498 -0.8170575 0.1784221 0.5482543 23.68161 0.4404992 -0.4203432 0.7932667 2.492241 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LClavicle_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LClavicle_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_LClavicle_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LClavicle_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_LClavicle_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_LClavicle_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_LClavicle_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_LClavicle_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_LClavicle_pose_matrix-sampler" target="LClavicle/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_LShoulder_pose_matrix">
+      <source id="mlb-hb-2_LShoulder_pose_matrix-input">
+        <float_array id="mlb-hb-2_LShoulder_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LShoulder_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LShoulder_pose_matrix-output">
+        <float_array id="mlb-hb-2_LShoulder_pose_matrix-output-array" count="32">0.9192774 -0.1549588 -0.3618244 0 0.1589438 0.9871063 -0.01892539 13.97177 0.3600918 -0.04011159 0.932054 3.8147e-6 0 0 0 1 0.8296893 0.5504372 0.09292257 0 0.02796099 0.1252737 -0.9917281 13.97177 -0.5575249 0.8254242 0.08854699 3.8147e-6 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LShoulder_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LShoulder_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_LShoulder_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LShoulder_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_LShoulder_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_LShoulder_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_LShoulder_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_LShoulder_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_LShoulder_pose_matrix-sampler" target="LShoulder/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_LForearm_pose_matrix">
+      <source id="mlb-hb-2_LForearm_pose_matrix-input">
+        <float_array id="mlb-hb-2_LForearm_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LForearm_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LForearm_pose_matrix-output">
+        <float_array id="mlb-hb-2_LForearm_pose_matrix-output-array" count="32">0.9999855 -0.003035723 0.004474426 -1.90735e-6 0.004336347 0.9446011 -0.3281919 29.54318 -0.003230222 0.3282058 0.9446005 -1.90735e-6 0 0 0 1 0.9999886 -3.65132e-4 0.004776721 -1.90735e-6 0.002943275 0.8335866 -0.5523808 29.54318 -0.003780161 0.5523878 0.8335784 -1.90735e-6 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LForearm_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LForearm_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_LForearm_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LForearm_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_LForearm_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_LForearm_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_LForearm_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_LForearm_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_LForearm_pose_matrix-sampler" target="LForearm/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_LHand_pose_matrix">
+      <source id="mlb-hb-2_LHand_pose_matrix-input">
+        <float_array id="mlb-hb-2_LHand_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LHand_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LHand_pose_matrix-output">
+        <float_array id="mlb-hb-2_LHand_pose_matrix-output-array" count="32">0.9994236 -0.005011737 -0.0335796 3.8147e-6 0.006134856 0.9994214 0.03345767 24.64475 0.03339304 -0.03364393 0.9988756 -2.86102e-6 0 0 0 1 0.9994236 -0.005011737 -0.0335796 3.8147e-6 0.006134856 0.9994214 0.03345767 24.64475 0.03339304 -0.03364393 0.9988756 -2.86102e-6 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LHand_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LHand_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_LHand_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LHand_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_LHand_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_LHand_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_LHand_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_LHand_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_LHand_pose_matrix-sampler" target="LHand/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_LFinger1_pose_matrix">
+      <source id="mlb-hb-2_LFinger1_pose_matrix-input">
+        <float_array id="mlb-hb-2_LFinger1_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger1_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger1_pose_matrix-output">
+        <float_array id="mlb-hb-2_LFinger1_pose_matrix-output-array" count="32">0.9467119 0.2488311 0.2044986 -0.6417522 -0.19523 0.94833 -0.2501108 9.444828 -0.2561677 0.1968585 0.9463745 3.057472 0 0 0 1 0.9467119 0.2488311 0.2044986 -0.6417522 -0.19523 0.94833 -0.2501108 9.444828 -0.2561677 0.1968585 0.9463745 3.057472 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger1_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger1_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_LFinger1_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger1_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_LFinger1_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_LFinger1_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_LFinger1_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_LFinger1_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_LFinger1_pose_matrix-sampler" target="LFinger1/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_LFinger11_pose_matrix">
+      <source id="mlb-hb-2_LFinger11_pose_matrix-input">
+        <float_array id="mlb-hb-2_LFinger11_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger11_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger11_pose_matrix-output">
+        <float_array id="mlb-hb-2_LFinger11_pose_matrix-output-array" count="32">1 4.57689e-5 7.30343e-5 -1.90735e-6 -4.5687e-5 0.9999999 -6.9201e-5 3.730877 -7.31982e-5 6.92606e-5 0.9999999 0 0 0 0 1 1 4.57689e-5 7.30343e-5 -1.90735e-6 -4.5687e-5 0.9999999 -6.9201e-5 3.730877 -7.31982e-5 6.92606e-5 0.9999999 0 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger11_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger11_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_LFinger11_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger11_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_LFinger11_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_LFinger11_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_LFinger11_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_LFinger11_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_LFinger11_pose_matrix-sampler" target="LFinger11/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_LFinger12_pose_matrix">
+      <source id="mlb-hb-2_LFinger12_pose_matrix-input">
+        <float_array id="mlb-hb-2_LFinger12_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger12_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger12_pose_matrix-output">
+        <float_array id="mlb-hb-2_LFinger12_pose_matrix-output-array" count="32">0.9984848 0.05231366 -0.01707362 0 -0.05223517 0.9986224 0.005000919 2.54705 0.01731165 -0.004101753 0.9998418 1.90735e-6 0 0 0 1 0.9984848 0.05231366 -0.01707362 0 -0.05223517 0.9986224 0.005000919 2.54705 0.01731165 -0.004101753 0.9998418 1.90735e-6 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger12_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger12_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_LFinger12_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger12_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_LFinger12_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_LFinger12_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_LFinger12_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_LFinger12_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_LFinger12_pose_matrix-sampler" target="LFinger12/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_LFinger2_pose_matrix">
+      <source id="mlb-hb-2_LFinger2_pose_matrix-input">
+        <float_array id="mlb-hb-2_LFinger2_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger2_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger2_pose_matrix-output">
+        <float_array id="mlb-hb-2_LFinger2_pose_matrix-output-array" count="32">0.9994201 0.006255278 0.03347315 -0.8648624 -0.005125687 0.9994181 -0.0337244 9.684259 -0.03366472 0.03353322 0.9988704 0.6500835 0 0 0 1 0.9994201 0.006255278 0.03347315 -0.8648624 -0.005125687 0.9994181 -0.0337244 9.684259 -0.03366472 0.03353322 0.9988704 0.6500835 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger2_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger2_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_LFinger2_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger2_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_LFinger2_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_LFinger2_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_LFinger2_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_LFinger2_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_LFinger2_pose_matrix-sampler" target="LFinger2/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_LFinger21_pose_matrix">
+      <source id="mlb-hb-2_LFinger21_pose_matrix-input">
+        <float_array id="mlb-hb-2_LFinger21_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger21_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger21_pose_matrix-output">
+        <float_array id="mlb-hb-2_LFinger21_pose_matrix-output-array" count="32">1 -2.78076e-4 -1.77989e-4 -3.8147e-6 2.78117e-4 0.9999999 1.75059e-4 4.41749 1.77889e-4 -1.75148e-4 1 -1.90735e-6 0 0 0 1 1 -2.78076e-4 -1.77989e-4 -3.8147e-6 2.78117e-4 0.9999999 1.75059e-4 4.41749 1.77889e-4 -1.75148e-4 1 -1.90735e-6 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger21_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger21_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_LFinger21_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger21_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_LFinger21_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_LFinger21_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_LFinger21_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_LFinger21_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_LFinger21_pose_matrix-sampler" target="LFinger21/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_LFinger22_pose_matrix">
+      <source id="mlb-hb-2_LFinger22_pose_matrix-input">
+        <float_array id="mlb-hb-2_LFinger22_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger22_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger22_pose_matrix-output">
+        <float_array id="mlb-hb-2_LFinger22_pose_matrix-output-array" count="32">0.9972653 0.07353526 0.007378404 0 -0.07348007 0.9972685 -0.007499993 2.44866 -0.007909719 0.006937385 0.9999445 -1.90735e-6 0 0 0 1 0.9972653 0.07353526 0.007378404 0 -0.07348007 0.9972685 -0.007499993 2.44866 -0.007909719 0.006937385 0.9999445 -1.90735e-6 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger22_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger22_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_LFinger22_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger22_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_LFinger22_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_LFinger22_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_LFinger22_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_LFinger22_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_LFinger22_pose_matrix-sampler" target="LFinger22/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_LFinger3_pose_matrix">
+      <source id="mlb-hb-2_LFinger3_pose_matrix-input">
+        <float_array id="mlb-hb-2_LFinger3_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger3_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger3_pose_matrix-output">
+        <float_array id="mlb-hb-2_LFinger3_pose_matrix-output-array" count="32">0.9981069 0.05720045 -0.02259752 -0.6435738 -0.05659801 0.9980465 0.02645329 9.270653 0.0240664 -0.02512428 0.9993947 -1.783319 0 0 0 1 0.9981069 0.05720045 -0.02259752 -0.6435738 -0.05659801 0.9980465 0.02645329 9.270653 0.0240664 -0.02512428 0.9993947 -1.783319 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger3_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger3_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_LFinger3_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger3_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_LFinger3_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_LFinger3_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_LFinger3_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_LFinger3_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_LFinger3_pose_matrix-sampler" target="LFinger3/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_LFinger31_pose_matrix">
+      <source id="mlb-hb-2_LFinger31_pose_matrix-input">
+        <float_array id="mlb-hb-2_LFinger31_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger31_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger31_pose_matrix-output">
+        <float_array id="mlb-hb-2_LFinger31_pose_matrix-output-array" count="32">0.9999999 -3.29182e-4 -2.12384e-4 0 3.29174e-4 0.9999999 1.83463e-4 4.021385 2.12388e-4 -1.83374e-4 0.9999999 -9.53674e-7 0 0 0 1 0.9999999 -3.29182e-4 -2.12384e-4 0 3.29174e-4 0.9999999 1.83463e-4 4.021385 2.12388e-4 -1.83374e-4 0.9999999 -9.53674e-7 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger31_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger31_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_LFinger31_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger31_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_LFinger31_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_LFinger31_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_LFinger31_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_LFinger31_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_LFinger31_pose_matrix-sampler" target="LFinger31/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_LFinger32_pose_matrix">
+      <source id="mlb-hb-2_LFinger32_pose_matrix-input">
+        <float_array id="mlb-hb-2_LFinger32_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger32_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger32_pose_matrix-output">
+        <float_array id="mlb-hb-2_LFinger32_pose_matrix-output-array" count="32">0.9972116 0.07280555 0.01637848 0 -0.07261323 0.9972872 -0.01205331 2.291588 -0.01721155 0.01083037 0.9997931 -9.53674e-7 0 0 0 1 0.9972116 0.07280555 0.01637848 0 -0.07261323 0.9972872 -0.01205331 2.291588 -0.01721155 0.01083037 0.9997931 -9.53674e-7 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger32_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger32_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_LFinger32_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger32_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_LFinger32_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_LFinger32_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_LFinger32_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_LFinger32_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_LFinger32_pose_matrix-sampler" target="LFinger32/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_LFinger4_pose_matrix">
+      <source id="mlb-hb-2_LFinger4_pose_matrix-input">
+        <float_array id="mlb-hb-2_LFinger4_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger4_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger4_pose_matrix-output">
+        <float_array id="mlb-hb-2_LFinger4_pose_matrix-output-array" count="32">0.9552994 0.1954364 -0.2218282 0.5787029 -0.1317028 0.9530927 0.272523 8.662107 0.2646836 -0.2311257 0.9362284 -3.438201 0 0 0 1 0.9552994 0.1954364 -0.2218282 0.5787029 -0.1317028 0.9530927 0.272523 8.662107 0.2646836 -0.2311257 0.9362284 -3.438201 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger4_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger4_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_LFinger4_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger4_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_LFinger4_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_LFinger4_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_LFinger4_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_LFinger4_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_LFinger4_pose_matrix-sampler" target="LFinger4/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_LFinger41_pose_matrix">
+      <source id="mlb-hb-2_LFinger41_pose_matrix-input">
+        <float_array id="mlb-hb-2_LFinger41_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger41_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger41_pose_matrix-output">
+        <float_array id="mlb-hb-2_LFinger41_pose_matrix-output-array" count="32">0.9999999 -3.31759e-4 -1.85903e-4 -3.8147e-6 3.31849e-4 0.9999999 6.44922e-5 2.608879 1.85808e-4 -6.47008e-5 1 9.53674e-7 0 0 0 1 0.9999999 -3.31759e-4 -1.85903e-4 -3.8147e-6 3.31849e-4 0.9999999 6.44922e-5 2.608879 1.85808e-4 -6.47008e-5 1 9.53674e-7 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger41_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger41_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_LFinger41_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger41_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_LFinger41_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_LFinger41_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_LFinger41_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_LFinger41_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_LFinger41_pose_matrix-sampler" target="LFinger41/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_LFinger42_pose_matrix">
+      <source id="mlb-hb-2_LFinger42_pose_matrix-input">
+        <float_array id="mlb-hb-2_LFinger42_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger42_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger42_pose_matrix-output">
+        <float_array id="mlb-hb-2_LFinger42_pose_matrix-output-array" count="32">0.9959478 0.07270579 0.05293076 3.8147e-6 -0.07130833 0.9970659 -0.02783157 1.913128 -0.05479897 0.02394442 0.9982102 -4.76837e-7 0 0 0 1 0.9959478 0.07270579 0.05293076 3.8147e-6 -0.07130833 0.9970659 -0.02783157 1.913128 -0.05479897 0.02394442 0.9982102 -4.76837e-7 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger42_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger42_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_LFinger42_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger42_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_LFinger42_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_LFinger42_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_LFinger42_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_LFinger42_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_LFinger42_pose_matrix-sampler" target="LFinger42/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_LFinger0_pose_matrix">
+      <source id="mlb-hb-2_LFinger0_pose_matrix-input">
+        <float_array id="mlb-hb-2_LFinger0_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger0_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger0_pose_matrix-output">
+        <float_array id="mlb-hb-2_LFinger0_pose_matrix-output-array" count="32">0.7499092 0.2835028 0.5977144 1.571501 0.2184697 0.7466959 -0.6282644 1.903355 -0.6244258 0.6017236 0.4980172 1.51395 0 0 0 1 0.7499092 0.2835028 0.5977144 1.571501 0.2184697 0.7466959 -0.6282644 1.903355 -0.6244258 0.6017236 0.4980172 1.51395 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger0_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger0_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_LFinger0_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger0_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_LFinger0_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_LFinger0_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_LFinger0_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_LFinger0_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_LFinger0_pose_matrix-sampler" target="LFinger0/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_LFinger01_pose_matrix">
+      <source id="mlb-hb-2_LFinger01_pose_matrix-input">
+        <float_array id="mlb-hb-2_LFinger01_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger01_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger01_pose_matrix-output">
+        <float_array id="mlb-hb-2_LFinger01_pose_matrix-output-array" count="32">0.9990639 0.03343301 -0.02744576 3.8147e-6 -0.03339596 0.9994406 0.001806468 4.762848 0.027491 -8.88258e-4 0.9996216 -3.8147e-6 0 0 0 1 0.9990639 0.03343301 -0.02744576 3.8147e-6 -0.03339596 0.9994406 0.001806468 4.762848 0.027491 -8.88258e-4 0.9996216 -3.8147e-6 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger01_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger01_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_LFinger01_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger01_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_LFinger01_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_LFinger01_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_LFinger01_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_LFinger01_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_LFinger01_pose_matrix-sampler" target="LFinger01/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_LFinger02_pose_matrix">
+      <source id="mlb-hb-2_LFinger02_pose_matrix-input">
+        <float_array id="mlb-hb-2_LFinger02_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger02_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger02_pose_matrix-output">
+        <float_array id="mlb-hb-2_LFinger02_pose_matrix-output-array" count="32">0.9995006 0.008764699 -0.03035957 -3.8147e-6 -0.008091047 0.9997198 0.022248 3.10887 0.03054607 -0.02199119 0.9992916 0 0 0 0 1 0.9995006 0.008764699 -0.03035957 -3.8147e-6 -0.008091047 0.9997198 0.022248 3.10887 0.03054607 -0.02199119 0.9992916 0 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger02_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFinger02_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_LFinger02_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFinger02_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_LFinger02_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_LFinger02_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_LFinger02_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_LFinger02_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_LFinger02_pose_matrix-sampler" target="LFinger02/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_RClavicle_pose_matrix">
+      <source id="mlb-hb-2_RClavicle_pose_matrix-input">
+        <float_array id="mlb-hb-2_RClavicle_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RClavicle_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RClavicle_pose_matrix-output">
+        <float_array id="mlb-hb-2_RClavicle_pose_matrix-output-array" count="32">0.7373847 -0.6729128 -0.05874965 -2.142502 0.5525886 0.5509312 0.6253961 23.68159 -0.3884707 -0.4936216 0.7780925 2.492149 0 0 0 1 0.2751322 -0.9119298 -0.3044431 -2.142502 0.8510723 0.08372966 0.5183291 23.68159 -0.4471892 -0.4017117 0.7991553 2.492149 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RClavicle_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RClavicle_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_RClavicle_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RClavicle_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_RClavicle_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_RClavicle_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_RClavicle_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_RClavicle_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_RClavicle_pose_matrix-sampler" target="RClavicle/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_RShoulder_pose_matrix">
+      <source id="mlb-hb-2_RShoulder_pose_matrix-input">
+        <float_array id="mlb-hb-2_RShoulder_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RShoulder_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RShoulder_pose_matrix-output">
+        <float_array id="mlb-hb-2_RShoulder_pose_matrix-output-array" count="32">0.524924 0.8435726 0.1133144 -3.8147e-6 -0.5264623 0.4264008 -0.7355403 13.97423 -0.668799 0.3264472 0.6679372 -3.8147e-6 0 0 0 1 0.2968748 -0.9164787 -0.2682016 -3.8147e-6 -0.2530955 0.1953014 -0.9475231 13.97423 0.9207649 0.3491763 -0.1739767 -3.8147e-6 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RShoulder_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RShoulder_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_RShoulder_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RShoulder_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_RShoulder_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_RShoulder_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_RShoulder_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_RShoulder_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_RShoulder_pose_matrix-sampler" target="RShoulder/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_RForearm_pose_matrix">
+      <source id="mlb-hb-2_RForearm_pose_matrix-input">
+        <float_array id="mlb-hb-2_RForearm_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RForearm_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RForearm_pose_matrix-output">
+        <float_array id="mlb-hb-2_RForearm_pose_matrix-output-array" count="32">0.9999752 0.006531999 -0.002640396 0 -0.006505191 0.9999284 0.01003745 29.5432 0.002705723 -0.01002003 0.9999462 0 0 0 0 1 0.9999858 -0.003021896 -0.004418507 0 -0.001520172 0.6311312 -0.7756745 29.5432 0.005132556 0.7756702 0.6311176 0 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RForearm_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RForearm_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_RForearm_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RForearm_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_RForearm_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_RForearm_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_RForearm_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_RForearm_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_RForearm_pose_matrix-sampler" target="RForearm/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_RHand_pose_matrix">
+      <source id="mlb-hb-2_RHand_pose_matrix-input">
+        <float_array id="mlb-hb-2_RHand_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RHand_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RHand_pose_matrix-output">
+        <float_array id="mlb-hb-2_RHand_pose_matrix-output-array" count="32">0.9994234 0.005019933 0.03358151 7.62939e-6 -0.006144196 0.9994212 0.03345975 24.64475 -0.03339404 -0.03364669 0.9988757 3.8147e-6 0 0 0 1 0.9994234 0.005019933 0.03358151 7.62939e-6 -0.006144196 0.9994212 0.03345975 24.64475 -0.03339404 -0.03364669 0.9988757 3.8147e-6 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RHand_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RHand_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_RHand_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RHand_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_RHand_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_RHand_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_RHand_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_RHand_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_RHand_pose_matrix-sampler" target="RHand/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_RFinger1_pose_matrix">
+      <source id="mlb-hb-2_RFinger1_pose_matrix-input">
+        <float_array id="mlb-hb-2_RFinger1_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger1_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger1_pose_matrix-output">
+        <float_array id="mlb-hb-2_RFinger1_pose_matrix-output-array" count="32">0.9467097 -0.2488413 -0.2044968 0.6417656 0.1952398 0.9483271 -0.2501149 9.444836 0.2561688 0.1968603 0.946374 3.057503 0 0 0 1 0.9467097 -0.2488413 -0.2044968 0.6417656 0.1952398 0.9483271 -0.2501149 9.444836 0.2561688 0.1968603 0.946374 3.057503 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger1_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger1_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_RFinger1_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger1_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_RFinger1_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_RFinger1_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_RFinger1_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_RFinger1_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_RFinger1_pose_matrix-sampler" target="RFinger1/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_RFinger11_pose_matrix">
+      <source id="mlb-hb-2_RFinger11_pose_matrix-input">
+        <float_array id="mlb-hb-2_RFinger11_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger11_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger11_pose_matrix-output">
+        <float_array id="mlb-hb-2_RFinger11_pose_matrix-output-array" count="32">1 -7.9006e-5 -7.84993e-5 -3.8147e-6 7.90358e-5 1 -7.46399e-5 3.730873 7.86632e-5 7.4774e-5 1 -7.62939e-6 0 0 0 1 1 -7.9006e-5 -7.84993e-5 -3.8147e-6 7.90358e-5 1 -7.46399e-5 3.730873 7.86632e-5 7.4774e-5 1 -7.62939e-6 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger11_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger11_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_RFinger11_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger11_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_RFinger11_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_RFinger11_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_RFinger11_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_RFinger11_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_RFinger11_pose_matrix-sampler" target="RFinger11/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_RFinger12_pose_matrix">
+      <source id="mlb-hb-2_RFinger12_pose_matrix-input">
+        <float_array id="mlb-hb-2_RFinger12_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger12_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger12_pose_matrix-output">
+        <float_array id="mlb-hb-2_RFinger12_pose_matrix-output-array" count="32">0.998486 -0.05228341 0.01708423 0 0.05220512 0.9986238 0.005004495 2.547071 -0.01732239 -0.004105039 0.9998416 0 0 0 0 1 0.998486 -0.05228341 0.01708423 0 0.05220512 0.9986238 0.005004495 2.547071 -0.01732239 -0.004105039 0.9998416 0 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger12_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger12_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_RFinger12_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger12_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_RFinger12_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_RFinger12_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_RFinger12_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_RFinger12_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_RFinger12_pose_matrix-sampler" target="RFinger12/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_RFinger2_pose_matrix">
+      <source id="mlb-hb-2_RFinger2_pose_matrix-input">
+        <float_array id="mlb-hb-2_RFinger2_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger2_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger2_pose_matrix-output">
+        <float_array id="mlb-hb-2_RFinger2_pose_matrix-output-array" count="32">0.9994199 -0.006264716 -0.03347405 0.8648682 0.005135179 0.999418 -0.03372724 9.684265 0.0336659 0.03353581 0.9988704 0.6501122 0 0 0 1 0.9994199 -0.006264716 -0.03347405 0.8648682 0.005135179 0.999418 -0.03372724 9.684265 0.0336659 0.03353581 0.9988704 0.6501122 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger2_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger2_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_RFinger2_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger2_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_RFinger2_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_RFinger2_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_RFinger2_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_RFinger2_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_RFinger2_pose_matrix-sampler" target="RFinger2/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_RFinger21_pose_matrix">
+      <source id="mlb-hb-2_RFinger21_pose_matrix-input">
+        <float_array id="mlb-hb-2_RFinger21_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger21_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger21_pose_matrix-output">
+        <float_array id="mlb-hb-2_RFinger21_pose_matrix-output-array" count="32">1 2.81632e-4 2.15404e-4 -3.8147e-6 -2.81632e-4 0.9999999 2.15724e-4 4.417599 -2.1524e-4 -2.15739e-4 1 0 0 0 0 1 1 2.81632e-4 2.15404e-4 -3.8147e-6 -2.81632e-4 0.9999999 2.15724e-4 4.417599 -2.1524e-4 -2.15739e-4 1 0 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger21_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger21_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_RFinger21_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger21_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_RFinger21_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_RFinger21_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_RFinger21_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_RFinger21_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_RFinger21_pose_matrix-sampler" target="RFinger21/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_RFinger22_pose_matrix">
+      <source id="mlb-hb-2_RFinger22_pose_matrix-input">
+        <float_array id="mlb-hb-2_RFinger22_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger22_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger22_pose_matrix-output">
+        <float_array id="mlb-hb-2_RFinger22_pose_matrix-output-array" count="32">0.9972648 -0.07353851 -0.007416435 -3.8147e-6 0.07348245 0.9972678 -0.007541165 2.448666 0.007950701 0.006975517 0.999944 -3.8147e-6 0 0 0 1 0.9972648 -0.07353851 -0.007416435 -3.8147e-6 0.07348245 0.9972678 -0.007541165 2.448666 0.007950701 0.006975517 0.999944 -3.8147e-6 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger22_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger22_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_RFinger22_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger22_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_RFinger22_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_RFinger22_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_RFinger22_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_RFinger22_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_RFinger22_pose_matrix-sampler" target="RFinger22/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_RFinger3_pose_matrix">
+      <source id="mlb-hb-2_RFinger3_pose_matrix-input">
+        <float_array id="mlb-hb-2_RFinger3_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger3_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger3_pose_matrix-output">
+        <float_array id="mlb-hb-2_RFinger3_pose_matrix-output-array" count="32">0.9981065 -0.0572077 0.02259436 0.6434937 0.0566057 0.9980463 0.02645083 9.270672 -0.02406337 -0.02512173 0.9993947 -1.783295 0 0 0 1 0.9981065 -0.0572077 0.02259436 0.6434937 0.0566057 0.9980463 0.02645083 9.270672 -0.02406337 -0.02512173 0.9993947 -1.783295 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger3_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger3_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_RFinger3_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger3_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_RFinger3_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_RFinger3_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_RFinger3_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_RFinger3_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_RFinger3_pose_matrix-sampler" target="RFinger3/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_RFinger31_pose_matrix">
+      <source id="mlb-hb-2_RFinger31_pose_matrix-input">
+        <float_array id="mlb-hb-2_RFinger31_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger31_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger31_pose_matrix-output">
+        <float_array id="mlb-hb-2_RFinger31_pose_matrix-output-array" count="32">0.9999999 3.26693e-4 2.14383e-4 0 -3.26931e-4 0.9999999 1.82837e-4 4.021368 -2.14413e-4 -1.82971e-4 0.9999999 0 0 0 0 1 0.9999999 3.26693e-4 2.14383e-4 0 -3.26931e-4 0.9999999 1.82837e-4 4.021368 -2.14413e-4 -1.82971e-4 0.9999999 0 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger31_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger31_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_RFinger31_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger31_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_RFinger31_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_RFinger31_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_RFinger31_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_RFinger31_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_RFinger31_pose_matrix-sampler" target="RFinger31/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_RFinger32_pose_matrix">
+      <source id="mlb-hb-2_RFinger32_pose_matrix-input">
+        <float_array id="mlb-hb-2_RFinger32_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger32_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger32_pose_matrix-output">
+        <float_array id="mlb-hb-2_RFinger32_pose_matrix-output-array" count="32">0.9972122 -0.07280043 -0.01638311 3.8147e-6 0.07260793 0.9972878 -0.0120521 2.291592 0.01721603 0.01082896 0.9997931 -3.8147e-6 0 0 0 1 0.9972122 -0.07280043 -0.01638311 3.8147e-6 0.07260793 0.9972878 -0.0120521 2.291592 0.01721603 0.01082896 0.9997931 -3.8147e-6 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger32_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger32_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_RFinger32_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger32_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_RFinger32_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_RFinger32_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_RFinger32_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_RFinger32_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_RFinger32_pose_matrix-sampler" target="RFinger32/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_RFinger4_pose_matrix">
+      <source id="mlb-hb-2_RFinger4_pose_matrix-input">
+        <float_array id="mlb-hb-2_RFinger4_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger4_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger4_pose_matrix-output">
+        <float_array id="mlb-hb-2_RFinger4_pose_matrix-output-array" count="32">0.9553062 -0.1954064 0.2218254 -0.5787735 0.1316768 0.9530995 0.2725124 8.662121 -0.2646722 -0.2311234 0.9362321 -3.438179 0 0 0 1 0.9553062 -0.1954064 0.2218254 -0.5787735 0.1316768 0.9530995 0.2725124 8.662121 -0.2646722 -0.2311234 0.9362321 -3.438179 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger4_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger4_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_RFinger4_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger4_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_RFinger4_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_RFinger4_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_RFinger4_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_RFinger4_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_RFinger4_pose_matrix-sampler" target="RFinger4/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_RFinger41_pose_matrix">
+      <source id="mlb-hb-2_RFinger41_pose_matrix-input">
+        <float_array id="mlb-hb-2_RFinger41_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger41_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger41_pose_matrix-output">
+        <float_array id="mlb-hb-2_RFinger41_pose_matrix-output-array" count="32">0.9999999 3.41505e-4 1.88947e-4 3.8147e-6 -3.41535e-4 1 6.52373e-5 2.60887 -1.88947e-4 -6.54161e-5 0.9999999 7.62939e-6 0 0 0 1 0.9999999 3.41505e-4 1.88947e-4 3.8147e-6 -3.41535e-4 1 6.52373e-5 2.60887 -1.88947e-4 -6.54161e-5 0.9999999 7.62939e-6 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger41_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger41_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_RFinger41_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger41_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_RFinger41_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_RFinger41_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_RFinger41_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_RFinger41_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_RFinger41_pose_matrix-sampler" target="RFinger41/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_RFinger42_pose_matrix">
+      <source id="mlb-hb-2_RFinger42_pose_matrix-input">
+        <float_array id="mlb-hb-2_RFinger42_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger42_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger42_pose_matrix-output">
+        <float_array id="mlb-hb-2_RFinger42_pose_matrix-output-array" count="32">0.9959445 -0.07274827 -0.05293527 1.90735e-6 0.0713509 0.997063 -0.02782694 1.913085 0.05480424 0.02393712 0.9982102 0 0 0 0 1 0.9959445 -0.07274827 -0.05293527 1.90735e-6 0.0713509 0.997063 -0.02782694 1.913085 0.05480424 0.02393712 0.9982102 0 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger42_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger42_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_RFinger42_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger42_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_RFinger42_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_RFinger42_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_RFinger42_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_RFinger42_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_RFinger42_pose_matrix-sampler" target="RFinger42/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_RFinger0_pose_matrix">
+      <source id="mlb-hb-2_RFinger0_pose_matrix-input">
+        <float_array id="mlb-hb-2_RFinger0_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger0_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger0_pose_matrix-output">
+        <float_array id="mlb-hb-2_RFinger0_pose_matrix-output-array" count="32">0.7498912 -0.283547 -0.5977159 -1.571415 -0.2184646 0.7466727 -0.628294 1.903343 0.624449 0.6017317 0.4979782 1.513859 0 0 0 1 0.7498912 -0.283547 -0.5977159 -1.571415 -0.2184646 0.7466727 -0.628294 1.903343 0.624449 0.6017317 0.4979782 1.513859 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger0_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger0_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_RFinger0_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger0_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_RFinger0_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_RFinger0_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_RFinger0_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_RFinger0_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_RFinger0_pose_matrix-sampler" target="RFinger0/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_RFinger01_pose_matrix">
+      <source id="mlb-hb-2_RFinger01_pose_matrix-input">
+        <float_array id="mlb-hb-2_RFinger01_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger01_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger01_pose_matrix-output">
+        <float_array id="mlb-hb-2_RFinger01_pose_matrix-output-array" count="32">0.9990658 -0.03338531 0.02743888 0 0.03334729 0.9994422 0.001844287 4.762951 -0.02748519 -9.27627e-4 0.9996217 1.90735e-6 0 0 0 1 0.9990658 -0.03338531 0.02743888 0 0.03334729 0.9994422 0.001844287 4.762951 -0.02748519 -9.27627e-4 0.9996217 1.90735e-6 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger01_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger01_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_RFinger01_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger01_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_RFinger01_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_RFinger01_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_RFinger01_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_RFinger01_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_RFinger01_pose_matrix-sampler" target="RFinger01/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_RFinger02_pose_matrix">
+      <source id="mlb-hb-2_RFinger02_pose_matrix-input">
+        <float_array id="mlb-hb-2_RFinger02_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger02_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger02_pose_matrix-output">
+        <float_array id="mlb-hb-2_RFinger02_pose_matrix-output-array" count="32">0.9994995 -0.008794993 0.03038976 0 0.008120567 0.9997196 0.02224603 3.108776 -0.03057691 -0.02198806 0.9992905 0 0 0 0 1 0.9994995 -0.008794993 0.03038976 0 0.008120567 0.9997196 0.02224603 3.108776 -0.03057691 -0.02198806 0.9992905 0 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger02_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFinger02_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_RFinger02_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFinger02_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_RFinger02_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_RFinger02_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_RFinger02_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_RFinger02_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_RFinger02_pose_matrix-sampler" target="RFinger02/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_RThigh_pose_matrix">
+      <source id="mlb-hb-2_RThigh_pose_matrix-input">
+        <float_array id="mlb-hb-2_RThigh_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RThigh_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RThigh_pose_matrix-output">
+        <float_array id="mlb-hb-2_RThigh_pose_matrix-output-array" count="32">-0.7422761 -0.6411495 -0.1948156 -10.08512 0.2076043 -0.4964581 0.8428701 -0.4350052 -0.6371235 0.5851974 0.5016144 0.8177605 0 0 0 1 -0.9540426 0.2932436 -0.06173051 -10.2659 -0.09873255 -0.113095 0.9886665 1.238358 0.2829385 0.9493245 0.1368503 -0.3657646 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RThigh_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RThigh_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_RThigh_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RThigh_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_RThigh_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_RThigh_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_RThigh_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_RThigh_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_RThigh_pose_matrix-sampler" target="RThigh/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_RShin_pose_matrix">
+      <source id="mlb-hb-2_RShin_pose_matrix-input">
+        <float_array id="mlb-hb-2_RShin_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RShin_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RShin_pose_matrix-output">
+        <float_array id="mlb-hb-2_RShin_pose_matrix-output-array" count="32">0.9998307 -0.005166978 -0.01765354 -1.90735e-6 0.01839434 0.2808437 0.9595771 43.1227 -3.72529e-7 -0.9597393 0.2808914 -7.62939e-6 0 0 0 1 0.9998307 -0.008502126 -0.01631128 -1.90735e-6 0.01839428 0.4621287 0.8866218 43.1227 -3.8743e-7 -0.8867717 0.4622071 -7.62939e-6 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RShin_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RShin_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_RShin_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RShin_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_RShin_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_RShin_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_RShin_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_RShin_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_RShin_pose_matrix-sampler" target="RShin/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_RFoot_pose_matrix">
+      <source id="mlb-hb-2_RFoot_pose_matrix-input">
+        <float_array id="mlb-hb-2_RFoot_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFoot_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFoot_pose_matrix-output">
+        <float_array id="mlb-hb-2_RFoot_pose_matrix-output-array" count="32">-0.999625 -0.02738319 -1.93298e-4 -9.53674e-7 -0.0116498 0.4188697 0.9079715 42.33679 -0.02478221 0.9076335 -0.4190316 -9.53674e-7 0 0 0 1 -0.9988154 -0.04860661 0.002307631 -9.53674e-7 -0.02304816 0.5143176 0.85729 42.33679 -0.04285686 0.8562214 -0.5148286 -9.53674e-7 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFoot_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RFoot_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_RFoot_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RFoot_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_RFoot_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_RFoot_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_RFoot_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_RFoot_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_RFoot_pose_matrix-sampler" target="RFoot/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_RToe_pose_matrix">
+      <source id="mlb-hb-2_RToe_pose_matrix-input">
+        <float_array id="mlb-hb-2_RToe_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RToe_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RToe_pose_matrix-output">
+        <float_array id="mlb-hb-2_RToe_pose_matrix-output-array" count="32">0.9999999 -7.45058e-9 5.36442e-7 9.53674e-7 -2.23517e-7 0.9021519 0.4314186 10.78577 -5.06639e-7 -0.4314187 0.9021518 0 0 0 0 1 0.9999999 -7.45058e-9 5.36442e-7 9.53674e-7 -2.23517e-7 0.8931886 0.4496821 10.78577 -5.06639e-7 -0.4496822 0.8931886 0 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RToe_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_RToe_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_RToe_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_RToe_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_RToe_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_RToe_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_RToe_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_RToe_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_RToe_pose_matrix-sampler" target="RToe/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_LThigh_pose_matrix">
+      <source id="mlb-hb-2_LThigh_pose_matrix-input">
+        <float_array id="mlb-hb-2_LThigh_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LThigh_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LThigh_pose_matrix-output">
+        <float_array id="mlb-hb-2_LThigh_pose_matrix-output-array" count="32">-0.4462925 0.894834 -0.009738952 11.34305 -0.3116343 -0.1452056 0.9390419 2.147514 0.8388721 0.4221223 0.3436653 0.7932396 0 0 0 1 -0.9468002 0.3063232 0.09866542 11.49175 -0.2837679 -0.9392617 0.1930369 0.8273849 0.151804 0.154769 0.976218 2.493847 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LThigh_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LThigh_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_LThigh_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LThigh_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_LThigh_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_LThigh_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_LThigh_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_LThigh_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_LThigh_pose_matrix-sampler" target="LThigh/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_LShin_pose_matrix">
+      <source id="mlb-hb-2_LShin_pose_matrix-input">
+        <float_array id="mlb-hb-2_LShin_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LShin_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LShin_pose_matrix-output">
+        <float_array id="mlb-hb-2_LShin_pose_matrix-output-array" count="32">0.9998307 0.003336813 0.01809111 1.90735e-6 -0.01839617 0.1813529 0.9832461 43.12299 4.47035e-8 -0.9834124 0.1813838 0 0 0 0 1 0.9998307 0.01278232 0.01323004 1.90735e-6 -0.01839618 0.6947148 0.7190501 43.12299 6.70552e-8 -0.7191716 0.6948326 0 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LShin_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LShin_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_LShin_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LShin_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_LShin_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_LShin_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_LShin_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_LShin_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_LShin_pose_matrix-sampler" target="LShin/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_LFoot_pose_matrix">
+      <source id="mlb-hb-2_LFoot_pose_matrix-input">
+        <float_array id="mlb-hb-2_LFoot_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFoot_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFoot_pose_matrix-output">
+        <float_array id="mlb-hb-2_LFoot_pose_matrix-output-array" count="32">-0.9993747 0.03535496 3.56031e-4 -4.76837e-6 0.01493289 0.4129367 0.9106372 42.3368 0.03204866 0.9100735 -0.4132064 3.8147e-6 0 0 0 1 -0.9991796 0.0404976 -1.41333e-5 -4.76837e-6 0.01747985 0.431591 0.9018999 42.3368 0.03653103 0.9011601 -0.4319448 3.8147e-6 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFoot_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LFoot_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_LFoot_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LFoot_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_LFoot_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_LFoot_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_LFoot_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_LFoot_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_LFoot_pose_matrix-sampler" target="LFoot/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_LToe_pose_matrix">
+      <source id="mlb-hb-2_LToe_pose_matrix-input">
+        <float_array id="mlb-hb-2_LToe_pose_matrix-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LToe_pose_matrix-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LToe_pose_matrix-output">
+        <float_array id="mlb-hb-2_LToe_pose_matrix-output-array" count="32">1 -1.19209e-7 4.03076e-6 3.8147e-6 -1.72853e-6 0.8896468 0.4566491 10.78586 -3.66964e-6 -0.4566492 0.889647 0 0 0 0 1 0.9999999 -3.13669e-6 2.48849e-6 3.8147e-6 -1.69873e-6 0.2269979 0.9738952 10.78586 -3.64054e-6 -0.9738954 0.2269979 0 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LToe_pose_matrix-output-array" count="2" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_LToe_pose_matrix-interpolation">
+        <Name_array id="mlb-hb-2_LToe_pose_matrix-interpolation-array" count="2">LINEAR LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_LToe_pose_matrix-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_LToe_pose_matrix-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_LToe_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_LToe_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_LToe_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#mlb-hb-2_LToe_pose_matrix-sampler" target="LToe/transform"/>
+    </animation>
+    <animation id="mlb-hb-2_rotation_euler.Z">
+      <source id="mlb-hb-2_rotation_euler.Z-input">
+        <float_array id="mlb-hb-2_rotation_euler.Z-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_rotation_euler.Z-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_rotation_euler.Z-output">
+        <float_array id="mlb-hb-2_rotation_euler.Z-output-array" count="2">0 9.000004</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_rotation_euler.Z-output-array" count="2" stride="1">
+            <param name="ANGLE" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_rotation_euler.Z-interpolation">
+        <Name_array id="mlb-hb-2_rotation_euler.Z-interpolation-array" count="2">BEZIER BEZIER</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_rotation_euler.Z-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_rotation_euler.Z-intangent">
+        <float_array id="mlb-hb-2_rotation_euler.Z-intangent-array" count="4">-0.7482843 0 1.168382 9.000004</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_rotation_euler.Z-intangent-array" count="2" stride="2">
+            <param name="X" type="float"/>
+            <param name="Y" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_rotation_euler.Z-outtangent">
+        <float_array id="mlb-hb-2_rotation_euler.Z-outtangent-array" count="4">0.7482843 0 2.664951 9.000004</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_rotation_euler.Z-outtangent-array" count="2" stride="2">
+            <param name="X" type="float"/>
+            <param name="Y" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_rotation_euler.Z-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_rotation_euler.Z-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_rotation_euler.Z-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_rotation_euler.Z-interpolation"/>
+        <input semantic="IN_TANGENT" source="#mlb-hb-2_rotation_euler.Z-intangent"/>
+        <input semantic="OUT_TANGENT" source="#mlb-hb-2_rotation_euler.Z-outtangent"/>
+      </sampler>
+      <channel source="#mlb-hb-2_rotation_euler.Z-sampler" target="mlb-hb-2/rotationZ.ANGLE"/>
+    </animation>
+    <animation id="mlb-hb-2_location.Y">
+      <source id="mlb-hb-2_location.Y-input">
+        <float_array id="mlb-hb-2_location.Y-input-array" count="2">0 1.916667</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_location.Y-input-array" count="2" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_location.Y-output">
+        <float_array id="mlb-hb-2_location.Y-output-array" count="2">0 -16.88965</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_location.Y-output-array" count="2" stride="1">
+            <param name="Y" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_location.Y-interpolation">
+        <Name_array id="mlb-hb-2_location.Y-interpolation-array" count="2">BEZIER BEZIER</Name_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_location.Y-interpolation-array" count="2" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_location.Y-intangent">
+        <float_array id="mlb-hb-2_location.Y-intangent-array" count="4">-0.7024371 0 1.21423 -16.88965</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_location.Y-intangent-array" count="2" stride="2">
+            <param name="X" type="float"/>
+            <param name="Y" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="mlb-hb-2_location.Y-outtangent">
+        <float_array id="mlb-hb-2_location.Y-outtangent-array" count="4">0.7024371 0 2.619104 -16.88965</float_array>
+        <technique_common>
+          <accessor source="#mlb-hb-2_location.Y-outtangent-array" count="2" stride="2">
+            <param name="X" type="float"/>
+            <param name="Y" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="mlb-hb-2_location.Y-sampler">
+        <input semantic="INPUT" source="#mlb-hb-2_location.Y-input"/>
+        <input semantic="OUTPUT" source="#mlb-hb-2_location.Y-output"/>
+        <input semantic="INTERPOLATION" source="#mlb-hb-2_location.Y-interpolation"/>
+        <input semantic="IN_TANGENT" source="#mlb-hb-2_location.Y-intangent"/>
+        <input semantic="OUT_TANGENT" source="#mlb-hb-2_location.Y-outtangent"/>
+      </sampler>
+      <channel source="#mlb-hb-2_location.Y-sampler" target="mlb-hb-2/location.Y"/>
+    </animation>
+  </library_animations>
+  <library_controllers/>
+  <library_visual_scenes>
+    <visual_scene id="Scene" name="Scene">
+      <node id="mlb-hb-2" name="mlb-hb-2" type="NODE">
+        <matrix sid="transform">0.9876883 -0.1564345 0 0 0.1564345 0.9876883 0 -16.88965 0 0 1 0 0 0 0 1</matrix>
+        <translate sid="location">0 -16.88965 0</translate>
+        <rotate sid="rotationZ">0 0 1 9.000004</rotate>
+        <rotate sid="rotationY">0 1 0 0</rotate>
+        <rotate sid="rotationX">1 0 0 0</rotate>
+        <scale sid="scale">1 1 1</scale>
+        <node id="Hip" name="Hip" sid="Hip" type="JOINT">
+          <matrix sid="transform">0.9976854 -0.05104218 -0.04492958 -11.24495 -0.0248562 0.3412649 -0.9396385 4.979383 0.06329409 0.9385803 0.3392063 10.9127 0 0 0 1</matrix>
+          <node id="LowerSpine" name="LowerSpine" sid="LowerSpine" type="JOINT">
+            <matrix sid="transform">1 1.03042e-5 -2.5481e-6 1.10626e-4 -1.03042e-5 0.9047834 -0.425872 10.67212 -2.03028e-6 0.425872 0.9047834 -1.547293 0 0 0 1</matrix>
+            <node id="MiddleSpine" name="MiddleSpine" sid="MiddleSpine" type="JOINT">
+              <matrix sid="transform">1 2.12342e-7 -1.44355e-7 0 -3.50177e-7 0.9702097 0.2422668 8.465542 3.10596e-7 -0.2422668 0.9702096 -9.53674e-7 0 0 0 1</matrix>
+              <node id="Chest" name="Chest" sid="Chest" type="JOINT">
+                <matrix sid="transform">1 -7.82311e-8 1.1269e-7 -9.53674e-7 2.23517e-7 0.9241617 -0.3820013 10.67141 4.65661e-9 0.3820013 0.9241619 -4.76837e-7 0 0 0 1</matrix>
+                <node id="Neck" name="Neck" sid="Neck" type="JOINT">
+                  <matrix sid="transform">1 -7.18981e-6 9.9279e-7 2.86102e-6 7.48038e-6 0.997457 -0.07126945 23.05067 -5.87665e-7 0.07126945 0.9974571 -4.984381 0 0 0 1</matrix>
+                  <node id="Head" name="Head" sid="Head" type="JOINT">
+                    <matrix sid="transform">0.9999999 1.26511e-5 6.7614e-7 0 -1.20141e-5 0.9723439 0.2335534 13.79928 2.06567e-6 -0.2335533 0.972344 -1.90735e-6 0 0 0 1</matrix>
+                  </node>
+                </node>
+                <node id="LClavicle" name="LClavicle" sid="LClavicle" type="JOINT">
+                  <matrix sid="transform">0.3494316 0.8958491 0.2745032 2.142502 -0.8260157 0.1562507 0.5415569 23.68161 0.4422619 -0.4159811 0.7945844 2.492239 0 0 0 1</matrix>
+                  <node id="LShoulder" name="LShoulder" sid="LShoulder" type="JOINT">
+                    <matrix sid="transform">0.8969848 0.3502132 0.2697581 1.52588e-5 -0.2399907 0.8982573 -0.368155 13.97177 -0.371245 0.2654898 0.8897709 -5.72205e-6 0 0 0 1</matrix>
+                    <node id="LForearm" name="LForearm" sid="LForearm" type="JOINT">
+                      <matrix sid="transform">0.9999756 -0.006421745 0.002685647 7.62939e-6 0.006429024 0.9999757 -0.002714691 29.54319 -0.002668872 0.002731936 0.9999925 9.53674e-7 0 0 0 1</matrix>
+                      <node id="LHand" name="LHand" sid="LHand" type="JOINT">
+                        <matrix sid="transform">0.9994235 -0.005011559 -0.03357978 0 0.006135844 0.9994211 0.03345707 24.64474 0.03339265 -0.03364382 0.9988759 0 0 0 0 1</matrix>
+                        <node id="LFinger1" name="LFinger1" sid="LFinger1" type="JOINT">
+                          <matrix sid="transform">0.946712 0.2488312 0.2044986 -0.6417542 -0.1952302 0.9483301 -0.2501109 9.444832 -0.2561675 0.1968586 0.9463745 3.057473 0 0 0 1</matrix>
+                          <node id="LFinger11" name="LFinger11" sid="LFinger11" type="JOINT">
+                            <matrix sid="transform">1 4.57019e-5 7.31498e-5 0 -4.58062e-5 1 -6.92531e-5 3.730885 -7.30753e-5 6.92308e-5 1 -3.8147e-6 0 0 0 1</matrix>
+                            <node id="LFinger12" name="LFinger12" sid="LFinger12" type="JOINT">
+                              <matrix sid="transform">0.9984847 0.0523136 -0.01707359 0 -0.05223522 0.9986223 0.005001001 2.54705 0.01731165 -0.004101571 0.9998418 0 0 0 0 1</matrix>
+                            </node>
+                          </node>
+                        </node>
+                        <node id="LFinger2" name="LFinger2" sid="LFinger2" type="JOINT">
+                          <matrix sid="transform">0.9994203 0.006255366 0.03347318 -0.8648605 -0.005125873 0.9994181 -0.0337244 9.684265 -0.03366465 0.03353324 0.9988704 0.6500845 0 0 0 1</matrix>
+                          <node id="LFinger21" name="LFinger21" sid="LFinger21" type="JOINT">
+                            <matrix sid="transform">0.9999999 -2.7816e-4 -1.77924e-4 0 2.78071e-4 1 1.75133e-4 4.417496 1.77864e-4 -1.75188e-4 0.9999999 -9.53674e-7 0 0 0 1</matrix>
+                            <node id="LFinger22" name="LFinger22" sid="LFinger22" type="JOINT">
+                              <matrix sid="transform">0.9972653 0.07353532 0.007378414 0 -0.07348001 0.9972685 -0.007500023 2.448647 -0.007909779 0.006937352 0.9999446 9.53674e-7 0 0 0 1</matrix>
+                            </node>
+                          </node>
+                        </node>
+                        <node id="LFinger3" name="LFinger3" sid="LFinger3" type="JOINT">
+                          <matrix sid="transform">0.998107 0.05720055 -0.02259744 -0.6435699 -0.05659821 0.9980466 0.02645332 9.27066 0.02406645 -0.02512427 0.9993945 -1.783319 0 0 0 1</matrix>
+                          <node id="LFinger31" name="LFinger31" sid="LFinger31" type="JOINT">
+                            <matrix sid="transform">1 -3.29193e-4 -2.12446e-4 7.62939e-6 3.29139e-4 0.9999999 1.83311e-4 4.021378 2.12388e-4 -1.83395e-4 1 0 0 0 0 1</matrix>
+                            <node id="LFinger32" name="LFinger32" sid="LFinger32" type="JOINT">
+                              <matrix sid="transform">0.9972115 0.07280551 0.01637851 7.62939e-6 -0.07261307 0.9972872 -0.01205327 2.29158 -0.01721163 0.01083037 0.9997932 0 0 0 0 1</matrix>
+                            </node>
+                          </node>
+                        </node>
+                        <node id="LFinger4" name="LFinger4" sid="LFinger4" type="JOINT">
+                          <matrix sid="transform">0.9552996 0.1954365 -0.2218282 0.5787048 -0.131703 0.9530929 0.2725231 8.662109 0.2646836 -0.2311257 0.9362283 -3.438199 0 0 0 1</matrix>
+                          <node id="LFinger41" name="LFinger41" sid="LFinger41" type="JOINT">
+                            <matrix sid="transform">0.9999999 -3.31707e-4 -1.85862e-4 7.62939e-6 3.31692e-4 0.9999999 6.45965e-5 2.608883 1.85773e-4 -6.4671e-5 1 0 0 0 0 1</matrix>
+                            <node id="LFinger42" name="LFinger42" sid="LFinger42" type="JOINT">
+                              <matrix sid="transform">0.9959479 0.07270579 0.05293077 0 -0.07130816 0.9970658 -0.02783161 1.91312 -0.05479905 0.02394446 0.9982102 1.90735e-6 0 0 0 1</matrix>
+                            </node>
+                          </node>
+                        </node>
+                        <node id="LFinger0" name="LFinger0" sid="LFinger0" type="JOINT">
+                          <matrix sid="transform">0.7499093 0.283503 0.5977144 1.571495 0.2184695 0.7466959 -0.6282647 1.903358 -0.6244256 0.6017236 0.4980173 1.513952 0 0 0 1</matrix>
+                          <node id="LFinger01" name="LFinger01" sid="LFinger01" type="JOINT">
+                            <matrix sid="transform">0.9990641 0.03343289 -0.02744585 0 -0.03339578 0.9994404 0.001806483 4.762842 0.02749082 -8.88199e-4 0.9996215 0 0 0 0 1</matrix>
+                            <node id="LFinger02" name="LFinger02" sid="LFinger02" type="JOINT">
+                              <matrix sid="transform">0.9995006 0.008764923 -0.03035957 0 -0.008091062 0.9997196 0.02224812 3.10887 0.03054604 -0.02199131 0.9992913 0 0 0 0 1</matrix>
+                            </node>
+                          </node>
+                        </node>
+                      </node>
+                    </node>
+                  </node>
+                </node>
+                <node id="RClavicle" name="RClavicle" sid="RClavicle" type="JOINT">
+                  <matrix sid="transform">0.3494323 -0.8958493 -0.2745013 -2.1425 0.8260164 0.1562529 0.5415549 23.68159 -0.44226 -0.4159794 0.7945861 2.492144 0 0 0 1</matrix>
+                  <node id="RShoulder" name="RShoulder" sid="RShoulder" type="JOINT">
+                    <matrix sid="transform">0.8969851 -0.3502132 -0.2697565 -3.8147e-6 0.2399931 0.8982576 -0.3681529 13.97422 0.3712428 0.2654881 0.8897724 -1.90735e-6 0 0 0 1</matrix>
+                    <node id="RForearm" name="RForearm" sid="RForearm" type="JOINT">
+                      <matrix sid="transform">0.9999757 0.006421983 -0.00268599 7.62939e-6 -0.006428972 0.9999756 -0.002714799 29.5432 0.002668463 0.002731983 0.9999927 9.53674e-7 0 0 0 1</matrix>
+                      <node id="RHand" name="RHand" sid="RHand" type="JOINT">
+                        <matrix sid="transform">0.9994233 0.005019706 0.03358148 -7.62939e-6 -0.006144248 0.9994211 0.03345969 24.64473 -0.03339408 -0.03364672 0.9988757 0 0 0 0 1</matrix>
+                        <node id="RFinger1" name="RFinger1" sid="RFinger1" type="JOINT">
+                          <matrix sid="transform">0.9467096 -0.2488414 -0.2044968 0.6417694 0.1952397 0.948327 -0.2501149 9.444832 0.2561687 0.1968603 0.9463739 3.057502 0 0 0 1</matrix>
+                          <node id="RFinger11" name="RFinger11" sid="RFinger11" type="JOINT">
+                            <matrix sid="transform">0.9999999 -7.9155e-5 -7.86036e-5 0 7.9006e-5 1 -7.47293e-5 3.730881 7.86036e-5 7.47964e-5 1 0 0 0 0 1</matrix>
+                            <node id="RFinger12" name="RFinger12" sid="RFinger12" type="JOINT">
+                              <matrix sid="transform">0.9984862 -0.05228356 0.01708426 0 0.05220515 0.9986238 0.005004555 2.547073 -0.01732244 -0.004105069 0.9998415 0 0 0 0 1</matrix>
+                            </node>
+                          </node>
+                        </node>
+                        <node id="RFinger2" name="RFinger2" sid="RFinger2" type="JOINT">
+                          <matrix sid="transform">0.99942 -0.006264847 -0.03347404 0.8648834 0.005135152 0.9994178 -0.03372725 9.684273 0.03366584 0.03353577 0.9988703 0.6501131 0 0 0 1</matrix>
+                          <node id="RFinger21" name="RFinger21" sid="RFinger21" type="JOINT">
+                            <matrix sid="transform">1 2.81624e-4 2.15285e-4 -7.62939e-6 -2.81714e-4 0.9999999 2.1564e-4 4.417603 -2.15221e-4 -2.15698e-4 1 0 0 0 0 1</matrix>
+                            <node id="RFinger22" name="RFinger22" sid="RFinger22" type="JOINT">
+                              <matrix sid="transform">0.9972647 -0.07353847 -0.007416409 -7.62939e-6 0.07348256 0.9972679 -0.007541144 2.448662 0.007950712 0.006975541 0.999944 9.53674e-7 0 0 0 1</matrix>
+                            </node>
+                          </node>
+                        </node>
+                        <node id="RFinger3" name="RFinger3" sid="RFinger3" type="JOINT">
+                          <matrix sid="transform">0.9981065 -0.05720792 0.02259433 0.6435013 0.05660564 0.9980462 0.02645083 9.270676 -0.02406338 -0.02512179 0.9993947 -1.783296 0 0 0 1</matrix>
+                          <node id="RFinger31" name="RFinger31" sid="RFinger31" type="JOINT">
+                            <matrix sid="transform">0.9999999 3.26909e-4 2.14451e-4 0 -3.26827e-4 1 1.82888e-4 4.021378 -2.14399e-4 -1.82954e-4 0.9999999 -2.38419e-7 0 0 0 1</matrix>
+                            <node id="RFinger32" name="RFinger32" sid="RFinger32" type="JOINT">
+                              <matrix sid="transform">0.997212 -0.07280037 -0.01638302 -7.62939e-6 0.07260796 0.997288 -0.0120521 2.291588 0.01721597 0.01082896 0.9997931 1.19209e-6 0 0 0 1</matrix>
+                            </node>
+                          </node>
+                        </node>
+                        <node id="RFinger4" name="RFinger4" sid="RFinger4" type="JOINT">
+                          <matrix sid="transform">0.9553062 -0.1954065 0.2218253 -0.5787659 0.1316768 0.9530994 0.2725124 8.662117 -0.2646722 -0.2311235 0.936232 -3.438176 0 0 0 1</matrix>
+                          <node id="RFinger41" name="RFinger41" sid="RFinger41" type="JOINT">
+                            <matrix sid="transform">1 3.41505e-4 1.88991e-4 0 -3.41535e-4 1 6.53304e-5 2.608879 -1.88962e-4 -6.53714e-5 0.9999999 1.90735e-6 0 0 0 1</matrix>
+                            <node id="RFinger42" name="RFinger42" sid="RFinger42" type="JOINT">
+                              <matrix sid="transform">0.9959445 -0.0727483 -0.05293532 -7.62939e-6 0.07135096 0.997063 -0.02782698 1.913078 0.05480421 0.02393718 0.9982101 0 0 0 0 1</matrix>
+                            </node>
+                          </node>
+                        </node>
+                        <node id="RFinger0" name="RFinger0" sid="RFinger0" type="JOINT">
+                          <matrix sid="transform">0.7498913 -0.283547 -0.5977159 -1.571411 -0.2184644 0.7466727 -0.6282939 1.903343 0.6244488 0.6017317 0.4979783 1.513855 0 0 0 1</matrix>
+                          <node id="RFinger01" name="RFinger01" sid="RFinger01" type="JOINT">
+                            <matrix sid="transform">0.9990659 -0.03338543 0.02743882 3.8147e-6 0.03334746 0.9994423 0.001844287 4.762959 -0.02748504 -9.27657e-4 0.9996219 7.62939e-6 0 0 0 1</matrix>
+                            <node id="RFinger02" name="RFinger02" sid="RFinger02" type="JOINT">
+                              <matrix sid="transform">0.9994995 -0.008794904 0.03038979 1.90735e-6 0.008120507 0.9997197 0.02224618 3.108772 -0.03057688 -0.02198821 0.9992905 0 0 0 0 1</matrix>
+                            </node>
+                          </node>
+                        </node>
+                      </node>
+                    </node>
+                  </node>
+                </node>
+              </node>
+            </node>
+          </node>
+          <node id="RThigh" name="RThigh" sid="RThigh" type="JOINT">
+            <matrix sid="transform">-0.9998306 -0.01840459 -1.79233e-6 -10.95606 0.01700249 -0.9236304 -0.382907 4.213605 0.007045539 -0.3828423 0.9237868 0.7736585 0 0 0 1</matrix>
+            <node id="RShin" name="RShin" sid="RShin" type="JOINT">
+              <matrix sid="transform">0.9998308 -0.01839409 4.49596e-7 -1.90735e-6 0.01839412 0.9998308 6.33299e-8 43.1227 -4.46569e-7 -5.21541e-8 0.9999999 0 0 0 0 1</matrix>
+              <node id="RFoot" name="RFoot" sid="RFoot" type="JOINT">
+                <matrix sid="transform">-0.9999999 -3.18512e-7 -8.49366e-7 1.90735e-6 -7.97212e-7 0.4314196 0.9021513 42.3368 5.7742e-8 0.9021516 -0.4314196 1.90735e-6 0 0 0 1</matrix>
+                <node id="RToe" name="RToe" sid="RToe" type="JOINT">
+                  <matrix sid="transform">1 2.32831e-8 5.1409e-7 -1.90735e-6 -2.58908e-7 0.9021516 0.4314194 10.78577 -7.07805e-7 -0.4314194 0.9021516 0 0 0 0 1</matrix>
+                </node>
+              </node>
+            </node>
+          </node>
+          <node id="LThigh" name="LThigh" sid="LThigh" type="JOINT">
+            <matrix sid="transform">-0.9998308 0.01838566 -2.23401e-6 10.95595 -0.01698367 -0.9236308 -0.3829071 4.213693 -0.00704213 -0.3828424 0.9237868 0.7736361 0 0 0 1</matrix>
+            <node id="LShin" name="LShin" sid="LShin" type="JOINT">
+              <matrix sid="transform">0.9998307 0.01839624 -1.86265e-8 -5.96046e-7 -0.01839625 0.9998306 -4.84288e-8 43.12299 1.86265e-8 -3.35276e-8 0.9999999 -1.43051e-6 0 0 0 1</matrix>
+              <node id="LFoot" name="LFoot" sid="LFoot" type="JOINT">
+                <matrix sid="transform">-1 -1.41561e-7 -2.23517e-7 2.38419e-7 -1.2666e-7 0.4314157 0.9021533 42.33679 -1.09198e-7 0.9021535 -0.4314155 4.76837e-7 0 0 0 1</matrix>
+                <node id="LToe" name="LToe" sid="LToe" type="JOINT">
+                  <matrix sid="transform">0.9999999 -5.14556e-8 4.00096e-6 -1.54972e-6 -1.51619e-6 0.9021537 0.4314155 10.78587 -3.15532e-6 -0.4314148 0.9021534 7.62939e-6 0 0 0 1</matrix>
+                </node>
+              </node>
+            </node>
+          </node>
+        </node>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#Scene"/>
+  </scene>
+</COLLADA>

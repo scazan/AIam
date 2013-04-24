@@ -59,17 +59,17 @@ class AIamCaptureTest : public AppBasic
 		typedef shared_ptr< assimp::AssimpLoader > AssimpLoaderRef;
 		vector< AssimpLoaderRef > mMotions;
 		int mMotionIndex;
-		int mCurrentMotion;
+		AssimpLoaderRef mCurrentMotion;
 		Anim< double > mMotionTime;
 
 		MayaCamUI mMayaCam;
 
-		//! Returns paths of bvh files in the directory.
-		vector< fs::path > getBvhs( const fs::path & relativeDir );
-		vector< fs::path > mBvhPaths; //< all bvh paths
-		//! Loads some bvh files.
-		void loadSomeBvhs();
-		bool mAllBvhsLoaded;
+		//! Returns paths of motion files in the directory.
+		vector< fs::path > getMotions( const fs::path & relativeDir );
+		vector< fs::path > mMotionPaths; //< all bvh paths
+		//! Loads some motion files.
+		void loadSomeMotions();
+		bool mAllMotionsLoaded;
 		float mLoadingProgress;
 		vector< string > mMotionNames;
 
@@ -83,6 +83,22 @@ class AIamCaptureTest : public AppBasic
 		bool mDrawPlane;
 		bool mDrawGrid;
 		int mGridSize;
+
+		enum
+		{
+			POSE_MC = 0,
+			POSE_MLB,
+			POSE_ML,
+			POSE_HB,
+			POSE_MLF
+		};
+#define POSE_COUNT ( POSE_MLF + 1 )
+		const map< string, int > mPoseStrToId = { { "mc", POSE_MC }, { "mlb", POSE_MLB }, { "ml", POSE_ML },
+			{ "hb", POSE_HB }, { "mlf", POSE_MLF } };
+		const vector< string > mPoseNames = { "mc", "mlb", "ml", "hb", "mlf" };
+		AssimpLoaderRef mMotionGrid[ POSE_COUNT ][ POSE_COUNT ];
+		int mCurrentPose = POSE_MC;
+		int mTargetPose = POSE_MC;
 };
 
 void AIamCaptureTest::prepareSettings( Settings *settings )
@@ -93,7 +109,7 @@ void AIamCaptureTest::prepareSettings( Settings *settings )
 void AIamCaptureTest::setup()
 {
 	mVerticalSyncEnabled = false;
-	mAllBvhsLoaded = false;
+	mAllMotionsLoaded = false;
 
 	mndl::params::PInterfaceGl::load( "params.xml" );
 	mParams = mndl::params::PInterfaceGl( "Parameters", Vec2i( 200, 300 ) );
@@ -114,15 +130,29 @@ void AIamCaptureTest::setup()
 	mParams.addPersistentParam( "Grid size", &mGridSize, 50, "min=1 max=512" );
 	mParams.addSeparator();
 
+	mParams.addParam( "Go to pose", mPoseNames, &mTargetPose );
+	mParams.addButton( "Go", [&]() {
+			mCurrentMotion = mMotionGrid[ mCurrentPose ][ mTargetPose ];
+			if ( mCurrentMotion )
+			{
+				mMotionTime = 0.;
+				double motionDuration = mCurrentMotion->getAnimationDuration( 0 );
+				timeline().apply( &mMotionTime, motionDuration, motionDuration ).finishFn(
+					[&]() { mCurrentPose = mTargetPose; } );
+			}
+	} );
+
+	mParams.addSeparator();
+
 	mTriMeshPlane = createSquare( Vec2i( 64, 64 ) );
 
 	mMotions.push_back( AssimpLoaderRef() );
 	mParams.addText( "Motions" );
 	mMotionNames.push_back( "no motion" );
-	mBvhPaths = getBvhs( "motions" );
+	mMotionPaths = getMotions( "motions" );
 }
 
-vector< fs::path > AIamCaptureTest::getBvhs( const fs::path &relativeDir )
+vector< fs::path > AIamCaptureTest::getMotions( const fs::path &relativeDir )
 {
 	vector< fs::path > files;
 
@@ -130,7 +160,8 @@ vector< fs::path > AIamCaptureTest::getBvhs( const fs::path &relativeDir )
 
 	for ( fs::directory_iterator it( dataPath ); it != fs::directory_iterator(); ++it )
 	{
-		if ( fs::is_regular_file( *it ) && ( it->path().extension().string() == ".bvh" ) )
+		if ( fs::is_regular_file( *it ) && ( ( it->path().extension().string() == ".bvh" ) ||
+				( it->path().extension().string() == ".dae" ) ) )
 		{
 			files.push_back( relativeDir / it->path().filename() );
 		}
@@ -139,37 +170,53 @@ vector< fs::path > AIamCaptureTest::getBvhs( const fs::path &relativeDir )
 	return files;
 }
 
-void AIamCaptureTest::loadSomeBvhs()
+void AIamCaptureTest::loadSomeMotions()
 {
 	const int loadNum = 5;
-	static size_t bvhNum = mBvhPaths.size();
+	static size_t bvhNum = mMotionPaths.size();
 	int i = 0;
 
-	auto bIt = mBvhPaths.begin();
-	while ( ( bIt != mBvhPaths.end() ) && ( i < loadNum ) )
+	auto bIt = mMotionPaths.begin();
+	while ( ( bIt != mMotionPaths.end() ) && ( i < loadNum ) )
 	{
 		AssimpLoaderRef aref( AssimpLoaderRef( new assimp::AssimpLoader( getAssetPath( *bIt ) ) ) );
 		aref->setAnimation( 0 );
 		aref->enableSkinning( true );
 		aref->enableAnimation( true );
 		mMotions.push_back( aref );
+
+		// splitting to pose tokens "hb-mb-1.dae" -> "hb", "mb", "1"
+		vector< string > filenameTokens = split( bIt->stem().string(), "-" );
+		auto poseIdIt0 = mPoseStrToId.find( filenameTokens[ 0 ] );
+		auto poseIdIt1 = mPoseStrToId.find( filenameTokens[ 1 ] );
+		if ( ( poseIdIt0 != mPoseStrToId.end() ) && ( poseIdIt1 != mPoseStrToId.end() ) )
+		{
+			int poseId0 = poseIdIt0->second;
+			int poseId1 = poseIdIt1->second;
+			mMotionGrid[ poseId0 ][poseId1 ] = aref;
+		}
+		else
+		{
+			app::console() << "Unknown pose id in filename " << bIt->filename().string() << endl;
+		}
+
 		mMotionNames.push_back( bIt->filename().string() );
 
 		++i;
-		bIt = mBvhPaths.erase( bIt );
+		bIt = mMotionPaths.erase( bIt );
 	}
 
-	if ( ( mLoadingProgress > .999f ) && mBvhPaths.empty() )
+	if ( ( mLoadingProgress > .999f ) && mMotionPaths.empty() )
 	{
-		mAllBvhsLoaded = true;
-		mMotionIndex = mCurrentMotion = 0;
+		mAllMotionsLoaded = true;
+		mMotionIndex = 0;
 		mParams.addParam( "Motion files", mMotionNames, &mMotionIndex );
 		mParams.addButton( "Play motion", [&]() {
-				mCurrentMotion = mMotionIndex;
-				if ( mMotions[ mCurrentMotion ] )
+				mCurrentMotion = mMotions[ mMotionIndex ];
+				if ( mCurrentMotion )
 				{
 					mMotionTime = 0.;
-					double motionDuration = mMotions[ mCurrentMotion ]->getAnimationDuration( 0 );
+					double motionDuration = mCurrentMotion->getAnimationDuration( 0 );
 					timeline().apply( &mMotionTime, motionDuration, motionDuration );
 				}
 		} );
@@ -191,16 +238,16 @@ void AIamCaptureTest::update()
 	if ( mVerticalSyncEnabled != gl::isVerticalSyncEnabled() )
 		gl::enableVerticalSync( mVerticalSyncEnabled );
 
-	if ( !mAllBvhsLoaded )
+	if ( !mAllMotionsLoaded )
 	{
-		loadSomeBvhs();
+		loadSomeMotions();
 		return;
 	}
 
-	if ( mMotions[ mCurrentMotion ] )
+	if ( mCurrentMotion )
 	{
-		mMotions[ mCurrentMotion ]->setTime( mMotionTime );
-		mMotions[ mCurrentMotion ]->update();
+		mCurrentMotion->setTime( mMotionTime );
+		mCurrentMotion->update();
 	}
 
 	static int lastGridSize = -1;
@@ -216,7 +263,7 @@ void AIamCaptureTest::draw()
 	gl::clear( Color::white() );
 
 	gl::setViewport( getWindowBounds() );
-	if ( !mAllBvhsLoaded )
+	if ( !mAllMotionsLoaded )
 	{
 		gl::disableDepthRead();
 		gl::enableAlphaBlending();
@@ -244,11 +291,10 @@ void AIamCaptureTest::draw()
 
 		glPolygonOffset( 1.0f, 1.0f );
 		gl::enable( GL_POLYGON_OFFSET_FILL );
-		if ( mMotions[ mCurrentMotion ] )
+		if ( mCurrentMotion )
 		{
 			gl::pushModelView();
-			gl::rotate( Vec3f( -90, 0, 0 ) );
-			mMotions[ mCurrentMotion ]->draw();
+			mCurrentMotion->draw();
 			gl::popModelView();
 		}
 
