@@ -101,13 +101,6 @@ class AIamCaptureTest : public AppBasic
 		int mCurrentPose = POSE_MC;
 		int mTargetPose = POSE_MC;
 
-		enum
-		{
-			CONTROL_MANUAL = 0,
-			CONTROL_OSC
-		};
-		int mControlType;
-
 		bool positionReceived( const mndl::osc::Message &message );
 		mndl::osc::Server mListener;
 		std::mutex mOscMutex;
@@ -124,7 +117,7 @@ void AIamCaptureTest::setup()
 	mAllMotionsLoaded = false;
 
 	mndl::params::PInterfaceGl::load( "params.xml" );
-	mParams = mndl::params::PInterfaceGl( "Parameters", Vec2i( 200, 300 ) );
+	mParams = mndl::params::PInterfaceGl( "Parameters", Vec2i( 220, 320 ) );
 	mParams.addPersistentSizeAndPosition();
 	mParams.addParam( "Fps", &mFps, "", true );
 	mParams.addParam( "Vertical sync", &mVerticalSyncEnabled );
