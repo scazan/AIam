@@ -29,6 +29,7 @@
 #include "mndlkit/params/PParams.h"
 
 #include "AssimpLoader.h"
+#include "OscServer.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -99,6 +100,17 @@ class AIamCaptureTest : public AppBasic
 		AssimpLoaderRef mMotionGrid[ POSE_COUNT ][ POSE_COUNT ];
 		int mCurrentPose = POSE_MC;
 		int mTargetPose = POSE_MC;
+
+		enum
+		{
+			CONTROL_MANUAL = 0,
+			CONTROL_OSC
+		};
+		int mControlType;
+
+		bool positionReceived( const mndl::osc::Message &message );
+		mndl::osc::Server mListener;
+		std::mutex mOscMutex;
 };
 
 void AIamCaptureTest::prepareSettings( Settings *settings )
@@ -124,12 +136,14 @@ void AIamCaptureTest::setup()
 	cam.setCenterOfInterestPoint( Vec3f( 0, 70, 0 ) );
 	mMayaCam.setCurrentCam( cam );
 
+	mParams.addText( "Debug" );
 	mParams.addPersistentParam( "Draw axes", &mDrawAxes, true );
 	mParams.addPersistentParam( "Draw plane", &mDrawPlane, true );
 	mParams.addPersistentParam( "Draw grid", &mDrawGrid, true );
 	mParams.addPersistentParam( "Grid size", &mGridSize, 50, "min=1 max=512" );
 	mParams.addSeparator();
 
+	mParams.addText( "Manual control" );
 	mParams.addParam( "Current pose", mPoseNames, &mCurrentPose, "", true );
 	mParams.addParam( "Go to pose", mPoseNames, &mTargetPose );
 	mParams.addButton( "Go", [&]() {
@@ -160,6 +174,9 @@ void AIamCaptureTest::setup()
 	mParams.addText( "Motions" );
 	mMotionNames.push_back( "no motion" );
 	mMotionPaths = getMotions( "motions" );
+
+	mListener = mndl::osc::Server( 7892 );
+	mListener.registerOscReceived< AIamCaptureTest >( &AIamCaptureTest::positionReceived, this, "/position", "ssf" );
 }
 
 vector< fs::path > AIamCaptureTest::getMotions( const fs::path &relativeDir )
@@ -256,10 +273,14 @@ void AIamCaptureTest::update()
 		return;
 	}
 
-	if ( mCurrentMotion )
 	{
-		mCurrentMotion->setTime( mMotionTime );
-		mCurrentMotion->update();
+		std::lock_guard< std::mutex > lock( mOscMutex );
+
+		if ( mCurrentMotion )
+		{
+			mCurrentMotion->setTime( mMotionTime );
+			mCurrentMotion->update();
+		}
 	}
 
 	static int lastGridSize = -1;
@@ -303,11 +324,15 @@ void AIamCaptureTest::draw()
 
 		glPolygonOffset( 1.0f, 1.0f );
 		gl::enable( GL_POLYGON_OFFSET_FILL );
-		if ( mCurrentMotion )
 		{
-			gl::pushModelView();
-			mCurrentMotion->draw();
-			gl::popModelView();
+			std::lock_guard< std::mutex > lock( mOscMutex );
+
+			if ( mCurrentMotion )
+			{
+				gl::pushModelView();
+				mCurrentMotion->draw();
+				gl::popModelView();
+			}
 		}
 
 		if ( mDrawPlane )
@@ -330,6 +355,35 @@ void AIamCaptureTest::draw()
 	}
 
 	mParams.draw();
+}
+
+bool AIamCaptureTest::positionReceived( const mndl::osc::Message &message )
+{
+	// /position s s f
+	string pose0str = message.getArg< string >( 0 );
+	string pose1str = message.getArg< string >( 1 );
+	float per = math< float >::clamp( message.getArg< float >( 2 ), 0.f, 1.f );
+	auto poseIdIt0 = mPoseStrToId.find( pose0str );
+	auto poseIdIt1 = mPoseStrToId.find( pose1str );
+	if ( ( poseIdIt0 != mPoseStrToId.end() ) && ( poseIdIt1 != mPoseStrToId.end() ) )
+	{
+		std::lock_guard< std::mutex > lock( mOscMutex );
+
+		mCurrentPose = poseIdIt0->second;
+		mTargetPose = poseIdIt1->second;
+		mCurrentMotion = mMotionGrid[ mCurrentPose ][ mTargetPose ];
+		if ( mCurrentMotion )
+		{
+			double motionDuration = mCurrentMotion->getAnimationDuration( 0 );
+			mMotionTime = motionDuration * per;
+		}
+	}
+	else
+	{
+		app::console() << "Unknown pose id in osc message " << message << endl;
+	}
+
+	return false;
 }
 
 void AIamCaptureTest::mouseDown( MouseEvent event )
