@@ -6,6 +6,7 @@ from OpenGL.GLU import *
 from states import state_machine, InterStatePosition
 from simple_osc_receiver import OscReceiver
 from argparse import ArgumentParser
+from config_loader import load_config
 
 MOUSE_REACTIVITY = 5.0
 TORSO_COLOR = (0,0.5,1)
@@ -166,6 +167,8 @@ osc_receiver.start()
 output_inter_state_position = None
 
 parser = ArgumentParser()
+parser.add_argument("-config", type=str)
 window.Window.add_parser_arguments(parser)
 args = parser.parse_args()
+load_config(args.config)
 window.run(Display, args)

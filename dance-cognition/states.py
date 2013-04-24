@@ -12,24 +12,23 @@ LLF = "LLF"
 HRF = "HRF"
 
 class State:
-    def __init__(self, name, position, output_names):
+    def __init__(self, name, output_names):
         self.name = name
-        self.position = Vector3d(*position)
         self.output_names = output_names
         self.outputs = []
         self.inputs = []
 
     def __repr__(self):
-        return "State(%r, %r, %r)" % (self.name, self.position, self.output_names)
+        return "State(%r)" % (self.name)
 
 class StateMachine:
     def __init__(self):
         self.states = {}
         self.transitions = set()
 
-    def add(self, name, position, output_names):
+    def add(self, name, output_names):
         assert name not in self.states
-        self.states[name] = State(name, position, output_names)
+        self.states[name] = State(name, output_names)
 
     def compile(self):
         for input_name, input_state in self.states.iteritems():
@@ -47,6 +46,10 @@ class StateMachine:
         pos2 = inter_state_position.destination_state.position
         return pos1 + (pos2 - pos1) * inter_state_position.relative_position
 
+    def set_config(self, config):
+        for name, state in self.states.iteritems():
+            state.position = Vector3d(*config.states[name])
+
 class InterStatePosition:
     def __init__(self, source_state, destination_state, relative_position):
         self.source_state = source_state
@@ -60,22 +63,22 @@ class InterStatePosition:
 
 state_machine = StateMachine()
 
-state_machine.add(MC,  (0,0,0),   [MLB, ML , HB, MB, MLF, MRF, MRB, LLF, HRF])
-state_machine.add(MLB, (0,-1,-1), [MC,  ML,  HB, MB, MLF, MRF, MRB, LLF, HRF])
-state_machine.add(ML,  (0,-1,0),  [MLB, MLB, HB, MB, MLF, MRF, MRB, LLF, HRF])
-state_machine.add(HB,  (1,0,-1),  [MC,  MLB, ML, MB, MLF, MRF, MRB, LLF, HRF])
-state_machine.add(MB,  (0,0,-1),  [MC,  MLB, ML, HB, MLF, MRF, MRB, LLF, HRF])
-state_machine.add(MLF, (0,-1,1),  [MC,  MLB, ML, HB, MB,  MRF, MRB, LLF, HRF])
-state_machine.add(MRF, (0,1,-1),  [])
-state_machine.add(MRB, (0,1,1),   [])
-state_machine.add(LLF, (-1,1,-1), [])
-state_machine.add(HRF, (1,1,-1),  [])
+state_machine.add(MC,  [MLB, ML , HB, MB, MLF, MRF, MRB, LLF, HRF])
+state_machine.add(MLB, [MC,  ML,  HB, MB, MLF, MRF, MRB, LLF, HRF])
+state_machine.add(ML,  [MLB, MLB, HB, MB, MLF, MRF, MRB, LLF, HRF])
+state_machine.add(HB,  [MC,  MLB, ML, MB, MLF, MRF, MRB, LLF, HRF])
+state_machine.add(MB,  [MC,  MLB, ML, HB, MLF, MRF, MRB, LLF, HRF])
+state_machine.add(MLF, [MC,  MLB, ML, HB, MB,  MRF, MRB, LLF, HRF])
+state_machine.add(MRF, [])
+state_machine.add(MRB, [])
+state_machine.add(LLF, [])
+state_machine.add(HRF, [])
 state_machine.compile()
 
-# state_machine.add(MC,  (0,0,0),   [MLB])
-# state_machine.add(MLB, (0,1,1), [])
+# state_machine.add(MC,  [MLB])
+# state_machine.add(MLB, [])
 # state_machine.compile()
 
-# state_machine.add(MB, (0,0,-1),  [MRF])
-# state_machine.add(MRF, (0,1,-1),  [])
+# state_machine.add(MB,  [MRF])
+# state_machine.add(MRF, [])
 # state_machine.compile()
