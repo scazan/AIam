@@ -41,7 +41,7 @@ class Display(window.Window):
         self._draw_transitions_as_lines()
         self._draw_states_as_points()
         self._draw_state_names()
-        self._draw_sensed_input_position()
+        self._draw_input_position()
         self._draw_output_position()
         glPopMatrix()
 
@@ -92,8 +92,8 @@ class Display(window.Window):
     def _draw_center_of_mass_position(self):
         self._draw_position(center_of_mass_position, CENTER_OF_MASS_COLOR)
 
-    def _draw_sensed_input_position(self):
-        self._draw_position(sensed_input_position, INPUT_COLOR)
+    def _draw_input_position(self):
+        self._draw_position(input_position, INPUT_COLOR)
 
     def _draw_position(self, position, color):
         if position is None:
@@ -130,10 +130,10 @@ def receive_center_of_mass_position(path, args, types, src, user_data):
     position_tuple = args
     center_of_mass_position = Vector3d(*position_tuple)
 
-def receive_sensed_input_position(path, args, types, src, user_data):
-    global sensed_input_position
+def receive_input_position(path, args, types, src, user_data):
+    global input_position
     position_tuple = args
-    sensed_input_position = Vector3d(*position_tuple)
+    input_position = Vector3d(*position_tuple)
 
 def receive_output_position(path, args, types, src, user_data):
     global output_inter_state_position
@@ -153,12 +153,12 @@ def receive_observed_state(path, args, types, src, user_data):
 
 torso_position = None
 center_of_mass_position = None
-sensed_input_position = None
+input_position = None
 observed_state = None
 osc_receiver = OscReceiver(7892, listen="localhost")
 osc_receiver.add_method("/normalized_torso_position", "fff", receive_torso_position)
 osc_receiver.add_method("/normalized_center_of_mass_position", "fff", receive_center_of_mass_position)
-osc_receiver.add_method("/sensed_input_position", "fff", receive_sensed_input_position)
+osc_receiver.add_method("/input_position", "fff", receive_input_position)
 osc_receiver.add_method("/position", "ssf", receive_output_position)
 osc_receiver.add_method("/observed_state", "s", receive_observed_state)
 osc_receiver.start()

@@ -1,7 +1,6 @@
-add input generator that mixes known moves, idling and unknown moves
+sync/mirror is entirely still too much
 
 combine mirror+echo
-- protect mirror from sensory adaptation
 - handle situation where we are waiting to switch to echo, but dancer stays in middle: perhaps sway while waiting?
 
 combine mirror+improvise
@@ -9,6 +8,8 @@ combine mirror+echo+improvise
 
 invent: perform transitions between inter-state positions
 combine mirror+echo+improvise+invent?
+
+test with input that contains unknown moves
 
 fix bug in sync causing it to sometimes output relative positions greater than 1
 
