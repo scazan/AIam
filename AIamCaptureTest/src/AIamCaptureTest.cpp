@@ -108,20 +108,14 @@ class AIamCaptureTest : public AppBasic
 #define POSE_COUNT ( POSE_MLF + 1 )
 		map< string, int > mPoseStrToId;
 		vector< string > mPoseNames;
-		/*
-		const map< string, int > mPoseStrToId = { { "mc", POSE_MC }, { "mlb", POSE_MLB }, { "ml", POSE_ML },
-			{ "hb", POSE_HB }, { "mlf", POSE_MLF } };
-		const vector< string > mPoseNames = { "mc", "mlb", "ml", "hb", "mlf" };
-		*/
 		AssimpLoaderRef mMotionGrid[ POSE_COUNT ][ POSE_COUNT ];
 		int mCurrentPose;
 		int mTargetPose;
+		void goToPoseFunc();
 
 		bool positionReceived( const mndl::osc::Message &message );
 		mndl::osc::Server mListener;
 		std::mutex mOscMutex;
-
-		void go();
 };
 
 AIamCaptureTest::AIamCaptureTest() :
@@ -173,31 +167,8 @@ void AIamCaptureTest::setup()
 	mParams.addText( "Manual control" );
 	mParams.addParam( "Current pose", mPoseNames, &mCurrentPose, "", true );
 	mParams.addParam( "Go to pose", mPoseNames, &mTargetPose );
-	mParams.addButton( "Go", std::bind( &AIamCaptureTest::go, this ));
-//	mParams.addButton( "Go", [&]() {
-//			if ( mCurrentPose == mTargetPose )
-//				return;
-//
-//			// prevent from staring the same motion again
-//			static int lastTargetPose = -1;
-//			if ( mTargetPose == lastTargetPose )
-//				return;
-//			lastTargetPose = mTargetPose;
-//
-//			mCurrentMotion = mMotionGrid[ mCurrentPose ][ mTargetPose ];
-//			if ( mCurrentMotion )
-//			{
-//				mMotionTime = 0.;
-//				double motionDuration = mCurrentMotion->getAnimationDuration( 0 );
-//				/*
-//				timeline().apply( &mMotionTime, motionDuration, motionDuration ).finishFn(
-//					[&]() { mCurrentPose = mTargetPose; } );
-//					*/
-//				auto tweenOptions = timeline().apply( &mMotionTime, motionDuration, motionDuration );
-//				tweenOptions.finishFn( [&]() { mCurrentPose = mTargetPose; } );
-//			}
-//	} );
-
+	// NOTE: vc compiler crashes if this is a lambda, probably because the other lambda inside
+	mParams.addButton( "Go", std::bind( &AIamCaptureTest::goToPoseFunc, this ));
 	mParams.addSeparator();
 
 	mTriMeshPlane = createSquare( Vec2i( 64, 64 ) );
@@ -214,7 +185,7 @@ void AIamCaptureTest::setup()
 	mModel->enableSkinning();
 }
 
-void AIamCaptureTest::go()
+void AIamCaptureTest::goToPoseFunc()
 {
 	if ( mCurrentPose == mTargetPose )
 		return;
@@ -357,6 +328,29 @@ void AIamCaptureTest::update()
 						modelNode->setScale( scale );
 					}
 				}
+
+				/* model structure:                     skeleton structure:
+				 * 'Scene', meshes: 0					'Scene', meshes: 0
+				 *  -- 'csontok', meshes: 0				-- 'mc-mlb-1', meshes: 1
+				 *  -- -- 'Hip', meshes: 0				-- -- 'Hip', meshes: 1
+				 *  -- -- -- 'LowerSpine', meshes: 0	-- -- -- 'LowerSpine', meshes: 1
+				 *  ...									...
+				 * the two first child have to be matched although they have different names
+				 */
+				const vector< mndl::NodeRef > &skelRootNodes = mCurrentMotion->getAssimpNode( "Scene" )->getChildren();
+				const vector< mndl::NodeRef > &modelRootNodes = mModel->getAssimpNode( "Scene" )->getChildren();
+				if ( !skelRootNodes.empty() && !modelRootNodes.empty() )
+				{
+					mndl::NodeRef skelNode = skelRootNodes[ 0 ];
+					mndl::NodeRef modelNode = modelRootNodes[ 0 ];
+					Quatf ori = skelNode->getOrientation();
+					Vec3f pos = skelNode->getPosition();
+					Vec3f scale = skelNode->getScale();
+					modelNode->setOrientation( ori );
+					modelNode->setPosition( pos );
+					modelNode->setScale( scale );
+				}
+
 				mModel->update();
 			}
 		}
