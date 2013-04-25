@@ -116,14 +116,6 @@ class AIamCaptureTest : public AppBasic
 
 AIamCaptureTest::AIamCaptureTest() :
 	mAllMotionsLoaded( false ), mCurrentPose( POSE_MC ), mTargetPose( POSE_MC )
-{}
-
-void AIamCaptureTest::prepareSettings( Settings *settings )
-{
-	settings->setWindowSize( 800, 600 );
-}
-
-void AIamCaptureTest::setup()
 {
 	/* because visual studio does not support initializer lists
 	   NOTE: the dummy containers are necessary, because the c++11 compiler
@@ -134,7 +126,15 @@ void AIamCaptureTest::setup()
 	mPoseStrToId = dummy0;
 	vector< string > dummy1 = boost::assign::list_of( "mc" )( "mlb" )( "ml" )( "hb" )( "mlf" );
 	mPoseNames = dummy1;
+}
 
+void AIamCaptureTest::prepareSettings( Settings *settings )
+{
+	settings->setWindowSize( 800, 600 );
+}
+
+void AIamCaptureTest::setup()
+{
 	mndl::params::PInterfaceGl::load( "params.xml" );
 	mParams = mndl::params::PInterfaceGl( "Parameters", Vec2i( 220, 320 ) );
 	mParams.addPersistentSizeAndPosition();
