@@ -70,7 +70,8 @@ class OscReceiver:
         try:
             handler = self._handlers[address_pattern]
         except KeyError:
-            raise Exception("unhandled address: %s" % address_pattern)
+            # raise Exception("unhandled address: %s" % address_pattern)
+            return
 
         comma_prefixed_type_tag_string = self._consume_osc_string()
         assert comma_prefixed_type_tag_string.startswith(",")
