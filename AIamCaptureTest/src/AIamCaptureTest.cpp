@@ -17,6 +17,8 @@
 
 #include <vector>
 
+#include "boost/assign.hpp"
+
 #include "cinder/Cinder.h"
 #include "cinder/app/AppBasic.h"
 #include "cinder/gl/gl.h"
@@ -39,6 +41,8 @@ using namespace mndl;
 class AIamCaptureTest : public AppBasic
 {
 	public:
+		AIamCaptureTest();
+
 		void prepareSettings( Settings *settings );
 		void setup();
 
@@ -94,17 +98,25 @@ class AIamCaptureTest : public AppBasic
 			POSE_MLF
 		};
 #define POSE_COUNT ( POSE_MLF + 1 )
+		map< string, int > mPoseStrToId;
+		vector< string > mPoseNames;
+		/*
 		const map< string, int > mPoseStrToId = { { "mc", POSE_MC }, { "mlb", POSE_MLB }, { "ml", POSE_ML },
 			{ "hb", POSE_HB }, { "mlf", POSE_MLF } };
 		const vector< string > mPoseNames = { "mc", "mlb", "ml", "hb", "mlf" };
+		*/
 		AssimpLoaderRef mMotionGrid[ POSE_COUNT ][ POSE_COUNT ];
-		int mCurrentPose = POSE_MC;
-		int mTargetPose = POSE_MC;
+		int mCurrentPose;
+		int mTargetPose;
 
 		bool positionReceived( const mndl::osc::Message &message );
 		mndl::osc::Server mListener;
 		std::mutex mOscMutex;
 };
+
+AIamCaptureTest::AIamCaptureTest() :
+	mAllMotionsLoaded( false ), mCurrentPose( POSE_MC ), mTargetPose( POSE_MC )
+{}
 
 void AIamCaptureTest::prepareSettings( Settings *settings )
 {
@@ -113,14 +125,21 @@ void AIamCaptureTest::prepareSettings( Settings *settings )
 
 void AIamCaptureTest::setup()
 {
-	mVerticalSyncEnabled = false;
-	mAllMotionsLoaded = false;
+	/* because visual studio does not support initializer lists
+	   NOTE: the dummy containers are necessary, because the c++11 compiler
+	   cannot decide betwwen the operator='s in boost 1.53.
+       error: use of overloaded operator '=' is ambiguous */
+	map< string, int > dummy0 = boost::assign::map_list_of( string( "mc" ), POSE_MC )( string( "mlb" ), POSE_MLB )
+		( string( "ml" ), POSE_ML )( string( "hb" ), POSE_HB )( string( "mlf" ), POSE_MLF );
+	mPoseStrToId = dummy0;
+	vector< string > dummy1 = boost::assign::list_of( "mc" )( "mlb" )( "ml" )( "hb" )( "mlf" );
+	mPoseNames = dummy1;
 
 	mndl::params::PInterfaceGl::load( "params.xml" );
 	mParams = mndl::params::PInterfaceGl( "Parameters", Vec2i( 220, 320 ) );
 	mParams.addPersistentSizeAndPosition();
 	mParams.addParam( "Fps", &mFps, "", true );
-	mParams.addParam( "Vertical sync", &mVerticalSyncEnabled );
+	mParams.addPersistentParam( "Vertical sync", &mVerticalSyncEnabled, false );
 	mParams.addSeparator();
 
 	CameraPersp cam;
@@ -154,8 +173,12 @@ void AIamCaptureTest::setup()
 			{
 				mMotionTime = 0.;
 				double motionDuration = mCurrentMotion->getAnimationDuration( 0 );
+				/*
 				timeline().apply( &mMotionTime, motionDuration, motionDuration ).finishFn(
 					[&]() { mCurrentPose = mTargetPose; } );
+					*/
+				auto tweenOptions = timeline().apply( &mMotionTime, motionDuration, motionDuration );
+				tweenOptions.finishFn( [&]() { mCurrentPose = mTargetPose; } );
 			}
 	} );
 
