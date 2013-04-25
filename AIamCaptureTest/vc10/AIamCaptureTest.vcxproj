@@ -46,7 +46,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\include;..\..\..\..\cinder_0.8.5\include;..\..\..\..\cinder_0.8.5\boost;..\..\..\..\cinder_0.8.5\src\AntTweakBar;..\..\..\..\cinder_0.8.5\blocks\MndlKit\src;..\..\..\..\cinder_0.8.5\blocks\Cinder-Assimp\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;..\..\..\..\cinder_0.8.5\include;..\..\..\..\cinder_0.8.5\boost;..\..\..\..\cinder_0.8.5\src\AntTweakBar;..\..\..\..\cinder_0.8.5\blocks\MndlKit\src;..\..\..\..\cinder_0.8.5\blocks\Cinder-Assimp\src;..\..\..\..\cinder_0.8.5\blocks\Cinder-Osc\src;..\..\..\..\cinder_0.8.5\blocks\Cinder-Osc\include\msw;..\..\..\..\cinder_0.8.5\blocks\Cinder-Osc\include\msw\pthread</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -61,8 +61,8 @@
       <AdditionalIncludeDirectories>"..\..\..\cinder_0.8.5\include";..\include</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>cinder_d.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\cinder_0.8.5\lib;..\..\..\..\cinder_0.8.5\lib\msw;..\..\..\..\cinder_0.8.5\blocks\Cinder-Assimp\lib\msw</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cinder_d.lib;assimp.lib;liblo_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\..\..\cinder_0.8.5\lib;..\..\..\..\cinder_0.8.5\lib\msw;..\..\..\..\cinder_0.8.5\blocks\Cinder-Assimp\lib\msw;..\..\..\..\cinder_0.8.5\blocks\Cinder-Osc\lib\vc10</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -73,7 +73,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\include;..\..\..\..\cinder_0.8.5\include;..\..\..\..\cinder_0.8.5\boost;..\..\..\..\cinder_0.8.5\src\AntTweakBar;..\..\..\..\cinder_0.8.5\blocks\MndlKit\src;..\..\..\..\cinder_0.8.5\blocks\Cinder-Assimp\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;..\..\..\..\cinder_0.8.5\include;..\..\..\..\cinder_0.8.5\boost;..\..\..\..\cinder_0.8.5\src\AntTweakBar;..\..\..\..\cinder_0.8.5\blocks\MndlKit\src;..\..\..\..\cinder_0.8.5\blocks\Cinder-Assimp\src;..\..\..\..\cinder_0.8.5\blocks\Cinder-Osc\src;..\..\..\..\cinder_0.8.5\blocks\Cinder-Osc\include\msw;..\..\..\..\cinder_0.8.5\blocks\Cinder-Osc\include\msw\pthread</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader />
@@ -89,8 +89,8 @@
       <AdditionalIncludeDirectories>"..\..\..\cinder_0.8.5\include";..\include</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>cinder.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\cinder_0.8.5\lib;..\..\..\..\cinder_0.8.5\lib\msw;..\..\..\..\cinder_0.8.5\blocks\Cinder-Assimp\lib\msw</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cinder.lib;assimp.lib;liblo.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\..\..\cinder_0.8.5\lib;..\..\..\..\cinder_0.8.5\lib\msw;..\..\..\..\cinder_0.8.5\blocks\Cinder-Assimp\lib\msw;..\..\..\..\cinder_0.8.5\blocks\Cinder-Osc\lib\vc10</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <GenerateMapFile>true</GenerateMapFile>
       <SubSystem>Windows</SubSystem>
@@ -104,6 +104,8 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\..\cinder_0.8.5\blocks\Cinder-Assimp\src\AssimpLoader.cpp" />
     <ClCompile Include="..\..\..\..\cinder_0.8.5\blocks\Cinder-Assimp\src\Node.cpp" />
+    <ClCompile Include="..\..\..\..\cinder_0.8.5\blocks\Cinder-Osc\src\OscClient.cpp" />
+    <ClCompile Include="..\..\..\..\cinder_0.8.5\blocks\Cinder-Osc\src\OscServer.cpp" />
     <ClCompile Include="..\..\..\..\cinder_0.8.5\blocks\MndlKit\src\mndlkit\params\PParams.cpp" />
     <ClCompile Include="..\src\AIamCaptureTest.cpp" />
   </ItemGroup>
@@ -111,6 +113,9 @@
     <ClInclude Include="..\..\..\..\cinder_0.8.5\blocks\Cinder-Assimp\src\AssimpLoader.h" />
     <ClInclude Include="..\..\..\..\cinder_0.8.5\blocks\Cinder-Assimp\src\AssimpMesh.h" />
     <ClInclude Include="..\..\..\..\cinder_0.8.5\blocks\Cinder-Assimp\src\Node.h" />
+    <ClInclude Include="..\..\..\..\cinder_0.8.5\blocks\Cinder-Osc\src\OscClient.h" />
+    <ClInclude Include="..\..\..\..\cinder_0.8.5\blocks\Cinder-Osc\src\OscCore.h" />
+    <ClInclude Include="..\..\..\..\cinder_0.8.5\blocks\Cinder-Osc\src\OscServer.h" />
     <ClInclude Include="..\..\..\..\cinder_0.8.5\blocks\MndlKit\src\mndlkit\params\PParams.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
