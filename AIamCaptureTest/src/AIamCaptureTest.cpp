@@ -67,6 +67,14 @@ class AIamCaptureTest : public AppBasic
 		AssimpLoaderRef mCurrentMotion;
 		Anim< double > mMotionTime;
 
+		AssimpLoaderRef mModel;
+		enum
+		{
+			RENDER_SKELETON = 0,
+			RENDER_MODEL
+		};
+		int mRenderType;
+
 		MayaCamUI mMayaCam;
 
 		//! Returns paths of motion files in the directory.
@@ -155,6 +163,11 @@ void AIamCaptureTest::setup()
 	mParams.addPersistentParam( "Grid size", &mGridSize, 50, "min=1 max=512" );
 	mParams.addSeparator();
 
+	mParams.addText( "Render" );
+	vector< string > renderTypeStrs = boost::assign::list_of( "skeleton" )( "model" );
+	mParams.addPersistentParam( "Type", renderTypeStrs, &mRenderType, RENDER_SKELETON );
+	mParams.addSeparator();
+
 	mParams.addText( "Manual control" );
 	mParams.addParam( "Current pose", mPoseNames, &mCurrentPose, "", true );
 	mParams.addParam( "Go to pose", mPoseNames, &mTargetPose );
@@ -193,6 +206,9 @@ void AIamCaptureTest::setup()
 
 	mListener = mndl::osc::Server( 7892 );
 	mListener.registerOscReceived< AIamCaptureTest >( &AIamCaptureTest::positionReceived, this, "/position", "ssf" );
+
+	mModel = AssimpLoaderRef( new assimp::AssimpLoader( getAssetPath( "model/model.dae" ) ) );
+	mModel->enableSkinning();
 }
 
 vector< fs::path > AIamCaptureTest::getMotions( const fs::path &relativeDir )
@@ -296,6 +312,28 @@ void AIamCaptureTest::update()
 		{
 			mCurrentMotion->setTime( mMotionTime );
 			mCurrentMotion->update();
+
+			// copy pose
+			if ( mRenderType == RENDER_MODEL )
+			{
+				const vector< string > &nodeNames = mCurrentMotion->getNodeNames();
+				for ( auto it = nodeNames.cbegin(); it != nodeNames.cend(); ++it )
+				{
+					mndl::assimp::AssimpNodeRef skelNode = mCurrentMotion->getAssimpNode( *it );
+					mndl::assimp::AssimpNodeRef modelNode = mModel->getAssimpNode( *it );
+
+					if ( modelNode )
+					{
+						Quatf ori = skelNode->getOrientation();
+						Vec3f pos = skelNode->getPosition();
+						Vec3f scale = skelNode->getScale();
+						modelNode->setOrientation( ori );
+						modelNode->setPosition( pos );
+						modelNode->setScale( scale );
+					}
+				}
+				mModel->update();
+			}
 		}
 	}
 
@@ -343,11 +381,15 @@ void AIamCaptureTest::draw()
 		{
 			std::lock_guard< std::mutex > lock( mOscMutex );
 
-			if ( mCurrentMotion )
+			if ( mRenderType == RENDER_SKELETON )
 			{
-				gl::pushModelView();
-				mCurrentMotion->draw();
-				gl::popModelView();
+				if ( mCurrentMotion )
+					mCurrentMotion->draw();
+			}
+			else
+			if ( mRenderType == RENDER_MODEL )
+			{
+				mModel->draw();
 			}
 		}
 
