@@ -120,6 +120,8 @@ class AIamCaptureTest : public AppBasic
 		bool positionReceived( const mndl::osc::Message &message );
 		mndl::osc::Server mListener;
 		std::mutex mOscMutex;
+
+		void go();
 };
 
 AIamCaptureTest::AIamCaptureTest() :
@@ -127,7 +129,7 @@ AIamCaptureTest::AIamCaptureTest() :
 {
 	/* because visual studio does not support initializer lists
 	   NOTE: the dummy containers are necessary, because the c++11 compiler
-	   cannot decide betwwen the operator='s in boost 1.53.
+	   cannot decide between the operator='s in boost 1.53.
        error: use of overloaded operator '=' is ambiguous */
 	map< string, int > dummy0 = boost::assign::map_list_of( string( "mc" ), POSE_MC )( string( "mlb" ), POSE_MLB )
 		( string( "ml" ), POSE_ML )( string( "hb" ), POSE_HB )( string( "mlf" ), POSE_MLF );
@@ -171,29 +173,30 @@ void AIamCaptureTest::setup()
 	mParams.addText( "Manual control" );
 	mParams.addParam( "Current pose", mPoseNames, &mCurrentPose, "", true );
 	mParams.addParam( "Go to pose", mPoseNames, &mTargetPose );
-	mParams.addButton( "Go", [&]() {
-			if ( mCurrentPose == mTargetPose )
-				return;
-
-			// prevent from staring the same motion again
-			static int lastTargetPose = -1;
-			if ( mTargetPose == lastTargetPose )
-				return;
-			lastTargetPose = mTargetPose;
-
-			mCurrentMotion = mMotionGrid[ mCurrentPose ][ mTargetPose ];
-			if ( mCurrentMotion )
-			{
-				mMotionTime = 0.;
-				double motionDuration = mCurrentMotion->getAnimationDuration( 0 );
-				/*
-				timeline().apply( &mMotionTime, motionDuration, motionDuration ).finishFn(
-					[&]() { mCurrentPose = mTargetPose; } );
-					*/
-				auto tweenOptions = timeline().apply( &mMotionTime, motionDuration, motionDuration );
-				tweenOptions.finishFn( [&]() { mCurrentPose = mTargetPose; } );
-			}
-	} );
+	mParams.addButton( "Go", std::bind( &AIamCaptureTest::go, this ));
+//	mParams.addButton( "Go", [&]() {
+//			if ( mCurrentPose == mTargetPose )
+//				return;
+//
+//			// prevent from staring the same motion again
+//			static int lastTargetPose = -1;
+//			if ( mTargetPose == lastTargetPose )
+//				return;
+//			lastTargetPose = mTargetPose;
+//
+//			mCurrentMotion = mMotionGrid[ mCurrentPose ][ mTargetPose ];
+//			if ( mCurrentMotion )
+//			{
+//				mMotionTime = 0.;
+//				double motionDuration = mCurrentMotion->getAnimationDuration( 0 );
+//				/*
+//				timeline().apply( &mMotionTime, motionDuration, motionDuration ).finishFn(
+//					[&]() { mCurrentPose = mTargetPose; } );
+//					*/
+//				auto tweenOptions = timeline().apply( &mMotionTime, motionDuration, motionDuration );
+//				tweenOptions.finishFn( [&]() { mCurrentPose = mTargetPose; } );
+//			}
+//	} );
 
 	mParams.addSeparator();
 
@@ -209,6 +212,28 @@ void AIamCaptureTest::setup()
 
 	mModel = AssimpLoaderRef( new assimp::AssimpLoader( getAssetPath( "model/model.dae" ) ) );
 	mModel->enableSkinning();
+}
+
+void AIamCaptureTest::go()
+{
+	if ( mCurrentPose == mTargetPose )
+		return;
+
+	// prevent from staring the same motion again
+	static int lastTargetPose = -1;
+	if ( mTargetPose == lastTargetPose )
+		return;
+	lastTargetPose = mTargetPose;
+
+	mCurrentMotion = mMotionGrid[ mCurrentPose ][ mTargetPose ];
+	if ( mCurrentMotion )
+	{
+		mMotionTime = 0.;
+		double motionDuration = mCurrentMotion->getAnimationDuration( 0 );
+
+		timeline().apply( &mMotionTime, motionDuration, motionDuration ).finishFn(
+			[&]() { mCurrentPose = mTargetPose; } );
+	}
 }
 
 vector< fs::path > AIamCaptureTest::getMotions( const fs::path &relativeDir )
