@@ -1,16 +1,16 @@
 from vector import Vector3d
 import collections
 
-MC = "MC"
-MLB = "MLB"
-ML = "ML"
-HB = "HB"
-MB = "MB"
-MLF = "MLF"
-MRF = "MRF"
-MRB = "MRB"
-LLF = "LLF"
-HRF = "HRF"
+MC = "mc"
+MLB = "mlb"
+ML = "ml"
+HB = "hb"
+MB = "mb"
+MLF = "mlf"
+MRF = "mrf"
+MRB = "mrb"
+LLF = "llf"
+HRF = "hrf"
 
 class State:
     def __init__(self, name, output_names):
