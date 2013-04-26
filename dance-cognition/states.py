@@ -1,4 +1,5 @@
 from vector import Vector3d
+import collections
 
 MC = "MC"
 MLB = "MLB"
@@ -23,7 +24,7 @@ class State:
 
 class StateMachine:
     def __init__(self):
-        self.states = {}
+        self.states = collections.OrderedDict()
         self.transitions = set()
 
     def add(self, name, output_names):
