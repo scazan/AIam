@@ -4,6 +4,7 @@ from sensory_adaptation import SensoryAdapter
 
 SPATIAL_THRESHOLD = 0.5
 TEMPORAL_THRESHOLD = 0.4
+MIN_MOVE_DURATION = 2.0
 
 MIN_DISTANCE = 0.001
 MAX_DISTANCE = 0.5
@@ -76,7 +77,7 @@ class Interpreter:
             if nearest_state == self._state_hypothesis:
                 self._duration_in_state += time_increment
                 if self._duration_in_state > TEMPORAL_THRESHOLD:
-                    self._state_observed(nearest_state)
+                    self._state_potentially_observed(nearest_state)
             else:
                 self._state_hypothesis = nearest_state
                 self._duration_in_state = 0
@@ -87,13 +88,16 @@ class Interpreter:
     def _distance_to_state(self, state):
         return (state.position - self._input_position).mag()
 
-    def _is_valid_transition(self, source_state, destination_state):
-        return destination_state in source_state.inputs + source_state.outputs
+    def _state_potentially_observed(self, new_observed_state):
+        if self._observed_state:
+            duration = self._time - self._observed_state_at_time
+            if duration > MIN_MOVE_DURATION:
+                self._fire_callbacks(MOVE, self._observed_state, new_observed_state, duration)
+                self._state_observed(new_observed_state)
+        else:
+            self._state_observed(new_observed_state)
 
     def _state_observed(self, new_observed_state):
-        if self._observed_state and self._is_valid_transition(self._observed_state, new_observed_state):
-            duration = self._time - self._observed_state_at_time
-            self._fire_callbacks(MOVE, self._observed_state, new_observed_state, duration)
         self._observed_state = new_observed_state
         self._observed_state_at_time = self._time
         self._fire_callbacks(STATE, new_observed_state)
