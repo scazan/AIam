@@ -2,7 +2,7 @@ from vector import *
 from states import state_machine, InterStatePosition
 from sensory_adaptation import SensoryAdapter
 
-SPATIAL_THRESHOLD = 0.20
+SPATIAL_THRESHOLD = 0.5
 TEMPORAL_THRESHOLD = 0.4
 
 MIN_DISTANCE = 0.001
