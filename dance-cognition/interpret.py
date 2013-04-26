@@ -5,6 +5,9 @@ from sensory_adaptation import SensoryAdapter
 SPATIAL_THRESHOLD = 0.20
 TEMPORAL_THRESHOLD = 0.4
 
+MIN_DISTANCE = 0.001
+MAX_DISTANCE = 0.5
+
 CENTER_SPATIAL_THRESHOLD = 0.04
 CENTER_TEMPORAL_THRESHOLD = 0.2
 
@@ -24,14 +27,23 @@ class Interpreter:
             LEAVING_CENTER: [],
             ENTERING_CENTER: []
         }
+        self.state_probability = {}
 
     def add_callback(self, event, callback):
         self._callbacks[event].append(callback)
 
     def process_input(self, input_position, time_increment):
         self._time += time_increment
+        self._update_state_probabilities(input_position)
         self._detect_whether_leaving_or_entering_center(input_position, time_increment)
         self._detect_whether_state_changed(input_position, time_increment)
+
+    def _update_state_probabilities(self, input_position):
+        for state_name, state in state_machine.states.iteritems():
+            distance = (state.position - input_position).mag()
+            probability = 1 - (self._clamp(distance, MIN_DISTANCE, MAX_DISTANCE) - MIN_DISTANCE) / \
+                 (MAX_DISTANCE - MIN_DISTANCE)
+            self.state_probability[state_name] = probability
 
     def sensed_center(self):
         return self._sensory_adapter.sensed_center()

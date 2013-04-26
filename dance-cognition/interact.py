@@ -54,6 +54,8 @@ def refresh():
     osc_sender.send("/normalized_torso_position", *normalized_torso_position)
     if normalized_center_of_mass_position:
         osc_sender.send("/normalized_center_of_mass_position", *normalized_center_of_mass_position)
+    for state_name, probability in interpreter.state_probability.iteritems():
+        osc_sender.send("/state_probability", state_name, probability)
 
     output_inter_state_position = behaviour.output()
     if output_inter_state_position:

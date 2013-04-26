@@ -2,7 +2,9 @@ better input state detection
 
 sync/mirror is entirely still too much
 
-render only allowed moves (the moves between mc, mlb, ml, hb, mb, mlf)
+generate only allowed moves (the moves between mc, mlb, ml, hb, mb, mlf)
+
+honour duration of recorded moves when playing them back (at least within reasonable range)
 
 combine mirror+echo
 - handle situation where we are waiting to switch to echo, but dancer stays in middle: perhaps sway while waiting?

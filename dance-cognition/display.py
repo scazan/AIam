@@ -18,8 +18,6 @@ TEXT_SIZE = 0.15
 
 MIN_STATE_POINT_SIZE = 1.0
 MAX_STATE_POINT_SIZE = 20.0
-MIN_DISTANCE = 0.001
-MAX_DISTANCE = 0.5
 
 class Display(window.Window):
     def InitGL(self):
@@ -64,16 +62,12 @@ class Display(window.Window):
             glEnd()
 
     def _state_point_size(self, state):
-        if input_position:
-            distance = (state.position - input_position).mag()
+        if state.name in state_probability:
+            probability = state_probability[state.name]
             return MIN_STATE_POINT_SIZE + (MAX_STATE_POINT_SIZE - MIN_STATE_POINT_SIZE) * \
-                (1 - (self._clamp(distance, MIN_DISTANCE, MAX_DISTANCE) - MIN_DISTANCE) / \
-                 (MAX_DISTANCE - MIN_DISTANCE))
+                probability
         else:
             return MIN_STATE_POINT_SIZE
-
-    def _clamp(self, v, v_min, v_max):
-        return max(min(v, v_max), v_min)
 
     def _draw_state_names(self):
         for state in state_machine.states.values():
@@ -170,16 +164,23 @@ def receive_observed_state(path, args, types, src, user_data):
     else:
         observed_state = None
 
+def receive_state_probability(path, args, types, src, user_data):
+    global state_probability
+    state_name, probability = args
+    state_probability[state_name] = probability
+
 torso_position = None
 center_of_mass_position = None
 input_position = None
 observed_state = None
+state_probability = {}
 osc_receiver = OscReceiver(7892, listen="localhost")
 osc_receiver.add_method("/normalized_torso_position", "fff", receive_torso_position)
 osc_receiver.add_method("/normalized_center_of_mass_position", "fff", receive_center_of_mass_position)
 osc_receiver.add_method("/input_position", "fff", receive_input_position)
 osc_receiver.add_method("/position", "ssf", receive_output_position)
 osc_receiver.add_method("/observed_state", "s", receive_observed_state)
+osc_receiver.add_method("/state_probability", "sf", receive_state_probability)
 osc_receiver.start()
 
 output_inter_state_position = None
