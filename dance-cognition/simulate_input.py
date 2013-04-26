@@ -4,7 +4,7 @@ import time
 import imp
 from utils import random_unit_sphere_position
 from states import state_machine
-from config_loader import load_config
+from config_manager import load_config
 
 def noise():
     return random_unit_sphere_position() * args.noise

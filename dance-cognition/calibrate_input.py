@@ -1,6 +1,6 @@
 import wx
 from states import state_machine
-from config_loader import load_config
+from config_manager import load_config, save_config
 from argparse import ArgumentParser
 from simple_osc_receiver import OscReceiver
 from vector import *
@@ -10,6 +10,16 @@ class Calibrator(wx.Frame):
         wx.Frame.__init__(self, None, wx.ID_ANY, "Input calibrator")
         self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
         self.SetFocus()
+
+        menubar = wx.MenuBar()
+        file_menu = wx.Menu()
+        save_item = file_menu.Append(-1, 'Save')
+        quit_item = file_menu.Append(-1, 'Quit')
+        menubar.Append(file_menu, '&File')
+        self.SetMenuBar(menubar)
+        self.Bind(wx.EVT_MENU, lambda event: save_config(config, args.config), save_item)
+        self.Bind(wx.EVT_MENU, lambda event: self.Close(), quit_item)
+
         sizer = wx.GridSizer(len(config.states), 4, 5, 5)
         self.SetSizer(sizer)
 
@@ -62,7 +72,7 @@ class Calibrator(wx.Frame):
         if len(self._calibrated_positions) > 0:
             calibrated_position = sum(self._calibrated_positions) / \
                                   len(self._calibrated_positions)
-            config.states[self._calibrated_state_name] = calibrated_position
+            config.states[self._calibrated_state_name] = calibrated_position.v
             self._update_position_text(self._calibrated_state_name)
         self._calibrated_state_name = None
 

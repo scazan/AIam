@@ -6,7 +6,7 @@ from OpenGL.GLU import *
 from states import state_machine, InterStatePosition
 from simple_osc_receiver import OscReceiver
 from argparse import ArgumentParser
-from config_loader import load_config
+from config_manager import load_config
 
 MOUSE_REACTIVITY = 5.0
 TORSO_COLOR = (0,0.5,1)

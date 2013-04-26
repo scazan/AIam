@@ -6,7 +6,7 @@ import imp
 from vector import *
 from states import state_machine
 import interpret
-from config_loader import load_config
+from config_manager import load_config
 
 def receive_torso_position(path, args, types, src, user_data):
     global normalized_torso_position
