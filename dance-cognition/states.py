@@ -64,12 +64,12 @@ class InterStatePosition:
 
 state_machine = StateMachine()
 
-state_machine.add(MC,  [MLB, ML , HB, MB, MLF, MRF, MRB, LLF, HRF])
-state_machine.add(MLB, [MC,  ML,  HB, MB, MLF, MRF, MRB, LLF, HRF])
-state_machine.add(ML,  [MLB, MLB, HB, MB, MLF, MRF, MRB, LLF, HRF])
-state_machine.add(HB,  [MC,  MLB, ML, MB, MLF, MRF, MRB, LLF, HRF])
-state_machine.add(MB,  [MC,  MLB, ML, HB, MLF, MRF, MRB, LLF, HRF])
-state_machine.add(MLF, [MC,  MLB, ML, HB, MB,  MRF, MRB, LLF, HRF])
+state_machine.add(MC,  [MLB, ML , HB, MB, MLF])
+state_machine.add(MLB, [MC,  ML,  HB, MB, MLF])
+state_machine.add(ML,  [MLB, MLB, HB, MB, MLF])
+state_machine.add(HB,  [MC,  MLB, ML, MB, MLF])
+state_machine.add(MB,  [MC,  MLB, ML, HB, MLF])
+state_machine.add(MLF, [MC,  MLB, ML, HB, MB])
 state_machine.add(MRF, [])
 state_machine.add(MRB, [])
 state_machine.add(LLF, [])
