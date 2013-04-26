@@ -16,6 +16,11 @@ OUTPUT_COLOR = (1,0,0)
 OBSERVED_STATE_COLOR = (0,1,0)
 TEXT_SIZE = 0.15
 
+MIN_STATE_POINT_SIZE = 1.0
+MAX_STATE_POINT_SIZE = 20.0
+MIN_DISTANCE = 0.001
+MAX_DISTANCE = 0.5
+
 class Display(window.Window):
     def InitGL(self):
         window.Window.InitGL(self)
@@ -47,15 +52,28 @@ class Display(window.Window):
         glPopMatrix()
 
     def _draw_states_as_points(self):
-        glPointSize(5.0)
         for state in state_machine.states.values():
+            glPointSize(self._state_point_size(state))
             glBegin(GL_POINTS)
-            if state == observed_state:
-                glColor3f(*OBSERVED_STATE_COLOR)
-            else:
-                glColor3f(0,0,0)
+            # if state == observed_state:
+            #     glColor3f(*OBSERVED_STATE_COLOR)
+            # else:
+            #     glColor3f(0,0,0)
+            glColor3f(0,0,0)
             glVertex3f(*state.position)
             glEnd()
+
+    def _state_point_size(self, state):
+        if input_position:
+            distance = (state.position - input_position).mag()
+            return MIN_STATE_POINT_SIZE + (MAX_STATE_POINT_SIZE - MIN_STATE_POINT_SIZE) * \
+                (1 - (self._clamp(distance, MIN_DISTANCE, MAX_DISTANCE) - MIN_DISTANCE) / \
+                 (MAX_DISTANCE - MIN_DISTANCE))
+        else:
+            return MIN_STATE_POINT_SIZE
+
+    def _clamp(self, v, v_min, v_max):
+        return max(min(v, v_max), v_min)
 
     def _draw_state_names(self):
         for state in state_machine.states.values():
