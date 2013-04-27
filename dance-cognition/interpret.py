@@ -1,5 +1,5 @@
 from vector import *
-from states import state_machine, InterStatePosition, MC
+from states import *
 from sensory_adaptation import SensoryAdapter
 
 SPATIAL_THRESHOLD = 0.5
@@ -123,7 +123,7 @@ class Interpreter:
 
     def _distance_to_transition(self, position, input_state, output_state):
         inter_state_position = self._perpendicular_inter_state_position(position, input_state, output_state)
-        return (position - state_machine.inter_state_to_euclidian_position(inter_state_position)).mag()
+        return (position - state_machine.cursor_to_euclidian_position(inter_state_position)).mag()
 
     def _perpendicular_inter_state_position(self, v, input_state, output_state):
         pos1 = input_state.position
@@ -131,7 +131,7 @@ class Interpreter:
         intersection = self._perpendicular(pos1, pos2, v)
         relative_position = (intersection - pos1).mag() / (pos2 - pos1).mag()
         relative_position = self._clamp(relative_position, 0, 1)
-        return InterStatePosition(input_state, output_state, relative_position)
+        return BetweenStates(input_state, output_state, relative_position)
 
     def _perpendicular(self, p1, p2, q):
         u = p2 - p1

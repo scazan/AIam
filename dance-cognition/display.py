@@ -3,7 +3,7 @@ from vector import *
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
-from states import state_machine, InterStatePosition
+from states import *
 from simple_osc_receiver import OscReceiver
 from argparse import ArgumentParser
 from config_manager import load_config
@@ -87,8 +87,8 @@ class Display(window.Window):
         glEnd()
 
     def _draw_output_position(self):
-        if output_inter_state_position:
-            output_position = state_machine.inter_state_to_euclidian_position(output_inter_state_position)
+        if output_cursor:
+            output_position = state_machine.cursor_to_euclidian_position(output_cursor)
             self._draw_position(output_position, OUTPUT_COLOR)
 
     def _draw_input(self):
@@ -149,11 +149,11 @@ def receive_input_position(path, args, types, src, user_data):
     input_position = Vector3d(*position_tuple)
 
 def receive_output_position(path, args, types, src, user_data):
-    global output_inter_state_position
+    global output_cursor
     source_state_name, output_state_name, relative_position = args
     source_state = state_machine.states[source_state_name]
     output_state = state_machine.states[output_state_name]
-    output_inter_state_position = InterStatePosition(
+    output_cursor = BetweenStates(
         source_state, output_state, relative_position)
 
 def receive_observed_state(path, args, types, src, user_data):
@@ -183,7 +183,7 @@ osc_receiver.add_method("/observed_state", "s", receive_observed_state)
 osc_receiver.add_method("/state_probability", "sf", receive_state_probability)
 osc_receiver.start()
 
-output_inter_state_position = None
+output_cursor = None
 
 parser = ArgumentParser()
 parser.add_argument("-config", type=str)

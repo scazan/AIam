@@ -1,8 +1,7 @@
-idle mode (sway near center)
+echo should never follow into a non-dataset state (such as MRB). now it leads to an exception if it does.
+
 combine idle+echo
 combine idle+echo+improvise
-
-MotionController.output(): optimize IDLE, always choose same output state
 
 sync/mirror is entirely still too much
 

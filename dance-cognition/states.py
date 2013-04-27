@@ -19,13 +19,19 @@ class State:
         self.outputs = []
         self.inputs = []
 
+    def __eq__(self, other):
+        try:
+            return isinstance(other, State) and self.name == other.name
+        except AttributeError:
+            return False
+
     def __repr__(self):
         return "State(%r)" % (self.name)
 
 class StateMachine:
     def __init__(self):
         self.states = collections.OrderedDict()
-        self.transitions = set()
+        self.transitions = []
 
     def add(self, name, output_names):
         assert name not in self.states
@@ -38,29 +44,62 @@ class StateMachine:
                     raise Exception("transition from %s to itself!" % input_name)
                 output_state = self.states[output_name]
                 input_state.outputs.append(output_state)
-                self.transitions.add((input_state, output_state))
+                self.transitions.append((input_state, output_state))
                 if input_state not in output_state.inputs:
                     output_state.inputs.append(input_state)
 
-    def inter_state_to_euclidian_position(self, inter_state_position):
-        pos1 = inter_state_position.source_state.position
-        pos2 = inter_state_position.destination_state.position
-        return pos1 + (pos2 - pos1) * inter_state_position.relative_position
+    def cursor_to_euclidian_position(self, cursor):
+        pos1 = cursor.source_state.position
+        pos2 = cursor.destination_state.position
+        return pos1 + (pos2 - pos1) * cursor.relative_position
 
     def set_config(self, config):
         for name, state in self.states.iteritems():
             state.position = Vector3d(*config.states[name])
 
-class InterStatePosition:
+class Cursor:
+    def is_in_state(self):
+        return False
+
+    def is_between_states(self):
+        return False
+
+class BetweenStates(Cursor):
     def __init__(self, source_state, destination_state, relative_position):
         self.source_state = source_state
         self.destination_state = destination_state
         self.relative_position = relative_position
         self.transition_length = (destination_state.position - source_state.position).mag()
 
+    def is_between_states(self):
+        return True
+
+    def inter_state_position(self):
+        return self.source_state.name, self.destination_state.name, self.relative_position
+
     def __repr__(self):
-        return "InterStatePosition(%r, %r, %r)" % (
+        return "BetweenStates(%r, %r, %r)" % (
             self.source_state.name, self.destination_state.name, self.relative_position)
+
+class InState(Cursor):
+    def __init__(self, state):
+        self.state = state
+        self._any_other_state = self._pick_any_destination_state()
+
+    def _pick_any_destination_state(self):
+        choices = self.state.inputs + self.state.outputs
+        if len(choices) == 0:
+            raise Exception("_pick_any_destination_state failed for %s as it has no inputs or outputs" % self.state)
+        return choices[0]
+
+    def is_in_state(self):
+        return True
+
+    def inter_state_position(self):
+        return self.state.name, self._any_other_state.name, 0.0
+
+    def __repr__(self):
+        return "InState(%r)" % self.state.name
 
 state_machine = StateMachine()
 

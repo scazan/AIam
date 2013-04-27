@@ -59,21 +59,23 @@ def refresh():
     for state_name, probability in interpreter.state_probability.iteritems():
         osc_sender.send("/state_probability", state_name, probability)
 
-    output_inter_state_position = motion_controller.output()
-    if output_inter_state_position:
-        if output_inter_state_position.relative_position < 0 or \
-           output_inter_state_position.relative_position > 1:
+    output_cursor = motion_controller.output()
+    if output_cursor:
+        source_state_name, destination_state_name, relative_position \
+            = output_cursor.inter_state_position()
+        if relative_position < 0 or \
+           relative_position > 1:
             print "WARNING: illegal relative_position in output: %r" % \
-                output_inter_state_position.relative_position
+                relative_position
         osc_sender.send("/position",
-                        output_inter_state_position.source_state.name,
-                        output_inter_state_position.destination_state.name,
-                        output_inter_state_position.relative_position)
+                        source_state_name,
+                        destination_state_name,
+                        relative_position)
         if args.show_output:
             print "/position %s %s %.3f" % (
-                output_inter_state_position.source_state.name,
-                output_inter_state_position.destination_state.name,
-                output_inter_state_position.relative_position)
+                source_state_name,
+                destination_state_name,
+                relative_position)
 
 def observed_state(state):
     osc_sender.send("/observed_state", state.name)

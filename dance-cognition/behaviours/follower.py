@@ -1,5 +1,5 @@
 from vector import *
-from states import InterStatePosition
+from states import BetweenStates
 import behaviour
 
 SPEED = 1.0
@@ -23,7 +23,7 @@ class Behaviour(behaviour.Behaviour):
             nearest_state = self._nearest_transition_state(desired_inter_state_position)
             self._move_along_transition_towards_state(nearest_state)
 
-            euclidian = self._state_machine.inter_state_to_euclidian_position(self._inter_state_position)
+            euclidian = self._state_machine.cursor_to_euclidian_position(self._inter_state_position)
             if (euclidian - nearest_state.position).mag() < THRESHOLD:
                 self._select_best_transition(input_position, nearest_state)
 
@@ -56,7 +56,7 @@ class Behaviour(behaviour.Behaviour):
         self._move_along_transition_towards_relative_position(desired_relative_position)
 
     def _nearest_transition_state(self, target_inter_state_position):
-        target_euclidian = self._state_machine.inter_state_to_euclidian_position(target_inter_state_position)
+        target_euclidian = self._state_machine.cursor_to_euclidian_position(target_inter_state_position)
         distance_from_source = (
             target_euclidian - self._inter_state_position.source_state.position).mag()
         distance_from_destination = (
@@ -70,17 +70,17 @@ class Behaviour(behaviour.Behaviour):
         nearest_output_state = min(
             input_state.inputs + input_state.outputs,
             key=lambda output_state: self._distance_to_transition(v, input_state, output_state))
-        self._inter_state_position = InterStatePosition(input_state, nearest_output_state, 0.0)
+        self._inter_state_position = BetweenStates(input_state, nearest_output_state, 0.0)
 
     def _distance_to_transition(self, v, input_state, output_state):
         inter_state_position = self._perpendicular_inter_state_position(v, input_state, output_state)
-        return (v - self._state_machine.inter_state_to_euclidian_position(inter_state_position)).mag()
+        return (v - self._state_machine.cursor_to_euclidian_position(inter_state_position)).mag()
 
     def _nearest_inter_state_position(self, v):
         min_distance = None
         for input_state, output_state in self._state_machine.transitions:
             inter_state_position = self._perpendicular_inter_state_position(v, input_state, output_state)
-            distance = (v - self._state_machine.inter_state_to_euclidian_position(inter_state_position)).mag()
+            distance = (v - self._state_machine.cursor_to_euclidian_position(inter_state_position)).mag()
             if min_distance is None or distance < min_distance:
                 nearest_inter_state_position = inter_state_position
                 min_distance = distance
@@ -92,7 +92,7 @@ class Behaviour(behaviour.Behaviour):
         intersection = self._perpendicular(pos1, pos2, v)
         relative_position = (intersection - pos1).mag() / (pos2 - pos1).mag()
         relative_position = self._clamp(relative_position, 0, 1)
-        return InterStatePosition(input_state, output_state, relative_position)
+        return BetweenStates(input_state, output_state, relative_position)
 
     def _perpendicular(self, p1, p2, q):
         u = p2 - p1
