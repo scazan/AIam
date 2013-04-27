@@ -8,5 +8,24 @@ def move(source, destination):
         time.sleep(0.01)
 
 while True:
-    move("mc", "ml")
-    move("ml", "mc")
+    move("mc", "mlb")
+    move("mlb", "mc")
+
+    # move("mc", "ml")
+    # move("ml", "mc")
+
+    # move("mc", "hb") # bad BVH
+    # move("hb", "mc") # bad BVH
+
+    # move("mc", "mb") # nothing
+    # move("mb", "mc") # nothing
+
+    # move("mc", "mlf")
+    # move("mlf", "mc")
+
+    # move("mlb", "ml")
+    # move("ml", "mlb")
+
+    # move("mlb", "hb")
+    # move("hb", "mlb") # bad BVH
+
