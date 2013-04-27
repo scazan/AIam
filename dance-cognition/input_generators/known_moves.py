@@ -14,7 +14,7 @@ class Generator(input_generator.Generator):
     def add_parser_arguments(parser):
         parser.add_argument("-pause-duration", type=float, default=0.5)
         parser.add_argument("-fluctuation", type=float, default=0.2)
-        parser.add_argument("-move-duration", type=float, default=3.0)
+        parser.add_argument("-move-duration", type=float, default=2.0)
 
     def __init__(self, args):
         self._pause_duration = args.pause_duration

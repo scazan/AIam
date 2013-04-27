@@ -10,7 +10,7 @@ PAUSE, SWAY_OUT, SWAY_IN = range(3)
 class Generator(input_generator.Generator):
     @staticmethod
     def add_parser_arguments(parser):
-        parser.add_argument("-magnitude", type=float, default=0.2)
+        parser.add_argument("-magnitude", type=float, default=0.5)
         parser.add_argument("-pause-duration", type=float, default=0.5)
         parser.add_argument("-sway-duration", type=float, default=1.0)
         parser.add_argument("-fluctuation", type=float, default=0.1)

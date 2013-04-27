@@ -14,12 +14,12 @@ class Generator(input_generator.Generator):
 
     @staticmethod
     def add_parser_arguments(parser):
-        parser.add_argument("-sway-magnitude", type=float, default=0.2)
+        parser.add_argument("-sway-magnitude", type=float, default=0.5)
         parser.add_argument("-sway-duration", type=float, default=1.0)
         parser.add_argument("-pause-duration", type=float, default=0.5)
         parser.add_argument("-move-fluctuation", type=float, default=0.2)
         parser.add_argument("-idle-fluctuation", type=float, default=0.1)
-        parser.add_argument("-move-duration", type=float, default=3.0)
+        parser.add_argument("-move-duration", type=float, default=2.0)
 
     def __init__(self, args):
         self._sway_magnitude = args.sway_magnitude
