@@ -1,6 +1,5 @@
 # echo: Observe and repeat moves, one by one, like an echo.
 
-from states import InterStatePosition
 import behaviour
 import interpret
 
@@ -14,7 +13,7 @@ class Behaviour(behaviour.Behaviour):
         behaviour.Behaviour.process_input(self, input_position, time_increment)
         if self._last_observed_move and \
            self.can_move_to(self._last_observed_move["destination_state"]):
-            self.start_move_to(
+            self.initiate_movement_to(
                 self._last_observed_move["destination_state"],
                 self._last_observed_move["duration"])
 

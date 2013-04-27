@@ -40,10 +40,7 @@ class Generator(input_generator.Generator):
     def _enter_sway_out_state(self):
         self._state = SWAY_OUT
         self._t = 0
-        self._sway_target = Vector3d(
-            random.uniform(-1, 1),
-            random.uniform(-1, 1),
-            random.uniform(-1, 1)) * self._magnitude
+        self._sway_target = random_unit_sphere_position() * self._magnitude
 
     def _enter_sway_in_state(self):
         self._state = SWAY_IN
