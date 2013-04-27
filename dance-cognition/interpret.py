@@ -1,5 +1,5 @@
 from vector import *
-from states import state_machine, InterStatePosition
+from states import state_machine, InterStatePosition, MC
 from sensory_adaptation import SensoryAdapter
 
 SPATIAL_THRESHOLD = 0.5
@@ -9,10 +9,16 @@ MIN_MOVE_DURATION = 2.0
 MIN_DISTANCE = 0.001
 MAX_DISTANCE = 0.5
 
-CENTER_SPATIAL_THRESHOLD = 0.04
-CENTER_TEMPORAL_THRESHOLD = 0.2
-
 MOVE, STATE, LEAVING_CENTER, ENTERING_CENTER = range(4)
+
+SENSE_CENTER = False
+
+if SENSE_CENTER:
+    CENTER_SPATIAL_THRESHOLD = 0.04
+    CENTER_TEMPORAL_THRESHOLD = 0.2
+else:
+    CENTER_SPATIAL_THRESHOLD = 0.15
+    CENTER_TEMPORAL_THRESHOLD = 0.2
 
 class Interpreter:
     def __init__(self):
@@ -47,7 +53,10 @@ class Interpreter:
             self.state_probability[state_name] = probability
 
     def sensed_center(self):
-        return self._sensory_adapter.sensed_center()
+        if SENSE_CENTER:
+            return self._sensory_adapter.sensed_center()
+        else:
+            return state_machine.states[MC].position
 
     def guess_target_state(self, input_position, source_state):
         return min(
@@ -55,7 +64,11 @@ class Interpreter:
             key=lambda output_state: self._distance_to_transition(input_position, source_state, output_state))
 
     def _detect_whether_leaving_or_entering_center(self, input_position, time_increment):
-        sensed_input_position = self._sensory_adapter.process(input_position, time_increment)
+        if SENSE_CENTER:
+            sensed_input_position = self._sensory_adapter.process(
+                input_position, time_increment)
+        else:
+            sensed_input_position = input_position
         input_in_center = sensed_input_position.mag() < CENTER_SPATIAL_THRESHOLD
         if self._in_center:
             if input_in_center:
