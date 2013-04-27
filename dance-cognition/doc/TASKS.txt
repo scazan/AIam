@@ -3,11 +3,13 @@ echo should never follow into a non-dataset state (such as MRB). now it leads to
 combine idle+echo
 combine idle+echo+improvise
 
-sync/mirror is entirely still too much
-
-better input state detection: replace strict limits with probabilities?
+better input state detection:
+ - expected durations
+ - expected set of moves
+ - replace strict limits with probabilities?
 
 combine idle+echo+mirror+improvise
+sync/mirror is entirely still too much
 
 invent: perform transitions between inter-state positions
 combine mirror+echo+improvise+invent?
