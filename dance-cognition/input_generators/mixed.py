@@ -1,5 +1,5 @@
 from vector import *
-from states import state_machine
+from states import state_machine, MC
 import random
 import input_generator
 from utils import random_unit_sphere_position
@@ -10,7 +10,7 @@ PROBABILITY_TO_CENTER = 0.8
 SWAY_PROBABILITY = 0.5
 
 class Generator(input_generator.Generator):
-    MC = state_machine.states["MC"]
+    MC = state_machine.states[MC]
 
     @staticmethod
     def add_parser_arguments(parser):

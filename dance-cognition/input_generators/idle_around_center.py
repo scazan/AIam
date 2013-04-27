@@ -1,5 +1,5 @@
 from vector import *
-from states import state_machine
+from states import state_machine, MC
 import random
 import math
 import input_generator
@@ -48,7 +48,7 @@ class Generator(input_generator.Generator):
     def _enter_sway_in_state(self):
         self._state = SWAY_IN
         self._t = 0
-        self._source_position = state_machine.states["MC"].position + self._fluctuation()
+        self._source_position = state_machine.states[MC].position + self._fluctuation()
 
     def position(self):
         if self._state == PAUSE:

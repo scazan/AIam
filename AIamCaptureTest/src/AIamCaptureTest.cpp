@@ -17,6 +17,8 @@
 
 #include <vector>
 
+#include "boost/assign.hpp"
+
 #include "cinder/Cinder.h"
 #include "cinder/app/AppBasic.h"
 #include "cinder/gl/gl.h"
@@ -29,6 +31,7 @@
 #include "mndlkit/params/PParams.h"
 
 #include "AssimpLoader.h"
+#include "OscServer.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -38,6 +41,8 @@ using namespace mndl;
 class AIamCaptureTest : public AppBasic
 {
 	public:
+		AIamCaptureTest();
+
 		void prepareSettings( Settings *settings );
 		void setup();
 
@@ -61,6 +66,14 @@ class AIamCaptureTest : public AppBasic
 		int mMotionIndex;
 		AssimpLoaderRef mCurrentMotion;
 		Anim< double > mMotionTime;
+
+		AssimpLoaderRef mModel;
+		enum
+		{
+			RENDER_SKELETON = 0,
+			RENDER_MODEL
+		};
+		int mRenderType;
 
 		MayaCamUI mMayaCam;
 
@@ -93,13 +106,31 @@ class AIamCaptureTest : public AppBasic
 			POSE_MLF
 		};
 #define POSE_COUNT ( POSE_MLF + 1 )
-		const map< string, int > mPoseStrToId = { { "mc", POSE_MC }, { "mlb", POSE_MLB }, { "ml", POSE_ML },
-			{ "hb", POSE_HB }, { "mlf", POSE_MLF } };
-		const vector< string > mPoseNames = { "mc", "mlb", "ml", "hb", "mlf" };
+		map< string, int > mPoseStrToId;
+		vector< string > mPoseNames;
 		AssimpLoaderRef mMotionGrid[ POSE_COUNT ][ POSE_COUNT ];
-		int mCurrentPose = POSE_MC;
-		int mTargetPose = POSE_MC;
+		int mCurrentPose;
+		int mTargetPose;
+		void goToPoseFunc();
+
+		bool positionReceived( const mndl::osc::Message &message );
+		mndl::osc::Server mListener;
+		std::mutex mOscMutex;
 };
+
+AIamCaptureTest::AIamCaptureTest() :
+	mAllMotionsLoaded( false ), mCurrentPose( POSE_MC ), mTargetPose( POSE_MC )
+{
+	/* because visual studio does not support initializer lists
+	   NOTE: the dummy containers are necessary, because the c++11 compiler
+	   cannot decide between the operator='s in boost 1.53.
+       error: use of overloaded operator '=' is ambiguous */
+	map< string, int > dummy0 = boost::assign::map_list_of( string( "mc" ), POSE_MC )( string( "mlb" ), POSE_MLB )
+		( string( "ml" ), POSE_ML )( string( "hb" ), POSE_HB )( string( "mlf" ), POSE_MLF );
+	mPoseStrToId = dummy0;
+	vector< string > dummy1 = boost::assign::list_of( "mc" )( "mlb" )( "ml" )( "hb" )( "mlf" );
+	mPoseNames = dummy1;
+}
 
 void AIamCaptureTest::prepareSettings( Settings *settings )
 {
@@ -108,14 +139,11 @@ void AIamCaptureTest::prepareSettings( Settings *settings )
 
 void AIamCaptureTest::setup()
 {
-	mVerticalSyncEnabled = false;
-	mAllMotionsLoaded = false;
-
 	mndl::params::PInterfaceGl::load( "params.xml" );
-	mParams = mndl::params::PInterfaceGl( "Parameters", Vec2i( 200, 300 ) );
+	mParams = mndl::params::PInterfaceGl( "Parameters", Vec2i( 220, 320 ) );
 	mParams.addPersistentSizeAndPosition();
 	mParams.addParam( "Fps", &mFps, "", true );
-	mParams.addParam( "Vertical sync", &mVerticalSyncEnabled );
+	mParams.addPersistentParam( "Vertical sync", &mVerticalSyncEnabled, false );
 	mParams.addSeparator();
 
 	CameraPersp cam;
@@ -124,24 +152,23 @@ void AIamCaptureTest::setup()
 	cam.setCenterOfInterestPoint( Vec3f( 0, 70, 0 ) );
 	mMayaCam.setCurrentCam( cam );
 
+	mParams.addText( "Debug" );
 	mParams.addPersistentParam( "Draw axes", &mDrawAxes, true );
 	mParams.addPersistentParam( "Draw plane", &mDrawPlane, true );
 	mParams.addPersistentParam( "Draw grid", &mDrawGrid, true );
 	mParams.addPersistentParam( "Grid size", &mGridSize, 50, "min=1 max=512" );
 	mParams.addSeparator();
 
-	mParams.addParam( "Go to pose", mPoseNames, &mTargetPose );
-	mParams.addButton( "Go", [&]() {
-			mCurrentMotion = mMotionGrid[ mCurrentPose ][ mTargetPose ];
-			if ( mCurrentMotion )
-			{
-				mMotionTime = 0.;
-				double motionDuration = mCurrentMotion->getAnimationDuration( 0 );
-				timeline().apply( &mMotionTime, motionDuration, motionDuration ).finishFn(
-					[&]() { mCurrentPose = mTargetPose; } );
-			}
-	} );
+	mParams.addText( "Render" );
+	vector< string > renderTypeStrs = boost::assign::list_of( "skeleton" )( "model" );
+	mParams.addPersistentParam( "Type", renderTypeStrs, &mRenderType, RENDER_SKELETON );
+	mParams.addSeparator();
 
+	mParams.addText( "Manual control" );
+	mParams.addParam( "Current pose", mPoseNames, &mCurrentPose, "", true );
+	mParams.addParam( "Go to pose", mPoseNames, &mTargetPose );
+	// NOTE: vc compiler crashes if this is a lambda, probably because the other lambda inside
+	mParams.addButton( "Go", std::bind( &AIamCaptureTest::goToPoseFunc, this ));
 	mParams.addSeparator();
 
 	mTriMeshPlane = createSquare( Vec2i( 64, 64 ) );
@@ -150,6 +177,34 @@ void AIamCaptureTest::setup()
 	mParams.addText( "Motions" );
 	mMotionNames.push_back( "no motion" );
 	mMotionPaths = getMotions( "motions" );
+
+	mListener = mndl::osc::Server( 7892 );
+	mListener.registerOscReceived< AIamCaptureTest >( &AIamCaptureTest::positionReceived, this, "/position", "ssf" );
+
+	mModel = AssimpLoaderRef( new assimp::AssimpLoader( getAssetPath( "model/model.dae" ) ) );
+	mModel->enableSkinning();
+}
+
+void AIamCaptureTest::goToPoseFunc()
+{
+	if ( mCurrentPose == mTargetPose )
+		return;
+
+	// prevent from staring the same motion again
+	static int lastTargetPose = -1;
+	if ( mTargetPose == lastTargetPose )
+		return;
+	lastTargetPose = mTargetPose;
+
+	mCurrentMotion = mMotionGrid[ mCurrentPose ][ mTargetPose ];
+	if ( mCurrentMotion )
+	{
+		mMotionTime = 0.;
+		double motionDuration = mCurrentMotion->getAnimationDuration( 0 );
+
+		timeline().apply( &mMotionTime, motionDuration, motionDuration ).finishFn(
+			[&]() { mCurrentPose = mTargetPose; } );
+	}
 }
 
 vector< fs::path > AIamCaptureTest::getMotions( const fs::path &relativeDir )
@@ -220,7 +275,9 @@ void AIamCaptureTest::loadSomeMotions()
 					timeline().apply( &mMotionTime, motionDuration, motionDuration );
 				}
 		} );
+		// start from POSE_MC
 		mMotionTime = 0.;
+		mCurrentMotion = mMotionGrid[ POSE_MC ][ POSE_MLB ];
 		mParams.addSeparator();
 	}
 
@@ -244,10 +301,59 @@ void AIamCaptureTest::update()
 		return;
 	}
 
-	if ( mCurrentMotion )
 	{
-		mCurrentMotion->setTime( mMotionTime );
-		mCurrentMotion->update();
+		std::lock_guard< std::mutex > lock( mOscMutex );
+
+		if ( mCurrentMotion )
+		{
+			mCurrentMotion->setTime( mMotionTime );
+			mCurrentMotion->update();
+
+			// copy pose
+			if ( mRenderType == RENDER_MODEL )
+			{
+				const vector< string > &nodeNames = mCurrentMotion->getNodeNames();
+				for ( auto it = nodeNames.cbegin(); it != nodeNames.cend(); ++it )
+				{
+					mndl::assimp::AssimpNodeRef skelNode = mCurrentMotion->getAssimpNode( *it );
+					mndl::assimp::AssimpNodeRef modelNode = mModel->getAssimpNode( *it );
+
+					if ( modelNode )
+					{
+						Quatf ori = skelNode->getOrientation();
+						Vec3f pos = skelNode->getPosition();
+						Vec3f scale = skelNode->getScale();
+						modelNode->setOrientation( ori );
+						modelNode->setPosition( pos );
+						modelNode->setScale( scale );
+					}
+				}
+
+				/* model structure:                     skeleton structure:
+				 * 'Scene', meshes: 0					'Scene', meshes: 0
+				 *  -- 'csontok', meshes: 0				-- 'mc-mlb-1', meshes: 1
+				 *  -- -- 'Hip', meshes: 0				-- -- 'Hip', meshes: 1
+				 *  -- -- -- 'LowerSpine', meshes: 0	-- -- -- 'LowerSpine', meshes: 1
+				 *  ...									...
+				 * the two first child have to be matched although they have different names
+				 */
+				const vector< mndl::NodeRef > &skelRootNodes = mCurrentMotion->getAssimpNode( "Scene" )->getChildren();
+				const vector< mndl::NodeRef > &modelRootNodes = mModel->getAssimpNode( "Scene" )->getChildren();
+				if ( !skelRootNodes.empty() && !modelRootNodes.empty() )
+				{
+					mndl::NodeRef skelNode = skelRootNodes[ 0 ];
+					mndl::NodeRef modelNode = modelRootNodes[ 0 ];
+					Quatf ori = skelNode->getOrientation();
+					Vec3f pos = skelNode->getPosition();
+					Vec3f scale = skelNode->getScale();
+					modelNode->setOrientation( ori );
+					modelNode->setPosition( pos );
+					modelNode->setScale( scale );
+				}
+
+				mModel->update();
+			}
+		}
 	}
 
 	static int lastGridSize = -1;
@@ -291,11 +397,19 @@ void AIamCaptureTest::draw()
 
 		glPolygonOffset( 1.0f, 1.0f );
 		gl::enable( GL_POLYGON_OFFSET_FILL );
-		if ( mCurrentMotion )
 		{
-			gl::pushModelView();
-			mCurrentMotion->draw();
-			gl::popModelView();
+			std::lock_guard< std::mutex > lock( mOscMutex );
+
+			if ( mRenderType == RENDER_SKELETON )
+			{
+				if ( mCurrentMotion )
+					mCurrentMotion->draw();
+			}
+			else
+			if ( mRenderType == RENDER_MODEL )
+			{
+				mModel->draw();
+			}
 		}
 
 		if ( mDrawPlane )
@@ -318,6 +432,35 @@ void AIamCaptureTest::draw()
 	}
 
 	mParams.draw();
+}
+
+bool AIamCaptureTest::positionReceived( const mndl::osc::Message &message )
+{
+	// /position s s f
+	string pose0str = message.getArg< string >( 0 );
+	string pose1str = message.getArg< string >( 1 );
+	float per = math< float >::clamp( message.getArg< float >( 2 ), 0.f, 1.f );
+	auto poseIdIt0 = mPoseStrToId.find( pose0str );
+	auto poseIdIt1 = mPoseStrToId.find( pose1str );
+	if ( ( poseIdIt0 != mPoseStrToId.end() ) && ( poseIdIt1 != mPoseStrToId.end() ) )
+	{
+		std::lock_guard< std::mutex > lock( mOscMutex );
+
+		mCurrentPose = poseIdIt0->second;
+		mTargetPose = poseIdIt1->second;
+		mCurrentMotion = mMotionGrid[ mCurrentPose ][ mTargetPose ];
+		if ( mCurrentMotion )
+		{
+			double motionDuration = mCurrentMotion->getAnimationDuration( 0 );
+			mMotionTime = motionDuration * per;
+		}
+	}
+	else
+	{
+		app::console() << "Unknown pose id in osc message " << message << endl;
+	}
+
+	return false;
 }
 
 void AIamCaptureTest::mouseDown( MouseEvent event )

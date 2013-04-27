@@ -6,6 +6,7 @@ from OpenGL.GLU import *
 from states import state_machine, InterStatePosition
 from simple_osc_receiver import OscReceiver
 from argparse import ArgumentParser
+from config_manager import load_config
 
 MOUSE_REACTIVITY = 5.0
 TORSO_COLOR = (0,0.5,1)
@@ -14,6 +15,9 @@ INPUT_COLOR = (0,0,1)
 OUTPUT_COLOR = (1,0,0)
 OBSERVED_STATE_COLOR = (0,1,0)
 TEXT_SIZE = 0.15
+
+MIN_STATE_POINT_SIZE = 3.0
+MAX_STATE_POINT_SIZE = 20.0
 
 class Display(window.Window):
     def InitGL(self):
@@ -46,15 +50,24 @@ class Display(window.Window):
         glPopMatrix()
 
     def _draw_states_as_points(self):
-        glPointSize(5.0)
         for state in state_machine.states.values():
+            glPointSize(self._state_point_size(state))
             glBegin(GL_POINTS)
-            if state == observed_state:
-                glColor3f(*OBSERVED_STATE_COLOR)
-            else:
-                glColor3f(0,0,0)
+            # if state == observed_state:
+            #     glColor3f(*OBSERVED_STATE_COLOR)
+            # else:
+            #     glColor3f(0,0,0)
+            glColor3f(0,0,0)
             glVertex3f(*state.position)
             glEnd()
+
+    def _state_point_size(self, state):
+        if state.name in state_probability:
+            probability = state_probability[state.name]
+            return MIN_STATE_POINT_SIZE + (MAX_STATE_POINT_SIZE - MIN_STATE_POINT_SIZE) * \
+                probability
+        else:
+            return MIN_STATE_POINT_SIZE
 
     def _draw_state_names(self):
         for state in state_machine.states.values():
@@ -151,21 +164,30 @@ def receive_observed_state(path, args, types, src, user_data):
     else:
         observed_state = None
 
+def receive_state_probability(path, args, types, src, user_data):
+    global state_probability
+    state_name, probability = args
+    state_probability[state_name] = probability
+
 torso_position = None
 center_of_mass_position = None
 input_position = None
 observed_state = None
+state_probability = {}
 osc_receiver = OscReceiver(7892, listen="localhost")
 osc_receiver.add_method("/normalized_torso_position", "fff", receive_torso_position)
 osc_receiver.add_method("/normalized_center_of_mass_position", "fff", receive_center_of_mass_position)
 osc_receiver.add_method("/input_position", "fff", receive_input_position)
 osc_receiver.add_method("/position", "ssf", receive_output_position)
 osc_receiver.add_method("/observed_state", "s", receive_observed_state)
+osc_receiver.add_method("/state_probability", "sf", receive_state_probability)
 osc_receiver.start()
 
 output_inter_state_position = None
 
 parser = ArgumentParser()
+parser.add_argument("-config", type=str)
 window.Window.add_parser_arguments(parser)
 args = parser.parse_args()
+load_config(args.config)
 window.run(Display, args)

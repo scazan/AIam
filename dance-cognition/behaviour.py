@@ -5,13 +5,13 @@
 # add method leave_free_movement. this will be used by echo_or_mirror when detecting that partner is away from center.
 # add callback for entering resting state (from free movement). this will be used by echo_or_mirror to potentially start new move.
 
-from states import InterStatePosition
+from states import MC, InterStatePosition
 
 class Behaviour:
     def __init__(self, state_machine, interpreter):
         self._state_machine = state_machine
         self.interpreter = interpreter
-        self.MC = state_machine.states["MC"]
+        self.MC = state_machine.states[MC]
         self._resting_state = self.MC
         self._performing_move = False
 

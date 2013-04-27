@@ -22,6 +22,9 @@
     <Filter Include="blocks\Cinder-Assimp">
       <UniqueIdentifier>{0ffa025c-f910-4dfb-aeda-8806a82c5017}</UniqueIdentifier>
     </Filter>
+    <Filter Include="blocks\Cinder-Osc">
+      <UniqueIdentifier>{597bf053-f732-4a46-9ac9-347225b16af9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\cinder_0.8.5\blocks\MndlKit\src\mndlkit\params\PParams.h">
@@ -36,10 +39,14 @@
     <ClInclude Include="..\..\..\..\cinder_0.8.5\blocks\Cinder-Assimp\src\Node.h">
       <Filter>blocks\Cinder-Assimp</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\include\Resources.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="..\..\..\..\cinder_0.8.5\blocks\Cinder-Osc\src\OscClient.h">
+      <Filter>blocks\Cinder-Osc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\cinder_0.8.5\blocks\Cinder-Osc\src\OscCore.h">
+      <Filter>blocks\Cinder-Osc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\cinder_0.8.5\blocks\Cinder-Osc\src\OscServer.h">
+      <Filter>blocks\Cinder-Osc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -54,6 +61,12 @@
     </ClCompile>
     <ClCompile Include="..\..\..\..\cinder_0.8.5\blocks\Cinder-Assimp\src\Node.cpp">
       <Filter>blocks\Cinder-Assimp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\cinder_0.8.5\blocks\Cinder-Osc\src\OscClient.cpp">
+      <Filter>blocks\Cinder-Osc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\cinder_0.8.5\blocks\Cinder-Osc\src\OscServer.cpp">
+      <Filter>blocks\Cinder-Osc</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

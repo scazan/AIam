@@ -1,4 +1,4 @@
-from states import state_machine
+from states import state_machine, MC
 import random
 import input_generator
 from utils import random_unit_sphere_position
@@ -8,7 +8,7 @@ PAUSE, MOVE = range(2)
 PROBABILITY_TO_CENTER = 0.8
 
 class Generator(input_generator.Generator):
-    MC = state_machine.states["MC"]
+    MC = state_machine.states[MC]
 
     @staticmethod
     def add_parser_arguments(parser):

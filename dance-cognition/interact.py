@@ -6,6 +6,7 @@ import imp
 from vector import *
 from states import state_machine
 import interpret
+from config_manager import load_config
 
 def receive_torso_position(path, args, types, src, user_data):
     global normalized_torso_position
@@ -51,7 +52,10 @@ def refresh():
 
     osc_sender.send("/input_position", *input_position)
     osc_sender.send("/normalized_torso_position", *normalized_torso_position)
-    osc_sender.send("/normalized_center_of_mass_position", *normalized_center_of_mass_position)
+    if normalized_center_of_mass_position:
+        osc_sender.send("/normalized_center_of_mass_position", *normalized_center_of_mass_position)
+    for state_name, probability in interpreter.state_probability.iteritems():
+        osc_sender.send("/state_probability", state_name, probability)
 
     output_inter_state_position = behaviour.output()
     if output_inter_state_position:
@@ -69,15 +73,13 @@ def observed_state(state):
 
 parser = ArgumentParser()
 parser.add_argument("-behaviour", type=str, default="follower")
-parser.add_argument("-config", type=str, default="default")
+parser.add_argument("-config", type=str)
 parser.add_argument("-refresh-rate", type=float, default=60.0)
 parser.add_argument("-verbose", action="store_true")
 args = parser.parse_args()
 verbose = args.verbose
 
-config = imp.load_source("config", "input_data/%s/config.py" % args.config)
-config.center = Vector3d(*config.center)
-config.size = Vector3d(*config.size)
+config = load_config(args.config)
 
 interpreter = interpret.Interpreter()
 interpreter.add_callback(interpret.STATE, observed_state)

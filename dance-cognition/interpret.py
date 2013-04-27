@@ -2,8 +2,12 @@ from vector import *
 from states import state_machine, InterStatePosition
 from sensory_adaptation import SensoryAdapter
 
-SPATIAL_THRESHOLD = 0.25
-TEMPORAL_THRESHOLD = 1.0
+SPATIAL_THRESHOLD = 0.5
+TEMPORAL_THRESHOLD = 0.4
+MIN_MOVE_DURATION = 2.0
+
+MIN_DISTANCE = 0.001
+MAX_DISTANCE = 0.5
 
 CENTER_SPATIAL_THRESHOLD = 0.04
 CENTER_TEMPORAL_THRESHOLD = 0.2
@@ -24,14 +28,23 @@ class Interpreter:
             LEAVING_CENTER: [],
             ENTERING_CENTER: []
         }
+        self.state_probability = {}
 
     def add_callback(self, event, callback):
         self._callbacks[event].append(callback)
 
     def process_input(self, input_position, time_increment):
         self._time += time_increment
+        self._update_state_probabilities(input_position)
         self._detect_whether_leaving_or_entering_center(input_position, time_increment)
         self._detect_whether_state_changed(input_position, time_increment)
+
+    def _update_state_probabilities(self, input_position):
+        for state_name, state in state_machine.states.iteritems():
+            distance = (state.position - input_position).mag()
+            probability = 1 - (self._clamp(distance, MIN_DISTANCE, MAX_DISTANCE) - MIN_DISTANCE) / \
+                 (MAX_DISTANCE - MIN_DISTANCE)
+            self.state_probability[state_name] = probability
 
     def sensed_center(self):
         return self._sensory_adapter.sensed_center()
@@ -64,7 +77,7 @@ class Interpreter:
             if nearest_state == self._state_hypothesis:
                 self._duration_in_state += time_increment
                 if self._duration_in_state > TEMPORAL_THRESHOLD:
-                    self._state_observed(nearest_state)
+                    self._state_potentially_observed(nearest_state)
             else:
                 self._state_hypothesis = nearest_state
                 self._duration_in_state = 0
@@ -75,13 +88,16 @@ class Interpreter:
     def _distance_to_state(self, state):
         return (state.position - self._input_position).mag()
 
-    def _is_valid_transition(self, source_state, destination_state):
-        return destination_state in source_state.inputs + source_state.outputs
+    def _state_potentially_observed(self, new_observed_state):
+        if self._observed_state:
+            duration = self._time - self._observed_state_at_time
+            if duration > MIN_MOVE_DURATION:
+                self._fire_callbacks(MOVE, self._observed_state, new_observed_state, duration)
+                self._state_observed(new_observed_state)
+        else:
+            self._state_observed(new_observed_state)
 
     def _state_observed(self, new_observed_state):
-        if self._observed_state and self._is_valid_transition(self._observed_state, new_observed_state):
-            duration = self._time - self._observed_state_at_time
-            self._fire_callbacks(MOVE, self._observed_state, new_observed_state, duration)
         self._observed_state = new_observed_state
         self._observed_state_at_time = self._time
         self._fire_callbacks(STATE, new_observed_state)

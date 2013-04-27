@@ -1,6 +1,6 @@
 # sync: Mirrors the dynamics of the input. Works best when input is near center.
 
-from states import InterStatePosition
+from states import InterStatePosition, MC, MLB
 import random
 import behaviour
 import math
@@ -15,8 +15,8 @@ class Behaviour(behaviour.Behaviour):
         self.interpreter.add_callback(interpret.ENTERING_CENTER, self._on_entering_center)
         self._target_state = None
         self._center_output = InterStatePosition(
-            self._state_machine.states["MC"],
-            self._state_machine.states["MLB"],
+            self._state_machine.states[MC],
+            self._state_machine.states[MLB],
             0.0)
         self._output = self._center_output
         self._in_center = False
@@ -40,6 +40,6 @@ class Behaviour(behaviour.Behaviour):
         self._in_center = True
 
     def _select_transition(self, input_position):
-        mc = self._state_machine.states["MC"]
+        mc = self._state_machine.states[MC]
         target_state = random.choice(mc.inputs + mc.outputs)
         self._output = InterStatePosition(mc, target_state, 0.0)
