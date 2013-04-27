@@ -4,6 +4,7 @@ import random
 import input_generator
 from utils import random_unit_sphere_position
 import math
+from motion_durations import get_duration
 
 PAUSE, MOVE, SWAY_IN, SWAY_OUT = range(4)
 PROBABILITY_TO_CENTER = 0.8
@@ -19,7 +20,7 @@ class Generator(input_generator.Generator):
         parser.add_argument("-pause-duration", type=float, default=0.5)
         parser.add_argument("-move-fluctuation", type=float, default=0.2)
         parser.add_argument("-idle-fluctuation", type=float, default=0.1)
-        parser.add_argument("-move-duration", type=float, default=2.0)
+        parser.add_argument("-move-duration-fluctuation", type=float, default=0.2)
 
     def __init__(self, args):
         self._sway_magnitude = args.sway_magnitude
@@ -27,7 +28,7 @@ class Generator(input_generator.Generator):
         self._pause_duration = args.pause_duration
         self._move_fluctuation_magnitude = args.move_fluctuation
         self._idle_fluctuation_magnitude = args.idle_fluctuation
-        self._move_duration = args.move_duration
+        self._move_duration_fluctuation = args.move_duration_fluctuation
         self._destination_state = self.MC
         self._destination_position = self._destination_state.position
         self._enter_sway_in_state()
@@ -76,6 +77,9 @@ class Generator(input_generator.Generator):
             self._destination_position = self.MC.position + self._idle_fluctuation()
         else:
             self._destination_position = self._destination_state.position + self._move_fluctuation()
+        self._move_duration = get_duration(self._source_state, self._destination_state) * \
+                              (1.0 + random.uniform(-self._move_duration_fluctuation,
+                                                    +self._move_duration_fluctuation))
         print "%s -> %s" % (self._source_state.name, self._destination_state.name)
         distance = (self._destination_position - self._source_state.position).mag()
         self._t = 0.0
