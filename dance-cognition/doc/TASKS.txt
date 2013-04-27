@@ -1,16 +1,14 @@
+idle mode (sway near center)
+combine idle+echo
+combine idle+echo+improvise
+
 MotionController.output(): optimize IDLE, always choose same output state
 
 sync/mirror is entirely still too much
 
-honour duration of recorded moves when playing them back (at least within reasonable range). NOTE: both directions (mc-mlb != mlb-mc).
-
 better input state detection: replace strict limits with probabilities?
 
-combine mirror+echo
-- handle situation where we are waiting to switch to echo, but dancer stays in middle: perhaps sway while waiting?
-
-combine mirror+improvise
-combine mirror+echo+improvise
+combine idle+echo+mirror+improvise
 
 invent: perform transitions between inter-state positions
 combine mirror+echo+improvise+invent?
