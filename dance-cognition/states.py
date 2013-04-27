@@ -84,7 +84,7 @@ class BetweenStates(Cursor):
 class InState(Cursor):
     def __init__(self, state):
         self.state = state
-        self._any_other_state = self._pick_any_destination_state()
+        self._any_destination_state = None
 
     def _pick_any_destination_state(self):
         choices = self.state.inputs + self.state.outputs
@@ -96,7 +96,9 @@ class InState(Cursor):
         return True
 
     def inter_state_position(self):
-        return self.state.name, self._any_other_state.name, 0.0
+        if self._any_destination_state is None:
+            self._any_destination_state = self._pick_any_destination_state()
+        return self.state.name, self._any_destination_state.name, 0.0
 
     def __repr__(self):
         return "InState(%r)" % self.state.name

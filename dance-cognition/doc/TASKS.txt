@@ -1,5 +1,3 @@
-echo should never follow into a non-dataset state (such as MRB). now it leads to an exception if it does.
-
 combine idle+echo
 combine idle+echo+improvise
 

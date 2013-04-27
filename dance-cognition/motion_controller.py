@@ -149,6 +149,7 @@ class MotionController:
         self._move_duration = full_duration * \
                               (self._move_destination_relative_position -
                                self._move_source_relative_position)
+        print "initiating move to %r" % self._destination_cursor
 
     def _adjusted_duration(self, recorded_duration, desired_duration):
         relative_difference = abs(desired_duration - recorded_duration) / recorded_duration
