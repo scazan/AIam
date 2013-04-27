@@ -8,21 +8,21 @@ from states import state_machine
 import interpret
 from config_manager import load_config
 
-def receive_torso_position(path, args, types, src, user_data):
+def receive_torso_position(path, values, types, src, user_data):
     global normalized_torso_position
-    position_tuple = args
+    position_tuple = values
     position_relative_to_camera = Vector3d(*position_tuple)
     normalized_torso_position = position_in_unit_cube(position_relative_to_camera)
-    if verbose:
+    if args.show_input:
         print "torso", position_tuple
         print " =>", normalized_torso_position
 
-def receive_center_of_mass_position(path, args, types, src, user_data):
+def receive_center_of_mass_position(path, values, types, src, user_data):
     global normalized_center_of_mass_position
-    position_tuple = args
+    position_tuple = values
     position_relative_to_camera = Vector3d(*position_tuple)
     normalized_center_of_mass_position = position_in_unit_cube(position_relative_to_camera)
-    if verbose:
+    if args.show_input:
         print "center_of_mass", position_tuple
         print " =>", normalized_center_of_mass_position
 
@@ -67,6 +67,11 @@ def refresh():
                         output_inter_state_position.source_state.name,
                         output_inter_state_position.destination_state.name,
                         output_inter_state_position.relative_position)
+        if args.show_output:
+            print "/position %s %s %.3f" % (
+                output_inter_state_position.source_state.name,
+                output_inter_state_position.destination_state.name,
+                output_inter_state_position.relative_position)
 
 def observed_state(state):
     osc_sender.send("/observed_state", state.name)
@@ -75,9 +80,9 @@ parser = ArgumentParser()
 parser.add_argument("-behaviour", type=str, default="follower")
 parser.add_argument("-config", type=str)
 parser.add_argument("-refresh-rate", type=float, default=60.0)
-parser.add_argument("-verbose", action="store_true")
+parser.add_argument("-show-input", action="store_true")
+parser.add_argument("-show-output", action="store_true")
 args = parser.parse_args()
-verbose = args.verbose
 
 config = load_config(args.config)
 
