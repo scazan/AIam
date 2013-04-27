@@ -6,6 +6,7 @@
 # add callback for entering resting state (from free movement). this will be used by echo_or_mirror to potentially start new move.
 
 from states import MC, InterStatePosition
+IDLE, MOVE = range(2)
 
 class Behaviour:
     def __init__(self, state_machine, interpreter):
@@ -13,13 +14,13 @@ class Behaviour:
         self.interpreter = interpreter
         self.MC = state_machine.states[MC]
         self._resting_state = self.MC
-        self._performing_move = False
+        self._mode = IDLE
 
     def process_input(self, input_position, time_increment):
-        if self._performing_move:
+        if self._mode == MOVE:
             self._move_time += time_increment
             if self._move_time > self._move_duration:
-                self._performing_move = False
+                self._mode = IDLE
                 self._resting_state = self._destination_state
 
     def start_move_to(self, destination_state, duration):
@@ -27,19 +28,19 @@ class Behaviour:
         self._destination_state = destination_state
         self._move_time = 0.0
         self._move_duration = duration
-        self._performing_move = True
+        self._mode = MOVE
 
     def can_move_to(self, destination_state):
-        return not self._performing_move and \
+        return self._mode == IDLE and \
             destination_state in self._resting_state.outputs + self._resting_state.inputs
 
     def output(self):
-        if self._performing_move:
+        if self._mode == MOVE:
             return InterStatePosition(
                 self._resting_state,
                 self._destination_state,
                 self._move_time / self._move_duration)
-        else:
+        elif self._mode == IDLE:
             # TODO: optimize (?)
             return InterStatePosition(
                 self._resting_state,
