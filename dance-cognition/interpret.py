@@ -86,7 +86,9 @@ class Interpreter:
     def _detect_whether_state_changed(self, input_position, time_increment):
         self._input_position = input_position
         nearest_state = self._nearest_state()
-        if nearest_state and self._distance_to_state(nearest_state) < SPATIAL_THRESHOLD:
+        if nearest_state and \
+           nearest_state != self._observed_state and \
+           self._distance_to_state(nearest_state) < SPATIAL_THRESHOLD:
             if nearest_state == self._state_hypothesis:
                 self._duration_in_state += time_increment
                 if self._duration_in_state > TEMPORAL_THRESHOLD:

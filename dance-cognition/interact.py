@@ -7,6 +7,7 @@ from vector import *
 from states import state_machine
 import interpret
 from config_manager import load_config
+from motion_controller import MotionController
 
 def receive_torso_position(path, values, types, src, user_data):
     global normalized_torso_position
@@ -49,6 +50,7 @@ def refresh():
     input_position = normalized_torso_position
     interpreter.process_input(input_position, time_increment)
     behaviour.process_input(input_position, time_increment)
+    motion_controller.update(time_increment)
 
     osc_sender.send("/input_position", *input_position)
     osc_sender.send("/normalized_torso_position", *normalized_torso_position)
@@ -57,7 +59,7 @@ def refresh():
     for state_name, probability in interpreter.state_probability.iteritems():
         osc_sender.send("/state_probability", state_name, probability)
 
-    output_inter_state_position = behaviour.output()
+    output_inter_state_position = motion_controller.output()
     if output_inter_state_position:
         if output_inter_state_position.relative_position < 0 or \
            output_inter_state_position.relative_position > 1:
@@ -89,8 +91,9 @@ config = load_config(args.config)
 interpreter = interpret.Interpreter()
 interpreter.add_callback(interpret.STATE, observed_state)
 
+motion_controller = MotionController()
 behaviour_module = imp.load_source(args.behaviour, "behaviours/%s.py" % args.behaviour)
-behaviour = behaviour_module.Behaviour(state_machine, interpreter)
+behaviour = behaviour_module.Behaviour(interpreter, motion_controller)
 
 osc_sender = OscSender(7892)
 normalized_torso_position = None

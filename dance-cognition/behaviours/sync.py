@@ -5,6 +5,7 @@ import random
 import behaviour
 import math
 import interpret
+import motion_controller
 
 class Behaviour(behaviour.Behaviour):
     max_amplitude = math.sqrt(2)
@@ -16,20 +17,21 @@ class Behaviour(behaviour.Behaviour):
 
     def process_input(self, input_position, time_increment):
         behaviour.Behaviour.process_input(self, input_position, time_increment)
-        if self.get_mode() == behaviour.FREE:
+        if self.motion_controller.get_mode() == motion_controller.FREE:
             amplitude = max((input_position - self.interpreter.sensed_center()).mag() -
                             interpret.CENTER_SPATIAL_THRESHOLD, 0.0) / self.max_amplitude
-            self.set_cursor(self.MC, self._target_state, amplitude)
+            self.motion_controller.set_cursor(self.MC, self._target_state, amplitude)
 
     def _on_leaving_center(self, input_position):
-        print "LEAVING_CENTER"
-        self._select_target_state(input_position)
-        self.initiate_free_movement()
+        if self.enabled:
+            print "LEAVING_CENTER"
+            self._select_target_state(input_position)
+            self.motion_controller.initiate_free_movement()
 
     def _on_entering_center(self, input_position):
-        print "ENTERING_CENTER"
-        self.initiate_idle()
+        if self.enabled:
+            print "ENTERING_CENTER"
+            self.motion_controller.initiate_idle()
 
     def _select_target_state(self, input_position):
-        mc = self._state_machine.states[MC]
-        self._target_state = random.choice(mc.inputs + mc.outputs)
+        self._target_state = random.choice(self.MC.inputs + self.MC.outputs)

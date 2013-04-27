@@ -1,64 +1,39 @@
-from states import InterStatePosition
 import behaviour
+import behaviours.mirror
+import behaviours.echo
 import interpret
+import time
 
-MIRROR, ECHO, WAIT = range(3)
+MIRROR_THRESHOLD = 3.0
 
 class Behaviour(behaviour.Behaviour):
     def __init__(self, *args):
         behaviour.Behaviour.__init__(self, *args)
-        self._mode = MIRROR
-
-        # from echo
-        self.interpreter.add_callback(interpret.MOVE, self._move_observed)
-        self.interpreter.add_callback(interpret.STATE, self._state_observed)
-        self._next_output_transition = None
-        self._output_transition = None
-
-        # from mirror
-        self.interpreter.add_callback(interpret.LEAVING_CENTER, self._on_leaving_center)
-        self.interpreter.add_callback(interpret.ENTERING_CENTER, self._on_entering_center)
-        self._target_state = None
-        self._center_output = InterStatePosition(
-            self._state_machine.states["MC"],
-            self._state_machine.states["MLB"],
-            0.0)
-        self._output = self._center_output
-        self._in_center = False
+        self._mirror = behaviours.mirror.Behaviour(*args)
+        self._echo = behaviours.echo.Behaviour(*args)
+        self._mode = self._mirror
+        self.interpreter.add_callback(interpret.STATE, self._observed_state)
+        self._observed_MC_at_time = None
 
     def process_input(self, input_position, time_increment):
-        if self._mode == MIRROR:
-            if self._output_transition:
-                self._output_transition_time += time_increment
-                if self._output_transition_time > self._output_transition["duration"]:
-                    self._output_transition = None
+        if self._mode == self._echo and self._observed_MC_at_time and \
+           (time.time() - self._observed_MC_at_time) > MIRROR_THRESHOLD:
+            print "-> mirror"
+            self._echo.enabled = False
+            self._mode = self._mirror
+            self._mirror.enabled = True
+            self.motion_controller.initiate_idle()
+        self._mode.process_input(input_position, time_increment)
 
-            if not self._output_transition and self._next_output_transition:
-                self._output_transition = self._next_output_transition
-                self._next_output_transition = None
-                self._output_transition_time = 0.0
+    def _observed_state(self, state):
+        if state == self.MC:
+            self._observed_MC_at_time = time.time()
+        else:
+            self._observed_MC_at_time = None
 
-        elif self._mode == WAIT:
-
-    # from echo
-    def _move_observed(self, source_state, destination_state, duration):
-        self._next_output_transition = {
-            "source_state": source_state,
-            "destination_state": destination_state,
-            "duration": duration}
-
-    def output(self):
-        if self._output_transition:
-            return InterStatePosition(
-                self._output_transition["source_state"],
-                self._output_transition["destination_state"],
-                self._output_transition_time / self._output_transition["duration"])
-
-    def _state_observed(self, state):
-        if self._mode == MIRROR and state != self.MC:
-            self._mode = WAIT
-
-    # from mirror
-    def _select_transition(self, input_position):
-        assumed_target_state = self.interpreter.guess_target_state(input_position, self.MC)
-        self._output = InterStatePosition(self.MC, assumed_target_state, 0.0)
+        if self._mode == self._mirror and state != self.MC:
+            print "-> echo"
+            self._mirror.enabled = False
+            self._mode = self._echo
+            self._echo.enabled = True
+            self.motion_controller.initiate_idle() # go back to center before echoing

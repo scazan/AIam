@@ -12,8 +12,8 @@ class Behaviour(behaviour.Behaviour):
     def process_input(self, input_position, time_increment):
         behaviour.Behaviour.process_input(self, input_position, time_increment)
         if self._last_observed_move and \
-           self.can_move_to(self._last_observed_move["destination_state"]):
-            self.initiate_movement_to(
+           self.motion_controller.can_move_to(self._last_observed_move["destination_state"]):
+            self.motion_controller.initiate_movement_to(
                 self._last_observed_move["destination_state"],
                 self._last_observed_move["duration"])
 
