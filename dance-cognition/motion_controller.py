@@ -2,6 +2,7 @@ from states import state_machine, MC, InterStatePosition
 from motion_durations import get_duration
 
 SPEED = 1.0
+DURATION_FLEXIBILITY = 0.2
 
 IDLE = "idle"
 MOVE = "move"
@@ -105,13 +106,31 @@ class MotionController:
         new_relative_position = self._clamp(new_relative_position, 0, 1)
         self._cursor.relative_position = new_relative_position
 
-    def initiate_movement_to(self, destination_state, duration=None):
-        if duration is None:
-            duration = get_duration(self._resting_state, destination_state)
+    def initiate_movement_to(self, destination_state, desired_duration=None):
+        recorded_duration = get_duration(self._resting_state, destination_state)
+        if desired_duration is None:
+            duration = recorded_duration
+        else:
+            duration = self._adjusted_duration(recorded_duration, desired_duration)
         self._desired_mode = MOVE
         self._destination_state = destination_state
         self._move_time = 0.0
         self._move_duration = duration
+
+    def _adjusted_duration(self, recorded_duration, desired_duration):
+        relative_difference = abs(desired_duration - recorded_duration) / recorded_duration
+        if relative_difference < DURATION_FLEXIBILITY:
+            print "desired duration %.2f near enough %.2f (relative_difference=%.2f)" % (
+                desired_duration, recorded_duration, relative_difference)
+            return desired_duration
+        else:
+            if desired_duration > recorded_duration:
+                adjusted_duration = recorded_duration * (1 + DURATION_FLEXIBILITY)
+            else:
+                adjusted_duration = recorded_duration * (1 - DURATION_FLEXIBILITY)
+            print "desired duration %.2f adjusted to %.2f (relative_difference %.2f too high)" % (
+                desired_duration, adjusted_duration, relative_difference)
+            return adjusted_duration
 
     def initiate_idle(self):
         self._desired_mode = IDLE
