@@ -1,10 +1,8 @@
-mc-hb is not OK
-
 sync/mirror is entirely still too much
 
 generate only allowed moves (the moves between mc, mlb, ml, hb, mb, mlf)
 
-honour duration of recorded moves when playing them back (at least within reasonable range)
+honour duration of recorded moves when playing them back (at least within reasonable range). NOTE: both directions (mc-mlb != mlb-mc).
 
 better input state detection: replace strict limits with probabilities?
 
