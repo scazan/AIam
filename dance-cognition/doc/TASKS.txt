@@ -1,3 +1,5 @@
+MotionController.output(): optimize IDLE, always choose same output state
+
 sync/mirror is entirely still too much
 
 honour duration of recorded moves when playing them back (at least within reasonable range). NOTE: both directions (mc-mlb != mlb-mc).

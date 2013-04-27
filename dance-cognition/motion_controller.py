@@ -1,4 +1,5 @@
 from states import state_machine, MC, InterStatePosition
+from motion_durations import get_duration
 
 SPEED = 1.0
 
@@ -104,7 +105,9 @@ class MotionController:
         new_relative_position = self._clamp(new_relative_position, 0, 1)
         self._cursor.relative_position = new_relative_position
 
-    def initiate_movement_to(self, destination_state, duration):
+    def initiate_movement_to(self, destination_state, duration=None):
+        if duration is None:
+            duration = get_duration(self._resting_state, destination_state)
         self._desired_mode = MOVE
         self._destination_state = destination_state
         self._move_time = 0.0
