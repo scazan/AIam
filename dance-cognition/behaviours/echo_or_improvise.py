@@ -16,20 +16,30 @@ class Behaviour(behaviour.Behaviour):
     def process_input(self, input_position, time_increment):
         behaviour.Behaviour.process_input(self, input_position, time_increment)
         if self.motion_controller.get_mode() == motion_controller.IDLE:
-            if self._last_observed_destination and \
-               self.motion_controller.can_move_to(self._last_observed_destination):
+            if self._can_echo():
                 print "echoing"
-                self.motion_controller.initiate_movement_to(
-                    self._last_observed_destination,
-                    self._last_observed_duration)
-                self._last_observed_destination = None
+                self._echo()
             else:
                 print "improvising"
                 self._initiate_random_movement()
 
+    # echo
+
+    def _can_echo(self):
+        return self._last_observed_destination and \
+            self.motion_controller.can_move_to(self._last_observed_destination)
+
+    def _echo(self):
+        self.motion_controller.initiate_movement_to(
+            self._last_observed_destination,
+            self._last_observed_duration)
+        self._last_observed_destination = None
+
     def _move_observed(self, source_state, destination_state, duration):
         self._last_observed_destination = InState(destination_state)
         self._last_observed_duration = duration
+
+    # improvise
 
     def _initiate_random_movement(self):
         cursor = self.motion_controller.get_cursor()

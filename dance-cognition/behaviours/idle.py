@@ -13,11 +13,14 @@ class Behaviour(behaviour.Behaviour):
 
     def process_input(self, input_position, time_increment):
         if self.motion_controller.get_mode() == motion_controller.IDLE:
-            if self.motion_controller.get_cursor().is_in_state() and \
-               self.motion_controller.get_cursor().state == self.MC:
-                self._initiate_sway_out()
-            else:
-                self._initiate_sway_in()
+            self._idle()
+
+    def _idle(self):
+        if self.motion_controller.get_cursor().is_in_state() and \
+           self.motion_controller.get_cursor().state == self.MC:
+            self._initiate_sway_out()
+        else:
+            self._initiate_sway_in()
 
     def _initiate_sway_out(self):
         destination_state = random.choice(self.MC.inputs + self.MC.outputs)

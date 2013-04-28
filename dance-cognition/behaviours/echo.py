@@ -15,12 +15,18 @@ class Behaviour(behaviour.Behaviour):
 
     def process_input(self, input_position, time_increment):
         behaviour.Behaviour.process_input(self, input_position, time_increment)
-        if self._last_observed_destination and \
-           self.motion_controller.can_move_to(self._last_observed_destination):
-            self.motion_controller.initiate_movement_to(
-                self._last_observed_destination,
-                self._last_observed_duration)
-            self._last_observed_destination = None
+        if self._can_echo():
+            self._echo()
+
+    def _can_echo(self):
+        return self._last_observed_destination and \
+            self.motion_controller.can_move_to(self._last_observed_destination)
+
+    def _echo(self):
+        self.motion_controller.initiate_movement_to(
+            self._last_observed_destination,
+            self._last_observed_duration)
+        self._last_observed_destination = None
 
     def _move_observed(self, source_state, destination_state, duration):
         self._last_observed_destination = InState(destination_state)
