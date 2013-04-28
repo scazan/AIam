@@ -11,35 +11,24 @@ class Behaviour(behaviour.Behaviour):
     def __init__(self, *args):
         behaviour.Behaviour.__init__(self, *args)
         self.interpreter.add_callback(interpret.MOVE, self._move_observed)
-        self.interpreter.add_callback(interpret.ACTIVITY, self._observed_active)
-        self.interpreter.add_passivity_callback(PASSIVITY_TIMEOUT, self._observed_passive)
+        self.interpreter.add_callback(interpret.STATE, self._state_observed)
         self._last_observed_destination = None
-        self._idling = True
+        self._observed_state = self.MC
 
     # control logic
 
     def on_enabled(self):
         self.motion_controller.initiate_movement_to(InState(self.MC))
 
-    def _observed_active(self):
-        print "observed active"
-        if self._can_echo():
-            print "echoing"
-            self._echo()
-        if self._idling:
-            print "stopped idling"
-            self._idling = False
-
-    def _observed_passive(self):
-        print "observed passive"
-        if not self._idling:
-            print "idling"
-            self._idling = True
+    def _state_observed(self, state):
+        print "observed %r" % state
+        self._observed_state = state
 
     def process_input(self, input_position, time_increment):
         behaviour.Behaviour.process_input(self, input_position, time_increment)
         if self.motion_controller.get_mode() == motion_controller.IDLE:
-            if self._idling:
+            if self._in_sync():
+                print "idling"
                 self._idle()
             elif self._can_echo():
                 print "echoing"
@@ -47,6 +36,9 @@ class Behaviour(behaviour.Behaviour):
             else:
                 print "improvising"
                 self._initiate_random_movement()
+
+    def _in_sync(self):
+        return self.motion_controller.state_nearest_to_cursor() == self._observed_state
 
     # echo
 
@@ -77,17 +69,17 @@ class Behaviour(behaviour.Behaviour):
     # idle
 
     def _idle(self):
-        if self.motion_controller.get_cursor().is_in_state() and \
-           self.motion_controller.get_cursor().state == self.MC:
+        if self.motion_controller.get_cursor().is_in_state():
             self._initiate_sway_out()
         else:
             self._initiate_sway_in()
 
     def _initiate_sway_out(self):
-        destination_state = random.choice(self.MC.inputs + self.MC.outputs)
+        cursor = self.motion_controller.get_cursor()
+        destination_state = random.choice(cursor.state.inputs + cursor.state.outputs)
         self.motion_controller.initiate_movement_to(
-            BetweenStates(
-                self.MC, destination_state, SWAY_MAGNITUDE))
+            BetweenStates(cursor.state, destination_state, SWAY_MAGNITUDE))
 
     def _initiate_sway_in(self):
-        self.motion_controller.initiate_movement_to(InState(self.MC))
+        destination_state = self.motion_controller.state_nearest_to_cursor()
+        self.motion_controller.initiate_movement_to(InState(destination_state))

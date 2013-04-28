@@ -215,3 +215,12 @@ class MotionController:
 
     def _clamp(self, v, v_min, v_max):
         return max(min(v, v_max), v_min)
+
+    def state_nearest_to_cursor(self):
+        if self._cursor.is_in_state():
+            return self._cursor.state
+        elif self._cursor.is_between_states():
+            if self._cursor.relative_position < 0.5:
+                return self._cursor.source_state
+            else:
+                return self._cursor.destination_state
