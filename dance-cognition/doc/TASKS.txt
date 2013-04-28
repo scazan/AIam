@@ -1,12 +1,12 @@
-replace deepcopy with copy
-
-combine idle+echo
 combine idle+echo+improvise
 
 better input state detection:
  - expected durations
  - expected set of moves
  - replace strict limits with probabilities?
+
+configurable idle behaviour
+ - sigmoid?
 
 combine idle+echo+mirror+improvise
 sync/mirror is entirely still too much
