@@ -23,7 +23,7 @@ class MotionController:
         return self._cursor
 
     def _set_mode(self, mode):
-        print mode
+        # print mode
         self._mode = mode
 
     def update(self, time_increment):
@@ -37,7 +37,7 @@ class MotionController:
             if self._desired_mode == MOVE:
                 self._move_time += time_increment
                 if self._move_time > self._move_duration:
-                    print "completed move"
+                    # print "completed move"
                     self._set_mode(IDLE)
                     self._cursor = copy.deepcopy(self._destination_cursor)
                     self._desired_mode = None
@@ -56,13 +56,13 @@ class MotionController:
         if self._cursor.source_state == self.MC:
             self._move_cursor(-delta)
             if self._desired_mode != FREE and self._cursor.relative_position < 0.001:
-                print "reached center"
+                # print "reached center"
                 self._cursor = InState(self.MC)
                 self._set_mode(IDLE)
         elif self._cursor.destination_state == self.MC:
             self._move_cursor(delta)
             if self._desired_mode != FREE and self._cursor.relative_position > 0.999:
-                print "reached center"
+                # print "reached center"
                 self._cursor = InState(self.MC)
                 self._set_mode(IDLE)
         else:
@@ -152,21 +152,21 @@ class MotionController:
         self._move_duration = full_duration * \
                               (self._move_destination_relative_position -
                                self._move_source_relative_position)
-        print "initiating move to %r" % self._destination_cursor
+        # print "initiating move to %r" % self._destination_cursor
 
     def _adjusted_duration(self, recorded_duration, desired_duration):
         relative_difference = abs(desired_duration - recorded_duration) / recorded_duration
         if relative_difference < DURATION_FLEXIBILITY:
-            print "desired duration %.2f near enough %.2f (relative_difference=%.2f)" % (
-                desired_duration, recorded_duration, relative_difference)
+            # print "desired duration %.2f near enough %.2f (relative_difference=%.2f)" % (
+            #     desired_duration, recorded_duration, relative_difference)
             return desired_duration
         else:
             if desired_duration > recorded_duration:
                 adjusted_duration = recorded_duration * (1 + DURATION_FLEXIBILITY)
             else:
                 adjusted_duration = recorded_duration * (1 - DURATION_FLEXIBILITY)
-            print "desired duration %.2f adjusted to %.2f (relative_difference %.2f too high)" % (
-                desired_duration, adjusted_duration, relative_difference)
+            # print "desired duration %.2f adjusted to %.2f (relative_difference %.2f too high)" % (
+            #     desired_duration, adjusted_duration, relative_difference)
             return adjusted_duration
 
     def initiate_idle(self):
