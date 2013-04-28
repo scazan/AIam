@@ -1,7 +1,8 @@
-combine echo+improvise
+combine idle+echo+improvise
  - needs to be patient when waiting for next thing to echo, before improvising, or guess MC
 
-combine idle+echo+improvise
+combine echo+improvise
+ - needs to be patient when waiting for next thing to echo, before improvising, or guess MC
 
 better input state detection:
  - expected durations
