@@ -1,3 +1,6 @@
+combine echo+improvise
+ - needs to be patient when waiting for next thing to echo, before improvising, or guess MC
+
 combine idle+echo+improvise
 
 better input state detection:
