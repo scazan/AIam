@@ -3,7 +3,7 @@ better input state detection:
  - expected set of moves
  - replace strict limits with probabilities?
 
-configurable idle behaviour
+configurable swaying behaviour
  - sigmoid?
 
 unison movement
