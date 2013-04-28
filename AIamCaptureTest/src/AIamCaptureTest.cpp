@@ -103,6 +103,7 @@ class AIamCaptureTest : public AppBasic
 			POSE_MLB,
 			POSE_ML,
 			POSE_HB,
+			POSE_MB,
 			POSE_MLF
 		};
 #define POSE_COUNT ( POSE_MLF + 1 )
@@ -126,9 +127,9 @@ AIamCaptureTest::AIamCaptureTest() :
 	   cannot decide between the operator='s in boost 1.53.
        error: use of overloaded operator '=' is ambiguous */
 	map< string, int > dummy0 = boost::assign::map_list_of( string( "mc" ), POSE_MC )( string( "mlb" ), POSE_MLB )
-		( string( "ml" ), POSE_ML )( string( "hb" ), POSE_HB )( string( "mlf" ), POSE_MLF );
+		( string( "ml" ), POSE_ML )( string( "hb" ), POSE_HB )( string( "mb"), POSE_MB )( string( "mlf" ), POSE_MLF );
 	mPoseStrToId = dummy0;
-	vector< string > dummy1 = boost::assign::list_of( "mc" )( "mlb" )( "ml" )( "hb" )( "mlf" );
+	vector< string > dummy1 = boost::assign::list_of( "mc" )( "mlb" )( "ml" )( "hb" )( "mb ")( "mlf" );
 	mPoseNames = dummy1;
 }
 
