@@ -81,7 +81,7 @@ def observed_state(state):
     osc_sender.send("/observed_state", state.name)
 
 parser = ArgumentParser()
-parser.add_argument("-behaviour", type=str, default="follower")
+parser.add_argument("-behaviour", type=str, default="echo_or_idle_or_improvise")
 parser.add_argument("-config", type=str)
 parser.add_argument("-refresh-rate", type=float, default=60.0)
 parser.add_argument("-show-input", action="store_true")
