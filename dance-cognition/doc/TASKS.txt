@@ -1,9 +1,6 @@
 combine idle+echo+improvise
  - needs to be patient when waiting for next thing to echo, before improvising, or guess MC
 
-combine echo+improvise
- - needs to be patient when waiting for next thing to echo, before improvising, or guess MC
-
 better input state detection:
  - expected durations
  - expected set of moves
@@ -12,14 +9,13 @@ better input state detection:
 configurable idle behaviour
  - sigmoid?
 
-combine idle+echo+mirror+improvise
-sync/mirror is entirely still too much
+unison movement
+ - sync/mirror is entirely still too much
+  - fix bug in sync causing it to sometimes output relative positions greater than 1
+ - tweak idle instead?
 
 invent: perform transitions between inter-state positions
-combine mirror+echo+improvise+invent?
 
-test with input that contains unknown moves
-
-fix bug in sync causing it to sometimes output relative positions greater than 1
+echo_or_improvise: needs to be patient when waiting for next thing to echo, before improvising, or guess MC
 
 learn: perform moves in a manner which reflects statistical patterns in the input (HMM)
