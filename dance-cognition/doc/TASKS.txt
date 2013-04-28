@@ -1,6 +1,3 @@
-idle+echo+improvise:
- - add option for disabling swaying entirely (setting SWAY_MAGNITUDE to 0.0 doesn't help)
-
 better input state detection:
  - expected durations
  - expected set of moves

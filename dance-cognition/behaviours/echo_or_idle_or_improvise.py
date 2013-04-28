@@ -4,8 +4,8 @@ import random
 from states import *
 import motion_controller
 
-PASSIVITY_TIMEOUT = 3.0
 SWAY_MAGNITUDE = 0.1
+ENABLE_SWAYING = True
 
 class Behaviour(behaviour.Behaviour):
     def __init__(self, *args):
@@ -28,8 +28,9 @@ class Behaviour(behaviour.Behaviour):
         behaviour.Behaviour.process_input(self, input_position, time_increment)
         if self.motion_controller.get_mode() == motion_controller.IDLE:
             if self._in_sync():
-                print "idling"
-                self._idle()
+                if ENABLE_SWAYING:
+                    print "swaying"
+                    self._idle()
             elif self._can_echo():
                 print "echoing"
                 self._echo()
