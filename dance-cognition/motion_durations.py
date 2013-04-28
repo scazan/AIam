@@ -41,7 +41,7 @@ for source_state_name, destination_state_name, duration in MOTION_DURATIONS:
 
 def get_duration(source_state, destination_state):
     try:
-        return _durations[source_state.name][destination_state.name]
+        return _durations[source_state.name][destination_state.name] * 0.5
     except KeyError:
         print "WARNING: failed to get duration for %s->%c" % (
             source_state.name, destination_state.name)
