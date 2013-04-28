@@ -41,13 +41,12 @@ class Behaviour(behaviour.Behaviour):
         if self.motion_controller.get_mode() == motion_controller.IDLE:
             if self._idling:
                 self._idle()
+            elif self._can_echo():
+                print "echoing"
+                self._echo()
             else:
-                if self._can_echo():
-                    print "echoing"
-                    self._echo()
-                else:
-                    print "improvising"
-                    self._initiate_random_movement()
+                print "improvising"
+                self._initiate_random_movement()
 
     # echo
 
