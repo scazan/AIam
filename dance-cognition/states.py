@@ -25,6 +25,9 @@ class State:
         except AttributeError:
             return False
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __repr__(self):
         return "State(%r)" % (self.name)
 
@@ -81,6 +84,16 @@ class BetweenStates(Cursor):
         return "BetweenStates(%r, %r, %r)" % (
             self.source_state.name, self.destination_state.name, self.relative_position)
 
+    def __eq__(self, other):
+        try:
+            return isinstance(other, BetweenStates) and \
+                other.inter_state_position() == self.inter_state_position()
+        except AttributeError:
+            return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
 class InState(Cursor):
     def __init__(self, state):
         self.state = state
@@ -102,6 +115,15 @@ class InState(Cursor):
 
     def __repr__(self):
         return "InState(%r)" % self.state.name
+
+    def __eq__(self, other):
+        try:
+            return isinstance(other, InState) and other.state == self.state
+        except AttributeError:
+            return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
 state_machine = StateMachine()
 

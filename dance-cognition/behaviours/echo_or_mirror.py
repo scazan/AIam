@@ -18,7 +18,6 @@ class Behaviour(behaviour.Behaviour):
     def _enable_mirror(self):
         if self.get_mode() != mirror:
             self.set_mode(mirror)
-            self.motion_controller.initiate_idle()
 
     def _observed_state(self, state):
         if self.get_mode() != echo and state != self.MC:
@@ -27,4 +26,3 @@ class Behaviour(behaviour.Behaviour):
     def _enable_echo(self):
         if self.get_mode != echo:
             self.set_mode(echo)
-            self.motion_controller.initiate_idle() # go back to center before echoing

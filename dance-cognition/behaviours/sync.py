@@ -1,6 +1,6 @@
 # sync: Mirrors the dynamics of the input. Works best when input is near center.
 
-from states import MC
+from states import *
 import random
 import behaviour
 import math
@@ -14,6 +14,9 @@ class Behaviour(behaviour.Behaviour):
         behaviour.Behaviour.__init__(self, *args)
         self.interpreter.add_callback(interpret.LEAVING_CENTER, self._on_leaving_center)
         self.interpreter.add_callback(interpret.ENTERING_CENTER, self._on_entering_center)
+
+    def on_enabled(self):
+        self.motion_controller.initiate_movement_to(InState(self.MC))
 
     def process_input(self, input_position, time_increment):
         behaviour.Behaviour.process_input(self, input_position, time_increment)

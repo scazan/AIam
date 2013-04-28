@@ -8,6 +8,9 @@ from states import *
 MAGNITUDE = 0.1
 
 class Behaviour(behaviour.Behaviour):
+    def on_enabled(self):
+        self._initiate_sway_in()
+
     def process_input(self, input_position, time_increment):
         if self.motion_controller.get_mode() == motion_controller.IDLE:
             if self.motion_controller.get_cursor().is_in_state() and \

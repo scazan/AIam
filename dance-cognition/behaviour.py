@@ -10,6 +10,9 @@ class Behaviour:
         self._sub_behaviours = {}
         self._sub_behaviour = None
 
+    def on_enabled(self):
+        pass
+
     def process_input(self, input_position, time_increment):
         self._time_increment = time_increment
         if self._sub_behaviour:
@@ -28,3 +31,4 @@ class Behaviour:
             self._sub_behaviour = self._sub_behaviours[module]
             for sub_behaviour in self._sub_behaviours.values():
                 sub_behaviour.enabled = (sub_behaviour == self._sub_behaviour)
+            self._sub_behaviour.on_enabled()

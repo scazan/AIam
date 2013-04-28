@@ -14,7 +14,7 @@ class MotionController:
         self.MC = state_machine.states[MC]
         self._cursor = InState(self.MC)
         self._set_mode(IDLE)
-        self._desired_mode = IDLE
+        self._desired_mode = None
 
     def get_mode(self):
         return self._mode
@@ -40,6 +40,7 @@ class MotionController:
                     print "completed move"
                     self._set_mode(IDLE)
                     self._cursor = copy.deepcopy(self._destination_cursor)
+                    self._desired_mode = None
                 else:
                     self._cursor = self._cursor_in_current_move()
             else:
@@ -116,6 +117,9 @@ class MotionController:
         self._cursor.relative_position = new_relative_position
 
     def initiate_movement_to(self, destination_cursor, desired_duration=None):
+        if destination_cursor == self._cursor:
+            return
+
         if destination_cursor.is_in_state():
             self._move_destination_state = destination_cursor.state
             self._move_destination_relative_position = 1.0
@@ -135,8 +139,7 @@ class MotionController:
                 self._move_source_relative_position = self._cursor.relative_position
 
         if self._move_source_state == self._move_destination_state:
-            raise Exception("source_state %r == destination_state %r" % (
-                self._move_source_state, self._move_destination_state))
+            raise Exception("source_state %r == destination_state %r (self._cursor=%r, destination_cursor=%s" % (self._move_source_state, self._move_destination_state, self._cursor, destination_cursor))
 
         recorded_duration = get_duration(self._move_source_state, self._move_destination_state)
         if desired_duration is None:
@@ -192,7 +195,7 @@ class MotionController:
                     [source.source_state, source.destination_state]
             else:
                 return source.source_state == destination.source_state and \
-                    source.destination_state == destination_state.destination_state
+                    source.destination_state == destination.destination_state
 
     def output(self):
         return self._cursor
