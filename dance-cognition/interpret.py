@@ -9,7 +9,7 @@ MIN_MOVE_DURATION = 2.0
 MIN_DISTANCE = 0.001
 MAX_DISTANCE = 0.5
 
-MOVE, STATE, LEAVING_CENTER, ENTERING_CENTER = range(4)
+MOVE, STATE, LEAVING_CENTER, ENTERING_CENTER, ACTIVITY = range(5)
 
 SENSE_CENTER = False
 
@@ -48,7 +48,8 @@ class Interpreter:
             MOVE: [],
             STATE: [],
             LEAVING_CENTER: [],
-            ENTERING_CENTER: []
+            ENTERING_CENTER: [],
+            ACTIVITY: [],
         }
         self._passivity_detectors = []
         self.state_probability = {}
@@ -138,6 +139,8 @@ class Interpreter:
         self._observed_state = new_observed_state
         self._observed_state_at_time = self._time
         self._fire_callbacks(STATE, new_observed_state)
+        if new_observed_state.name != MC:
+            self._fire_callbacks(ACTIVITY)
 
     def _fire_callbacks(self, event, *args):
         for callback in self._callbacks[event]:
