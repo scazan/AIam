@@ -20,6 +20,22 @@ else:
     CENTER_SPATIAL_THRESHOLD = 0.15
     CENTER_TEMPORAL_THRESHOLD = 0.2
 
+class PassivityDetector:
+    def __init__(self, timeout, callback):
+        self.timeout = timeout
+        self.callback = callback
+        self.passivity_duration = 0.0
+
+    def process(self, state, time_increment):
+        if state.name == MC:
+            self.passivity_duration += time_increment
+        else:
+            self.passivity_duration = 0.0
+
+        if self.passivity_duration > self.timeout:
+            self.callback()
+            self.passivity_duration = 0.0
+
 class Interpreter:
     def __init__(self):
         self._state_hypothesis = None
@@ -34,16 +50,21 @@ class Interpreter:
             LEAVING_CENTER: [],
             ENTERING_CENTER: []
         }
+        self._passivity_detectors = []
         self.state_probability = {}
 
     def add_callback(self, event, callback):
         self._callbacks[event].append(callback)
+
+    def add_passivity_callback(self, timeout, callback):
+        self._passivity_detectors.append(PassivityDetector(timeout, callback))
 
     def process_input(self, input_position, time_increment):
         self._time += time_increment
         self._update_state_probabilities(input_position)
         self._detect_whether_leaving_or_entering_center(input_position, time_increment)
         self._detect_whether_state_changed(input_position, time_increment)
+        self._process_passivity_detectors(time_increment)
 
     def _update_state_probabilities(self, input_position):
         for state_name, state in state_machine.states.iteritems():
@@ -98,7 +119,8 @@ class Interpreter:
                 self._duration_in_state = 0
 
     def _nearest_state(self):
-        return min(state_machine.states.values(), key=lambda state: self._distance_to_state(state))
+        return min(state_machine.states.values(),
+                   key=lambda state: self._distance_to_state(state))
 
     def _distance_to_state(self, state):
         return (state.position - self._input_position).mag()
@@ -122,8 +144,10 @@ class Interpreter:
             callback(*args)
 
     def _distance_to_transition(self, position, input_state, output_state):
-        inter_state_position = self._perpendicular_inter_state_position(position, input_state, output_state)
-        return (position - state_machine.cursor_to_euclidian_position(inter_state_position)).mag()
+        inter_state_position = self._perpendicular_inter_state_position(
+            position, input_state, output_state)
+        return (position -
+                state_machine.cursor_to_euclidian_position(inter_state_position)).mag()
 
     def _perpendicular_inter_state_position(self, v, input_state, output_state):
         pos1 = input_state.position
@@ -141,3 +165,8 @@ class Interpreter:
 
     def _clamp(self, v, v_min, v_max):
         return max(min(v, v_max), v_min)
+
+    def _process_passivity_detectors(self, time_increment):
+        if self._observed_state:
+            for detector in self._passivity_detectors:
+                detector.process(self._observed_state, time_increment)
