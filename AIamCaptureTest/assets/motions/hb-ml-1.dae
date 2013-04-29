@@ -5,8 +5,8 @@
       <author>Gáspár Hajdu - gase12@gmail.com</author>
       <authoring_tool>Blender 2.66.6 r56104</authoring_tool>
     </contributor>
-    <created>2013-04-23T23:14:17</created>
-    <modified>2013-04-23T23:14:17</modified>
+    <created>2013-04-29T12:49:46</created>
+    <modified>2013-04-29T12:49:46</modified>
     <unit name="meter" meter="1"/>
     <up_axis>Z_UP</up_axis>
   </asset>
@@ -2150,7 +2150,7 @@
   <library_visual_scenes>
     <visual_scene id="Scene" name="Scene">
       <node id="hb-ml-1" name="hb-ml-1" type="NODE">
-        <translate sid="location">-23.95472 15.36857 0</translate>
+        <translate sid="location">-0.004895531 0.003050428 0</translate>
         <rotate sid="rotationZ">0 0 1 0</rotate>
         <rotate sid="rotationY">0 1 0 0</rotate>
         <rotate sid="rotationX">1 0 0 0</rotate>
