@@ -1,0 +1,13 @@
+env = Environment()
+
+env['APP_TARGET'] = 'AI_am'
+env['APP_SOURCES'] = ['AI_am.cpp']
+env['ASSETS'] = ['motions/*.dae', 'motions/*.bvh', 'model/*']
+env['DEBUG'] = 1
+
+env = SConscript('../../../../blocks/MndlKit/scons/SConscript', exports = 'env')
+env = SConscript('../../../../blocks/Cinder-Assimp/scons/SConscript', exports = 'env')
+env = SConscript('../../../../blocks/Cinder-Osc/scons/SConscript', exports = 'env')
+
+SConscript('../../../../scons/SConscript', exports = 'env')
+

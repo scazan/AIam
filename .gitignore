@@ -12,6 +12,7 @@ config.log
 *#
 
 *.oni
+*.mov
 *.pyc
 
 AIInput/*.exe
