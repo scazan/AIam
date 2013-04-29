@@ -68,6 +68,7 @@ class AIamCaptureTest : public AppBasic
 		Anim< double > mMotionTime;
 
 		AssimpLoaderRef mModel;
+		AssimpLoaderRef mSkeleton;
 		enum
 		{
 			RENDER_SKELETON = 0,
@@ -113,6 +114,11 @@ class AIamCaptureTest : public AppBasic
 		int mCurrentPose;
 		int mTargetPose;
 		void goToPoseFunc();
+
+		AssimpLoaderRef mBlendPoseStart;
+		AssimpLoaderRef mBlendPoseEnd;
+		bool mBlendingEnabled;
+		float mBlendPosePercent; //< blending at [ 0 - duration * percent ] and [ 1 - duration * percent, 1 ]
 
 		bool positionReceived( const mndl::osc::Message &message );
 		mndl::osc::Server mListener;
@@ -165,6 +171,11 @@ void AIamCaptureTest::setup()
 	mParams.addPersistentParam( "Type", renderTypeStrs, &mRenderType, RENDER_SKELETON );
 	mParams.addSeparator();
 
+	mParams.addText( "Motion capture correction" );
+	mParams.addPersistentParam( "Blending", &mBlendingEnabled, false );
+	mParams.addPersistentParam( "Blend at", &mBlendPosePercent, .1f, "min=0 max=.5 step=.01" );
+	mParams.addSeparator();
+
 	mParams.addText( "Manual control" );
 	mParams.addParam( "Current pose", mPoseNames, &mCurrentPose, "", true );
 	mParams.addParam( "Go to pose", mPoseNames, &mTargetPose );
@@ -184,13 +195,12 @@ void AIamCaptureTest::setup()
 
 	mModel = AssimpLoaderRef( new assimp::AssimpLoader( getAssetPath( "model/model.dae" ) ) );
 	mModel->enableSkinning();
+	mSkeleton = AssimpLoaderRef( new assimp::AssimpLoader( getAssetPath( "motions/mc-mc-1.dae" ) ) );
+	mSkeleton->enableSkinning();
 }
 
 void AIamCaptureTest::goToPoseFunc()
 {
-	if ( mCurrentPose == mTargetPose )
-		return;
-
 	// prevent from staring the same motion again
 	static int lastTargetPose = -1;
 	if ( mTargetPose == lastTargetPose )
@@ -198,6 +208,8 @@ void AIamCaptureTest::goToPoseFunc()
 	lastTargetPose = mTargetPose;
 
 	mCurrentMotion = mMotionGrid[ mCurrentPose ][ mTargetPose ];
+	mBlendPoseStart = mMotionGrid[ mCurrentPose ][ mCurrentPose ];
+	mBlendPoseEnd = mMotionGrid[ mTargetPose ][ mTargetPose ];
 	if ( mCurrentMotion )
 	{
 		mMotionTime = 0.;
@@ -305,45 +317,80 @@ void AIamCaptureTest::update()
 	{
 		std::lock_guard< std::mutex > lock( mOscMutex );
 
+		// update animation
 		if ( mCurrentMotion )
 		{
 			mCurrentMotion->setTime( mMotionTime );
 			mCurrentMotion->update();
+		}
 
-			// copy pose
-			if ( mRenderType == RENDER_MODEL )
+		// we blend the pose at the beginning and the end of each animation
+		// sequence to prevent the discontinuities between the motion capture files
+		if ( mBlendingEnabled && mCurrentMotion && mBlendPoseStart && mBlendPoseEnd )
+		{
+			double motionDuration = mCurrentMotion->getAnimationDuration( 0 );
+			double startLimit = motionDuration * mBlendPosePercent;
+			double endLimit = motionDuration * ( 1. - mBlendPosePercent );
+			bool blendAtStart = ( mMotionTime <= startLimit );
+			bool blendAtEnd = ( mMotionTime >= endLimit );
+
+			if ( blendAtStart || blendAtEnd )
 			{
+				float blendValue = 0.f;
+				AssimpLoaderRef targetPose;
+				if ( blendAtStart )
+				{
+					blendValue = mMotionTime / startLimit;
+					targetPose = mBlendPoseStart;
+				}
+				else
+				{
+					blendValue = ( mMotionTime - endLimit ) / startLimit;
+					targetPose = mBlendPoseEnd;
+				}
+				targetPose->setTime( 0. );
+				targetPose->update();
+
 				const vector< string > &nodeNames = mCurrentMotion->getNodeNames();
 				for ( auto it = nodeNames.cbegin(); it != nodeNames.cend(); ++it )
 				{
-					mndl::assimp::AssimpNodeRef skelNode = mCurrentMotion->getAssimpNode( *it );
-					mndl::assimp::AssimpNodeRef modelNode = mModel->getAssimpNode( *it );
-
-					if ( modelNode )
+					mndl::assimp::AssimpNodeRef node = mCurrentMotion->getAssimpNode( *it );
+					mndl::assimp::AssimpNodeRef targetNode = targetPose->getAssimpNode( *it );
+					if ( targetNode )
 					{
-						Quatf ori = skelNode->getOrientation();
-						Vec3f pos = skelNode->getPosition();
-						Vec3f scale = skelNode->getScale();
-						modelNode->setOrientation( ori );
-						modelNode->setPosition( pos );
-						modelNode->setScale( scale );
+						Quatf nodeOri = node->getOrientation();
+						Vec3f nodePos = node->getPosition();
+						Vec3f nodeScale = node->getScale();
+						Quatf targetOri = targetNode->getOrientation();
+						Vec3f targetPos = targetNode->getPosition();
+						Vec3f targetScale = targetNode->getScale();
+
+						node->setOrientation( nodeOri.slerp( blendValue, targetOri ) );
+						node->setPosition( lerp( nodePos, targetPos, blendValue ) );
+						node->setScale( lerp( nodeScale, targetScale, blendValue ) );
 					}
 				}
+			}
+		}
 
-				/* model structure:                     skeleton structure:
-				 * 'Scene', meshes: 0					'Scene', meshes: 0
-				 *  -- 'csontok', meshes: 0				-- 'mc-mlb-1', meshes: 1
-				 *  -- -- 'Hip', meshes: 0				-- -- 'Hip', meshes: 1
-				 *  -- -- -- 'LowerSpine', meshes: 0	-- -- -- 'LowerSpine', meshes: 1
-				 *  ...									...
-				 * the two first child have to be matched although they have different names
-				 */
-				const vector< mndl::NodeRef > &skelRootNodes = mCurrentMotion->getAssimpNode( "Scene" )->getChildren();
-				const vector< mndl::NodeRef > &modelRootNodes = mModel->getAssimpNode( "Scene" )->getChildren();
-				if ( !skelRootNodes.empty() && !modelRootNodes.empty() )
+		// copy pose to model or skeleton
+		if ( mCurrentMotion )
+		{
+			AssimpLoaderRef dstModel;
+
+			if ( mRenderType == RENDER_MODEL )
+				dstModel = mModel;
+			else
+				dstModel = mSkeleton;
+
+			const vector< string > &nodeNames = mCurrentMotion->getNodeNames();
+			for ( auto it = nodeNames.cbegin(); it != nodeNames.cend(); ++it )
+			{
+				mndl::assimp::AssimpNodeRef skelNode = mCurrentMotion->getAssimpNode( *it );
+				mndl::assimp::AssimpNodeRef modelNode = dstModel->getAssimpNode( *it );
+
+				if ( modelNode )
 				{
-					mndl::NodeRef skelNode = skelRootNodes[ 0 ];
-					mndl::NodeRef modelNode = modelRootNodes[ 0 ];
 					Quatf ori = skelNode->getOrientation();
 					Vec3f pos = skelNode->getPosition();
 					Vec3f scale = skelNode->getScale();
@@ -351,9 +398,31 @@ void AIamCaptureTest::update()
 					modelNode->setPosition( pos );
 					modelNode->setScale( scale );
 				}
-
-				mModel->update();
 			}
+
+			/* model structure:                     skeleton structure:
+			 * 'Scene', meshes: 0					'Scene', meshes: 0
+			 *  -- 'csontok', meshes: 0				-- 'mc-mlb-1', meshes: 1
+			 *  -- -- 'Hip', meshes: 0				-- -- 'Hip', meshes: 1
+			 *  -- -- -- 'LowerSpine', meshes: 0	-- -- -- 'LowerSpine', meshes: 1
+			 *  ...									...
+			 * the two first child have to be matched although they have different names
+			 */
+			const vector< mndl::NodeRef > &skelRootNodes = mCurrentMotion->getAssimpNode( "Scene" )->getChildren();
+			const vector< mndl::NodeRef > &modelRootNodes = dstModel->getAssimpNode( "Scene" )->getChildren();
+			if ( !skelRootNodes.empty() && !modelRootNodes.empty() )
+			{
+				mndl::NodeRef skelNode = skelRootNodes[ 0 ];
+				mndl::NodeRef modelNode = modelRootNodes[ 0 ];
+				Quatf ori = skelNode->getOrientation();
+				Vec3f pos = skelNode->getPosition();
+				Vec3f scale = skelNode->getScale();
+				modelNode->setOrientation( ori );
+				modelNode->setPosition( pos );
+				modelNode->setScale( scale );
+			}
+
+			dstModel->update();
 		}
 	}
 
@@ -403,8 +472,7 @@ void AIamCaptureTest::draw()
 
 			if ( mRenderType == RENDER_SKELETON )
 			{
-				if ( mCurrentMotion )
-					mCurrentMotion->draw();
+				mSkeleton->draw();
 			}
 			else
 			if ( mRenderType == RENDER_MODEL )
@@ -450,6 +518,8 @@ bool AIamCaptureTest::positionReceived( const mndl::osc::Message &message )
 		mCurrentPose = poseIdIt0->second;
 		mTargetPose = poseIdIt1->second;
 		mCurrentMotion = mMotionGrid[ mCurrentPose ][ mTargetPose ];
+		mBlendPoseStart = mMotionGrid[ mCurrentPose ][ mCurrentPose ];
+		mBlendPoseEnd = mMotionGrid[ mTargetPose ][ mTargetPose ];
 		if ( mCurrentMotion )
 		{
 			double motionDuration = mCurrentMotion->getAnimationDuration( 0 );
