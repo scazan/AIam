@@ -77,11 +77,13 @@ class AIamApp : public AppBasic
 		gl::Fbo mFbo;
 
 		AssimpLoaderRef mModel;
+		AssimpLoaderRef mAbstractModel;
 		AssimpLoaderRef mSkeleton;
 		enum
 		{
 			RENDER_SKELETON = 0,
-			RENDER_MODEL
+			RENDER_MODEL,
+			RENDER_ABSTRACT
 		};
 		int mRenderType;
 
@@ -206,7 +208,7 @@ void AIamApp::setup()
 	mParams.addSeparator();
 
 	mParams.addText( "Render" );
-	vector< string > renderTypeStrs = boost::assign::list_of( "skeleton" )( "model" );
+	vector< string > renderTypeStrs = boost::assign::list_of( "skeleton" )( "model" )( "abstract" );
 	mParams.addPersistentParam( "Type", renderTypeStrs, &mRenderType, RENDER_SKELETON );
 	mParams.addSeparator();
 
@@ -234,6 +236,8 @@ void AIamApp::setup()
 
 	mModel = AssimpLoaderRef( new assimp::AssimpLoader( getAssetPath( "model/model.dae" ) ) );
 	mModel->enableSkinning();
+	mAbstractModel = AssimpLoaderRef( new assimp::AssimpLoader( getAssetPath( "model/abstract.dae" ) ) );
+	mAbstractModel->enableSkinning();
 	mSkeleton = AssimpLoaderRef( new assimp::AssimpLoader( getAssetPath( "motions/mc-mc-1.dae" ) ) );
 	mSkeleton->enableSkinning();
 
@@ -474,6 +478,9 @@ void AIamApp::update()
 			if ( mRenderType == RENDER_MODEL )
 				dstModel = mModel;
 			else
+			if ( mRenderType == RENDER_ABSTRACT )
+				dstModel = mAbstractModel;
+			else
 				dstModel = mSkeleton;
 
 			const vector< string > &nodeNames = mCurrentMotion->getNodeNames();
@@ -603,6 +610,11 @@ void AIamApp::drawOutput()
 			if ( mRenderType == RENDER_MODEL )
 			{
 				mModel->draw();
+			}
+			else
+			if ( mRenderType == RENDER_ABSTRACT )
+			{
+				mAbstractModel->draw();
 			}
 		}
 
