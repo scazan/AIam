@@ -1,0 +1,2320 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  <asset>
+    <contributor>
+      <author>Gáspár Hajdu - gase12@gmail.com</author>
+      <authoring_tool>Blender 2.66.6 r56104</authoring_tool>
+    </contributor>
+    <created>2013-04-29T00:17:22</created>
+    <modified>2013-04-29T00:17:22</modified>
+    <unit name="meter" meter="1"/>
+    <up_axis>Z_UP</up_axis>
+  </asset>
+  <library_images/>
+  <library_effects/>
+  <library_animations>
+    <animation id="hb-hb-1_Hip_pose_matrix">
+      <source id="hb-hb-1_Hip_pose_matrix-input">
+        <float_array id="hb-hb-1_Hip_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_Hip_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_Hip_pose_matrix-output">
+        <float_array id="hb-hb-1_Hip_pose_matrix-output-array" count="16">0.8961235 -0.14232 -0.4203661 14.70049 0.1168812 -0.8380663 0.5329011 -136.8376 -0.4281372 -0.5266781 -0.7343764 107.1703 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_Hip_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_Hip_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_Hip_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_Hip_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_Hip_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_Hip_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_Hip_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_Hip_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_Hip_pose_matrix-sampler" target="Hip/transform"/>
+    </animation>
+    <animation id="hb-hb-1_LowerSpine_pose_matrix">
+      <source id="hb-hb-1_LowerSpine_pose_matrix-input">
+        <float_array id="hb-hb-1_LowerSpine_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LowerSpine_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LowerSpine_pose_matrix-output">
+        <float_array id="hb-hb-1_LowerSpine_pose_matrix-output-array" count="16">0.9897215 0.1375324 0.03919563 0.01213455 -0.09931186 0.8582011 -0.503615 10.67208 -0.1029014 0.4945456 0.8630388 -1.547226 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LowerSpine_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LowerSpine_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_LowerSpine_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LowerSpine_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_LowerSpine_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_LowerSpine_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_LowerSpine_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_LowerSpine_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_LowerSpine_pose_matrix-sampler" target="LowerSpine/transform"/>
+    </animation>
+    <animation id="hb-hb-1_MiddleSpine_pose_matrix">
+      <source id="hb-hb-1_MiddleSpine_pose_matrix-input">
+        <float_array id="hb-hb-1_MiddleSpine_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_MiddleSpine_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_MiddleSpine_pose_matrix-output">
+        <float_array id="hb-hb-1_MiddleSpine_pose_matrix-output-array" count="16">0.9891117 0.1295363 0.06984742 3.8147e-6 -0.138961 0.9783388 0.1534379 8.465521 -0.04845908 -0.1614732 0.9856866 -1.52588e-5 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_MiddleSpine_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_MiddleSpine_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_MiddleSpine_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_MiddleSpine_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_MiddleSpine_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_MiddleSpine_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_MiddleSpine_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_MiddleSpine_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_MiddleSpine_pose_matrix-sampler" target="MiddleSpine/transform"/>
+    </animation>
+    <animation id="hb-hb-1_Chest_pose_matrix">
+      <source id="hb-hb-1_Chest_pose_matrix-input">
+        <float_array id="hb-hb-1_Chest_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_Chest_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_Chest_pose_matrix-output">
+        <float_array id="hb-hb-1_Chest_pose_matrix-output-array" count="16">0.9897606 0.1416039 0.01796141 5.72205e-6 -0.1174951 0.8796962 -0.4607918 10.6714 -0.08105027 0.4539632 0.8873262 1.52588e-5 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_Chest_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_Chest_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_Chest_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_Chest_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_Chest_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_Chest_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_Chest_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_Chest_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_Chest_pose_matrix-sampler" target="Chest/transform"/>
+    </animation>
+    <animation id="hb-hb-1_Neck_pose_matrix">
+      <source id="hb-hb-1_Neck_pose_matrix-input">
+        <float_array id="hb-hb-1_Neck_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_Neck_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_Neck_pose_matrix-output">
+        <float_array id="hb-hb-1_Neck_pose_matrix-output-array" count="16">0.9987764 -0.04565628 -0.01901299 0.04571438 0.04689672 0.7522005 0.6572633 23.05072 -0.01570667 -0.6573504 0.7534211 -4.984177 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_Neck_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_Neck_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_Neck_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_Neck_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_Neck_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_Neck_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_Neck_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_Neck_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_Neck_pose_matrix-sampler" target="Neck/transform"/>
+    </animation>
+    <animation id="hb-hb-1_Head_pose_matrix">
+      <source id="hb-hb-1_Head_pose_matrix-input">
+        <float_array id="hb-hb-1_Head_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_Head_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_Head_pose_matrix-output">
+        <float_array id="hb-hb-1_Head_pose_matrix-output-array" count="16">0.9990279 -0.04396117 -0.00324659 5.72205e-6 0.04218193 0.9320132 0.3599617 13.79926 -0.01279792 -0.359749 0.9329612 -1.52588e-5 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_Head_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_Head_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_Head_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_Head_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_Head_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_Head_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_Head_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_Head_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_Head_pose_matrix-sampler" target="Head/transform"/>
+    </animation>
+    <animation id="hb-hb-1_LClavicle_pose_matrix">
+      <source id="hb-hb-1_LClavicle_pose_matrix-input">
+        <float_array id="hb-hb-1_LClavicle_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LClavicle_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LClavicle_pose_matrix-output">
+        <float_array id="hb-hb-1_LClavicle_pose_matrix-output-array" count="16">0.4599168 0.7032943 -0.5420829 2.119562 0.2727825 0.4690564 0.8399856 23.68165 0.8450242 -0.5341942 0.02388071 2.51178 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LClavicle_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LClavicle_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_LClavicle_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LClavicle_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_LClavicle_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_LClavicle_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_LClavicle_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_LClavicle_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_LClavicle_pose_matrix-sampler" target="LClavicle/transform"/>
+    </animation>
+    <animation id="hb-hb-1_LShoulder_pose_matrix">
+      <source id="hb-hb-1_LShoulder_pose_matrix-input">
+        <float_array id="hb-hb-1_LShoulder_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LShoulder_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LShoulder_pose_matrix-output">
+        <float_array id="hb-hb-1_LShoulder_pose_matrix-output-array" count="16">0.4273497 0.4604315 -0.7780589 1.52588e-5 -0.8458618 0.5074743 -0.1642818 13.97175 0.3192038 0.7283356 0.6063303 -7.62939e-6 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LShoulder_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LShoulder_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_LShoulder_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LShoulder_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_LShoulder_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_LShoulder_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_LShoulder_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_LShoulder_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_LShoulder_pose_matrix-sampler" target="LShoulder/transform"/>
+    </animation>
+    <animation id="hb-hb-1_LForearm_pose_matrix">
+      <source id="hb-hb-1_LForearm_pose_matrix-input">
+        <float_array id="hb-hb-1_LForearm_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LForearm_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LForearm_pose_matrix-output">
+        <float_array id="hb-hb-1_LForearm_pose_matrix-output-array" count="16">0.9984871 -0.0546024 0.006501168 -1.52588e-5 0.0546545 0.9984723 -0.008122921 29.54321 -0.006048026 0.008465946 0.9999463 0 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LForearm_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LForearm_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_LForearm_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LForearm_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_LForearm_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_LForearm_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_LForearm_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_LForearm_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_LForearm_pose_matrix-sampler" target="LForearm/transform"/>
+    </animation>
+    <animation id="hb-hb-1_LHand_pose_matrix">
+      <source id="hb-hb-1_LHand_pose_matrix-input">
+        <float_array id="hb-hb-1_LHand_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LHand_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LHand_pose_matrix-output">
+        <float_array id="hb-hb-1_LHand_pose_matrix-output-array" count="16">0.772862 -0.63454 0.006589048 -1.52588e-5 -0.03233679 -0.04975156 -0.9982378 24.64469 0.6337495 0.7712871 -0.05897009 0 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LHand_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LHand_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_LHand_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LHand_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_LHand_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_LHand_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_LHand_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_LHand_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_LHand_pose_matrix-sampler" target="LHand/transform"/>
+    </animation>
+    <animation id="hb-hb-1_LFinger1_pose_matrix">
+      <source id="hb-hb-1_LFinger1_pose_matrix-input">
+        <float_array id="hb-hb-1_LFinger1_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger1_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger1_pose_matrix-output">
+        <float_array id="hb-hb-1_LFinger1_pose_matrix-output-array" count="16">0.9503523 0.200716 -0.2377892 3.047104 -0.1276031 0.9483293 0.290498 9.44487 0.28381 -0.2457328 0.9268588 0.689343 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger1_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger1_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_LFinger1_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger1_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_LFinger1_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_LFinger1_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_LFinger1_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_LFinger1_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_LFinger1_pose_matrix-sampler" target="LFinger1/transform"/>
+    </animation>
+    <animation id="hb-hb-1_LFinger11_pose_matrix">
+      <source id="hb-hb-1_LFinger11_pose_matrix-input">
+        <float_array id="hb-hb-1_LFinger11_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger11_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger11_pose_matrix-output">
+        <float_array id="hb-hb-1_LFinger11_pose_matrix-output-array" count="16">1 3.89367e-5 -7.03484e-5 -7.62939e-6 -3.87877e-5 1 7.09295e-5 3.730804 7.03782e-5 -7.08103e-5 1 -1.14441e-5 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger11_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger11_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_LFinger11_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger11_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_LFinger11_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_LFinger11_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_LFinger11_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_LFinger11_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_LFinger11_pose_matrix-sampler" target="LFinger11/transform"/>
+    </animation>
+    <animation id="hb-hb-1_LFinger12_pose_matrix">
+      <source id="hb-hb-1_LFinger12_pose_matrix-input">
+        <float_array id="hb-hb-1_LFinger12_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger12_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger12_pose_matrix-output">
+        <float_array id="hb-hb-1_LFinger12_pose_matrix-output-array" count="16">0.9978881 -0.02842798 -0.05841108 2.28882e-5 0.03093008 0.998622 0.0423955 2.547012 0.0571252 -0.04411262 0.997392 -1.52588e-5 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger12_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger12_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_LFinger12_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger12_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_LFinger12_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_LFinger12_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_LFinger12_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_LFinger12_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_LFinger12_pose_matrix-sampler" target="LFinger12/transform"/>
+    </animation>
+    <animation id="hb-hb-1_LFinger2_pose_matrix">
+      <source id="hb-hb-1_LFinger2_pose_matrix-input">
+        <float_array id="hb-hb-1_LFinger2_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger2_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger2_pose_matrix-output">
+        <float_array id="hb-hb-1_LFinger2_pose_matrix-output-array" count="16">0.9994164 0.03362687 -0.006020159 0.636528 -0.03359138 0.9994181 0.005938038 9.684265 0.006216332 -0.005732371 0.9999642 0.8748703 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger2_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger2_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_LFinger2_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger2_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_LFinger2_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_LFinger2_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_LFinger2_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_LFinger2_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_LFinger2_pose_matrix-sampler" target="LFinger2/transform"/>
+    </animation>
+    <animation id="hb-hb-1_LFinger21_pose_matrix">
+      <source id="hb-hb-1_LFinger21_pose_matrix-input">
+        <float_array id="hb-hb-1_LFinger21_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger21_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger21_pose_matrix-output">
+        <float_array id="hb-hb-1_LFinger21_pose_matrix-output-array" count="16">1 -1.68408e-4 2.82988e-4 -1.14441e-5 1.6843e-4 0.9999999 -2.82604e-4 4.417526 -2.82928e-4 2.82593e-4 0.9999999 0 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger21_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger21_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_LFinger21_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger21_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_LFinger21_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_LFinger21_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_LFinger21_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_LFinger21_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_LFinger21_pose_matrix-sampler" target="LFinger21/transform"/>
+    </animation>
+    <animation id="hb-hb-1_LFinger22_pose_matrix">
+      <source id="hb-hb-1_LFinger22_pose_matrix-input">
+        <float_array id="hb-hb-1_LFinger22_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger22_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger22_pose_matrix-output">
+        <float_array id="hb-hb-1_LFinger22_pose_matrix-output-array" count="16">0.9972861 0.005198755 -0.07344314 -7.62939e-6 2.40834e-4 0.9972684 0.0738629 2.4487 0.07362652 -0.07368015 0.9945603 -1.26362e-5 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger22_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger22_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_LFinger22_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger22_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_LFinger22_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_LFinger22_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_LFinger22_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_LFinger22_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_LFinger22_pose_matrix-sampler" target="LFinger22/transform"/>
+    </animation>
+    <animation id="hb-hb-1_LFinger3_pose_matrix">
+      <source id="hb-hb-1_LFinger3_pose_matrix-input">
+        <float_array id="hb-hb-1_LFinger3_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger3_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger3_pose_matrix-output">
+        <float_array id="hb-hb-1_LFinger3_pose_matrix-output-array" count="16">0.966676 -0.2478633 -0.0640431 -1.793129 0.250511 0.9674001 0.03716471 9.270676 0.05274355 -0.05196973 0.9972551 0.6156507 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger3_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger3_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_LFinger3_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger3_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_LFinger3_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_LFinger3_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_LFinger3_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_LFinger3_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_LFinger3_pose_matrix-sampler" target="LFinger3/transform"/>
+    </animation>
+    <animation id="hb-hb-1_LFinger31_pose_matrix">
+      <source id="hb-hb-1_LFinger31_pose_matrix-input">
+        <float_array id="hb-hb-1_LFinger31_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger31_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger31_pose_matrix-output">
+        <float_array id="hb-hb-1_LFinger31_pose_matrix-output-array" count="16">1 -1.77072e-4 3.11196e-4 2.86102e-6 1.77154e-4 1 -3.38376e-4 4.021347 -3.11106e-4 3.38457e-4 0.9999999 -2.28882e-5 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger31_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger31_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_LFinger31_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger31_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_LFinger31_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_LFinger31_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_LFinger31_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_LFinger31_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_LFinger31_pose_matrix-sampler" target="LFinger31/transform"/>
+    </animation>
+    <animation id="hb-hb-1_LFinger32_pose_matrix">
+      <source id="hb-hb-1_LFinger32_pose_matrix-input">
+        <float_array id="hb-hb-1_LFinger32_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger32_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger32_pose_matrix-output">
+        <float_array id="hb-hb-1_LFinger32_pose_matrix-output-array" count="16">0.9976251 0.00973144 -0.06818806 1.90735e-6 -0.004707971 0.9972876 0.07345389 2.291595 0.0687179 -0.07295837 0.9949648 -4.29153e-6 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger32_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger32_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_LFinger32_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger32_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_LFinger32_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_LFinger32_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_LFinger32_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_LFinger32_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_LFinger32_pose_matrix-sampler" target="LFinger32/transform"/>
+    </animation>
+    <animation id="hb-hb-1_LFinger4_pose_matrix">
+      <source id="hb-hb-1_LFinger4_pose_matrix-input">
+        <float_array id="hb-hb-1_LFinger4_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger4_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger4_pose_matrix-output">
+        <float_array id="hb-hb-1_LFinger4_pose_matrix-output-array" count="16">0.9548851 -0.2280483 -0.1902335 -3.428761 0.2588677 0.9530928 0.1568486 8.662109 0.1455411 -0.1990177 0.9691284 -0.6322622 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger4_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger4_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_LFinger4_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger4_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_LFinger4_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_LFinger4_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_LFinger4_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_LFinger4_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_LFinger4_pose_matrix-sampler" target="LFinger4/transform"/>
+    </animation>
+    <animation id="hb-hb-1_LFinger41_pose_matrix">
+      <source id="hb-hb-1_LFinger41_pose_matrix-input">
+        <float_array id="hb-hb-1_LFinger41_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger41_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger41_pose_matrix-output">
+        <float_array id="hb-hb-1_LFinger41_pose_matrix-output-array" count="16">1 -1.00362e-4 2.27963e-4 2.86102e-6 1.00537e-4 1 -3.22551e-4 2.608902 -2.27931e-4 3.2258e-4 0.9999999 1.33514e-5 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger41_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger41_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_LFinger41_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger41_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_LFinger41_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_LFinger41_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_LFinger41_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_LFinger41_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_LFinger41_pose_matrix-sampler" target="LFinger41/transform"/>
+    </animation>
+    <animation id="hb-hb-1_LFinger42_pose_matrix">
+      <source id="hb-hb-1_LFinger42_pose_matrix-input">
+        <float_array id="hb-hb-1_LFinger42_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger42_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger42_pose_matrix-output">
+        <float_array id="hb-hb-1_LFinger42_pose_matrix-output-array" count="16">0.9983844 0.03073987 -0.04778681 6.67572e-6 -0.02727518 0.9970657 0.07152817 1.913055 0.04984541 -0.07010917 0.9962933 -7.62939e-6 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger42_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger42_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_LFinger42_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger42_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_LFinger42_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_LFinger42_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_LFinger42_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_LFinger42_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_LFinger42_pose_matrix-sampler" target="LFinger42/transform"/>
+    </animation>
+    <animation id="hb-hb-1_LFinger0_pose_matrix">
+      <source id="hb-hb-1_LFinger0_pose_matrix-input">
+        <float_array id="hb-hb-1_LFinger0_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger0_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger0_pose_matrix-output">
+        <float_array id="hb-hb-1_LFinger0_pose_matrix-output-array" count="16">0.7498811 0.6060729 -0.2652432 1.538288 -0.4214812 0.7466947 0.5145875 1.903351 0.5099334 -0.2740845 0.8153808 -1.547705 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger0_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger0_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_LFinger0_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger0_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_LFinger0_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_LFinger0_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_LFinger0_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_LFinger0_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_LFinger0_pose_matrix-sampler" target="LFinger0/transform"/>
+    </animation>
+    <animation id="hb-hb-1_LFinger01_pose_matrix">
+      <source id="hb-hb-1_LFinger01_pose_matrix-input">
+        <float_array id="hb-hb-1_LFinger01_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger01_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger01_pose_matrix-output">
+        <float_array id="hb-hb-1_LFinger01_pose_matrix-output-array" count="16">0.9987469 -0.03169498 -0.0387302 -7.62939e-6 0.0320835 0.9994406 0.00944826 4.762909 0.03840911 -0.01067901 0.9992051 5.34058e-5 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger01_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger01_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_LFinger01_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger01_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_LFinger01_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_LFinger01_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_LFinger01_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_LFinger01_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_LFinger01_pose_matrix-sampler" target="LFinger01/transform"/>
+    </animation>
+    <animation id="hb-hb-1_LFinger02_pose_matrix">
+      <source id="hb-hb-1_LFinger02_pose_matrix-input">
+        <float_array id="hb-hb-1_LFinger02_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger02_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger02_pose_matrix-output">
+        <float_array id="hb-hb-1_LFinger02_pose_matrix-output-array" count="16">0.9996697 -0.01560764 0.0204111 1.52588e-5 0.0159654 0.9997197 -0.01747948 3.108864 -0.02013248 0.01779956 0.9996389 3.05176e-5 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger02_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFinger02_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_LFinger02_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFinger02_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_LFinger02_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_LFinger02_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_LFinger02_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_LFinger02_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_LFinger02_pose_matrix-sampler" target="LFinger02/transform"/>
+    </animation>
+    <animation id="hb-hb-1_RClavicle_pose_matrix">
+      <source id="hb-hb-1_RClavicle_pose_matrix-input">
+        <float_array id="hb-hb-1_RClavicle_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RClavicle_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RClavicle_pose_matrix-output">
+        <float_array id="hb-hb-1_RClavicle_pose_matrix-output-array" count="16">0.4256074 -0.6535398 0.6258947 -2.165268 -0.2743143 0.565941 0.7774716 23.68161 -0.8623279 -0.5025895 0.06159341 2.472382 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RClavicle_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RClavicle_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_RClavicle_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RClavicle_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_RClavicle_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_RClavicle_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_RClavicle_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_RClavicle_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_RClavicle_pose_matrix-sampler" target="RClavicle/transform"/>
+    </animation>
+    <animation id="hb-hb-1_RShoulder_pose_matrix">
+      <source id="hb-hb-1_RShoulder_pose_matrix-input">
+        <float_array id="hb-hb-1_RShoulder_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RShoulder_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RShoulder_pose_matrix-output">
+        <float_array id="hb-hb-1_RShoulder_pose_matrix-output-array" count="16">0.480781 -0.4758964 0.7364591 -4.57764e-5 0.8103874 0.5619026 -0.1659456 13.97424 -0.3348449 0.6766007 0.6558125 3.8147e-6 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RShoulder_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RShoulder_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_RShoulder_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RShoulder_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_RShoulder_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_RShoulder_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_RShoulder_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_RShoulder_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_RShoulder_pose_matrix-sampler" target="RShoulder/transform"/>
+    </animation>
+    <animation id="hb-hb-1_RForearm_pose_matrix">
+      <source id="hb-hb-1_RForearm_pose_matrix-input">
+        <float_array id="hb-hb-1_RForearm_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RForearm_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RForearm_pose_matrix-output">
+        <float_array id="hb-hb-1_RForearm_pose_matrix-output-array" count="16">0.9975428 0.0697409 -0.0065717 3.05176e-5 -0.06979953 0.9975172 -0.009381339 29.5432 0.005901247 0.009815842 0.9999343 1.14441e-5 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RForearm_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RForearm_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_RForearm_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RForearm_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_RForearm_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_RForearm_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_RForearm_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_RForearm_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_RForearm_pose_matrix-sampler" target="RForearm/transform"/>
+    </animation>
+    <animation id="hb-hb-1_RHand_pose_matrix">
+      <source id="hb-hb-1_RHand_pose_matrix-input">
+        <float_array id="hb-hb-1_RHand_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RHand_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RHand_pose_matrix-output">
+        <float_array id="hb-hb-1_RHand_pose_matrix-output-array" count="16">0.6698072 0.7425311 0.002492756 -3.05176e-5 0.09627102 -0.08351326 -0.9918456 24.64474 -0.7362667 0.6645881 -0.1274216 3.05176e-5 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RHand_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RHand_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_RHand_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RHand_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_RHand_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_RHand_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_RHand_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_RHand_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_RHand_pose_matrix-sampler" target="RHand/transform"/>
+    </animation>
+    <animation id="hb-hb-1_RFinger1_pose_matrix">
+      <source id="hb-hb-1_RFinger1_pose_matrix-input">
+        <float_array id="hb-hb-1_RFinger1_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger1_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger1_pose_matrix-output">
+        <float_array id="hb-hb-1_RFinger1_pose_matrix-output-array" count="16">0.8244072 -0.5502921 0.1324081 -3.055229 0.4725396 0.7979481 0.3741465 9.444824 -0.3115447 -0.245881 0.9178684 0.6524944 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger1_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger1_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_RFinger1_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger1_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_RFinger1_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_RFinger1_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_RFinger1_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_RFinger1_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_RFinger1_pose_matrix-sampler" target="RFinger1/transform"/>
+    </animation>
+    <animation id="hb-hb-1_RFinger11_pose_matrix">
+      <source id="hb-hb-1_RFinger11_pose_matrix-input">
+        <float_array id="hb-hb-1_RFinger11_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger11_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger11_pose_matrix-output">
+        <float_array id="hb-hb-1_RFinger11_pose_matrix-output-array" count="16">0.9999963 -2.60249e-5 1.12519e-4 -4.57764e-5 2.3663e-5 1 1.0556e-4 3.730827 -1.14128e-4 -1.05366e-4 1 0 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger11_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger11_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_RFinger11_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger11_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_RFinger11_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_RFinger11_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_RFinger11_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_RFinger11_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_RFinger11_pose_matrix-sampler" target="RFinger11/transform"/>
+    </animation>
+    <animation id="hb-hb-1_RFinger12_pose_matrix">
+      <source id="hb-hb-1_RFinger12_pose_matrix-input">
+        <float_array id="hb-hb-1_RFinger12_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger12_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger12_pose_matrix-output">
+        <float_array id="hb-hb-1_RFinger12_pose_matrix-output-array" count="16">0.9978877 0.0288794 0.05811495 1.52588e-5 -0.03135686 0.9986203 0.04203385 2.54705 -0.05682325 -0.04376991 0.9974243 -2.28882e-5 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger12_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger12_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_RFinger12_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger12_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_RFinger12_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_RFinger12_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_RFinger12_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_RFinger12_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_RFinger12_pose_matrix-sampler" target="RFinger12/transform"/>
+    </animation>
+    <animation id="hb-hb-1_RFinger2_pose_matrix">
+      <source id="hb-hb-1_RFinger2_pose_matrix-input">
+        <float_array id="hb-hb-1_RFinger2_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger2_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger2_pose_matrix-output">
+        <float_array id="hb-hb-1_RFinger2_pose_matrix-output-array" count="16">0.999419 -0.03355777 0.005989939 -0.6470871 0.03352029 0.9994181 0.00634867 9.68428 -0.006199546 -0.0061443 0.9999619 0.8671579 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger2_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger2_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_RFinger2_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger2_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_RFinger2_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_RFinger2_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_RFinger2_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_RFinger2_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_RFinger2_pose_matrix-sampler" target="RFinger2/transform"/>
+    </animation>
+    <animation id="hb-hb-1_RFinger21_pose_matrix">
+      <source id="hb-hb-1_RFinger21_pose_matrix-input">
+        <float_array id="hb-hb-1_RFinger21_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger21_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger21_pose_matrix-output">
+        <float_array id="hb-hb-1_RFinger21_pose_matrix-output-array" count="16">0.9999996 2.05503e-4 -2.82235e-4 0 -2.0681e-4 0.9999993 -2.85104e-4 4.417572 2.82191e-4 2.84947e-4 0.9999999 8.58307e-6 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger21_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger21_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_RFinger21_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger21_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_RFinger21_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_RFinger21_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_RFinger21_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_RFinger21_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_RFinger21_pose_matrix-sampler" target="RFinger21/transform"/>
+    </animation>
+    <animation id="hb-hb-1_RFinger22_pose_matrix">
+      <source id="hb-hb-1_RFinger22_pose_matrix-input">
+        <float_array id="hb-hb-1_RFinger22_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger22_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger22_pose_matrix-output">
+        <float_array id="hb-hb-1_RFinger22_pose_matrix-output-array" count="16">0.9973151 -0.004348134 0.07310865 0 -0.001064222 0.9972692 0.07385848 2.448624 -0.07322991 -0.07373736 0.9945855 -8.10623e-6 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger22_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger22_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_RFinger22_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger22_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_RFinger22_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_RFinger22_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_RFinger22_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_RFinger22_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_RFinger22_pose_matrix-sampler" target="RFinger22/transform"/>
+    </animation>
+    <animation id="hb-hb-1_RFinger3_pose_matrix">
+      <source id="hb-hb-1_RFinger3_pose_matrix-input">
+        <float_array id="hb-hb-1_RFinger3_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger3_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger3_pose_matrix-output">
+        <float_array id="hb-hb-1_RFinger3_pose_matrix-output-array" count="16">0.9981796 0.02492078 0.05492777 1.785526 -0.02799077 0.9980465 0.05586122 9.270645 -0.05342838 -0.05729708 0.9969265 0.6372566 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger3_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger3_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_RFinger3_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger3_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_RFinger3_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_RFinger3_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_RFinger3_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_RFinger3_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_RFinger3_pose_matrix-sampler" target="RFinger3/transform"/>
+    </animation>
+    <animation id="hb-hb-1_RFinger31_pose_matrix">
+      <source id="hb-hb-1_RFinger31_pose_matrix-input">
+        <float_array id="hb-hb-1_RFinger31_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger31_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger31_pose_matrix-output">
+        <float_array id="hb-hb-1_RFinger31_pose_matrix-output-array" count="16">0.9999998 1.76611e-4 -3.05066e-4 -1.14441e-5 -1.76853e-4 1.000001 -3.3666e-4 4.021332 3.05027e-4 3.36723e-4 0.9999999 -3.8147e-6 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger31_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger31_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_RFinger31_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger31_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_RFinger31_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_RFinger31_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_RFinger31_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_RFinger31_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_RFinger31_pose_matrix-sampler" target="RFinger31/transform"/>
+    </animation>
+    <animation id="hb-hb-1_RFinger32_pose_matrix">
+      <source id="hb-hb-1_RFinger32_pose_matrix-input">
+        <float_array id="hb-hb-1_RFinger32_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger32_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger32_pose_matrix-output">
+        <float_array id="hb-hb-1_RFinger32_pose_matrix-output-array" count="16">0.9976543 -0.00887078 0.06787428 -1.52588e-5 0.003865936 0.9972873 0.07349991 2.291504 -0.06834224 -0.07306512 0.9949829 -2.38419e-6 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger32_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger32_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_RFinger32_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger32_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_RFinger32_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_RFinger32_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_RFinger32_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_RFinger32_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_RFinger32_pose_matrix-sampler" target="RFinger32/transform"/>
+    </animation>
+    <animation id="hb-hb-1_RFinger4_pose_matrix">
+      <source id="hb-hb-1_RFinger4_pose_matrix-input">
+        <float_array id="hb-hb-1_RFinger4_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger4_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger4_pose_matrix-output">
+        <float_array id="hb-hb-1_RFinger4_pose_matrix-output-array" count="16">0.9545009 0.2304353 0.1892836 3.436108 -0.2606134 0.9531003 0.1538863 8.662125 -0.1449454 -0.1962145 0.9697891 -0.590807 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger4_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger4_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_RFinger4_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger4_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_RFinger4_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_RFinger4_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_RFinger4_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_RFinger4_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_RFinger4_pose_matrix-sampler" target="RFinger4/transform"/>
+    </animation>
+    <animation id="hb-hb-1_RFinger41_pose_matrix">
+      <source id="hb-hb-1_RFinger41_pose_matrix-input">
+        <float_array id="hb-hb-1_RFinger41_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger41_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger41_pose_matrix-output">
+        <float_array id="hb-hb-1_RFinger41_pose_matrix-output-array" count="16">1 9.31108e-5 -2.35729e-4 -1.52588e-5 -9.17669e-5 0.9999997 -3.36319e-4 2.608826 2.3593e-4 3.36364e-4 0.9999999 9.53674e-6 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger41_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger41_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_RFinger41_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger41_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_RFinger41_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_RFinger41_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_RFinger41_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_RFinger41_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_RFinger41_pose_matrix-sampler" target="RFinger41/transform"/>
+    </animation>
+    <animation id="hb-hb-1_RFinger42_pose_matrix">
+      <source id="hb-hb-1_RFinger42_pose_matrix-input">
+        <float_array id="hb-hb-1_RFinger42_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger42_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger42_pose_matrix-output">
+        <float_array id="hb-hb-1_RFinger42_pose_matrix-output-array" count="16">0.9984196 -0.02992912 0.04756627 -9.53674e-6 0.02646428 0.9970624 0.071871 1.913116 -0.04957756 -0.07049859 0.996279 -1.33514e-5 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger42_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger42_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_RFinger42_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger42_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_RFinger42_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_RFinger42_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_RFinger42_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_RFinger42_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_RFinger42_pose_matrix-sampler" target="RFinger42/transform"/>
+    </animation>
+    <animation id="hb-hb-1_RFinger0_pose_matrix">
+      <source id="hb-hb-1_RFinger0_pose_matrix-input">
+        <float_array id="hb-hb-1_RFinger0_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger0_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger0_pose_matrix-output">
+        <float_array id="hb-hb-1_RFinger0_pose_matrix-output-array" count="16">0.7536875 -0.60272 0.2620766 -1.519379 0.4168637 0.7466748 0.5183648 1.90332 -0.5081147 -0.2814349 0.8140111 -1.566098 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger0_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger0_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_RFinger0_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger0_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_RFinger0_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_RFinger0_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_RFinger0_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_RFinger0_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_RFinger0_pose_matrix-sampler" target="RFinger0/transform"/>
+    </animation>
+    <animation id="hb-hb-1_RFinger01_pose_matrix">
+      <source id="hb-hb-1_RFinger01_pose_matrix-input">
+        <float_array id="hb-hb-1_RFinger01_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger01_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger01_pose_matrix-output">
+        <float_array id="hb-hb-1_RFinger01_pose_matrix-output-array" count="16">0.9987532 0.03175277 0.0385069 4.57764e-5 -0.03212649 0.9994423 0.009122163 4.762978 -0.03819621 -0.01034769 0.9992167 0 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger01_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger01_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_RFinger01_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger01_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_RFinger01_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_RFinger01_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_RFinger01_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_RFinger01_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_RFinger01_pose_matrix-sampler" target="RFinger01/transform"/>
+    </animation>
+    <animation id="hb-hb-1_RFinger02_pose_matrix">
+      <source id="hb-hb-1_RFinger02_pose_matrix-input">
+        <float_array id="hb-hb-1_RFinger02_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger02_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger02_pose_matrix-output">
+        <float_array id="hb-hb-1_RFinger02_pose_matrix-output-array" count="16">0.9996766 0.01547684 -0.02018923 -1.52588e-5 -0.01583497 0.9997178 -0.01761347 3.108749 0.01991141 0.01792577 0.9996411 0 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger02_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFinger02_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_RFinger02_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFinger02_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_RFinger02_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_RFinger02_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_RFinger02_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_RFinger02_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_RFinger02_pose_matrix-sampler" target="RFinger02/transform"/>
+    </animation>
+    <animation id="hb-hb-1_RThigh_pose_matrix">
+      <source id="hb-hb-1_RThigh_pose_matrix-input">
+        <float_array id="hb-hb-1_RThigh_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RThigh_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RThigh_pose_matrix-output">
+        <float_array id="hb-hb-1_RThigh_pose_matrix-output-array" count="16">0.8972823 -0.422943 0.1265051 -10.96174 -0.4357238 -0.8024518 0.4076957 4.213612 -0.07091798 -0.420939 -0.9043124 0.6885529 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RThigh_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RThigh_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_RThigh_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RThigh_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_RThigh_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_RThigh_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_RThigh_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_RThigh_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_RThigh_pose_matrix-sampler" target="RThigh/transform"/>
+    </animation>
+    <animation id="hb-hb-1_RShin_pose_matrix">
+      <source id="hb-hb-1_RShin_pose_matrix-input">
+        <float_array id="hb-hb-1_RShin_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RShin_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RShin_pose_matrix-output">
+        <float_array id="hb-hb-1_RShin_pose_matrix-output-array" count="16">0.9996911 0.02128099 0.01273763 3.05176e-5 -0.01749752 0.969169 -0.2457745 43.12266 -0.01757213 0.2454763 0.9692431 -4.57764e-5 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RShin_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RShin_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_RShin_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RShin_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_RShin_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_RShin_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_RShin_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_RShin_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_RShin_pose_matrix-sampler" target="RShin/transform"/>
+    </animation>
+    <animation id="hb-hb-1_RFoot_pose_matrix">
+      <source id="hb-hb-1_RFoot_pose_matrix-input">
+        <float_array id="hb-hb-1_RFoot_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFoot_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFoot_pose_matrix-output">
+        <float_array id="hb-hb-1_RFoot_pose_matrix-output-array" count="16">0.9961388 -0.08762948 -0.005349733 -7.62939e-6 0.0427244 0.430638 0.901513 42.33678 -0.07669538 -0.8982605 0.4327191 3.05176e-5 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFoot_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RFoot_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_RFoot_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RFoot_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_RFoot_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_RFoot_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_RFoot_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_RFoot_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_RFoot_pose_matrix-sampler" target="RFoot/transform"/>
+    </animation>
+    <animation id="hb-hb-1_RToe_pose_matrix">
+      <source id="hb-hb-1_RToe_pose_matrix-input">
+        <float_array id="hb-hb-1_RToe_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RToe_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RToe_pose_matrix-output">
+        <float_array id="hb-hb-1_RToe_pose_matrix-output-array" count="16">0.9931191 -0.001729546 -0.1170913 -7.62939e-6 0.05206574 0.902152 0.4282666 10.78579 0.1048983 -0.4314138 0.8960356 4.57764e-5 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RToe_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_RToe_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_RToe_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_RToe_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_RToe_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_RToe_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_RToe_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_RToe_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_RToe_pose_matrix-sampler" target="RToe/transform"/>
+    </animation>
+    <animation id="hb-hb-1_LThigh_pose_matrix">
+      <source id="hb-hb-1_LThigh_pose_matrix-input">
+        <float_array id="hb-hb-1_LThigh_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LThigh_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LThigh_pose_matrix-output">
+        <float_array id="hb-hb-1_LThigh_pose_matrix-output-array" count="16">0.8995009 0.3040228 -0.3137959 10.94961 -0.4032194 0.3010423 -0.8641686 4.213692 -0.1682612 0.9038491 0.3933763 0.8587189 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LThigh_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LThigh_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_LThigh_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LThigh_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_LThigh_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_LThigh_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_LThigh_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_LThigh_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_LThigh_pose_matrix-sampler" target="LThigh/transform"/>
+    </animation>
+    <animation id="hb-hb-1_LShin_pose_matrix">
+      <source id="hb-hb-1_LShin_pose_matrix-input">
+        <float_array id="hb-hb-1_LShin_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LShin_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LShin_pose_matrix-output">
+        <float_array id="hb-hb-1_LShin_pose_matrix-output-array" count="16">0.9994943 0.001888223 0.03173936 7.62939e-6 0.02058176 -0.7992958 -0.6005852 43.12301 0.02423499 0.6009348 -0.7989305 -1.52588e-5 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LShin_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LShin_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_LShin_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LShin_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_LShin_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_LShin_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_LShin_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_LShin_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_LShin_pose_matrix-sampler" target="LShin/transform"/>
+    </animation>
+    <animation id="hb-hb-1_LFoot_pose_matrix">
+      <source id="hb-hb-1_LFoot_pose_matrix-input">
+        <float_array id="hb-hb-1_LFoot_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFoot_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFoot_pose_matrix-output">
+        <float_array id="hb-hb-1_LFoot_pose_matrix-output-array" count="16">0.9999762 -0.004023849 -0.005603556 1.14441e-5 0.006830432 0.463594 0.8860211 42.33676 -9.67637e-4 -0.8860385 0.4636103 -1.52588e-5 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFoot_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LFoot_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_LFoot_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LFoot_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_LFoot_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_LFoot_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_LFoot_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_LFoot_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_LFoot_pose_matrix-sampler" target="LFoot/transform"/>
+    </animation>
+    <animation id="hb-hb-1_LToe_pose_matrix">
+      <source id="hb-hb-1_LToe_pose_matrix-input">
+        <float_array id="hb-hb-1_LToe_pose_matrix-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LToe_pose_matrix-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LToe_pose_matrix-output">
+        <float_array id="hb-hb-1_LToe_pose_matrix-output-array" count="16">0.9931196 -0.001729239 -0.117091 0 0.05206406 0.9021531 0.4282632 10.78588 0.1048935 -0.4314127 0.896036 -1.52588e-5 0 0 0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LToe_pose_matrix-output-array" count="1" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_LToe_pose_matrix-interpolation">
+        <Name_array id="hb-hb-1_LToe_pose_matrix-interpolation-array" count="1">LINEAR</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_LToe_pose_matrix-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_LToe_pose_matrix-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_LToe_pose_matrix-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_LToe_pose_matrix-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_LToe_pose_matrix-interpolation"/>
+      </sampler>
+      <channel source="#hb-hb-1_LToe_pose_matrix-sampler" target="LToe/transform"/>
+    </animation>
+    <animation id="hb-hb-1_location.X">
+      <source id="hb-hb-1_location.X-input">
+        <float_array id="hb-hb-1_location.X-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_location.X-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_location.X-output">
+        <float_array id="hb-hb-1_location.X-output-array" count="1">0</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_location.X-output-array" count="1" stride="1">
+            <param name="X" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_location.X-interpolation">
+        <Name_array id="hb-hb-1_location.X-interpolation-array" count="1">BEZIER</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_location.X-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_location.X-intangent">
+        <float_array id="hb-hb-1_location.X-intangent-array" count="2">0 0</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_location.X-intangent-array" count="1" stride="2">
+            <param name="X" type="float"/>
+            <param name="Y" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_location.X-outtangent">
+        <float_array id="hb-hb-1_location.X-outtangent-array" count="2">0.08333331 0</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_location.X-outtangent-array" count="1" stride="2">
+            <param name="X" type="float"/>
+            <param name="Y" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_location.X-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_location.X-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_location.X-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_location.X-interpolation"/>
+        <input semantic="IN_TANGENT" source="#hb-hb-1_location.X-intangent"/>
+        <input semantic="OUT_TANGENT" source="#hb-hb-1_location.X-outtangent"/>
+      </sampler>
+      <channel source="#hb-hb-1_location.X-sampler" target="hb-hb-1/location.X"/>
+    </animation>
+    <animation id="hb-hb-1_location.Y">
+      <source id="hb-hb-1_location.Y-input">
+        <float_array id="hb-hb-1_location.Y-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_location.Y-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_location.Y-output">
+        <float_array id="hb-hb-1_location.Y-output-array" count="1">0</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_location.Y-output-array" count="1" stride="1">
+            <param name="Y" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_location.Y-interpolation">
+        <Name_array id="hb-hb-1_location.Y-interpolation-array" count="1">BEZIER</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_location.Y-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_location.Y-intangent">
+        <float_array id="hb-hb-1_location.Y-intangent-array" count="2">0 0</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_location.Y-intangent-array" count="1" stride="2">
+            <param name="X" type="float"/>
+            <param name="Y" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_location.Y-outtangent">
+        <float_array id="hb-hb-1_location.Y-outtangent-array" count="2">0.08333331 0</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_location.Y-outtangent-array" count="1" stride="2">
+            <param name="X" type="float"/>
+            <param name="Y" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_location.Y-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_location.Y-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_location.Y-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_location.Y-interpolation"/>
+        <input semantic="IN_TANGENT" source="#hb-hb-1_location.Y-intangent"/>
+        <input semantic="OUT_TANGENT" source="#hb-hb-1_location.Y-outtangent"/>
+      </sampler>
+      <channel source="#hb-hb-1_location.Y-sampler" target="hb-hb-1/location.Y"/>
+    </animation>
+    <animation id="hb-hb-1_location.Z">
+      <source id="hb-hb-1_location.Z-input">
+        <float_array id="hb-hb-1_location.Z-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_location.Z-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_location.Z-output">
+        <float_array id="hb-hb-1_location.Z-output-array" count="1">0</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_location.Z-output-array" count="1" stride="1">
+            <param name="Z" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_location.Z-interpolation">
+        <Name_array id="hb-hb-1_location.Z-interpolation-array" count="1">BEZIER</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_location.Z-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_location.Z-intangent">
+        <float_array id="hb-hb-1_location.Z-intangent-array" count="2">0 0</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_location.Z-intangent-array" count="1" stride="2">
+            <param name="X" type="float"/>
+            <param name="Y" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_location.Z-outtangent">
+        <float_array id="hb-hb-1_location.Z-outtangent-array" count="2">0.08333331 0</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_location.Z-outtangent-array" count="1" stride="2">
+            <param name="X" type="float"/>
+            <param name="Y" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_location.Z-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_location.Z-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_location.Z-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_location.Z-interpolation"/>
+        <input semantic="IN_TANGENT" source="#hb-hb-1_location.Z-intangent"/>
+        <input semantic="OUT_TANGENT" source="#hb-hb-1_location.Z-outtangent"/>
+      </sampler>
+      <channel source="#hb-hb-1_location.Z-sampler" target="hb-hb-1/location.Z"/>
+    </animation>
+    <animation id="hb-hb-1_rotation_euler.X">
+      <source id="hb-hb-1_rotation_euler.X-input">
+        <float_array id="hb-hb-1_rotation_euler.X-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_rotation_euler.X-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_rotation_euler.X-output">
+        <float_array id="hb-hb-1_rotation_euler.X-output-array" count="1">0</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_rotation_euler.X-output-array" count="1" stride="1">
+            <param name="ANGLE" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_rotation_euler.X-interpolation">
+        <Name_array id="hb-hb-1_rotation_euler.X-interpolation-array" count="1">BEZIER</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_rotation_euler.X-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_rotation_euler.X-intangent">
+        <float_array id="hb-hb-1_rotation_euler.X-intangent-array" count="2">0 0</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_rotation_euler.X-intangent-array" count="1" stride="2">
+            <param name="X" type="float"/>
+            <param name="Y" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_rotation_euler.X-outtangent">
+        <float_array id="hb-hb-1_rotation_euler.X-outtangent-array" count="2">0.08333331 0</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_rotation_euler.X-outtangent-array" count="1" stride="2">
+            <param name="X" type="float"/>
+            <param name="Y" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_rotation_euler.X-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_rotation_euler.X-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_rotation_euler.X-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_rotation_euler.X-interpolation"/>
+        <input semantic="IN_TANGENT" source="#hb-hb-1_rotation_euler.X-intangent"/>
+        <input semantic="OUT_TANGENT" source="#hb-hb-1_rotation_euler.X-outtangent"/>
+      </sampler>
+      <channel source="#hb-hb-1_rotation_euler.X-sampler" target="hb-hb-1/rotationX.ANGLE"/>
+    </animation>
+    <animation id="hb-hb-1_rotation_euler.Y">
+      <source id="hb-hb-1_rotation_euler.Y-input">
+        <float_array id="hb-hb-1_rotation_euler.Y-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_rotation_euler.Y-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_rotation_euler.Y-output">
+        <float_array id="hb-hb-1_rotation_euler.Y-output-array" count="1">0</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_rotation_euler.Y-output-array" count="1" stride="1">
+            <param name="ANGLE" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_rotation_euler.Y-interpolation">
+        <Name_array id="hb-hb-1_rotation_euler.Y-interpolation-array" count="1">BEZIER</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_rotation_euler.Y-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_rotation_euler.Y-intangent">
+        <float_array id="hb-hb-1_rotation_euler.Y-intangent-array" count="2">0 0</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_rotation_euler.Y-intangent-array" count="1" stride="2">
+            <param name="X" type="float"/>
+            <param name="Y" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_rotation_euler.Y-outtangent">
+        <float_array id="hb-hb-1_rotation_euler.Y-outtangent-array" count="2">0.08333331 0</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_rotation_euler.Y-outtangent-array" count="1" stride="2">
+            <param name="X" type="float"/>
+            <param name="Y" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_rotation_euler.Y-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_rotation_euler.Y-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_rotation_euler.Y-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_rotation_euler.Y-interpolation"/>
+        <input semantic="IN_TANGENT" source="#hb-hb-1_rotation_euler.Y-intangent"/>
+        <input semantic="OUT_TANGENT" source="#hb-hb-1_rotation_euler.Y-outtangent"/>
+      </sampler>
+      <channel source="#hb-hb-1_rotation_euler.Y-sampler" target="hb-hb-1/rotationY.ANGLE"/>
+    </animation>
+    <animation id="hb-hb-1_rotation_euler.Z">
+      <source id="hb-hb-1_rotation_euler.Z-input">
+        <float_array id="hb-hb-1_rotation_euler.Z-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_rotation_euler.Z-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_rotation_euler.Z-output">
+        <float_array id="hb-hb-1_rotation_euler.Z-output-array" count="1">0</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_rotation_euler.Z-output-array" count="1" stride="1">
+            <param name="ANGLE" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_rotation_euler.Z-interpolation">
+        <Name_array id="hb-hb-1_rotation_euler.Z-interpolation-array" count="1">BEZIER</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_rotation_euler.Z-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_rotation_euler.Z-intangent">
+        <float_array id="hb-hb-1_rotation_euler.Z-intangent-array" count="2">0 0</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_rotation_euler.Z-intangent-array" count="1" stride="2">
+            <param name="X" type="float"/>
+            <param name="Y" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_rotation_euler.Z-outtangent">
+        <float_array id="hb-hb-1_rotation_euler.Z-outtangent-array" count="2">0.08333331 0</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_rotation_euler.Z-outtangent-array" count="1" stride="2">
+            <param name="X" type="float"/>
+            <param name="Y" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_rotation_euler.Z-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_rotation_euler.Z-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_rotation_euler.Z-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_rotation_euler.Z-interpolation"/>
+        <input semantic="IN_TANGENT" source="#hb-hb-1_rotation_euler.Z-intangent"/>
+        <input semantic="OUT_TANGENT" source="#hb-hb-1_rotation_euler.Z-outtangent"/>
+      </sampler>
+      <channel source="#hb-hb-1_rotation_euler.Z-sampler" target="hb-hb-1/rotationZ.ANGLE"/>
+    </animation>
+    <animation id="hb-hb-1_scale.X">
+      <source id="hb-hb-1_scale.X-input">
+        <float_array id="hb-hb-1_scale.X-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_scale.X-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_scale.X-output">
+        <float_array id="hb-hb-1_scale.X-output-array" count="1">1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_scale.X-output-array" count="1" stride="1">
+            <param name="X" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_scale.X-interpolation">
+        <Name_array id="hb-hb-1_scale.X-interpolation-array" count="1">BEZIER</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_scale.X-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_scale.X-intangent">
+        <float_array id="hb-hb-1_scale.X-intangent-array" count="2">0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_scale.X-intangent-array" count="1" stride="2">
+            <param name="X" type="float"/>
+            <param name="Y" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_scale.X-outtangent">
+        <float_array id="hb-hb-1_scale.X-outtangent-array" count="2">0.08333331 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_scale.X-outtangent-array" count="1" stride="2">
+            <param name="X" type="float"/>
+            <param name="Y" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_scale.X-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_scale.X-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_scale.X-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_scale.X-interpolation"/>
+        <input semantic="IN_TANGENT" source="#hb-hb-1_scale.X-intangent"/>
+        <input semantic="OUT_TANGENT" source="#hb-hb-1_scale.X-outtangent"/>
+      </sampler>
+      <channel source="#hb-hb-1_scale.X-sampler" target="hb-hb-1/scale.X"/>
+    </animation>
+    <animation id="hb-hb-1_scale.Y">
+      <source id="hb-hb-1_scale.Y-input">
+        <float_array id="hb-hb-1_scale.Y-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_scale.Y-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_scale.Y-output">
+        <float_array id="hb-hb-1_scale.Y-output-array" count="1">1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_scale.Y-output-array" count="1" stride="1">
+            <param name="Y" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_scale.Y-interpolation">
+        <Name_array id="hb-hb-1_scale.Y-interpolation-array" count="1">BEZIER</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_scale.Y-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_scale.Y-intangent">
+        <float_array id="hb-hb-1_scale.Y-intangent-array" count="2">0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_scale.Y-intangent-array" count="1" stride="2">
+            <param name="X" type="float"/>
+            <param name="Y" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_scale.Y-outtangent">
+        <float_array id="hb-hb-1_scale.Y-outtangent-array" count="2">0.08333331 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_scale.Y-outtangent-array" count="1" stride="2">
+            <param name="X" type="float"/>
+            <param name="Y" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_scale.Y-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_scale.Y-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_scale.Y-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_scale.Y-interpolation"/>
+        <input semantic="IN_TANGENT" source="#hb-hb-1_scale.Y-intangent"/>
+        <input semantic="OUT_TANGENT" source="#hb-hb-1_scale.Y-outtangent"/>
+      </sampler>
+      <channel source="#hb-hb-1_scale.Y-sampler" target="hb-hb-1/scale.Y"/>
+    </animation>
+    <animation id="hb-hb-1_scale.Z">
+      <source id="hb-hb-1_scale.Z-input">
+        <float_array id="hb-hb-1_scale.Z-input-array" count="1">0.04166662</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_scale.Z-input-array" count="1" stride="1">
+            <param name="TIME" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_scale.Z-output">
+        <float_array id="hb-hb-1_scale.Z-output-array" count="1">1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_scale.Z-output-array" count="1" stride="1">
+            <param name="Z" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_scale.Z-interpolation">
+        <Name_array id="hb-hb-1_scale.Z-interpolation-array" count="1">BEZIER</Name_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_scale.Z-interpolation-array" count="1" stride="1">
+            <param name="INTERPOLATION" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_scale.Z-intangent">
+        <float_array id="hb-hb-1_scale.Z-intangent-array" count="2">0 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_scale.Z-intangent-array" count="1" stride="2">
+            <param name="X" type="float"/>
+            <param name="Y" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <source id="hb-hb-1_scale.Z-outtangent">
+        <float_array id="hb-hb-1_scale.Z-outtangent-array" count="2">0.08333331 1</float_array>
+        <technique_common>
+          <accessor source="#hb-hb-1_scale.Z-outtangent-array" count="1" stride="2">
+            <param name="X" type="float"/>
+            <param name="Y" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+      <sampler id="hb-hb-1_scale.Z-sampler">
+        <input semantic="INPUT" source="#hb-hb-1_scale.Z-input"/>
+        <input semantic="OUTPUT" source="#hb-hb-1_scale.Z-output"/>
+        <input semantic="INTERPOLATION" source="#hb-hb-1_scale.Z-interpolation"/>
+        <input semantic="IN_TANGENT" source="#hb-hb-1_scale.Z-intangent"/>
+        <input semantic="OUT_TANGENT" source="#hb-hb-1_scale.Z-outtangent"/>
+      </sampler>
+      <channel source="#hb-hb-1_scale.Z-sampler" target="hb-hb-1/scale.Z"/>
+    </animation>
+  </library_animations>
+  <library_controllers/>
+  <library_visual_scenes>
+    <visual_scene id="Scene" name="Scene">
+      <node id="hb-hb-1" name="hb-hb-1" type="NODE">
+        <translate sid="location">0 0 0</translate>
+        <rotate sid="rotationZ">0 0 1 0</rotate>
+        <rotate sid="rotationY">0 1 0 0</rotate>
+        <rotate sid="rotationX">1 0 0 0</rotate>
+        <scale sid="scale">1 1 1</scale>
+        <node id="Hip" name="Hip" sid="Hip" type="JOINT">
+          <matrix sid="transform">0.9999828 -0.004804266 0.003346634 -4.729261 0.00480421 0.3465507 -0.938019 10.29793 0.003346714 0.938019 0.3465679 9.875082 0 0 0 1</matrix>
+          <node id="LowerSpine" name="LowerSpine" sid="LowerSpine" type="JOINT">
+            <matrix sid="transform">0.999993 -0.003297421 0.001704311 0.01212692 0.00370905 0.9047835 -0.4258555 10.67213 -1.37915e-4 0.4258589 0.9047896 -1.547253 0 0 0 1</matrix>
+            <node id="MiddleSpine" name="MiddleSpine" sid="MiddleSpine" type="JOINT">
+              <matrix sid="transform">0.9999978 0.002116092 -3.28915e-4 0 -0.001973446 0.9702096 0.2422591 8.465538 8.31849e-4 -0.2422578 0.9702116 0 0 0 0 1</matrix>
+              <node id="Chest" name="Chest" sid="Chest" type="JOINT">
+                <matrix sid="transform">0.9999938 -0.003111549 0.001642633 4.76837e-7 0.00350308 0.9241619 -0.3819852 10.67142 -3.29701e-4 0.3819886 0.924167 -1.90735e-6 0 0 0 1</matrix>
+                <node id="Neck" name="Neck" sid="Neck" type="JOINT">
+                  <matrix sid="transform">0.9999997 -6.60801e-4 2.74558e-4 0.0457077 6.78633e-4 0.9974571 -0.07126628 23.05068 -2.27072e-4 0.07126662 0.9974573 -4.984169 0 0 0 1</matrix>
+                  <node id="Head" name="Head" sid="Head" type="JOINT">
+                    <matrix sid="transform">0.9999974 0.002212827 -4.76901e-4 0 -0.002040206 0.972344 0.2335449 13.79927 9.8069e-4 -0.2335431 0.9723457 3.8147e-6 0 0 0 1</matrix>
+                  </node>
+                </node>
+                <node id="LClavicle" name="LClavicle" sid="LClavicle" type="JOINT">
+                  <matrix sid="transform">0.4062874 0.8996261 -0.1600102 2.119555 0.04265602 0.1562501 0.9867961 23.68161 0.9127489 -0.4077485 0.02510832 2.511784 0 0 0 1</matrix>
+                  <node id="LShoulder" name="LShoulder" sid="LShoulder" type="JOINT">
+                    <matrix sid="transform">0.8983082 0.4072959 -0.164781 -1.90735e-6 -0.3614079 0.8982575 0.2500358 13.97177 0.2498538 -0.1650559 0.954112 3.8147e-6 0 0 0 1</matrix>
+                    <node id="LForearm" name="LForearm" sid="LForearm" type="JOINT">
+                      <matrix sid="transform">0.9999761 0.00290783 0.006295684 -2.86102e-6 -0.002867892 0.9999757 -0.006362183 29.5432 -0.006314106 0.006345068 0.9999601 3.8147e-5 0 0 0 1</matrix>
+                      <node id="LHand" name="LHand" sid="LHand" type="JOINT">
+                        <matrix sid="transform">0.9994196 -0.03351482 0.006097184 0 0.03354909 0.9994215 -0.005614313 24.64476 -0.005905475 0.005815736 0.9999655 0 0 0 0 1</matrix>
+                        <node id="LFinger1" name="LFinger1" sid="LFinger1" type="JOINT">
+                          <matrix sid="transform">0.9503523 0.200716 -0.2377892 3.047095 -0.1276028 0.9483293 0.2904978 9.444817 0.28381 -0.2457327 0.9268588 0.6893539 0 0 0 1</matrix>
+                          <node id="LFinger11" name="LFinger11" sid="LFinger11" type="JOINT">
+                            <matrix sid="transform">0.9999999 3.90485e-5 -7.03335e-5 1.10269e-6 -3.90038e-5 1 7.08997e-5 3.730865 7.03633e-5 -7.08401e-5 0.9999999 7.62939e-6 0 0 0 1</matrix>
+                            <node id="LFinger12" name="LFinger12" sid="LFinger12" type="JOINT">
+                              <matrix sid="transform">0.9978878 -0.02842805 -0.05841097 3.39746e-6 0.03093061 0.998622 0.0423955 2.547062 0.05712526 -0.04411249 0.9973921 7.62939e-6 0 0 0 1</matrix>
+                            </node>
+                          </node>
+                        </node>
+                        <node id="LFinger2" name="LFinger2" sid="LFinger2" type="JOINT">
+                          <matrix sid="transform">0.9994163 0.03362686 -0.006020169 0.6365194 -0.03359115 0.999418 0.005938056 9.684258 0.006216339 -0.005732397 0.9999642 0.8748856 0 0 0 1</matrix>
+                          <node id="LFinger21" name="LFinger21" sid="LFinger21" type="JOINT">
+                            <matrix sid="transform">0.9999999 -1.6846e-4 2.82985e-4 9.53674e-7 1.68529e-4 0.9999999 -2.82545e-4 4.41748 -2.82932e-4 2.8272e-4 0.9999999 7.62939e-6 0 0 0 1</matrix>
+                            <node id="LFinger22" name="LFinger22" sid="LFinger22" type="JOINT">
+                              <matrix sid="transform">0.997286 0.0051987 -0.0734432 0 2.40886e-4 0.9972684 0.07386296 2.448662 0.07362656 -0.07368018 0.9945604 0 0 0 0 1</matrix>
+                            </node>
+                          </node>
+                        </node>
+                        <node id="LFinger3" name="LFinger3" sid="LFinger3" type="JOINT">
+                          <matrix sid="transform">0.9981826 -0.02422866 -0.05517637 -1.793138 0.02733103 0.9980462 0.05618405 9.270638 0.05370731 -0.05759 0.9968947 0.6156845 0 0 0 1</matrix>
+                          <node id="LFinger31" name="LFinger31" sid="LFinger31" type="JOINT">
+                            <matrix sid="transform">0.9999999 -1.77055e-4 3.11159e-4 9.53674e-7 1.77184e-4 0.9999998 -3.38387e-4 4.02137 -3.1111e-4 3.38286e-4 1 0 0 0 0 1</matrix>
+                            <node id="LFinger32" name="LFinger32" sid="LFinger32" type="JOINT">
+                              <matrix sid="transform">0.9976251 0.009731487 -0.06818807 -9.53674e-7 -0.004707574 0.9972875 0.07345383 2.29158 0.06871791 -0.07295842 0.9949648 0 0 0 0 1</matrix>
+                            </node>
+                          </node>
+                        </node>
+                        <node id="LFinger4" name="LFinger4" sid="LFinger4" type="JOINT">
+                          <matrix sid="transform">0.9548849 -0.2280483 -0.1902335 -3.428756 0.2588679 0.9530927 0.1568486 8.662102 0.1455411 -0.1990177 0.9691284 -0.6322594 0 0 0 1</matrix>
+                          <node id="LFinger41" name="LFinger41" sid="LFinger41" type="JOINT">
+                            <matrix sid="transform">1 -1.0027e-4 2.27943e-4 -9.53674e-7 1.00436e-4 0.9999999 -3.22595e-4 2.608891 -2.27898e-4 3.22551e-4 0.9999999 -7.62939e-6 0 0 0 1</matrix>
+                            <node id="LFinger42" name="LFinger42" sid="LFinger42" type="JOINT">
+                              <matrix sid="transform">0.9983843 0.03073986 -0.0477868 0 -0.02727559 0.9970657 0.07152815 1.913124 0.04984534 -0.07010923 0.9962934 7.62939e-6 0 0 0 1</matrix>
+                            </node>
+                          </node>
+                        </node>
+                        <node id="LFinger0" name="LFinger0" sid="LFinger0" type="JOINT">
+                          <matrix sid="transform">0.7498811 0.6060727 -0.2652431 1.538277 -0.421481 0.7466949 0.5145875 1.903343 0.5099332 -0.2740845 0.8153808 -1.547695 0 0 0 1</matrix>
+                          <node id="LFinger01" name="LFinger01" sid="LFinger01" type="JOINT">
+                            <matrix sid="transform">0.998747 -0.03169502 -0.03873023 2.86102e-6 0.03208341 0.9994405 0.009448186 4.762844 0.03840905 -0.01067901 0.9992051 7.62939e-6 0 0 0 1</matrix>
+                            <node id="LFinger02" name="LFinger02" sid="LFinger02" type="JOINT">
+                              <matrix sid="transform">0.9996699 -0.01560764 0.02041095 -3.15905e-6 0.01596522 0.9997197 -0.01747952 3.108879 -0.02013239 0.01779956 0.9996389 0 0 0 0 1</matrix>
+                            </node>
+                          </node>
+                        </node>
+                      </node>
+                    </node>
+                  </node>
+                </node>
+                <node id="RClavicle" name="RClavicle" sid="RClavicle" type="JOINT">
+                  <matrix sid="transform">0.420855 -0.891997 0.1649908 -2.165263 -0.05543621 0.1562525 0.9861601 23.6816 -0.9054323 -0.4241768 0.01631075 2.472391 0 0 0 1</matrix>
+                  <node id="RShoulder" name="RShoulder" sid="RShoulder" type="JOINT">
+                    <matrix sid="transform">0.8995696 -0.405122 0.1632492 0 0.3583692 0.8982577 0.2543705 13.97422 -0.2496912 -0.1703205 0.953229 3.8147e-6 0 0 0 1</matrix>
+                    <node id="RForearm" name="RForearm" sid="RForearm" type="JOINT">
+                      <matrix sid="transform">0.999976 -0.002983704 -0.006264114 2.86102e-6 0.002944114 0.9999757 -0.006326737 29.5432 0.006282823 0.006308253 0.9999605 7.62939e-6 0 0 0 1</matrix>
+                      <node id="RHand" name="RHand" sid="RHand" type="JOINT">
+                        <matrix sid="transform">0.999422 0.03344429 -0.006081358 9.53674e-7 -0.03348091 0.9994212 -0.006025824 24.64474 0.005876304 0.006226069 0.9999633 7.62939e-6 0 0 0 1</matrix>
+                        <node id="RFinger1" name="RFinger1" sid="RFinger1" type="JOINT">
+                          <matrix sid="transform">0.9512503 -0.1977313 0.2366968 -3.055234 0.1245042 0.9483271 0.291847 9.444832 -0.2821732 -0.2481498 0.9267147 0.6524887 0 0 0 1</matrix>
+                          <node id="RFinger11" name="RFinger11" sid="RFinger11" type="JOINT">
+                            <matrix sid="transform">1 -2.63751e-5 1.12474e-4 2.38419e-7 2.63304e-5 0.9999999 1.0556e-4 3.730877 -1.12474e-4 -1.05485e-4 1 0 0 0 0 1</matrix>
+                            <node id="RFinger12" name="RFinger12" sid="RFinger12" type="JOINT">
+                              <matrix sid="transform">0.9978919 0.02888431 0.05811545 -3.18885e-6 -0.0313535 0.9986241 0.04203436 2.547073 -0.05682138 -0.04376762 0.9974245 7.62939e-6 0 0 0 1</matrix>
+                            </node>
+                          </node>
+                        </node>
+                        <node id="RFinger2" name="RFinger2" sid="RFinger2" type="JOINT">
+                          <matrix sid="transform">0.9994189 -0.0335579 0.005989995 -0.6470747 0.03351982 0.999418 0.006348763 9.68428 -0.006199563 -0.00614427 0.9999619 0.8671646 0 0 0 1</matrix>
+                          <node id="RFinger21" name="RFinger21" sid="RFinger21" type="JOINT">
+                            <matrix sid="transform">0.9999999 2.05825e-4 -2.82122e-4 0 -2.05912e-4 0.9999998 -2.84864e-4 4.417595 2.82065e-4 2.84879e-4 0.9999999 0 0 0 0 1</matrix>
+                            <node id="RFinger22" name="RFinger22" sid="RFinger22" type="JOINT">
+                              <matrix sid="transform">0.9973146 -0.004348642 0.07310832 9.53674e-7 -0.001065696 0.9972683 0.07385772 2.448654 -0.07322977 -0.07373733 0.9945855 0 0 0 0 1</matrix>
+                            </node>
+                          </node>
+                        </node>
+                        <node id="RFinger3" name="RFinger3" sid="RFinger3" type="JOINT">
+                          <matrix sid="transform">0.9981794 0.02492062 0.05492777 1.785542 -0.02799125 0.9980463 0.05586126 9.270676 -0.05342835 -0.05729702 0.9969265 0.6372604 0 0 0 1</matrix>
+                          <node id="RFinger31" name="RFinger31" sid="RFinger31" type="JOINT">
+                            <matrix sid="transform">0.9999999 1.76208e-4 -3.05083e-4 0 -1.76296e-4 1 -3.36662e-4 4.021378 3.0503e-4 3.36763e-4 0.9999999 7.62939e-6 0 0 0 1</matrix>
+                            <node id="RFinger32" name="RFinger32" sid="RFinger32" type="JOINT">
+                              <matrix sid="transform">0.9976545 -0.008870551 0.06787427 0 0.003866795 0.9972877 0.07349994 2.291573 -0.06834215 -0.07306513 0.994983 -7.62939e-6 0 0 0 1</matrix>
+                            </node>
+                          </node>
+                        </node>
+                        <node id="RFinger4" name="RFinger4" sid="RFinger4" type="JOINT">
+                          <matrix sid="transform">0.9545007 0.2304352 0.1892837 3.436132 -0.2606137 0.9531 0.1538863 8.662117 -0.1449455 -0.1962145 0.969789 -0.5907974 0 0 0 1</matrix>
+                          <node id="RFinger41" name="RFinger41" sid="RFinger41" type="JOINT">
+                            <matrix sid="transform">1 9.31658e-5 -2.35647e-4 1.90735e-6 -9.3272e-5 0.9999998 -3.36453e-4 2.608879 2.35572e-4 3.36334e-4 0.9999999 0 0 0 0 1</matrix>
+                            <node id="RFinger42" name="RFinger42" sid="RFinger42" type="JOINT">
+                              <matrix sid="transform">0.9984195 -0.02992917 0.04756638 -3.8147e-6 0.02646439 0.9970628 0.07187107 1.913101 -0.04957771 -0.07049857 0.996279 0 0 0 0 1</matrix>
+                            </node>
+                          </node>
+                        </node>
+                        <node id="RFinger0" name="RFinger0" sid="RFinger0" type="JOINT">
+                          <matrix sid="transform">0.7536874 -0.6027199 0.2620766 -1.519355 0.4168631 0.7466748 0.5183648 1.903351 -0.5081148 -0.281435 0.814011 -1.56609 0 0 0 1</matrix>
+                          <node id="RFinger01" name="RFinger01" sid="RFinger01" type="JOINT">
+                            <matrix sid="transform">0.9987538 0.03175269 0.03850684 9.53674e-7 -0.03212622 0.9994423 0.009122267 4.762959 -0.03819573 -0.01034798 0.9992167 0 0 0 0 1</matrix>
+                            <node id="RFinger02" name="RFinger02" sid="RFinger02" type="JOINT">
+                              <matrix sid="transform">0.9996763 0.01547877 -0.02018929 -5.48363e-6 -0.01583517 0.9997195 -0.01761365 3.108765 0.01991102 0.01792759 0.9996411 0 0 0 0 1</matrix>
+                            </node>
+                          </node>
+                        </node>
+                      </node>
+                    </node>
+                  </node>
+                </node>
+              </node>
+            </node>
+          </node>
+          <node id="RThigh" name="RThigh" sid="RThigh" type="JOINT">
+            <matrix sid="transform">0.9998573 -0.01543035 -0.006871242 -10.96173 -0.0116214 -0.9236306 0.3831075 4.213612 -0.01225808 -0.382973 -0.9236784 0.6885428 0 0 0 1</matrix>
+            <node id="RShin" name="RShin" sid="RShin" type="JOINT">
+              <matrix sid="transform">0.9996744 0.01839215 0.01768843 9.53674e-7 -0.01839383 0.9998307 -6.71037e-5 43.1227 -0.01768667 -2.58274e-4 0.9998436 -9.53674e-7 0 0 0 1</matrix>
+              <node id="RFoot" name="RFoot" sid="RFoot" type="JOINT">
+                <matrix sid="transform">0.9999791 0.003283609 -0.005578366 -1.90735e-6 0.003615947 0.43142 0.902144 42.33681 0.005368905 -0.9021452 0.4313991 1.90735e-6 0 0 0 1</matrix>
+                <node id="RToe" name="RToe" sid="RToe" type="JOINT">
+                  <matrix sid="transform">0.9931198 -0.001729284 -0.1170911 -1.90735e-6 0.05206444 0.9021512 0.4282662 10.78577 0.1048932 -0.431416 0.8960341 0 0 0 0 1</matrix>
+                </node>
+              </node>
+            </node>
+          </node>
+          <node id="LThigh" name="LThigh" sid="LThigh" type="JOINT">
+            <matrix sid="transform">0.9993656 0.02135869 0.02850104 10.94961 0.008811858 -0.9236309 0.3831815 4.213692 0.03450859 -0.3826872 -0.9232333 0.8587079 0 0 0 1</matrix>
+            <node id="LShin" name="LShin" sid="LShin" type="JOINT">
+              <matrix sid="transform">0.9996743 -0.01839197 -0.01769262 0 0.0183958 0.999831 6.69882e-5 43.12301 0.01768841 -3.92556e-4 0.9998435 -3.8147e-6 0 0 0 1</matrix>
+              <node id="LFoot" name="LFoot" sid="LFoot" type="JOINT">
+                <matrix sid="transform">0.999979 0.003283452 -0.005578375 0 0.003616064 0.4314165 0.9021456 42.33678 0.005368812 -0.9021469 0.4313957 9.53674e-7 0 0 0 1</matrix>
+                <node id="LToe" name="LToe" sid="LToe" type="JOINT">
+                  <matrix sid="transform">0.9931196 -0.001729341 -0.117091 -4.76837e-7 0.05206377 0.9021529 0.4282632 10.78586 0.1048927 -0.4314132 0.8960361 0 0 0 0 1</matrix>
+                </node>
+              </node>
+            </node>
+          </node>
+        </node>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#Scene"/>
+  </scene>
+</COLLADA>
