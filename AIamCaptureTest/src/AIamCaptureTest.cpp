@@ -76,7 +76,10 @@ class AIamCaptureTest : public AppBasic
 		};
 		int mRenderType;
 
+		CameraPersp mCamera;
 		MayaCamUI mMayaCam;
+		Vec3f mCameraPosition;
+		Vec3f mCameraCenterOfInterestPoint;
 
 		//! Returns paths of motion files in the directory.
 		vector< fs::path > getMotions( const fs::path & relativeDir );
@@ -147,17 +150,21 @@ void AIamCaptureTest::prepareSettings( Settings *settings )
 void AIamCaptureTest::setup()
 {
 	mndl::params::PInterfaceGl::load( "params.xml" );
-	mParams = mndl::params::PInterfaceGl( "Parameters", Vec2i( 220, 320 ) );
+	mParams = mndl::params::PInterfaceGl( "Parameters", Vec2i( 250, 450 ) );
 	mParams.addPersistentSizeAndPosition();
 	mParams.addParam( "Fps", &mFps, "", true );
 	mParams.addPersistentParam( "Vertical sync", &mVerticalSyncEnabled, false );
 	mParams.addSeparator();
 
-	CameraPersp cam;
-	cam.setPerspective( 60, getWindowAspectRatio(), 0.1f, 10000.0f );
-	cam.setEyePoint( Vec3f( 0, 30, 260 ) );
-	cam.setCenterOfInterestPoint( Vec3f( 0, 70, 0 ) );
-	mMayaCam.setCurrentCam( cam );
+	mParams.addText( "Camera" );
+	mParams.addPersistentParam( "Eye", &mCameraPosition, Vec3f( 0, 30, 260 ), "", true );
+	mParams.addPersistentParam( "Center of Interest", &mCameraCenterOfInterestPoint,
+			Vec3f( 0, 70, 0 ), "", true );
+	mParams.addSeparator();
+	mCamera.setPerspective( 60, getWindowAspectRatio(), 0.1f, 10000.f );
+	mCamera.setEyePoint( mCameraPosition );
+	mCamera.setCenterOfInterestPoint( mCameraCenterOfInterestPoint );
+	mMayaCam.setCurrentCam( mCamera );
 
 	mParams.addText( "Debug" );
 	mParams.addPersistentParam( "Draw axes", &mDrawAxes, true );
@@ -365,7 +372,8 @@ void AIamCaptureTest::update()
 						Vec3f targetPos = targetNode->getPosition();
 						Vec3f targetScale = targetNode->getScale();
 
-						node->setOrientation( nodeOri.slerp( blendValue, targetOri ) );
+						node->setOrientation( nodeOri.lerp( blendValue, targetOri ).normalized() );
+						//node->setOrientation( nodeOri.slerpShortestUnenforced( blendValue, targetOri ).normalized() );
 						node->setPosition( lerp( nodePos, targetPos, blendValue ) );
 						node->setScale( lerp( nodeScale, targetScale, blendValue ) );
 					}
@@ -426,6 +434,17 @@ void AIamCaptureTest::update()
 		}
 	}
 
+	// update camera params
+	if ( mCameraPosition != mCamera.getEyePoint() )
+	{
+		mCameraPosition = mCamera.getEyePoint();
+	}
+
+	if ( mCameraCenterOfInterestPoint != mCamera.getCenterOfInterestPoint() )
+	{
+		mCameraCenterOfInterestPoint = mCamera.getCenterOfInterestPoint();
+	}
+
 	static int lastGridSize = -1;
 	if ( lastGridSize != mGridSize )
 	{
@@ -457,7 +476,7 @@ void AIamCaptureTest::draw()
 	}
 	else
 	{
-		gl::setMatrices( mMayaCam.getCamera() );
+		gl::setMatrices( mCamera );
 
 		gl::enableDepthWrite();
 		gl::enableDepthRead();
@@ -536,19 +555,21 @@ bool AIamCaptureTest::positionReceived( const mndl::osc::Message &message )
 
 void AIamCaptureTest::mouseDown( MouseEvent event )
 {
+	mMayaCam.setCurrentCam( mCamera );
 	mMayaCam.mouseDown( event.getPos() );
+	mCamera = mMayaCam.getCamera();
 }
 
 void AIamCaptureTest::mouseDrag( MouseEvent event )
 {
+	mMayaCam.setCurrentCam( mCamera );
 	mMayaCam.mouseDrag( event.getPos(), event.isLeftDown(), event.isMiddleDown(), event.isRightDown() );
+	mCamera = mMayaCam.getCamera();
 }
 
 void AIamCaptureTest::resize()
 {
-	CameraPersp cam = mMayaCam.getCamera();
-	cam.setAspectRatio( getWindowAspectRatio() );
-	mMayaCam.setCurrentCam( cam );
+	mCamera.setAspectRatio( getWindowAspectRatio() );
 }
 
 // based on Cinder-MeshHelper by Ban the Rewind
