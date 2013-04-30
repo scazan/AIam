@@ -178,9 +178,11 @@ void AIamApp::prepareSettings( Settings *settings )
 void AIamApp::setup()
 {
 	mOutputWindow = getWindow();
-	mControlWindow = createWindow( Window::Format().size( 800, 600 ) );
+	mControlWindow = createWindow( Window::Format().size( 600, 600 ) );
 
-	mFbo = gl::Fbo( 1024, 768 );
+	gl::Fbo::Format format;
+	format.setSamples( 8 );
+	mFbo = gl::Fbo( 1024, 768, format );
 
 	mndl::params::PInterfaceGl::load( "params.xml" );
 
