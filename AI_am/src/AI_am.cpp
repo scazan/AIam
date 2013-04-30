@@ -136,6 +136,7 @@ class AIamApp : public AppBasic
 
 		bool positionReceived( const mndl::osc::Message &message );
 		mndl::osc::Server mListener;
+		int32_t mListenerCallbackId;
 		std::mutex mOscMutex;
 
 		app::WindowRef mOutputWindow;
@@ -232,7 +233,7 @@ void AIamApp::setup()
 	mMotionPaths = getMotions( "motions" );
 
 	mListener = mndl::osc::Server( 7892 );
-	mListener.registerOscReceived< AIamApp >( &AIamApp::positionReceived, this, "/position", "ssf" );
+	mListenerCallbackId = mListener.registerOscReceived< AIamApp >( &AIamApp::positionReceived, this, "/position", "ssf" );
 
 	mModel = AssimpLoaderRef( new assimp::AssimpLoader( getAssetPath( "model/model.dae" ) ) );
 	mModel->enableSkinning();
@@ -255,6 +256,7 @@ void AIamApp::setup()
 	mAppState = STATE_AI;
 	mControlParams.addParam( "State", stateTypeStrs, &mAppState );
 	mControlParams.addButton( "Play video", [&]() {
+			mAppState = STATE_CLOSING_VIDEO;
 			if ( mMovie )
 			{
 				if ( mMovie.isPlaying() )
@@ -880,6 +882,7 @@ void AIamApp::keyDown( KeyEvent event )
 
 void AIamApp::shutdown()
 {
+	mListener.unregisterOscReceived( mListenerCallbackId );
 	mndl::params::PInterfaceGl::save();
 }
 
