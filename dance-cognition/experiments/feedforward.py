@@ -1,3 +1,5 @@
+HISTORY_SIZE = 10
+
 import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/..")
@@ -9,6 +11,7 @@ from OpenGL.GLU import *
 import window
 from vector import Vector2d
 import math
+import collections
 
 class InputGenerator:
     def __init__(self):
@@ -21,8 +24,14 @@ class InputGenerator:
         return Vector2d(x, y)
 
 class NeuralNet:
+    def __init__(self):
+        self._input_history = collections.deque(maxlen=HISTORY_SIZE)
+        self._input_history.extend([
+                Vector2d(0,0) for n in range(HISTORY_SIZE)])
+
     def process(self, inp):
-        return inp
+        self._input_history.append(inp)
+        return self._input_history[0]
 
 class Frame(window.Frame):
     def draw_point(self, p):
