@@ -1,4 +1,5 @@
-HISTORY_SIZE = 10
+HISTORY_SIZE = 100
+DATASET_SIZE = 10
 
 import sys
 import os
@@ -28,22 +29,22 @@ class InputGenerator:
 
 class NeuralNet:
     def __init__(self):
-        self._input_history = collections.deque(maxlen=HISTORY_SIZE)
-        self._input_history.extend([
-                Vector2d(0,0) for n in range(HISTORY_SIZE)])
-        self._net = buildNetwork(2, 2)
+        self._net = buildNetwork(2, 3, 2)
+        self._recent_data = collections.deque(maxlen=DATASET_SIZE)
+        self._trainer = BackpropTrainer(self._net, learningrate=0.001)
 
     def process(self, inp):
-        self._input_history.append(inp)
         net_in = inp.v
         net_out = self._net.activate(net_in)
         return Vector2d(*net_out)
 
     def train(self, inp, output):
+        self._recent_data.append((inp.v, output.v))
         dataset = SupervisedDataSet(2, 2)
-        dataset.addSample(inp.v, output.v)
-        trainer = BackpropTrainer(self._net, dataset)
-        trainer.train()
+        for recent_in, recent_out in self._recent_data:
+            dataset.addSample(recent_in, recent_out)
+
+        self._trainer.trainOnDataset(dataset)
 
 class Frame(window.Frame):
     def draw_point(self, p):
@@ -53,32 +54,40 @@ class Frame(window.Frame):
                    (p.y/2 + 0.5) * self.height)
         glEnd()
 
-class InputFrame(Frame):
+class InputOutputFrame(Frame):
     def render(self):
-        glColor3f(0, 0, 0)
-        self.draw_point(self.window.input)
-
-class OutputFrame(Frame):
-    def render(self):
-        glColor3f(0.5, 0.5, 1.0)
-        self.draw_point(self.window.output)
+        if self.window.future_input:
+            glColor3f(0, 1, 0)
+            self.draw_point(self.window.future_input)
+        if self.window.observed_input:
+            glColor3f(0, 0, 0)
+            self.draw_point(self.window.observed_input)
+        if self.window.output:
+            glColor3f(0.5, 0.5, 1.0)
+            self.draw_point(self.window.output)
 
 class ExperimentWindow(window.Window):
     def __init__(self, *args):
         window.Window.__init__(self, *args)
         self.input_generator = InputGenerator()
-        self.input = Vector2d(0,0)
-        self.output = Vector2d(0,0)
+        self.future_input = None
+        self.observed_input = None
+        self.output = None
         self.net = NeuralNet()
-        self.input_frame = InputFrame(
+        self._input_history = collections.deque(maxlen=HISTORY_SIZE)
+        self._input_history.extend([
+                Vector2d(0,0) for n in range(HISTORY_SIZE)])
+        self._training_history = collections.deque(maxlen=HISTORY_SIZE)
+        self.input_and_output_frame = InputOutputFrame(
             self, left=100, top=100, width=200, height=200)
-        self.output_frame = OutputFrame(
-            self, left=400, top=100, width=200, height=200)
 
     def render(self):
-        self.input = self.input_generator.process(self.time_increment)
-        self.output = self.net.process(self.input)
-        self.net.train(self.input, self.input)
+        self.future_input = self.input_generator.process(self.time_increment)
+        self._input_history.append(self.future_input)
+        self.observed_input = self._input_history[0]
+        self.output = self.net.process(self.observed_input)
+        self._training_history.append((self.observed_input, self.future_input))
+        self.net.train(*self._training_history[0])
 
 parser = ArgumentParser()
 window.Window.add_parser_arguments(parser)
