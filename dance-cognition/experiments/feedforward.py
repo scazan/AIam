@@ -12,6 +12,9 @@ import window
 from vector import Vector2d
 import math
 import collections
+from pybrain.tools.shortcuts import buildNetwork
+from pybrain.supervised.trainers import BackpropTrainer
+from pybrain.datasets import SupervisedDataSet
 
 class InputGenerator:
     def __init__(self):
@@ -28,10 +31,19 @@ class NeuralNet:
         self._input_history = collections.deque(maxlen=HISTORY_SIZE)
         self._input_history.extend([
                 Vector2d(0,0) for n in range(HISTORY_SIZE)])
+        self._net = buildNetwork(2, 2)
 
     def process(self, inp):
         self._input_history.append(inp)
-        return self._input_history[0]
+        net_in = inp.v
+        net_out = self._net.activate(net_in)
+        return Vector2d(*net_out)
+
+    def train(self, inp, output):
+        dataset = SupervisedDataSet(2, 2)
+        dataset.addSample(inp.v, output.v)
+        trainer = BackpropTrainer(self._net, dataset)
+        trainer.train()
 
 class Frame(window.Frame):
     def draw_point(self, p):
@@ -66,6 +78,7 @@ class ExperimentWindow(window.Window):
     def render(self):
         self.input = self.input_generator.process(self.time_increment)
         self.output = self.net.process(self.input)
+        self.net.train(self.input, self.input)
 
 parser = ArgumentParser()
 window.Window.add_parser_arguments(parser)
