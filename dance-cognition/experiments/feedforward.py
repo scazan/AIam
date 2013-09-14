@@ -56,12 +56,9 @@ class Frame(window.Frame):
 
 class InputOutputFrame(Frame):
     def render(self):
-        if self.window.future_input:
+        if self.window.input:
             glColor3f(0, 1, 0)
-            self.draw_point(self.window.future_input)
-        if self.window.observed_input:
-            glColor3f(0, 0, 0)
-            self.draw_point(self.window.observed_input)
+            self.draw_point(self.window.input)
         if self.window.output:
             glColor3f(0.5, 0.5, 1.0)
             self.draw_point(self.window.output)
@@ -70,8 +67,7 @@ class ExperimentWindow(window.Window):
     def __init__(self, *args):
         window.Window.__init__(self, *args)
         self.input_generator = InputGenerator()
-        self.future_input = None
-        self.observed_input = None
+        self.input = None
         self.output = None
         self.net = NeuralNet()
         self._input_history = collections.deque(maxlen=HISTORY_SIZE)
@@ -82,11 +78,11 @@ class ExperimentWindow(window.Window):
             self, left=100, top=100, width=200, height=200)
 
     def render(self):
-        self.future_input = self.input_generator.process(self.time_increment)
-        self._input_history.append(self.future_input)
-        self.observed_input = self._input_history[0]
-        self.output = self.net.process(self.observed_input)
-        self._training_history.append((self.observed_input, self.future_input))
+        self.input = self.input_generator.process(self.time_increment)
+        self._input_history.append(self.input)
+        self.past_input = self._input_history[0]
+        self.output = self.net.process(self.input)
+        self._training_history.append((self.past_input, self.input))
         self.net.train(*self._training_history[0])
 
 parser = ArgumentParser()
