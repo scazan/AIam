@@ -21,34 +21,6 @@ class joint:
     self.stransmat = array([ [0.,0.,0.,0.],[0.,0.,0.,0.],    \
                                [0.,0.,0.,0.],[0.,0.,0.,0.] ])
 
-  def info(self):
-    print "Joint name:", self.name
-    print " %s is connected to " % self.name,
-    if(len(self.children) == 0):
-        print "nothing"
-    else:
-      for child in self.children:
-        print "%s " % child.name,
-      print
-    for child in self.children:
-      child.info()
-
-  def __repr__(self):  # Recursively build up text info
-    str2 = self.name + " at strans=" + str(self.strans) + " is connected to "
-# Not sure how well self.strans will work now that self.strans is
-# a numpy "array", no longer a cgkit vec3.
-    if(len(self.children) == 0):
-      str2 = str2 + "nothing\n"
-    else: 
-      for child in self.children:
-        str2 = str2 + child.name + " "
-      str2 = str2 + "\n"
-    str3 = ""
-    for child in self.children:
-      str3 = str3 + child.__repr__()
-    str1 = str2 + str3
-    return (str1)
-
   def addchild(self, childjoint):
     self.children.append(childjoint)
     childjoint.hasparent = 1
@@ -72,12 +44,9 @@ class joint:
 class skeleton:
   def __init__(self, hips, keyframes, frames=0, dt=.033333333):
     self.hips = hips
-# 9/1/08: we now transfer the large bvh.keyframes data structure to
-# the skeleton because we need to keep this dataset around.
     self.keyframes = keyframes  
-    self.frames = frames  # Number of frames (caller must set correctly)
+    self.frames = frames
     self.dt = dt
-    self.edges = None
 
 # Precompute hips min and max values in all 3 dimensions.
 # First determine how far into a keyframe we need to look to find the 
@@ -102,7 +71,6 @@ class skeleton:
     ycorrect = self.hips.strans[1]
     zcorrect = self.hips.strans[2]
 
-#    self.strans = array([0.,0.,0.])  # I think I could just use   \
     for keyframe in self.keyframes:
       x = keyframe[xoffset] + xcorrect
       y = keyframe[yoffset] + ycorrect
@@ -113,12 +81,6 @@ class skeleton:
       if y > self.maxy: self.maxy = y
       if z < self.minz: self.minz = z
       if z > self.maxz: self.maxz = z
-
-
-  def __repr__(self):
-    str1 = "frames = " + str(self.frames) + ", dt = " + str(self.dt) + "\n"
-    str1 = str1 + self.hips.__repr__()
-    return str1
 
 
 
