@@ -4,48 +4,67 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/..")
 
-from cgkit.asfamc import AMCReader
+import cgkit.asfamc
 import window
 from argparse import ArgumentParser
-import threading
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
+import threading
 
 class AmcViewer(window.Window):
     def __init__(self, *args):
-        global amc_data_reader
+        global amc_reader
         window.Window.__init__(self, *args)
-        self.data_reader = amc_data_reader
+        self.reader = amc_reader
 
     def render(self):
         self.configure_3d_projection(100, 0)
-        if self.data_reader.data:
-            self._draw_points()
+        self._draw_unit_cube()
+        self._draw_points()
+
+    def _draw_unit_cube(self):
+        glColor4f(0,0,0,0.2)
+        glutWireCube(2.0)
 
     def _draw_points(self):
-        glPointSize(2.0)
-        glBegin(GL_POINTS)
-        for joint, point in self.data_reader.data:
-            if len(point) == 3:
-                glVertex3f(*point)
-        glEnd()
+        if len(self.reader.frames) > 0:
+            glPointSize(2.0)
+            glBegin(GL_POINTS)
+            for joint, point in self.reader.frames[0]:
+                if len(point) == 3:
+                    glVertex3f(*point)
+            glEnd()
 
-class AmcDataReader(AMCReader):
+class AsfReader(cgkit.asfamc.ASFReader):
     def __init__(self, *args):
-        AMCReader.__init__(self, *args)
-        self.data = None
+        cgkit.asfamc.ASFReader.__init__(self, *args)
+
+    def onRoot(self, root):
+        print root
+    # def onBonedata(self, bones):
+    #     print bones
+
+class AmcReader(cgkit.asfamc.AMCReader):
+    def __init__(self, *args):
+        cgkit.asfamc.AMCReader.__init__(self, *args)
+        self.frames = []
 
     def onFrame(self, framenr, data):
-        self.data = data
+        self.frames.append(data)
 
 parser = ArgumentParser()
 window.Window.add_parser_arguments(parser)
 parser.add_argument("-amc")
+parser.add_argument("-asf")
 args = parser.parse_args()
 
-amc_data_reader = AmcDataReader(args.amc)
-amc_data_reader_thread = threading.Thread(target=amc_data_reader.read)
-amc_data_reader_thread.daemon = True
-amc_data_reader_thread.start()
+asf_reader = AsfReader(args.asf)
+asf_reader.read()
+
+amc_reader = AmcReader(args.amc)
+amc_reader_thread = threading.Thread(target=amc_reader.read)
+amc_reader_thread.daemon = True
+amc_reader_thread.start()
+
 window.run(AmcViewer, args)
