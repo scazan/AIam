@@ -17,8 +17,7 @@ class BvhViewer(window.Window):
         global bvh_reader
         window.Window.__init__(self, *args)
         self.reader = bvh_reader
-        self.skelscreenedges = self.reader.skeleton.make_skelscreenedges(
-            DEBUG=0, arrow='none', circle=1)
+        self.skelscreenedges = self.reader.skeleton.make_skelscreenedges()
         self.t = 0.0
 
     def InitGL(self):
