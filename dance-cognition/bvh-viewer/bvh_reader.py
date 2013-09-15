@@ -9,27 +9,22 @@ class joint:
   def __init__(self, name):
     self.name = name
     self.children = []
-    self.channels = []  # Set later.  Ordered list of channels: each
-        # list entry is one of [XYZ]position, [XYZ]rotation
-    self.hasparent = 0  # flag
-    self.parent = 0  # joint.addchild() sets this
-#cgkit#    self.strans = vec3(0,0,0)  # static translation vector (x, y, z)
-    self.strans = array([0.,0.,0.])  # I think I could just use   \
-                                     # regular Python arrays
-
-    # Transformation matrices:
-    self.stransmat = array([ [0.,0.,0.,0.],[0.,0.,0.,0.],    \
-                               [0.,0.,0.,0.],[0.,0.,0.,0.] ])
+    self.channels = []
+    self.hasparent = 0
+    self.parent = 0
+    self.strans = array([0.,0.,0.])
+    self.stransmat = array([
+        [0.,0.,0.,0.],[0.,0.,0.,0.],
+        [0.,0.,0.,0.],[0.,0.,0.,0.] ])
 
   def addchild(self, childjoint):
     self.children.append(childjoint)
     childjoint.hasparent = 1
     childjoint.parent = self
 
-  # Called by skeleton.create_edges()
   def create_edges_recurse(self, edgelist):
     if self.hasparent:
-      temp1 = self.parent.worldpos  # Faster than triple lookup below?
+      temp1 = self.parent.worldpos
       temp2 = self.worldpos
       v1 = vertex(temp1[0], temp1[1], temp1[2])
       v2 = vertex(temp2[0], temp2[1], temp2[2])
@@ -115,7 +110,6 @@ class skeleton:
 # this information when we read the BVH file, here's where we do it.
 # This is on-demand computation of trtr and worldpos.
     process_bvhkeyframe(self.keyframes[t-1], self.hips, t)
-
     edgelist = []
     self.hips.create_edges_recurse(edgelist)
     self.edges = edgelist
@@ -131,7 +125,6 @@ class skeleton:
 # will make use of it.
 
   def populate_skelscreenedges(self, sse, t):
-# First we have to make sure that self.edges exists for slidert=t
     self.create_edges_onet(t)
     counter = 0
     for edge in self.edges:
@@ -147,19 +140,12 @@ class skeleton:
 
 
 def process_bvhkeyframe(keyframe, joint, t):
-
   counter = 0
   dotrans = 0
   dorot = 0
 
-# We have to build up drotmat one rotation value at a time so that
-# we get the matrix multiplication order correct.
   drotmat = array([ [1.,0.,0.,0.],[0.,1.,0.,0.],[0.,0.,1.,0.],[0.,0.,0.,1.] ])
 
-  # Suck in as many values off the front of "keyframe" as we need
-  # to populate this joint's channels.  The meanings of the keyvals
-  # aren't given in the keyframe itself; their meaning is specified
-  # by the channel names.
   for channel in joint.channels:
     keyval = keyframe[counter]
     if(channel == "Xposition"):
@@ -174,14 +160,14 @@ def process_bvhkeyframe(keyframe, joint, t):
     elif(channel == "Xrotation"):
       dorot = 1
       xrot = keyval
-#cgkit#      drotmat2 = drotmat2.rotation(radians(xrot), XAXIS)
-#cgkit#      drotmat = drotmat * drotmat2  # Build up the full rotation matrix
       theta = radians(xrot)
       mycos = cos(theta)
       mysin = sin(theta)
-##      drotmat2 = deepcopy(IDENTITY)
-      drotmat2 = array([ [1.,0.,0.,0.],[0.,1.,0.,0.],[0.,0.,1.,0.],    \
-                           [0.,0.,0.,1.] ])
+      drotmat2 = array([
+          [1.,0.,0.,0.],
+          [0.,1.,0.,0.],
+          [0.,0.,1.,0.],
+          [0.,0.,0.,1.] ])
       drotmat2[1,1] = mycos
       drotmat2[1,2] = -mysin
       drotmat2[2,1] = mysin
@@ -191,14 +177,14 @@ def process_bvhkeyframe(keyframe, joint, t):
     elif(channel == "Yrotation"):
       dorot = 1
       yrot = keyval
-#cgkit#      drotmat2 = drotmat2.rotation(radians(yrot), YAXIS)
-#cgkit#      drotmat = drotmat * drotmat2
       theta = radians(yrot)
       mycos = cos(theta)
       mysin = sin(theta)
-##      drotmat2 = deepcopy(IDENTITY)
-      drotmat2 = array([ [1.,0.,0.,0.],[0.,1.,0.,0.],[0.,0.,1.,0.],    \
-                           [0.,0.,0.,1.] ])
+      drotmat2 = array([
+          [1.,0.,0.,0.],
+          [0.,1.,0.,0.],
+          [0.,0.,1.,0.],
+          [0.,0.,0.,1.] ])
       drotmat2[0,0] = mycos
       drotmat2[0,2] = mysin
       drotmat2[2,0] = -mysin
@@ -211,86 +197,53 @@ def process_bvhkeyframe(keyframe, joint, t):
       theta = radians(zrot)
       mycos = cos(theta)
       mysin = sin(theta)
-##      drotmat2 = deepcopy(IDENTITY)
-      drotmat2 = array([ [1.,0.,0.,0.],[0.,1.,0.,0.],[0.,0.,1.,0.],     \
-                           [0.,0.,0.,1.] ])
+      drotmat2 = array([
+          [1.,0.,0.,0.],
+          [0.,1.,0.,0.],
+          [0.,0.,1.,0.],
+          [0.,0.,0.,1.] ])
       drotmat2[0,0] = mycos
       drotmat2[0,1] = -mysin
       drotmat2[1,0] = mysin
       drotmat2[1,1] = mycos
       drotmat = dot(drotmat, drotmat2)
     else:
-      print "Fatal error in process_bvhkeyframe: illegal channel name ", \
-                                                               channel
-      return(0)
-##      sys.exit()
+      raise Exception("Fatal error in process_bvhkeyframe: illegal channel name ", channel)
     counter += 1
-  # End "for channel..."
 
-  if dotrans:  # If we are the hips...
-    # Build a translation matrix for this keyframe
-    dtransmat = array([ [1.,0.,0.,0.],[0.,1.,0.,0.],[0.,0.,1.,0.],    \
-                          [0.,0.,0.,1.] ])
+  if dotrans:
+    dtransmat = array([
+            [1.,0.,0.,0.],
+            [0.,1.,0.,0.],
+            [0.,0.,1.,0.],
+            [0.,0.,0.,1.] ])
     dtransmat[0,3] = xpos
     dtransmat[1,3] = ypos
     dtransmat[2,3] = zpos
 
-    # End of IF dotrans
-
-  # At this point we should have computed:
-  #  stransmat  (computed previously in process_bvhnode subroutine)
-  #  dtransmat (only if we're the hips)
-  #  drotmat
-  # We now have enough to compute joint.trtr and also to convert
-  # the position of this joint (vertex) to worldspace.
-  # 
-  # Worldpos of the current joint is localtoworld = TRTR...T*[0,0,0,1]
-  #   which equals parent_trtr * T*[0,0,0,1]
-  # In other words, the rotation value of a joint has no impact on
-  # that joint's position in space, so drotmat doesn't get used to
-  # compute worldpos in this routine.
-  # 
-  # However we don't pass localtoworld down to our child -- what
-  # our child needs is trtr = TRTRTR...TR
-  # 
-  # The code below attempts to optimize the computations so that we
-  # compute localtoworld first, then trtr.
-
-  if joint.hasparent:  # Not hips
+  if joint.hasparent:
     parent_trtr = joint.parent.trtr
-
-# 8/31/2008: dtransmat now excluded from non-hips computation since
-# it's just identity anyway.
-##    localtoworld = dot(parent_trtr,dot(joint.stransmat,dtransmat))
     localtoworld = dot(parent_trtr,joint.stransmat)
-
-  else:  # Hips
-#cgkit#    localtoworld = joint.stransmat * dtransmat
+  else:
     localtoworld = dot(joint.stransmat,dtransmat)
 
-#cgkit#  trtr = localtoworld * drotmat
   trtr = dot(localtoworld,drotmat)
-
   joint.trtr = trtr
 
 
-#cgkit#  worldpos = localtoworld * ORIGIN  # worldpos should be a vec4
-#
-# numpy conversion: eliminate the matrix multiplication entirely,
-# since all we're doing is extracting the last column of worldpos.
-  worldpos = array([ localtoworld[0,3],localtoworld[1,3],        \
-                      localtoworld[2,3], localtoworld[3,3] ])
+  worldpos = array([
+            localtoworld[0,3],
+            localtoworld[1,3],
+            localtoworld[2,3],
+            localtoworld[3,3] ])
   joint.worldpos = worldpos
 
-  newkeyframe = keyframe[counter:]  # Slices from counter+1 to end
+  newkeyframe = keyframe[counter:]
   for child in joint.children:
-    # Here's the recursion call.  Each time we call process_bvhkeyframe,
-    # the returned value "newkeyframe" should shrink due to the slicing
-    # process
     newkeyframe = process_bvhkeyframe(newkeyframe, child, t)
-    if(newkeyframe == 0):  # If retval = 0
-      print "Passing up fatal error in process_bvhkeyframe"
-      return(0)
+    if(newkeyframe == 0):
+      raise Exception("fatal error")
+
   return newkeyframe
 
 
