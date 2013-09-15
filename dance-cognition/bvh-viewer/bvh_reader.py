@@ -21,13 +21,6 @@ class joint:
     self.stransmat = array([ [0.,0.,0.,0.],[0.,0.,0.,0.],    \
                                [0.,0.,0.,0.],[0.,0.,0.,0.] ])
 
-    self.trtr = {}
-##    self.trtr = []       # self.trtr[time]  A premultiplied series of
-                         # translation and rotation matrices
-    self.worldpos = {}
-##    self.worldpos = []  # Time-based worldspace xyz position of the
-                        # joint's endpoint.  A list of vec4's
-
   def info(self):
     print "Joint name:", self.name
     print " %s is connected to " % self.name,
@@ -62,17 +55,17 @@ class joint:
     childjoint.parent = self
 
   # Called by skeleton.create_edges()
-  def create_edges_recurse(self, edgelist, t):
+  def create_edges_recurse(self, edgelist):
     if self.hasparent:
-      temp1 = self.parent.worldpos[t]  # Faster than triple lookup below?
-      temp2 = self.worldpos[t]
+      temp1 = self.parent.worldpos  # Faster than triple lookup below?
+      temp2 = self.worldpos
       v1 = vertex(temp1[0], temp1[1], temp1[2])
       v2 = vertex(temp2[0], temp2[1], temp2[2])
       myedge = edge(v1,v2)
       edgelist.append(myedge)
 
     for child in self.children:
-      child.create_edges_recurse(edgelist,t)
+      child.create_edges_recurse(edgelist)
 
 
 
@@ -84,8 +77,7 @@ class skeleton:
     self.keyframes = keyframes  
     self.frames = frames  # Number of frames (caller must set correctly)
     self.dt = dt
-##    self.edges = []  # List of list of edges.  self.edges[time][edge#]
-    self.edges = {}  # As of 9/1/08 this now runs from 1...N not 0...N-1
+    self.edges = None
 
 # Precompute hips min and max values in all 3 dimensions.
 # First determine how far into a keyframe we need to look to find the 
@@ -135,14 +127,9 @@ class skeleton:
 # that has exactly as many elements as the joint count of skeleton.
 #
   def make_skelscreenedges(self):
-# I need the number of joints in self.  We don't store this value
-# in the class, but we can get it by looking at the length of any
-# edge array self.edges[t] for any t.  So we make sure that self.edges[1]
-# is set up, then we take its length.
-    if not (self.edges.has_key(1)):
-      self.create_edges_onet(1)
+    self.create_edges_onet(1)
 
-    jointcount = len(self.edges[1])
+    jointcount = len(self.edges)
     skelscreenedges = []
 
     for x in range(jointcount):
@@ -165,13 +152,11 @@ class skeleton:
 # for the joint hierarchy at time t.  Since we no longer precompute
 # this information when we read the BVH file, here's where we do it.
 # This is on-demand computation of trtr and worldpos.
-    if not (self.hips.worldpos.has_key(t)):
-      process_bvhkeyframe(self.keyframes[t-1], self.hips, t)
+    process_bvhkeyframe(self.keyframes[t-1], self.hips, t)
 
-    if not (self.edges.has_key(t)):
-      edgelist = []
-      self.hips.create_edges_recurse(edgelist, t)
-      self.edges[t] = edgelist  # dictionary entry      
+    edgelist = []
+    self.hips.create_edges_recurse(edgelist)
+    self.edges = edgelist
 
 
 #################################
@@ -185,10 +170,9 @@ class skeleton:
 
   def populate_skelscreenedges(self, sse, t):
 # First we have to make sure that self.edges exists for slidert=t
-    if not (self.edges.has_key(t)):
-      self.create_edges_onet(t)
+    self.create_edges_onet(t)
     counter = 0
-    for edge in self.edges[t]:
+    for edge in self.edges:
       # Yes, we copy in the xyz values manually.  This keeps us sane.
       sse[counter].v1.tr[0] = edge.v1.tr[0]
       sse[counter].v1.tr[1] = edge.v1.tr[1]
@@ -298,11 +282,6 @@ def process_bvhkeyframe(keyframe, joint, t):
   # We now have enough to compute joint.trtr and also to convert
   # the position of this joint (vertex) to worldspace.
   # 
-  # For the non-hips case, we assume that our parent joint has already
-  # had its trtr matrix appended to the end of self.trtr[]
-  # and that the appropriate matrix from the parent is the LAST item
-  # in the parent's trtr[] matrix list.
-  # 
   # Worldpos of the current joint is localtoworld = TRTR...T*[0,0,0,1]
   #   which equals parent_trtr * T*[0,0,0,1]
   # In other words, the rotation value of a joint has no impact on
@@ -316,8 +295,7 @@ def process_bvhkeyframe(keyframe, joint, t):
   # compute localtoworld first, then trtr.
 
   if joint.hasparent:  # Not hips
-##    parent_trtr = joint.parent.trtr[-1]  # Last entry from parent
-    parent_trtr = joint.parent.trtr[t]  # Dictionary-based rewrite
+    parent_trtr = joint.parent.trtr
 
 # 8/31/2008: dtransmat now excluded from non-hips computation since
 # it's just identity anyway.
@@ -331,8 +309,7 @@ def process_bvhkeyframe(keyframe, joint, t):
 #cgkit#  trtr = localtoworld * drotmat
   trtr = dot(localtoworld,drotmat)
 
-##  joint.trtr.append(trtr)  # Whew
-  joint.trtr[t] = trtr  # New dictionary-based approach    
+  joint.trtr = trtr
 
 
 #cgkit#  worldpos = localtoworld * ORIGIN  # worldpos should be a vec4
@@ -341,8 +318,7 @@ def process_bvhkeyframe(keyframe, joint, t):
 # since all we're doing is extracting the last column of worldpos.
   worldpos = array([ localtoworld[0,3],localtoworld[1,3],        \
                       localtoworld[2,3], localtoworld[3,3] ])
-##  joint.worldpos.append(worldpos)
-  joint.worldpos[t] = worldpos  # Dictionary-based approach
+  joint.worldpos = worldpos
 
   newkeyframe = keyframe[counter:]  # Slices from counter+1 to end
   for child in joint.children:
