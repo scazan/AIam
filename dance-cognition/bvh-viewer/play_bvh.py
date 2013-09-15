@@ -46,7 +46,7 @@ class BvhViewer(window.Window):
     def _draw_skeleton(self):
         glLineWidth(2.0)
         glColor3f(0,0,0)
-        frame_index = 1 + int(self.t / self.reader.skeleton.dt) % self.reader.skeleton.frames
+        frame_index = 1 + int(self.t * args.speed / self.reader.skeleton.dt) % self.reader.skeleton.frames
         self.reader.skeleton.populate_skelscreenedges(self.skelscreenedges, frame_index)
         for screenedge in self.skelscreenedges:
             screenedge.worldtocam(self.camera)            
@@ -78,6 +78,7 @@ class BvhViewer(window.Window):
 parser = ArgumentParser()
 window.Window.add_parser_arguments(parser)
 parser.add_argument("-bvh")
+parser.add_argument("-speed", type=float, default=1.0)
 args = parser.parse_args()
 
 bvh_reader = BvhReader(args.bvh)
