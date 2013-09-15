@@ -164,14 +164,10 @@ def process_bvhkeyframe(keyframe, joint, t):
       mycos = cos(theta)
       mysin = sin(theta)
       drotmat2 = array([
-          [1.,0.,0.,0.],
-          [0.,1.,0.,0.],
-          [0.,0.,1.,0.],
-          [0.,0.,0.,1.] ])
-      drotmat2[1,1] = mycos
-      drotmat2[1,2] = -mysin
-      drotmat2[2,1] = mysin
-      drotmat2[2,2] = mycos
+          [1.,     0.,     0.,     0.],
+          [0.,     mycos,  -mysin, 0.],
+          [0.,     mysin,  mycos,  0.],
+          [0.,     0.,     0.,     1.] ])
       drotmat = dot(drotmat, drotmat2)
 
     elif(channel == "Yrotation"):
@@ -181,14 +177,10 @@ def process_bvhkeyframe(keyframe, joint, t):
       mycos = cos(theta)
       mysin = sin(theta)
       drotmat2 = array([
-          [1.,0.,0.,0.],
-          [0.,1.,0.,0.],
-          [0.,0.,1.,0.],
-          [0.,0.,0.,1.] ])
-      drotmat2[0,0] = mycos
-      drotmat2[0,2] = mysin
-      drotmat2[2,0] = -mysin
-      drotmat2[2,2] = mycos
+          [mycos,  0.,    mysin, 0.],
+          [0.,     1.,    0.,    0.],
+          [-mysin, 0.,    mycos, 0.],
+          [0.,     0.,    0.,    1.] ])
       drotmat = dot(drotmat, drotmat2)
 
     elif(channel == "Zrotation"):
@@ -198,14 +190,10 @@ def process_bvhkeyframe(keyframe, joint, t):
       mycos = cos(theta)
       mysin = sin(theta)
       drotmat2 = array([
-          [1.,0.,0.,0.],
-          [0.,1.,0.,0.],
-          [0.,0.,1.,0.],
-          [0.,0.,0.,1.] ])
-      drotmat2[0,0] = mycos
-      drotmat2[0,1] = -mysin
-      drotmat2[1,0] = mysin
-      drotmat2[1,1] = mycos
+          [mycos,  -mysin, 0.,   0.],
+          [mysin,  mycos,  0.,   0.],
+          [0.,     0.,     1.,   0.],
+          [0.,     0.,     0.,   1.] ])
       drotmat = dot(drotmat, drotmat2)
     else:
       raise Exception("Fatal error in process_bvhkeyframe: illegal channel name ", channel)
@@ -213,13 +201,10 @@ def process_bvhkeyframe(keyframe, joint, t):
 
   if dotrans:
     dtransmat = array([
-            [1.,0.,0.,0.],
-            [0.,1.,0.,0.],
-            [0.,0.,1.,0.],
-            [0.,0.,0.,1.] ])
-    dtransmat[0,3] = xpos
-    dtransmat[1,3] = ypos
-    dtransmat[2,3] = zpos
+        [1.,    0.,    0.,    xpos],
+        [0.,    1.,    0.,    ypos],
+        [0.,    0.,    1.,    zpos],
+        [0.,    0.,    0.,    1.] ])
 
   if joint.hasparent:
     parent_trtr = joint.parent.trtr
@@ -277,7 +262,11 @@ class BvhReader(cgkit.bvh.BVHReader):
         b1.strans[1] = node.offset[1]
         b1.strans[2] = node.offset[2]
 
-        b1.stransmat = array([ [1.,0.,0.,0.],[0.,1.,0.,0.],[0.,0.,1.,0.],[0.,0.,0.,1.] ])
+        b1.stransmat = array([
+            [1.,0.,0.,0.],
+            [0.,1.,0.,0.],
+            [0.,0.,1.,0.],
+            [0.,0.,0.,1.] ])
 
         b1.stransmat[0,3] = b1.strans[0]
         b1.stransmat[1,3] = b1.strans[1]
