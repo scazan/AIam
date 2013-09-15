@@ -26,20 +26,20 @@ class BvhViewer(window.Window):
 
     def InitGL(self):
         window.Window.InitGL(self)
+        glutMouseFunc(self._mouse_clicked)
+        glutMotionFunc(self._mouse_moved)
         glEnable(GL_POINT_SMOOTH)
         glEnable(GL_LINE_SMOOTH)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-
-    def resized_window(self):
-        self.camera.t[0] = int((self.reader.skeleton.minx + self.reader.skeleton.maxx)/2)
-        self.camera.t[1] = int((self.reader.skeleton.miny + self.reader.skeleton.maxy)/2)
-        if (self.camera.t[1] < 10): self.camera.t[1] = 10
-        self.camera.t[2] = self.reader.skeleton.maxz + 100
-        self.camera.yrot = 0
-        self.camera.Recompute()
+        self._y_orientation = 0.0
+        self._x_orientation = 0.0
 
     def render(self):
+        self.configure_3d_projection(100, 0)
+        glRotatef(self._x_orientation, 1.0, 0.0, 0.0)
+        glRotatef(self._y_orientation, 0.0, 1.0, 0.0)
+        self._draw_unit_cube()
         self._draw_skeleton()
         self.t += self.time_increment
 
@@ -49,19 +49,27 @@ class BvhViewer(window.Window):
         frame_index = 1 + int(self.t * args.speed / self.reader.skeleton.dt) % self.reader.skeleton.frames
         self.reader.skeleton.populate_skelscreenedges(self.skelscreenedges, frame_index)
         for screenedge in self.skelscreenedges:
-            screenedge.worldtocam(self.camera)            
-            screenedge.camtoscreen(self.camera, self.width, self.height)
-            self._draw_line(
-                screenedge.sv1.screenx,
-                screenedge.sv1.screeny,
-                screenedge.sv2.screenx,
-                screenedge.sv2.screeny)
+            self._draw_line(self._normalize(self._screenvert_to_vector3d(screenedge.sv1)),
+                            self._normalize(self._screenvert_to_vector3d(screenedge.sv2)))
 
-    def _draw_line(self, x1, y1, x2, y2):
+    def _draw_line(self, v1, v2):
         glBegin(GL_LINES)
-        glVertex2f(x1, y1)
-        glVertex2f(x2, y2)
+        glVertex3f(*v1)
+        glVertex3f(*v2)
         glEnd()
+
+    def _screenvert_to_vector3d(self, sv):
+        return Vector3d(sv.tr[0], sv.tr[1], sv.tr[2])
+
+    def _normalize(self, v):
+        return Vector3d(
+            (v.x - self.reader.skeleton.minx) / args.scale,
+            (v.y - self.reader.skeleton.miny) / args.scale,
+            (v.z - self.reader.skeleton.minz) / args.scale)
+        
+    def _draw_unit_cube(self):
+        glColor4f(0,0,0,0.2)
+        glutWireCube(2.0)
 
     def _mouse_clicked(self, button, state, x, y):
         if button == GLUT_LEFT_BUTTON:
@@ -79,6 +87,7 @@ parser = ArgumentParser()
 window.Window.add_parser_arguments(parser)
 parser.add_argument("-bvh")
 parser.add_argument("-speed", type=float, default=1.0)
+parser.add_argument("-scale", type=float, default=40)
 args = parser.parse_args()
 
 bvh_reader = BvhReader(args.bvh)
