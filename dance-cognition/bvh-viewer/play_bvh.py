@@ -22,6 +22,7 @@ class BvhViewer(window.Window):
             DEBUG=0, arrow='none', circle=1)
         self.camera = Camera(x=0, y=15, z=35, cfx=20, parallel=0,   \
                                  ppdist=30, DEBUG=0)
+        self.t = 0.0
 
     def InitGL(self):
         window.Window.InitGL(self)
@@ -40,11 +41,13 @@ class BvhViewer(window.Window):
 
     def render(self):
         self._draw_skeleton()
+        self.t += self.time_increment
 
     def _draw_skeleton(self):
         glLineWidth(2.0)
         glColor3f(0,0,0)
-        self.reader.skeleton.populate_skelscreenedges(self.skelscreenedges, 100)
+        frame_index = 1 + int(self.t / self.reader.skeleton.dt) % self.reader.skeleton.frames
+        self.reader.skeleton.populate_skelscreenedges(self.skelscreenedges, frame_index)
         for screenedge in self.skelscreenedges:
             screenedge.worldtocam(self.camera)            
             screenedge.camtoscreen(self.camera, self.width, self.height)
