@@ -33,7 +33,7 @@ class BvhViewer(window.Window):
         self._x_orientation = 0.0
 
     def render(self):
-        self.configure_3d_projection(100, 0)
+        self.configure_3d_projection(-100, 0)
         glRotatef(self._x_orientation, 1.0, 0.0, 0.0)
         glRotatef(self._y_orientation, 0.0, 1.0, 0.0)
         self._draw_unit_cube()
