@@ -46,8 +46,8 @@ class BvhViewer(window.Window):
         frame_index = 1 + int(self.t * args.speed / self.reader.skeleton.dt) % self.reader.skeleton.frames
         self.reader.skeleton.populate_skelscreenedges(self.skelscreenedges, frame_index)
         for screenedge in self.skelscreenedges:
-            self._draw_line(self._normalize(self._screenvert_to_vector3d(screenedge.sv1)),
-                            self._normalize(self._screenvert_to_vector3d(screenedge.sv2)))
+            self._draw_line(self._normalize(self._vertex_to_vector3d(screenedge.v1)),
+                            self._normalize(self._vertex_to_vector3d(screenedge.v2)))
 
     def _draw_line(self, v1, v2):
         glBegin(GL_LINES)
@@ -55,7 +55,7 @@ class BvhViewer(window.Window):
         glVertex3f(*v2)
         glEnd()
 
-    def _screenvert_to_vector3d(self, sv):
+    def _vertex_to_vector3d(self, sv):
         return Vector3d(sv.tr[0], sv.tr[1], sv.tr[2])
 
     def _normalize(self, v):

@@ -2,7 +2,7 @@
 
 from math import radians, cos, sin
 import cgkit.bvh
-from geo import worldvert, screenvert, worldedge, screenedge
+from geo import vertex, edge
 from numpy import array, dot
 
 class joint:
@@ -68,13 +68,11 @@ class joint:
     if self.hasparent:
       temp1 = self.parent.worldpos[t]  # Faster than triple lookup below?
       temp2 = self.worldpos[t]
-      v1 = worldvert(temp1[0], temp1[1], temp1[2], DEBUG=DEBUG, \
-                    description=self.parent.name)
-      v2 = worldvert(temp2[0], temp2[1], temp2[2], DEBUG=DEBUG, \
-                    description=self.name)
+      v1 = vertex(temp1[0], temp1[1], temp1[2])
+      v2 = vertex(temp2[0], temp2[1], temp2[2])
 
       descr = self.parent.name + " to " + self.name
-      myedge = worldedge(v1,v2, description=descr)
+      myedge = edge(v1,v2)
       edgelist.append(myedge)
 
     for child in self.children:
@@ -159,10 +157,9 @@ class skeleton:
     skelscreenedges = []
 
     for x in range(jointcount):
-      sv1 = screenvert(0.,0.,0.,description='make_sse_sv1')
-      sv2 = screenvert(0.,0.,0.,description='make_sse_sv2')
-      se1 = screenedge(sv1, sv2, arrow=arrow, circle=circle, DEBUG=DEBUG, \
-                           description='created_by_make_skelscreenedges' )
+      sv1 = vertex(0.,0.,0.)
+      sv2 = vertex(0.,0.,0.)
+      se1 = edge(sv1, sv2)
       skelscreenedges.append(se1)
     return skelscreenedges
 
@@ -219,16 +216,14 @@ class skeleton:
                              % (t)
       self.create_edges_onet(t, DEBUG=DEBUG)
     counter = 0
-    for wldedge in self.edges[t]:
+    for edge in self.edges[t]:
       # Yes, we copy in the xyz values manually.  This keeps us sane.
-      sse[counter].sv1.tr[0] = wldedge.wv1.tr[0]
-      sse[counter].sv1.tr[1] = wldedge.wv1.tr[1]
-      sse[counter].sv1.tr[2] = wldedge.wv1.tr[2]
-      sse[counter].sv2.tr[0] = wldedge.wv2.tr[0]
-      sse[counter].sv2.tr[1] = wldedge.wv2.tr[1]
-      sse[counter].sv2.tr[2] = wldedge.wv2.tr[2]
-      # Also copy in the name
-      sse[counter].descr = wldedge.descr
+      sse[counter].v1.tr[0] = edge.v1.tr[0]
+      sse[counter].v1.tr[1] = edge.v1.tr[1]
+      sse[counter].v1.tr[2] = edge.v1.tr[2]
+      sse[counter].v2.tr[0] = edge.v2.tr[0]
+      sse[counter].v2.tr[1] = edge.v2.tr[1]
+      sse[counter].v2.tr[2] = edge.v2.tr[2]
       counter +=1
     if DEBUG:
       print "populate_skelscreenedges: copied %d edges from skeleton to sse" \
