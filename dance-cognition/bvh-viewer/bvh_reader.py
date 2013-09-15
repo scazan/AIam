@@ -70,8 +70,6 @@ class joint:
       temp2 = self.worldpos[t]
       v1 = vertex(temp1[0], temp1[1], temp1[2])
       v2 = vertex(temp2[0], temp2[1], temp2[2])
-
-      descr = self.parent.name + " to " + self.name
       myedge = edge(v1,v2)
       edgelist.append(myedge)
 
