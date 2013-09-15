@@ -1,3 +1,5 @@
+# adopted from BVHplay (http://sourceforge.net/projects/bvhplay)
+
 from math import radians, cos, sin
 import cgkit.bvh
 from geo import worldvert, screenvert, worldedge, screenedge

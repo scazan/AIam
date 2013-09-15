@@ -1,3 +1,4 @@
+# adopted from BVHplay (http://sourceforge.net/projects/bvhplay)
 
 from math import cos, sin, degrees, radians, pi
 from numpy import array, dot

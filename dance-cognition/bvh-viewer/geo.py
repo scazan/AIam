@@ -1,3 +1,4 @@
+# adopted from BVHplay (http://sourceforge.net/projects/bvhplay)
 #
 
 from numpy import array, dot
