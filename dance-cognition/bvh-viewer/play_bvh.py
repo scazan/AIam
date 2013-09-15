@@ -11,7 +11,6 @@ from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from vector import Vector3d
-from camera import Camera
 
 class BvhViewer(window.Window):
     def __init__(self, *args):
@@ -20,8 +19,6 @@ class BvhViewer(window.Window):
         self.reader = bvh_reader
         self.skelscreenedges = self.reader.skeleton.make_skelscreenedges(
             DEBUG=0, arrow='none', circle=1)
-        self.camera = Camera(x=0, y=15, z=35, cfx=20, parallel=0,   \
-                                 ppdist=30, DEBUG=0)
         self.t = 0.0
 
     def InitGL(self):
