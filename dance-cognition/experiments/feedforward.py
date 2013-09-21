@@ -48,6 +48,10 @@ class NeuralNet:
         self._trainer.trainOnDataset(dataset)
 
 class ExperimentWindow(window.Window):
+    @staticmethod
+    def add_parser_arguments(parser):
+        parser.add_argument("-pretrain", type=float)
+
     def __init__(self, *args):
         window.Window.__init__(self, *args)
         self.input_generator = InputGenerator()
@@ -60,14 +64,28 @@ class ExperimentWindow(window.Window):
         self._training_history = collections.deque(maxlen=HISTORY_SIZE)
         self._y_orientation = 0.0
         self._x_orientation = 0.0
+        if self.args.pretrain > 0:
+            self._pretrain(self.args.pretrain)
 
-    def render(self):
-        self.input = self.input_generator.process(self.time_increment)
+    def _pretrain(self, duration):
+        print "pre-training..."
+        t = 0
+        time_increment = 1.0 / 50
+        while t < duration:
+            self._update(time_increment)
+            t += time_increment
+        print "ok"
+
+    def _update(self, time_increment):
+        self.input = self.input_generator.process(time_increment)
         self._input_history.append(self.input)
         self.past_input = self._input_history[0]
-        self.output = self.net.process(self.input)
         self._training_history.append((self.past_input, self.input))
         self.net.train(*self._training_history[0])
+
+    def render(self):
+        self._update(self.time_increment)
+        self.output = self.net.process(self.input)
 
         self.configure_3d_projection(-100, 0)
         glRotatef(self._x_orientation, 1.0, 0.0, 0.0)
@@ -99,5 +117,6 @@ class ExperimentWindow(window.Window):
 
 parser = ArgumentParser()
 window.Window.add_parser_arguments(parser)
+ExperimentWindow.add_parser_arguments(parser)
 args = parser.parse_args()
 window.run(ExperimentWindow, args)
