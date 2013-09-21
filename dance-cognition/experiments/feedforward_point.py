@@ -30,12 +30,12 @@ class BvhInput:
 
     def process(self, time_increment):
         self._t += time_increment
-        edges = self._reader.get_skeleton_edges(self._t * args.bvh_speed)
-        hips = self._normalize(self._vertex_to_vector3d(edges[0].v1))
+        vertices = self._reader.get_skeleton_vertices(self._t * args.bvh_speed)
+        hips = self._normalize(self._vertex_to_vector3d(vertices[0]))
         return hips
 
-    def _vertex_to_vector3d(self, sv):
-        return Vector3d(sv.tr[0], sv.tr[1], sv.tr[2])
+    def _vertex_to_vector3d(self, v):
+        return Vector3d(v[0], v[1], v[2])
 
     def _normalize(self, v):
         return Vector3d(
