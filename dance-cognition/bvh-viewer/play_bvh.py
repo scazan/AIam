@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/python
 
 import sys
 import os
