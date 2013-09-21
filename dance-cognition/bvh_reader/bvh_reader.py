@@ -23,18 +23,6 @@ class joint:
     childjoint.hasparent = 1
     childjoint.parent = self
 
-  def create_edges_recurse(self, edgelist):
-    if self.hasparent:
-      temp1 = self.parent.worldpos
-      temp2 = self.worldpos
-      v1 = vertex(temp1[0], temp1[1], temp1[2])
-      v2 = vertex(temp2[0], temp2[1], temp2[2])
-      myedge = edge(v1,v2)
-      edgelist.append(myedge)
-
-    for child in self.children:
-      child.create_edges_recurse(edgelist)
-
   def get_vertices_recurse(self, vertices):
     vertices.append(self.worldpos)
     for child in self.children:
@@ -95,66 +83,6 @@ class skeleton:
       if y > self.maxy: self.maxy = y
       if z < self.minz: self.minz = z
       if z > self.maxz: self.maxz = z
-
-
-
-####################
-# MAKE_SKELSCREENEDGES: creates and returns an array of screenedge
-# that has exactly as many elements as the joint count of skeleton.
-#
-  def make_skelscreenedges(self):
-    self.create_edges_onet(1)
-
-    jointcount = len(self.edges)
-    skelscreenedges = []
-
-    for x in range(jointcount):
-      sv1 = vertex(0.,0.,0.)
-      sv2 = vertex(0.,0.,0.)
-      se1 = edge(sv1, sv2)
-      skelscreenedges.append(se1)
-    return skelscreenedges
-
-
-
-
-
-#########################################
-# CREATE_EDGES_ONET class function
-
-  def create_edges_onet(self, t):
-# Before we can compute edge positions, we need to have called
-# process_bvhkeyframe for time t, which computes trtr and worldpos
-# for the joint hierarchy at time t.  Since we no longer precompute
-# this information when we read the BVH file, here's where we do it.
-# This is on-demand computation of trtr and worldpos.
-    process_bvhkeyframe(self.keyframes[t-1], self.hips, t)
-    edgelist = []
-    self.hips.create_edges_recurse(edgelist)
-    self.edges = edgelist
-
-
-#################################
-# POPULATE_SKELSCREENEDGES
-# Given a time t and a precreated array of screenedge, copies values
-# from skeleton.edges[] into the screenedge array.
-#
-# Use this routine whenever slidert (time position on slider) changes.
-# This routine is how you get your edge data somewhere that redraw()
-# will make use of it.
-
-  def populate_skelscreenedges(self, sse, t):
-    self.create_edges_onet(t)
-    counter = 0
-    for edge in self.edges:
-      # Yes, we copy in the xyz values manually.  This keeps us sane.
-      sse[counter].v1.tr[0] = edge.v1.tr[0]
-      sse[counter].v1.tr[1] = edge.v1.tr[1]
-      sse[counter].v1.tr[2] = edge.v1.tr[2]
-      sse[counter].v2.tr[0] = edge.v2.tr[0]
-      sse[counter].v2.tr[1] = edge.v2.tr[1]
-      sse[counter].v2.tr[2] = edge.v2.tr[2]
-      counter +=1
 
   def get_vertices(self, t):
     process_bvhkeyframe(self.keyframes[t-1], self.hips, t)
@@ -268,7 +196,6 @@ class BvhReader(cgkit.bvh.BVHReader):
         self.skeleton = skeleton(
             hips, keyframes = self.keyframes,
             frames=self.frames, dt=self.dt)
-        self.skelscreenedges = self.skeleton.make_skelscreenedges()
 
     def get_skeleton_vertices(self, t):
         frame_index = 1 + int(t / self.skeleton.dt) % self.skeleton.frames
@@ -278,11 +205,6 @@ class BvhReader(cgkit.bvh.BVHReader):
       edges = []
       self.skeleton.populate_edges_from_vertices(vertices, edges)
       return edges
-
-    def get_skeleton_edges(self, t):
-        frame_index = 1 + int(t / self.skeleton.dt) % self.skeleton.frames
-        self.skeleton.populate_skelscreenedges(self.skelscreenedges, frame_index)
-        return self.skelscreenedges
 
     def onHierarchy(self, root):
         self.root = root
