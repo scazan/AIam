@@ -24,19 +24,20 @@ class joint:
     childjoint.parent = self
 
   def get_vertices_recurse(self, vertices):
-    vertices.append(self.worldpos)
+    vertices.append(vertex(
+        self.worldpos[0],
+        self.worldpos[1],
+        self.worldpos[2]))
     for child in self.children:
       child.get_vertices_recurse(vertices)
     return vertices
 
   def populate_edges_from_vertices_recurse(self, vertices, edgelist):
     if self.hasparent:
-      temp1 = vertices[self.parent.index]
-      temp2 = vertices[self.index]
-      v1 = vertex(temp1[0], temp1[1], temp1[2])
-      v2 = vertex(temp2[0], temp2[1], temp2[2])
-      myedge = edge(v1,v2)
-      edgelist.append(myedge)
+      new_edge = edge(
+        vertices[self.parent.index],
+        vertices[self.index])
+      edgelist.append(new_edge)
 
     for child in self.children:
       child.populate_edges_from_vertices_recurse(vertices, edgelist)
@@ -196,6 +197,7 @@ class BvhReader(cgkit.bvh.BVHReader):
         self.skeleton = skeleton(
             hips, keyframes = self.keyframes,
             frames=self.frames, dt=self.dt)
+        self.num_joints = self._joint_index
 
     def get_skeleton_vertices(self, t):
         frame_index = 1 + int(t / self.skeleton.dt) % self.skeleton.frames
