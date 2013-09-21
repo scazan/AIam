@@ -79,9 +79,10 @@ class ExperimentWindow(window.Window):
     def _update(self, time_increment):
         self.input = self.input_generator.process(time_increment)
         self._input_history.append(self.input)
-        self.past_input = self._input_history[0]
-        self._training_history.append((self.past_input, self.input))
-        self.net.train(*self._training_history[0])
+        past_input = self._input_history[0]
+        self._training_history.append((past_input, self.input))
+        past_training_tuple = self._training_history[0]
+        self.net.train(*past_training_tuple)
 
     def render(self):
         self._update(self.time_increment)
