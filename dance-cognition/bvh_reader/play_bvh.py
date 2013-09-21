@@ -1,15 +1,16 @@
 #!/usr/bin/python
 
-import sys
-import os
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/..")
-
 from bvh_reader import BvhReader
-import window
 from argparse import ArgumentParser
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
+
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/..")
+
+import window
 from vector import Vector3d
 
 class BvhViewer(window.Window):
@@ -17,7 +18,6 @@ class BvhViewer(window.Window):
         global bvh_reader
         window.Window.__init__(self, *args)
         self.reader = bvh_reader
-        self.skelscreenedges = self.reader.skeleton.make_skelscreenedges()
         self.t = 0.0
 
     def InitGL(self):
@@ -42,11 +42,10 @@ class BvhViewer(window.Window):
     def _draw_skeleton(self):
         glLineWidth(2.0)
         glColor3f(0,0,0)
-        frame_index = 1 + int(self.t * args.speed / self.reader.skeleton.dt) % self.reader.skeleton.frames
-        self.reader.skeleton.populate_skelscreenedges(self.skelscreenedges, frame_index)
-        for screenedge in self.skelscreenedges:
-            self._draw_line(self._normalize(self._vertex_to_vector3d(screenedge.v1)),
-                            self._normalize(self._vertex_to_vector3d(screenedge.v2)))
+        edges = self.reader.get_skeleton_edges(self.t * args.speed)
+        for edge in edges:
+            self._draw_line(self._normalize(self._vertex_to_vector3d(edge.v1)),
+                            self._normalize(self._vertex_to_vector3d(edge.v2)))
 
     def _draw_line(self, v1, v2):
         glBegin(GL_LINES)

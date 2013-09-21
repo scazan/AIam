@@ -240,6 +240,12 @@ class BvhReader(cgkit.bvh.BVHReader):
         self.skeleton = skeleton(
             hips, keyframes = self.keyframes,
             frames=self.frames, dt=self.dt)
+        self.skelscreenedges = self.skeleton.make_skelscreenedges()
+
+    def get_skeleton_edges(self, t):
+        frame_index = 1 + int(t / self.skeleton.dt) % self.skeleton.frames
+        self.skeleton.populate_skelscreenedges(self.skelscreenedges, frame_index)
+        return self.skelscreenedges
 
     def onHierarchy(self, root):
         self.root = root
