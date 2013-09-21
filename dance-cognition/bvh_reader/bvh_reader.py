@@ -6,8 +6,9 @@ from geo import vertex, edge
 from numpy import array, dot
 
 class joint:
-  def __init__(self, name):
+  def __init__(self, name, index):
     self.name = name
+    self.index = index
     self.children = []
     self.channels = []
     self.hasparent = 0
@@ -33,6 +34,24 @@ class joint:
 
     for child in self.children:
       child.create_edges_recurse(edgelist)
+
+  def get_vertices_recurse(self, vertices):
+    vertices.append(self.worldpos)
+    for child in self.children:
+      child.get_vertices_recurse(vertices)
+    return vertices
+
+  def populate_edges_from_vertices_recurse(self, vertices, edgelist):
+    if self.hasparent:
+      temp1 = vertices[self.parent.index]
+      temp2 = vertices[self.index]
+      v1 = vertex(temp1[0], temp1[1], temp1[2])
+      v2 = vertex(temp2[0], temp2[1], temp2[2])
+      myedge = edge(v1,v2)
+      edgelist.append(myedge)
+
+    for child in self.children:
+      child.populate_edges_from_vertices_recurse(vertices, edgelist)
 
 
 
@@ -137,6 +156,14 @@ class skeleton:
       sse[counter].v2.tr[2] = edge.v2.tr[2]
       counter +=1
 
+  def get_vertices(self, t):
+    process_bvhkeyframe(self.keyframes[t-1], self.hips, t)
+    result = []
+    self.hips.get_vertices_recurse(result)
+    return result
+
+  def populate_edges_from_vertices(self, vertices, edges):
+    self.hips.populate_edges_from_vertices_recurse(vertices, edges)
 
 
 def process_bvhkeyframe(keyframe, joint, t):
@@ -236,11 +263,21 @@ def process_bvhkeyframe(keyframe, joint, t):
 class BvhReader(cgkit.bvh.BVHReader):
     def read(self):
         cgkit.bvh.BVHReader.read(self)
+        self._joint_index = 0
         hips = self._process_node(self.root)
         self.skeleton = skeleton(
             hips, keyframes = self.keyframes,
             frames=self.frames, dt=self.dt)
         self.skelscreenedges = self.skeleton.make_skelscreenedges()
+
+    def get_skeleton_vertices(self, t):
+        frame_index = 1 + int(t / self.skeleton.dt) % self.skeleton.frames
+        return self.skeleton.get_vertices(frame_index)
+
+    def vertices_to_edges(self, vertices):
+      edges = []
+      self.skeleton.populate_edges_from_vertices(vertices, edges)
+      return edges
 
     def get_skeleton_edges(self, t):
         frame_index = 1 + int(t / self.skeleton.dt) % self.skeleton.frames
@@ -262,7 +299,8 @@ class BvhReader(cgkit.bvh.BVHReader):
         name = node.name
         if (name == "End Site") or (name == "end site"):
             name = parentname + "End"
-        b1 = joint(name)
+        b1 = joint(name, self._joint_index)
+        self._joint_index += 1
         b1.channels = node.channels
         b1.strans[0] = node.offset[0]
         b1.strans[1] = node.offset[1]

@@ -42,7 +42,9 @@ class BvhViewer(window.Window):
     def _draw_skeleton(self):
         glLineWidth(2.0)
         glColor3f(0,0,0)
-        edges = self.reader.get_skeleton_edges(self.t * args.speed)
+        vertices = self.reader.get_skeleton_vertices(self.t * args.speed)
+        edges = self.reader.vertices_to_edges(vertices)
+        # edges = self.reader.get_skeleton_edges(self.t * args.speed)
         for edge in edges:
             self._draw_line(self._normalize(self._vertex_to_vector3d(edge.v1)),
                             self._normalize(self._vertex_to_vector3d(edge.v2)))
