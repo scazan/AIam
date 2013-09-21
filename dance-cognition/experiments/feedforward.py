@@ -16,10 +16,39 @@ import collections
 from pybrain.tools.shortcuts import buildNetwork
 from pybrain.supervised.trainers import BackpropTrainer
 from pybrain.datasets import SupervisedDataSet
+from bvh_reader import bvh_reader
 
-class InputGenerator:
+class BvhInput:
+    def __init__(self, filename):
+        self._filename = filename
+        self._reader = bvh_reader.BvhReader(filename)
+        self._reader.read()
+        self._t = 0
+
+    def __str__(self):
+        return "BvhInput(%r)" % self._filename
+
+    def process(self, time_increment):
+        self._t += time_increment
+        edges = self._reader.get_skeleton_edges(self._t * args.bvh_speed)
+        hips = self._normalize(self._vertex_to_vector3d(edges[0].v1))
+        return hips
+
+    def _vertex_to_vector3d(self, sv):
+        return Vector3d(sv.tr[0], sv.tr[1], sv.tr[2])
+
+    def _normalize(self, v):
+        return Vector3d(
+            (v.x - self._reader.skeleton.minx) / args.bvh_scale,
+            (v.y - self._reader.skeleton.miny) / args.bvh_scale,
+            (v.z - self._reader.skeleton.minz) / args.bvh_scale)
+
+class CircularInput:
     def __init__(self):
         self._t = 0
+
+    def __str__(self):
+        return "CircularInput"
 
     def process(self, time_increment):
         self._t += time_increment
@@ -51,10 +80,12 @@ class ExperimentWindow(window.Window):
     @staticmethod
     def add_parser_arguments(parser):
         parser.add_argument("-pretrain", type=float)
+        parser.add_argument("-bvh")
+        parser.add_argument("-bvh-speed", type=float, default=1.0)
+        parser.add_argument("-bvh-scale", type=float, default=40)
 
     def __init__(self, *args):
         window.Window.__init__(self, *args)
-        self.input_generator = InputGenerator()
         self.input = None
         self.output = None
         self.net = NeuralNet()
@@ -77,7 +108,7 @@ class ExperimentWindow(window.Window):
         print "ok"
 
     def _update(self, time_increment):
-        self.input = self.input_generator.process(time_increment)
+        self.input = input_generator.process(time_increment)
         self._input_history.append(self.input)
         past_input = self._input_history[0]
         self._training_history.append((past_input, self.input))
@@ -120,4 +151,12 @@ parser = ArgumentParser()
 window.Window.add_parser_arguments(parser)
 ExperimentWindow.add_parser_arguments(parser)
 args = parser.parse_args()
+
+if args.bvh:
+    input_generator = BvhInput(args.bvh)
+else:
+    input_generator = CircularInput()
+
+print "input: %s" % input_generator
+
 window.run(ExperimentWindow, args)
