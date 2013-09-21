@@ -27,7 +27,7 @@ class BvhInput:
         self._t += time_increment
         vertices = bvh_reader.get_skeleton_vertices(self._t * args.bvh_speed)
         normalized_vectors = numpy.array(
-            [normalize_vector(vertex_to_vector(vertex))
+            [bvh_reader.normalize_vector(bvh_reader.vertex_to_vector(vertex))
              for vertex in vertices])
         return normalized_vectors
 
@@ -117,12 +117,12 @@ class ExperimentWindow(window.Window):
 
     def _draw_skeleton(self, normalized_vectors):
         glLineWidth(2.0)
-        vertices = [vector_to_vertex(skeleton_scale_vector(vector))
+        vertices = [bvh_reader.vector_to_vertex(bvh_reader.skeleton_scale_vector(vector))
                     for vector in normalized_vectors]
         edges = bvh_reader.vertices_to_edges(vertices)
         for edge in edges:
-            vector1 = normalize_vector(vertex_to_vector(edge.v1))
-            vector2 = normalize_vector(vertex_to_vector(edge.v2))
+            vector1 = bvh_reader.normalize_vector(bvh_reader.vertex_to_vector(edge.v1))
+            vector2 = bvh_reader.normalize_vector(bvh_reader.vertex_to_vector(edge.v2))
             self._draw_line(vector1, vector2)
 
     def _draw_line(self, v1, v2):
@@ -137,32 +137,13 @@ class ExperimentWindow(window.Window):
         glutWireCube(2.0)
 
 
-
-def vertex_to_vector(v):
-    return numpy.array([v.tr[0], v.tr[1], v.tr[2]])
-
-def vector_to_vertex(v):
-    return vertex(v[0], v[1], v[2])
-
-def normalize_vector(v):
-    return numpy.array([
-            (v[0] - bvh_reader.skeleton.minx) / args.bvh_scale,
-            (v[1] - bvh_reader.skeleton.miny) / args.bvh_scale,
-            (v[2] - bvh_reader.skeleton.minz) / args.bvh_scale])
-
-def skeleton_scale_vector(v):
-    return numpy.array([
-            v[0] * args.bvh_scale + bvh_reader.skeleton.minx,
-            v[1] * args.bvh_scale + bvh_reader.skeleton.miny,
-            v[2] * args.bvh_scale + bvh_reader.skeleton.minz])
-
-
 parser = ArgumentParser()
 window.Window.add_parser_arguments(parser)
 ExperimentWindow.add_parser_arguments(parser)
 args = parser.parse_args()
 
 bvh_reader = bvh_reader.BvhReader(args.bvh)
+bvh_reader.scale_factor = args.bvh_scale
 bvh_reader.read()
 input_generator = BvhInput()
 

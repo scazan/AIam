@@ -190,14 +190,18 @@ def process_bvhkeyframe(keyframe, joint, t):
 
 
 class BvhReader(cgkit.bvh.BVHReader):
+    def __init__(self, *args):
+      cgkit.bvh.BVHReader.__init__(self, *args)
+      self.scale_factor = 1
+
     def read(self):
-        cgkit.bvh.BVHReader.read(self)
-        self._joint_index = 0
-        hips = self._process_node(self.root)
-        self.skeleton = skeleton(
-            hips, keyframes = self.keyframes,
-            frames=self.frames, dt=self.dt)
-        self.num_joints = self._joint_index
+      cgkit.bvh.BVHReader.read(self)
+      self._joint_index = 0
+      hips = self._process_node(self.root)
+      self.skeleton = skeleton(
+        hips, keyframes = self.keyframes,
+        frames=self.frames, dt=self.dt)
+      self.num_joints = self._joint_index
 
     def get_skeleton_vertices(self, t):
         frame_index = 1 + int(t / self.skeleton.dt) % self.skeleton.frames
@@ -207,6 +211,24 @@ class BvhReader(cgkit.bvh.BVHReader):
       edges = []
       self.skeleton.populate_edges_from_vertices(vertices, edges)
       return edges
+
+    def vertex_to_vector(self, v):
+      return array([v.tr[0], v.tr[1], v.tr[2]])
+
+    def vector_to_vertex(self, v):
+      return vertex(v[0], v[1], v[2])
+
+    def normalize_vector(self, v):
+      return array([
+          (v[0] - self.skeleton.minx) / self.scale_factor,
+          (v[1] - self.skeleton.miny) / self.scale_factor,
+          (v[2] - self.skeleton.minz) / self.scale_factor])
+
+    def skeleton_scale_vector(self, v):
+      return array([
+          v[0] * self.scale_factor + self.skeleton.minx,
+          v[1] * self.scale_factor + self.skeleton.miny,
+          v[2] * self.scale_factor + self.skeleton.minz])
 
     def onHierarchy(self, root):
         self.root = root

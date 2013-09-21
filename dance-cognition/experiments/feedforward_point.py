@@ -28,7 +28,7 @@ class BvhInput:
     def process(self, time_increment):
         self._t += time_increment
         vertices = bvh_reader.get_skeleton_vertices(self._t * args.bvh_speed)
-        hips = normalize_vector(vertex_to_vector(vertices[0]))
+        hips = bvh_reader.normalize_vector(bvh_reader.vertex_to_vector(vertices[0]))
         return hips
 
 class CircularInput:
@@ -136,19 +136,6 @@ class ExperimentWindow(window.Window):
         glutWireCube(2.0)
 
 
-def vertex_to_vector(v):
-    return numpy.array([v.tr[0], v.tr[1], v.tr[2]])
-
-def vector_to_vertex(v):
-    return vertex(v[0], v[1], v[2])
-
-def normalize_vector(v):
-    return numpy.array([
-            (v[0] - bvh_reader.skeleton.minx) / args.bvh_scale,
-            (v[1] - bvh_reader.skeleton.miny) / args.bvh_scale,
-            (v[2] - bvh_reader.skeleton.minz) / args.bvh_scale])
-
-
 parser = ArgumentParser()
 window.Window.add_parser_arguments(parser)
 ExperimentWindow.add_parser_arguments(parser)
@@ -156,6 +143,7 @@ args = parser.parse_args()
 
 if args.bvh:
     bvh_reader = bvh_reader.BvhReader(args.bvh)
+    bvh_reader.scale_factor = args.bvh_scale
     bvh_reader.read()
     input_generator = BvhInput()
 else:
