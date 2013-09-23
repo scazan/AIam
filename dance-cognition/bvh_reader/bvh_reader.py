@@ -157,43 +157,39 @@ def make_transposition_matrix(xpos, ypos, zpos):
             [0.,    0.,    0.,    1.] ])
 
 def make_rotation_matrix(xrot, yrot, zrot):
-    rotation_matrix = array([
-        [1.,0.,0.,0.],
-        [0.,1.,0.,0.],
-        [0.,0.,1.,0.],
-        [0.,0.,0.,1.] ])
+    return dot(make_z_rotation_matrix(zrot),
+               dot(make_y_rotation_matrix(yrot),
+                   make_x_rotation_matrix(xrot)))
 
-    theta = radians(zrot)
+def make_z_rotation_matrix(degrees):
+    theta = radians(degrees)
     mycos = cos(theta)
     mysin = sin(theta)
-    rotation_matrix2 = array([
+    return array([
         [mycos,  -mysin, 0.,   0.],
         [mysin,  mycos,  0.,   0.],
         [0.,     0.,     1.,   0.],
         [0.,     0.,     0.,   1.] ])
-    rotation_matrix = dot(rotation_matrix, rotation_matrix2)
 
-    theta = radians(yrot)
+def make_y_rotation_matrix(degrees):
+    theta = radians(degrees)
     mycos = cos(theta)
     mysin = sin(theta)
-    rotation_matrix2 = array([
+    return array([
         [mycos,  0.,    mysin, 0.],
         [0.,     1.,    0.,    0.],
         [-mysin, 0.,    mycos, 0.],
         [0.,     0.,    0.,    1.] ])
-    rotation_matrix = dot(rotation_matrix, rotation_matrix2)
 
-    theta = radians(xrot)
+def make_x_rotation_matrix(degrees):
+    theta = radians(degrees)
     mycos = cos(theta)
     mysin = sin(theta)
-    rotation_matrix2 = array([
+    return array([
         [1.,     0.,     0.,     0.],
         [0.,     mycos,  -mysin, 0.],
         [0.,     mysin,  mycos,  0.],
         [0.,     0.,     0.,     1.] ])
-    rotation_matrix = dot(rotation_matrix, rotation_matrix2)
-
-    return rotation_matrix
 
 
 class BvhReader(cgkit.bvh.BVHReader):
