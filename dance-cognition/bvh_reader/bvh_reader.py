@@ -89,7 +89,7 @@ class skeleton:
             if z > self.maxz: self.maxz = z
 
     def get_vertices(self, t):
-        self._process_bvhkeyframe(self.keyframes[t-1], self.hips, t)
+        self._process_bvhkeyframe(self.keyframes[t], self.hips, t)
         result = []
         self.hips.get_vertices_recurse(result)
         return result
@@ -207,7 +207,7 @@ class BvhReader(cgkit.bvh.BVHReader):
         self.num_joints = self._joint_index
 
     def get_skeleton_vertices(self, t):
-        frame_index = 1 + int(t / self.skeleton.dt) % self.skeleton.frames
+        frame_index = int(t / self.skeleton.dt) % self.skeleton.frames
         return self.skeleton.get_vertices(frame_index)
 
     def vertices_to_edges(self, vertices):
