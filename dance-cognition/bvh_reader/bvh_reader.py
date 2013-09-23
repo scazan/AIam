@@ -105,15 +105,14 @@ class skeleton:
             counter += 1
 
         if "Xposition" in keyframe_dict:
-            transposition_matrix = array([
-                [1.,    0.,    0.,    keyframe_dict["Xposition"]],
-                [0.,    1.,    0.,    keyframe_dict["Yposition"]],
-                [0.,    0.,    1.,    keyframe_dict["Zposition"]],
-                [0.,    0.,    0.,    1.] ])
+            transposition_matrix = make_transposition_matrix(
+                keyframe_dict["Xposition"],
+                keyframe_dict["Yposition"],
+                keyframe_dict["Zposition"])
 
         if "Xrotation" in keyframe_dict:
             rotate = True
-            rotation_matrix = self._rotation_matrix(
+            rotation_matrix = make_rotation_matrix(
                 keyframe_dict["Xrotation"],
                 keyframe_dict["Yrotation"],
                 keyframe_dict["Zrotation"])
@@ -148,44 +147,53 @@ class skeleton:
 
         return newkeyframe
 
-    def _rotation_matrix(self, xrot, yrot, zrot):
-        rotation_matrix = array([
-            [1.,0.,0.,0.],
-            [0.,1.,0.,0.],
-            [0.,0.,1.,0.],
-            [0.,0.,0.,1.] ])
 
-        theta = radians(zrot)
-        mycos = cos(theta)
-        mysin = sin(theta)
-        rotation_matrix2 = array([
-            [mycos,  -mysin, 0.,   0.],
-            [mysin,  mycos,  0.,   0.],
-            [0.,     0.,     1.,   0.],
-            [0.,     0.,     0.,   1.] ])
-        rotation_matrix = dot(rotation_matrix, rotation_matrix2)
 
-        theta = radians(yrot)
-        mycos = cos(theta)
-        mysin = sin(theta)
-        rotation_matrix2 = array([
-            [mycos,  0.,    mysin, 0.],
-            [0.,     1.,    0.,    0.],
-            [-mysin, 0.,    mycos, 0.],
-            [0.,     0.,    0.,    1.] ])
-        rotation_matrix = dot(rotation_matrix, rotation_matrix2)
+def make_transposition_matrix(xpos, ypos, zpos):
+    return array([
+            [1.,    0.,    0.,    xpos],
+            [0.,    1.,    0.,    ypos],
+            [0.,    0.,    1.,    zpos],
+            [0.,    0.,    0.,    1.] ])
 
-        theta = radians(xrot)
-        mycos = cos(theta)
-        mysin = sin(theta)
-        rotation_matrix2 = array([
-            [1.,     0.,     0.,     0.],
-            [0.,     mycos,  -mysin, 0.],
-            [0.,     mysin,  mycos,  0.],
-            [0.,     0.,     0.,     1.] ])
-        rotation_matrix = dot(rotation_matrix, rotation_matrix2)
+def make_rotation_matrix(xrot, yrot, zrot):
+    rotation_matrix = array([
+        [1.,0.,0.,0.],
+        [0.,1.,0.,0.],
+        [0.,0.,1.,0.],
+        [0.,0.,0.,1.] ])
 
-        return rotation_matrix
+    theta = radians(zrot)
+    mycos = cos(theta)
+    mysin = sin(theta)
+    rotation_matrix2 = array([
+        [mycos,  -mysin, 0.,   0.],
+        [mysin,  mycos,  0.,   0.],
+        [0.,     0.,     1.,   0.],
+        [0.,     0.,     0.,   1.] ])
+    rotation_matrix = dot(rotation_matrix, rotation_matrix2)
+
+    theta = radians(yrot)
+    mycos = cos(theta)
+    mysin = sin(theta)
+    rotation_matrix2 = array([
+        [mycos,  0.,    mysin, 0.],
+        [0.,     1.,    0.,    0.],
+        [-mysin, 0.,    mycos, 0.],
+        [0.,     0.,    0.,    1.] ])
+    rotation_matrix = dot(rotation_matrix, rotation_matrix2)
+
+    theta = radians(xrot)
+    mycos = cos(theta)
+    mysin = sin(theta)
+    rotation_matrix2 = array([
+        [1.,     0.,     0.,     0.],
+        [0.,     mycos,  -mysin, 0.],
+        [0.,     mysin,  mycos,  0.],
+        [0.,     0.,     0.,     1.] ])
+    rotation_matrix = dot(rotation_matrix, rotation_matrix2)
+
+    return rotation_matrix
 
 
 class BvhReader(cgkit.bvh.BVHReader):
@@ -251,15 +259,10 @@ class BvhReader(cgkit.bvh.BVHReader):
         b1.transposition[1] = node.offset[1]
         b1.transposition[2] = node.offset[2]
 
-        b1.transposition_matrix = array([
-            [1.,0.,0.,0.],
-            [0.,1.,0.,0.],
-            [0.,0.,1.,0.],
-            [0.,0.,0.,1.] ])
-
-        b1.transposition_matrix[0,3] = b1.transposition[0]
-        b1.transposition_matrix[1,3] = b1.transposition[1]
-        b1.transposition_matrix[2,3] = b1.transposition[2]
+        b1.transposition_matrix = make_transposition_matrix(
+            b1.transposition[0],
+            b1.transposition[1],
+            b1.transposition[2])
 
         for child in node.children:
             b2 = self._process_node(child, name)
