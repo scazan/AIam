@@ -4,6 +4,7 @@ from math import radians, cos, sin
 import cgkit.bvh
 from geo import vertex, edge
 from numpy import array, dot
+import numpy
 
 class joint:
     def __init__(self, name, index):
@@ -191,7 +192,6 @@ class skeleton:
         return newkeyframe
 
 
-
 class BvhReader(cgkit.bvh.BVHReader):
     def __init__(self, *args):
         cgkit.bvh.BVHReader.__init__(self, *args)
@@ -269,3 +269,18 @@ class BvhReader(cgkit.bvh.BVHReader):
             b2 = self._process_node(child, name)
             b1.addchild(b2)
         return b1
+
+    def print_pose(self, vertices):
+        self._print_joint_recurse(vertices, self.skeleton.hips)
+        print
+
+    def _print_joint_recurse(self, vertices, joint):
+        if joint.hasparent:
+            print "%-3d -> %-3d: %f" % (
+                joint.parent.index, joint.index,
+                numpy.linalg.norm(
+                    self.vertex_to_vector(vertices[joint.parent.index]) -
+                    self.vertex_to_vector(vertices[joint.index])))
+
+        for child in joint.children:
+            self._print_joint_recurse(vertices, child)

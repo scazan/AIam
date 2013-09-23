@@ -105,6 +105,13 @@ class ExperimentWindow(window.Window):
         self._draw_input()
         self._draw_output()
 
+        # self._print_pose(self._input_vectors)
+
+    def _print_pose(self, normalized_vectors):
+        vertices = [bvh_reader.vector_to_vertex(bvh_reader.skeleton_scale_vector(vector))
+                    for vector in normalized_vectors]
+        bvh_reader.print_pose(vertices)
+
     def _draw_input(self):
         if self._input_vectors is not None:
             glColor3f(0, 1, 0)
