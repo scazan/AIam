@@ -99,75 +99,26 @@ class skeleton:
 
     def _process_bvhkeyframe(self, keyframe, joint, t):
         counter = 0
-        transpose = False
-        rotate = False
-
-        rotation_matrix = array([
-            [1.,0.,0.,0.],
-            [0.,1.,0.,0.],
-            [0.,0.,1.,0.],
-            [0.,0.,0.,1.] ])
-
+        keyframe_dict = dict()
         for channel in joint.channels:
-            keyval = keyframe[counter]
-            if(channel == "Xposition"):
-                transpose = True
-                xpos = keyval
-            elif(channel == "Yposition"):
-                transpose = True
-                ypos = keyval
-            elif(channel == "Zposition"):
-                transpose = True
-                zpos = keyval
-
-            elif(channel == "Xrotation"):
-                rotate = True
-                xrot = keyval
-                theta = radians(xrot)
-                mycos = cos(theta)
-                mysin = sin(theta)
-                rotation_matrix2 = array([
-                    [1.,     0.,     0.,     0.],
-                    [0.,     mycos,  -mysin, 0.],
-                    [0.,     mysin,  mycos,  0.],
-                    [0.,     0.,     0.,     1.] ])
-                rotation_matrix = dot(rotation_matrix, rotation_matrix2)
-
-            elif(channel == "Yrotation"):
-                rotate = True
-                yrot = keyval
-                theta = radians(yrot)
-                mycos = cos(theta)
-                mysin = sin(theta)
-                rotation_matrix2 = array([
-                    [mycos,  0.,    mysin, 0.],
-                    [0.,     1.,    0.,    0.],
-                    [-mysin, 0.,    mycos, 0.],
-                    [0.,     0.,    0.,    1.] ])
-                rotation_matrix = dot(rotation_matrix, rotation_matrix2)
-
-            elif(channel == "Zrotation"):
-                rotate = True
-                zrot = keyval
-                theta = radians(zrot)
-                mycos = cos(theta)
-                mysin = sin(theta)
-                rotation_matrix2 = array([
-                    [mycos,  -mysin, 0.,   0.],
-                    [mysin,  mycos,  0.,   0.],
-                    [0.,     0.,     1.,   0.],
-                    [0.,     0.,     0.,   1.] ])
-                rotation_matrix = dot(rotation_matrix, rotation_matrix2)
-            else:
-                raise Exception("illegal channel name ", channel)
+            keyframe_dict[channel] = keyframe[counter]
             counter += 1
 
-        if transpose:
+        if "Xposition" in keyframe_dict:
             transposition_matrix = array([
-                [1.,    0.,    0.,    xpos],
-                [0.,    1.,    0.,    ypos],
-                [0.,    0.,    1.,    zpos],
+                [1.,    0.,    0.,    keyframe_dict["Xposition"]],
+                [0.,    1.,    0.,    keyframe_dict["Yposition"]],
+                [0.,    0.,    1.,    keyframe_dict["Zposition"]],
                 [0.,    0.,    0.,    1.] ])
+
+        if "Xrotation" in keyframe_dict:
+            rotate = True
+            rotation_matrix = self._rotation_matrix(
+                keyframe_dict["Xrotation"],
+                keyframe_dict["Yrotation"],
+                keyframe_dict["Zrotation"])
+        else:
+            rotate = False
 
         if joint.hasparent:
             parent_trtr = joint.parent.trtr
@@ -175,7 +126,10 @@ class skeleton:
         else:
             localtoworld = dot(joint.transposition_matrix, transposition_matrix)
 
-        trtr = dot(localtoworld, rotation_matrix)
+        if rotate:
+            trtr = dot(localtoworld, rotation_matrix)
+        else:
+            trtr = localtoworld
         joint.trtr = trtr
 
 
@@ -193,6 +147,45 @@ class skeleton:
                 raise Exception("fatal error")
 
         return newkeyframe
+
+    def _rotation_matrix(self, xrot, yrot, zrot):
+        rotation_matrix = array([
+            [1.,0.,0.,0.],
+            [0.,1.,0.,0.],
+            [0.,0.,1.,0.],
+            [0.,0.,0.,1.] ])
+
+        theta = radians(zrot)
+        mycos = cos(theta)
+        mysin = sin(theta)
+        rotation_matrix2 = array([
+            [mycos,  -mysin, 0.,   0.],
+            [mysin,  mycos,  0.,   0.],
+            [0.,     0.,     1.,   0.],
+            [0.,     0.,     0.,   1.] ])
+        rotation_matrix = dot(rotation_matrix, rotation_matrix2)
+
+        theta = radians(yrot)
+        mycos = cos(theta)
+        mysin = sin(theta)
+        rotation_matrix2 = array([
+            [mycos,  0.,    mysin, 0.],
+            [0.,     1.,    0.,    0.],
+            [-mysin, 0.,    mycos, 0.],
+            [0.,     0.,    0.,    1.] ])
+        rotation_matrix = dot(rotation_matrix, rotation_matrix2)
+
+        theta = radians(xrot)
+        mycos = cos(theta)
+        mysin = sin(theta)
+        rotation_matrix2 = array([
+            [1.,     0.,     0.,     0.],
+            [0.,     mycos,  -mysin, 0.],
+            [0.,     mysin,  mycos,  0.],
+            [0.,     0.,     0.,     1.] ])
+        rotation_matrix = dot(rotation_matrix, rotation_matrix2)
+
+        return rotation_matrix
 
 
 class BvhReader(cgkit.bvh.BVHReader):
