@@ -14,10 +14,12 @@ class joint:
         self.channels = []
         self.hasparent = 0
         self.parent = 0
-        self.strans = array([0.,0.,0.])
-        self.stransmat = array([
-            [0.,0.,0.,0.],[0.,0.,0.,0.],
-            [0.,0.,0.,0.],[0.,0.,0.,0.] ])
+        self.transposition = array([0.,0.,0.])
+        self.transposition_matrix = array([
+            [0.,0.,0.,0.],
+            [0.,0.,0.,0.],
+            [0.,0.,0.,0.],
+            [0.,0.,0.,0.] ])
 
     def addchild(self, childjoint):
         self.children.append(childjoint)
@@ -71,9 +73,9 @@ class skeleton:
 # by the static hips OFFSET value, since sometimes this can be quite
 # large.  I feel it's bad BVH file form to have a non-zero HIPS offset
 # position, but there are definitely files that do this.
-        xcorrect = self.hips.strans[0]
-        ycorrect = self.hips.strans[1]
-        zcorrect = self.hips.strans[2]
+        xcorrect = self.hips.transposition[0]
+        ycorrect = self.hips.transposition[1]
+        zcorrect = self.hips.transposition[2]
 
         for keyframe in self.keyframes:
             x = keyframe[xoffset] + xcorrect
@@ -97,10 +99,10 @@ class skeleton:
 
     def _process_bvhkeyframe(self, keyframe, joint, t):
         counter = 0
-        dotrans = 0
-        dorot = 0
+        transpose = False
+        rotate = False
 
-        drotmat = array([
+        rotation_matrix = array([
             [1.,0.,0.,0.],
             [0.,1.,0.,0.],
             [0.,0.,1.,0.],
@@ -109,58 +111,59 @@ class skeleton:
         for channel in joint.channels:
             keyval = keyframe[counter]
             if(channel == "Xposition"):
-                dotrans = 1
+                transpose = True
                 xpos = keyval
             elif(channel == "Yposition"):
-                dotrans = 1
+                transpose = True
                 ypos = keyval
             elif(channel == "Zposition"):
-                dotrans = 1
+                transpose = True
                 zpos = keyval
+
             elif(channel == "Xrotation"):
-                dorot = 1
+                rotate = True
                 xrot = keyval
                 theta = radians(xrot)
                 mycos = cos(theta)
                 mysin = sin(theta)
-                drotmat2 = array([
+                rotation_matrix2 = array([
                     [1.,     0.,     0.,     0.],
                     [0.,     mycos,  -mysin, 0.],
                     [0.,     mysin,  mycos,  0.],
                     [0.,     0.,     0.,     1.] ])
-                drotmat = dot(drotmat, drotmat2)
+                rotation_matrix = dot(rotation_matrix, rotation_matrix2)
 
             elif(channel == "Yrotation"):
-                dorot = 1
+                rotate = True
                 yrot = keyval
                 theta = radians(yrot)
                 mycos = cos(theta)
                 mysin = sin(theta)
-                drotmat2 = array([
+                rotation_matrix2 = array([
                     [mycos,  0.,    mysin, 0.],
                     [0.,     1.,    0.,    0.],
                     [-mysin, 0.,    mycos, 0.],
                     [0.,     0.,    0.,    1.] ])
-                drotmat = dot(drotmat, drotmat2)
+                rotation_matrix = dot(rotation_matrix, rotation_matrix2)
 
             elif(channel == "Zrotation"):
-                dorot = 1
+                rotate = True
                 zrot = keyval
                 theta = radians(zrot)
                 mycos = cos(theta)
                 mysin = sin(theta)
-                drotmat2 = array([
+                rotation_matrix2 = array([
                     [mycos,  -mysin, 0.,   0.],
                     [mysin,  mycos,  0.,   0.],
                     [0.,     0.,     1.,   0.],
                     [0.,     0.,     0.,   1.] ])
-                drotmat = dot(drotmat, drotmat2)
+                rotation_matrix = dot(rotation_matrix, rotation_matrix2)
             else:
                 raise Exception("illegal channel name ", channel)
             counter += 1
 
-        if dotrans:
-            dtransmat = array([
+        if transpose:
+            transposition_matrix = array([
                 [1.,    0.,    0.,    xpos],
                 [0.,    1.,    0.,    ypos],
                 [0.,    0.,    1.,    zpos],
@@ -168,11 +171,11 @@ class skeleton:
 
         if joint.hasparent:
             parent_trtr = joint.parent.trtr
-            localtoworld = dot(parent_trtr,joint.stransmat)
+            localtoworld = dot(parent_trtr, joint.transposition_matrix)
         else:
-            localtoworld = dot(joint.stransmat,dtransmat)
+            localtoworld = dot(joint.transposition_matrix, transposition_matrix)
 
-        trtr = dot(localtoworld,drotmat)
+        trtr = dot(localtoworld, rotation_matrix)
         joint.trtr = trtr
 
 
@@ -251,19 +254,19 @@ class BvhReader(cgkit.bvh.BVHReader):
         b1 = joint(name, self._joint_index)
         self._joint_index += 1
         b1.channels = node.channels
-        b1.strans[0] = node.offset[0]
-        b1.strans[1] = node.offset[1]
-        b1.strans[2] = node.offset[2]
+        b1.transposition[0] = node.offset[0]
+        b1.transposition[1] = node.offset[1]
+        b1.transposition[2] = node.offset[2]
 
-        b1.stransmat = array([
+        b1.transposition_matrix = array([
             [1.,0.,0.,0.],
             [0.,1.,0.,0.],
             [0.,0.,1.,0.],
             [0.,0.,0.,1.] ])
 
-        b1.stransmat[0,3] = b1.strans[0]
-        b1.stransmat[1,3] = b1.strans[1]
-        b1.stransmat[2,3] = b1.strans[2]
+        b1.transposition_matrix[0,3] = b1.transposition[0]
+        b1.transposition_matrix[1,3] = b1.transposition[1]
+        b1.transposition_matrix[2,3] = b1.transposition[2]
 
         for child in node.children:
             b2 = self._process_node(child, name)
