@@ -89,7 +89,7 @@ class skeleton:
             if z > self.maxz: self.maxz = z
 
     def get_vertices(self, t):
-        self._process_bvhkeyframe(self.keyframes[t], self.hips, t)
+        self._process_bvhkeyframe(self.keyframes[t], self.hips)
         result = []
         self.hips.get_vertices_recurse(result)
         return result
@@ -97,12 +97,11 @@ class skeleton:
     def populate_edges_from_vertices(self, vertices, edges):
         self.hips.populate_edges_from_vertices_recurse(vertices, edges)
 
-    def _process_bvhkeyframe(self, keyframe, joint, t):
-        counter = 0
+    def _process_bvhkeyframe(self, keyframe, joint, frame_data_index=0):
         keyframe_dict = dict()
         for channel in joint.channels:
-            keyframe_dict[channel] = keyframe[counter]
-            counter += 1
+            keyframe_dict[channel] = keyframe[frame_data_index]
+            frame_data_index += 1
 
         if "Xposition" in keyframe_dict:
             transposition_matrix = make_transposition_matrix(
@@ -139,14 +138,12 @@ class skeleton:
                   localtoworld[3,3] ])
         joint.worldpos = worldpos
 
-        newkeyframe = keyframe[counter:]
         for child in joint.children:
-            newkeyframe = self._process_bvhkeyframe(newkeyframe, child, t)
-            if(newkeyframe == 0):
+            frame_data_index = self._process_bvhkeyframe(keyframe, child, frame_data_index)
+            if(frame_data_index == 0):
                 raise Exception("fatal error")
 
-        return newkeyframe
-
+        return frame_data_index
 
 
 def make_transposition_matrix(xpos, ypos, zpos):
