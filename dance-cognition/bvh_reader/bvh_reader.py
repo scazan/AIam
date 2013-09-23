@@ -86,7 +86,7 @@ class skeleton:
       if z > self.maxz: self.maxz = z
 
   def get_vertices(self, t):
-    process_bvhkeyframe(self.keyframes[t-1], self.hips, t)
+    self._process_bvhkeyframe(self.keyframes[t-1], self.hips, t)
     result = []
     self.hips.get_vertices_recurse(result)
     return result
@@ -94,98 +94,101 @@ class skeleton:
   def populate_edges_from_vertices(self, vertices, edges):
     self.hips.populate_edges_from_vertices_recurse(vertices, edges)
 
+  def _process_bvhkeyframe(self, keyframe, joint, t):
+    counter = 0
+    dotrans = 0
+    dorot = 0
 
-def process_bvhkeyframe(keyframe, joint, t):
-  counter = 0
-  dotrans = 0
-  dorot = 0
+    drotmat = array([
+        [1.,0.,0.,0.],
+        [0.,1.,0.,0.],
+        [0.,0.,1.,0.],
+        [0.,0.,0.,1.] ])
 
-  drotmat = array([ [1.,0.,0.,0.],[0.,1.,0.,0.],[0.,0.,1.,0.],[0.,0.,0.,1.] ])
+    for channel in joint.channels:
+      keyval = keyframe[counter]
+      if(channel == "Xposition"):
+        dotrans = 1
+        xpos = keyval
+      elif(channel == "Yposition"):
+        dotrans = 1
+        ypos = keyval
+      elif(channel == "Zposition"):
+        dotrans = 1
+        zpos = keyval
+      elif(channel == "Xrotation"):
+        dorot = 1
+        xrot = keyval
+        theta = radians(xrot)
+        mycos = cos(theta)
+        mysin = sin(theta)
+        drotmat2 = array([
+            [1.,     0.,     0.,     0.],
+            [0.,     mycos,  -mysin, 0.],
+            [0.,     mysin,  mycos,  0.],
+            [0.,     0.,     0.,     1.] ])
+        drotmat = dot(drotmat, drotmat2)
 
-  for channel in joint.channels:
-    keyval = keyframe[counter]
-    if(channel == "Xposition"):
-      dotrans = 1
-      xpos = keyval
-    elif(channel == "Yposition"):
-      dotrans = 1
-      ypos = keyval
-    elif(channel == "Zposition"):
-      dotrans = 1
-      zpos = keyval
-    elif(channel == "Xrotation"):
-      dorot = 1
-      xrot = keyval
-      theta = radians(xrot)
-      mycos = cos(theta)
-      mysin = sin(theta)
-      drotmat2 = array([
-          [1.,     0.,     0.,     0.],
-          [0.,     mycos,  -mysin, 0.],
-          [0.,     mysin,  mycos,  0.],
-          [0.,     0.,     0.,     1.] ])
-      drotmat = dot(drotmat, drotmat2)
+      elif(channel == "Yrotation"):
+        dorot = 1
+        yrot = keyval
+        theta = radians(yrot)
+        mycos = cos(theta)
+        mysin = sin(theta)
+        drotmat2 = array([
+            [mycos,  0.,    mysin, 0.],
+            [0.,     1.,    0.,    0.],
+            [-mysin, 0.,    mycos, 0.],
+            [0.,     0.,    0.,    1.] ])
+        drotmat = dot(drotmat, drotmat2)
 
-    elif(channel == "Yrotation"):
-      dorot = 1
-      yrot = keyval
-      theta = radians(yrot)
-      mycos = cos(theta)
-      mysin = sin(theta)
-      drotmat2 = array([
-          [mycos,  0.,    mysin, 0.],
-          [0.,     1.,    0.,    0.],
-          [-mysin, 0.,    mycos, 0.],
-          [0.,     0.,    0.,    1.] ])
-      drotmat = dot(drotmat, drotmat2)
+      elif(channel == "Zrotation"):
+        dorot = 1
+        zrot = keyval
+        theta = radians(zrot)
+        mycos = cos(theta)
+        mysin = sin(theta)
+        drotmat2 = array([
+            [mycos,  -mysin, 0.,   0.],
+            [mysin,  mycos,  0.,   0.],
+            [0.,     0.,     1.,   0.],
+            [0.,     0.,     0.,   1.] ])
+        drotmat = dot(drotmat, drotmat2)
+      else:
+        raise Exception("illegal channel name ", channel)
+      counter += 1
 
-    elif(channel == "Zrotation"):
-      dorot = 1
-      zrot = keyval
-      theta = radians(zrot)
-      mycos = cos(theta)
-      mysin = sin(theta)
-      drotmat2 = array([
-          [mycos,  -mysin, 0.,   0.],
-          [mysin,  mycos,  0.,   0.],
-          [0.,     0.,     1.,   0.],
-          [0.,     0.,     0.,   1.] ])
-      drotmat = dot(drotmat, drotmat2)
+    if dotrans:
+      dtransmat = array([
+          [1.,    0.,    0.,    xpos],
+          [0.,    1.,    0.,    ypos],
+          [0.,    0.,    1.,    zpos],
+          [0.,    0.,    0.,    1.] ])
+
+    if joint.hasparent:
+      parent_trtr = joint.parent.trtr
+      localtoworld = dot(parent_trtr,joint.stransmat)
     else:
-      raise Exception("Fatal error in process_bvhkeyframe: illegal channel name ", channel)
-    counter += 1
+      localtoworld = dot(joint.stransmat,dtransmat)
 
-  if dotrans:
-    dtransmat = array([
-        [1.,    0.,    0.,    xpos],
-        [0.,    1.,    0.,    ypos],
-        [0.,    0.,    1.,    zpos],
-        [0.,    0.,    0.,    1.] ])
-
-  if joint.hasparent:
-    parent_trtr = joint.parent.trtr
-    localtoworld = dot(parent_trtr,joint.stransmat)
-  else:
-    localtoworld = dot(joint.stransmat,dtransmat)
-
-  trtr = dot(localtoworld,drotmat)
-  joint.trtr = trtr
+    trtr = dot(localtoworld,drotmat)
+    joint.trtr = trtr
 
 
-  worldpos = array([
-            localtoworld[0,3],
-            localtoworld[1,3],
-            localtoworld[2,3],
-            localtoworld[3,3] ])
-  joint.worldpos = worldpos
+    worldpos = array([
+              localtoworld[0,3],
+              localtoworld[1,3],
+              localtoworld[2,3],
+              localtoworld[3,3] ])
+    joint.worldpos = worldpos
 
-  newkeyframe = keyframe[counter:]
-  for child in joint.children:
-    newkeyframe = process_bvhkeyframe(newkeyframe, child, t)
-    if(newkeyframe == 0):
-      raise Exception("fatal error")
+    newkeyframe = keyframe[counter:]
+    for child in joint.children:
+      newkeyframe = self._process_bvhkeyframe(newkeyframe, child, t)
+      if(newkeyframe == 0):
+        raise Exception("fatal error")
 
-  return newkeyframe
+    return newkeyframe
 
 
 
