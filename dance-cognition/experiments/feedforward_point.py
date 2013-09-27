@@ -108,13 +108,6 @@ class Student:
         return self._net.process(inp)
 
 class ExperimentWindow(window.Window):
-    @staticmethod
-    def add_parser_arguments(parser):
-        parser.add_argument("-pretrain", type=float)
-        parser.add_argument("-bvh")
-        parser.add_argument("-bvh-speed", type=float, default=1.0)
-        parser.add_argument("-bvh-scale", type=float, default=40)
-
     def __init__(self, *args):
         window.Window.__init__(self, *args)
         self._y_orientation = 0.0
@@ -154,8 +147,11 @@ class ExperimentWindow(window.Window):
 
 
 parser = ArgumentParser()
+parser.add_argument("-pretrain", type=float)
+parser.add_argument("-bvh")
+parser.add_argument("-bvh-speed", type=float, default=1.0)
+parser.add_argument("-bvh-scale", type=float, default=40)
 window.Window.add_parser_arguments(parser)
-ExperimentWindow.add_parser_arguments(parser)
 args = parser.parse_args()
 
 if args.bvh:
