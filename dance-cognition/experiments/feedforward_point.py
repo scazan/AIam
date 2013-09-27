@@ -18,28 +18,30 @@ from pybrain.datasets import SupervisedDataSet
 from bvh_reader import bvh_reader
 import numpy
 
-class BvhInput:
+class Teacher:
     def __init__(self):
         self._t = 0
 
+    def proceed(self, time_increment):
+        self._t += time_increment
+
+    def get_output(self):
+        return self.get_input()
+
+class BvhInput(Teacher):
     def __str__(self):
         return "BvhInput"
 
-    def process(self, time_increment):
-        self._t += time_increment
+    def get_input(self):
         vertices = bvh_reader.get_skeleton_vertices(self._t * args.bvh_speed)
         hips = bvh_reader.normalize_vector(bvh_reader.vertex_to_vector(vertices[0]))
         return hips
 
-class CircularInput:
-    def __init__(self):
-        self._t = 0
-
+class CircularInput(Teacher):
     def __str__(self):
         return "CircularInput"
 
-    def process(self, time_increment):
-        self._t += time_increment
+    def get_input(self):
         z = math.cos(self._t)
         y = math.sin(self._t)
         x = 0
@@ -62,6 +64,49 @@ class NeuralNet:
 
         self._trainer.trainOnDataset(dataset)
 
+class Student:
+    def __init__(self, teacher, pretrain_duration):
+        self._teacher = teacher
+        self._input = None
+        self._net = NeuralNet()
+        self._input_history = collections.deque(maxlen=HISTORY_SIZE)
+        self._training_history = collections.deque(maxlen=HISTORY_SIZE)
+        if pretrain_duration > 0:
+            self._pretrain(pretrain_duration)
+
+    def _pretrain(self, duration):
+        print "pre-training..."
+        t = 0
+        time_increment = 1.0 / 50
+        while t < duration:
+            self.train()
+            self.proceed(time_increment)
+            t += time_increment
+        print "ok"
+
+    def train(self):
+        self._input = self._teacher.get_input()
+        expected_output = self._teacher.get_output()
+        self._input_history.append(self._input)
+
+        if self.received_enough_input():
+            past_input = self._input_history[0]
+            self._training_history.append((past_input, expected_output))
+            past_training_tuple = self._training_history[0]
+            self._net.train(*past_training_tuple)
+
+    def proceed(self, time_increment):
+        self._teacher.proceed(time_increment)
+
+    def received_enough_input(self):
+        return len(self._input_history) == HISTORY_SIZE
+
+    def last_input(self):
+        return self._input
+
+    def process(self, inp):
+        return self._net.process(inp)
+
 class ExperimentWindow(window.Window):
     @staticmethod
     def add_parser_arguments(parser):
@@ -72,58 +117,30 @@ class ExperimentWindow(window.Window):
 
     def __init__(self, *args):
         window.Window.__init__(self, *args)
-        self.input = None
-        self.output = None
-        self.net = NeuralNet()
-        self._input_history = collections.deque(maxlen=HISTORY_SIZE)
-        self._input_history.extend([
-                self._zero_input() for n in range(HISTORY_SIZE)])
-        self._training_history = collections.deque(maxlen=HISTORY_SIZE)
         self._y_orientation = 0.0
         self._x_orientation = 0.0
-        if self.args.pretrain > 0:
-            self._pretrain(self.args.pretrain)
-
-    def _zero_input(self):
-        return numpy.zeros(3)
-
-    def _pretrain(self, duration):
-        print "pre-training..."
-        t = 0
-        time_increment = 1.0 / 50
-        while t < duration:
-            self._update(time_increment)
-            t += time_increment
-        print "ok"
-
-    def _update(self, time_increment):
-        self.input = input_generator.process(time_increment)
-        self._input_history.append(self.input)
-        past_input = self._input_history[0]
-        self._training_history.append((past_input, self.input))
-        past_training_tuple = self._training_history[0]
-        self.net.train(*past_training_tuple)
 
     def render(self):
-        self._update(self.time_increment)
-        self.output = self.net.process(self.input)
+        student.train()
+        student.proceed(self.time_increment)
 
         self.configure_3d_projection(-100, 0)
         glRotatef(self._x_orientation, 1.0, 0.0, 0.0)
         glRotatef(self._y_orientation, 0.0, 1.0, 0.0)
         self._draw_unit_cube()
         self._draw_input()
-        self._draw_output()
+
+        if student.received_enough_input():
+            output = student.process(student.last_input())
+            self._draw_output(output)
 
     def _draw_input(self):
-        if self.input is not None:
-            glColor3f(0, 1, 0)
-            self._draw_point(self.input)
+        glColor3f(0, 1, 0)
+        self._draw_point(student.last_input())
 
-    def _draw_output(self):
-        if self.output is not None:
-            glColor3f(0.5, 0.5, 1.0)
-            self._draw_point(self.output)
+    def _draw_output(self, output):
+        glColor3f(0.5, 0.5, 1.0)
+        self._draw_point(output)
 
     def _draw_point(self, p):
         glPointSize(3)
@@ -145,10 +162,12 @@ if args.bvh:
     bvh_reader = bvh_reader.BvhReader(args.bvh)
     bvh_reader.scale_factor = args.bvh_scale
     bvh_reader.read()
-    input_generator = BvhInput()
+    teacher = BvhInput()
 else:
-    input_generator = CircularInput()
+    teacher = CircularInput()
 
-print "input: %s" % input_generator
+print "teacher: %s" % teacher
+
+student = Student(teacher, args.pretrain)
 
 window.run(ExperimentWindow, args)
