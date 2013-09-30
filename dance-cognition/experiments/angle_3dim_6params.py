@@ -33,16 +33,6 @@ class AngleWindow(ExperimentWindow):
 
     def _draw_3dim_angle(self, r1, r2, r3):
         glPointSize(3)
-
-        # rotation_matrix = bvh_reader_module.make_rotation_matrix(
-        #     r1 * math.pi * 2,
-        #     r2 * math.pi * 2,
-        #     r3 * math.pi * 2)
-        # v = numpy.dot(numpy.array([1., 1., 1.]), rotation_matrix)
-        # glBegin(GL_POINTS)
-        # glVertex3f(v[0], v[1], v[2])
-        # glEnd()
-
         glRotatef(math.degrees(r1), 1., 0., 0.)
         glRotatef(math.degrees(r2), 0., 1., 0.)
         glRotatef(math.degrees(r3), 0., 0., 1.)
