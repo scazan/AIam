@@ -16,6 +16,7 @@ from pybrain.supervised.trainers import BackpropTrainer
 from pybrain.datasets import SupervisedDataSet
 from bvh_reader import bvh_reader
 import numpy
+import random
 
 class Stimulus:
     def __init__(self):
@@ -33,6 +34,9 @@ class BvhStimulus(Stimulus):
         hips = bvh_reader.normalize_vector(bvh_reader.vertex_to_vector(vertices[0]))
         return hips
 
+    def get_duration(self):
+        return bvh_reader.get_duration() / args.bvh_speed
+
 class CircularStimulus(Stimulus):
     def __str__(self):
         return "CircularStimulus"
@@ -42,6 +46,9 @@ class CircularStimulus(Stimulus):
         y = math.sin(self._t)
         x = 0
         return numpy.array([x, y, z])
+
+    def get_duration(self):
+        return 2 * math.pi
 
 class NeuralNet:
     def __init__(self):
@@ -57,10 +64,13 @@ class NeuralNet:
         self._trainer.trainOnDataset(dataset)
 
 class Teacher:
-    def __init__(self, stimulus):
+    def __init__(self, stimulus, max_history_size):
         self._stimulus = stimulus
         self._input_history = collections.deque(maxlen=HISTORY_SIZE)
-        self._training_history = collections.deque(maxlen=HISTORY_SIZE)
+        self._training_history = collections.deque(maxlen=max_history_size)
+
+    def proceed(self, time_increment):
+        self._stimulus.proceed(time_increment)
         self._add_training_tuple_to_history()
 
     def _add_training_tuple_to_history(self):
@@ -70,8 +80,51 @@ class Teacher:
             past_input = self._input_history[0]
             self._training_history.append((past_input, recent_input))
 
+    def collected_enough_training_data(self):
+        return len(self._input_history) == HISTORY_SIZE
+
+    def judge_error(self, expected_output, output):
+        return numpy.linalg.norm(expected_output - output)
+
+class ShufflingTeacher(Teacher):
+    def __init__(self, stimulus):
+        Teacher.__init__(self, stimulus, max_history_size=None)
+        self._create_training_data()
+
+    def _create_training_data(self):
+        time_increment = 1.0 / 50
+        while not self.collected_enough_training_data():
+            self._add_training_tuple_to_history()
+            self.proceed(time_increment)
+
+        t = 0
+        stimulus_duration = self._stimulus.get_duration()
+        while t < stimulus_duration:
+            self._add_training_tuple_to_history()
+            self.proceed(time_increment)
+            t += time_increment
+
+        self._pick_next_training_datum_to_return()
+
     def proceed(self, time_increment):
-        self._stimulus.proceed(time_increment)
+        Teacher.proceed(self, time_increment)
+        if self.collected_enough_training_data():
+            self._pick_next_training_datum_to_return()
+
+    def _pick_next_training_datum_to_return(self):
+        random_index = random.randint(0, len(self._training_history)-1)
+        self._input_to_return, self._output_to_return = \
+            self._training_history[random_index]
+
+    def get_input(self):
+        return self._input_to_return
+
+    def get_output(self):
+        return self._output_to_return
+
+class LiveTeacher(Teacher):
+    def __init__(self, stimulus):
+        Teacher.__init__(self, stimulus, max_history_size=HISTORY_SIZE)
         self._add_training_tuple_to_history()
 
     def get_input(self):
@@ -81,12 +134,6 @@ class Teacher:
     def get_output(self):
         past_input, past_output = self._training_history[0]
         return past_output
-
-    def collected_enough_training_data(self):
-        return len(self._input_history) == HISTORY_SIZE
-
-    def judge_error(self, expected_output, output):
-        return numpy.linalg.norm(expected_output - output)
 
 class LearningPlotter:
     def __init__(self, student, teacher, duration):
@@ -172,6 +219,7 @@ parser.add_argument("-bvh-speed", type=float, default=1.0)
 parser.add_argument("-bvh-scale", type=float, default=40)
 parser.add_argument("-plot", type=str)
 parser.add_argument("-plot-duration", type=float, default=10)
+parser.add_argument("-shuffle-input", action="store_true")
 window.Window.add_parser_arguments(parser)
 args = parser.parse_args()
 
@@ -185,7 +233,11 @@ else:
 
 print "stimulus: %s" % stimulus
 
-teacher = Teacher(stimulus)
+if args.shuffle_input:
+    teacher = ShufflingTeacher(stimulus)
+else:
+    teacher = LiveTeacher(stimulus)
+
 student = NeuralNet()
 
 if args.pretrain > 0:
