@@ -88,32 +88,6 @@ class Teacher:
     def judge_error(self, expected_output, output):
         return numpy.linalg.norm(expected_output - output)
 
-class Student:
-    def __init__(self, teacher, pretrain_duration):
-        self._teacher = teacher
-        self._net = NeuralNet()
-        if pretrain_duration > 0:
-            self._pretrain(pretrain_duration)
-
-    def _pretrain(self, duration):
-        print "pre-training..."
-        t = 0
-        time_increment = 1.0 / 50
-        while t < duration:
-            if self._teacher.collected_enough_training_data():
-                inp = self._teacher.get_input()
-                output = self._teacher.get_output()
-                self.train(inp, output)
-            self._teacher.proceed(time_increment)
-            t += time_increment
-        print "ok"
-
-    def train(self, inp, output):
-        self._net.train(inp, output)
-
-    def process(self, inp):
-        return self._net.process(inp)
-
 class LearningPlotter:
     def __init__(self, student, teacher, duration):
         self._student = student
@@ -177,6 +151,19 @@ class ExperimentWindow(window.Window):
         glColor4f(0,0,0,0.2)
         glutWireCube(2.0)
 
+def pretrain(student, teacher, duration):
+    print "pre-training..."
+    t = 0
+    time_increment = 1.0 / 50
+    while t < duration:
+        if teacher.collected_enough_training_data():
+            inp = teacher.get_input()
+            output = teacher.get_output()
+            student.train(inp, output)
+        teacher.proceed(time_increment)
+        t += time_increment
+    print "ok"
+
 
 parser = ArgumentParser()
 parser.add_argument("-pretrain", type=float)
@@ -199,7 +186,10 @@ else:
 print "stimulus: %s" % stimulus
 
 teacher = Teacher(stimulus)
-student = Student(teacher, args.pretrain)
+student = NeuralNet()
+
+if args.pretrain > 0:
+    pretrain(student, teacher, args.pretrain)
 
 if args.plot:
     LearningPlotter(student, teacher, args.plot_duration).plot(args.plot)
