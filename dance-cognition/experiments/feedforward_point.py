@@ -1,5 +1,4 @@
 HISTORY_SIZE = 100
-DATASET_SIZE = 10
 
 import sys
 import os
@@ -53,18 +52,14 @@ class CircularInput(Teacher):
 class NeuralNet:
     def __init__(self):
         self._net = buildNetwork(3, 6, 3)
-        self._recent_data = collections.deque(maxlen=DATASET_SIZE)
         self._trainer = BackpropTrainer(self._net, learningrate=0.001)
 
     def process(self, inp):
         return self._net.activate(inp)
 
     def train(self, inp, output):
-        self._recent_data.append((inp, output))
         dataset = SupervisedDataSet(3, 3)
-        for recent_in, recent_out in self._recent_data:
-            dataset.addSample(recent_in, recent_out)
-
+        dataset.addSample(inp, output)
         self._trainer.trainOnDataset(dataset)
 
 class Student:
