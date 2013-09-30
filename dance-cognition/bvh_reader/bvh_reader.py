@@ -48,10 +48,10 @@ class joint:
 
 
 class skeleton:
-    def __init__(self, hips, keyframes, frames=0, dt=.033333333):
+    def __init__(self, hips, keyframes, num_frames=0, dt=.033333333):
         self.hips = hips
         self.keyframes = keyframes
-        self.frames = frames
+        self.num_frames = num_frames
         self.dt = dt
 
 # Precompute hips min and max values in all 3 dimensions.
@@ -200,11 +200,14 @@ class BvhReader(cgkit.bvh.BVHReader):
         hips = self._process_node(self.root)
         self.skeleton = skeleton(
           hips, keyframes = self.keyframes,
-          frames=self.frames, dt=self.dt)
+          num_frames=self.num_frames, dt=self.dt)
         self.num_joints = self._joint_index
 
+    def get_duration(self):
+        return self.skeleton.num_frames * self.skeleton.dt
+
     def get_skeleton_vertices(self, t):
-        frame_index = int(t / self.skeleton.dt) % self.skeleton.frames
+        frame_index = int(t / self.skeleton.dt) % self.skeleton.num_frames
         return self.skeleton.get_vertices(frame_index)
 
     def vertices_to_edges(self, vertices):
@@ -234,8 +237,8 @@ class BvhReader(cgkit.bvh.BVHReader):
         self.root = root
         self.keyframes = []
 
-    def onMotion(self, frames, dt):
-        self.frames = frames
+    def onMotion(self, num_frames, dt):
+        self.num_frames = num_frames
         self.dt = dt
 
     def onFrame(self, values):
