@@ -17,20 +17,27 @@ from pybrain.datasets import SupervisedDataSet
 from bvh_reader import bvh_reader
 import numpy
 
-class BvhInput(Teacher):
-    def __str__(self):
-        return "BvhInput"
+class Stimulus:
+    def __init__(self):
+        self._t = 0
 
-    def get_input(self):
+    def proceed(self, time_increment):
+        self._t += time_increment
+
+class BvhStimulus(Stimulus):
+    def __str__(self):
+        return "BvhStimulus"
+
+    def get_value(self):
         vertices = bvh_reader.get_skeleton_vertices(self._t * args.bvh_speed)
         hips = bvh_reader.normalize_vector(bvh_reader.vertex_to_vector(vertices[0]))
         return hips
 
-class CircularInput(Teacher):
+class CircularStimulus(Stimulus):
     def __str__(self):
-        return "CircularInput"
+        return "CircularStimulus"
 
-    def get_input(self):
+    def get_value(self):
         z = math.cos(self._t)
         y = math.sin(self._t)
         x = 0
@@ -50,14 +57,33 @@ class NeuralNet:
         self._trainer.trainOnDataset(dataset)
 
 class Teacher:
-    def __init__(self):
-        self._t = 0
+    def __init__(self, stimulus):
+        self._stimulus = stimulus
+        self._input_history = collections.deque(maxlen=HISTORY_SIZE)
+        self._training_history = collections.deque(maxlen=HISTORY_SIZE)
+        self._add_training_tuple_to_history()
+
+    def _add_training_tuple_to_history(self):
+        recent_input = self._stimulus.get_value()
+        self._input_history.append(recent_input)
+        if self.collected_enough_training_data():
+            past_input = self._input_history[0]
+            self._training_history.append((past_input, recent_input))
 
     def proceed(self, time_increment):
-        self._t += time_increment
+        self._stimulus.proceed(time_increment)
+        self._add_training_tuple_to_history()
+
+    def get_input(self):
+        past_input, past_output = self._training_history[0]
+        return past_input
 
     def get_output(self):
-        return self.get_input()
+        past_input, past_output = self._training_history[0]
+        return past_output
+
+    def collected_enough_training_data(self):
+        return len(self._input_history) == HISTORY_SIZE
 
     def judge_error(self, expected_output, output):
         return numpy.linalg.norm(expected_output - output)
@@ -66,8 +92,6 @@ class Student:
     def __init__(self, teacher, pretrain_duration):
         self._teacher = teacher
         self._net = NeuralNet()
-        self._input_history = collections.deque(maxlen=HISTORY_SIZE)
-        self._training_history = collections.deque(maxlen=HISTORY_SIZE)
         if pretrain_duration > 0:
             self._pretrain(pretrain_duration)
 
@@ -76,24 +100,16 @@ class Student:
         t = 0
         time_increment = 1.0 / 50
         while t < duration:
-            inp = self._teacher.get_input()
-            output = self._teacher.get_output()
+            if self._teacher.collected_enough_training_data():
+                inp = self._teacher.get_input()
+                output = self._teacher.get_output()
+                self.train(inp, output)
             self._teacher.proceed(time_increment)
-            self.train(inp, output)
             t += time_increment
         print "ok"
 
     def train(self, inp, output):
-        self._input_history.append(inp)
-
-        if self.received_enough_input():
-            past_input = self._input_history[0]
-            self._training_history.append((past_input, output))
-            past_training_tuple = self._training_history[0]
-            self._net.train(*past_training_tuple)
-
-    def received_enough_input(self):
-        return len(self._input_history) == HISTORY_SIZE
+        self._net.train(inp, output)
 
     def process(self, inp):
         return self._net.process(inp)
@@ -109,14 +125,14 @@ class LearningPlotter:
         t = 0
         time_increment = 1.0 / 50
         while t < self._duration:
-            inp = self._teacher.get_input()
-            expected_output = self._teacher.get_output()
-            self._teacher.proceed(time_increment)
-            self._student.train(inp, expected_output)
-            if self._student.received_enough_input():
+            if self._teacher.collected_enough_training_data():
+                inp = self._teacher.get_input()
+                expected_output = self._teacher.get_output()
+                self._student.train(inp, expected_output)
                 output = self._student.process(inp)
                 error = self._teacher.judge_error(expected_output, output)
                 print >>f, t, error
+            self._teacher.proceed(time_increment)
             t += time_increment
         f.close()
 
@@ -127,20 +143,21 @@ class ExperimentWindow(window.Window):
         self._x_orientation = 0.0
 
     def render(self):
-        inp = teacher.get_input()
-        expected_output = teacher.get_output()
+        if teacher.collected_enough_training_data():
+            inp = teacher.get_input()
+            expected_output = teacher.get_output()
+            student.train(inp, expected_output)
         teacher.proceed(self.time_increment)
-        student.train(inp, expected_output)
 
         self.configure_3d_projection(-100, 0)
         glRotatef(self._x_orientation, 1.0, 0.0, 0.0)
         glRotatef(self._y_orientation, 0.0, 1.0, 0.0)
         self._draw_unit_cube()
-        self._draw_input(inp)
 
-        if student.received_enough_input():
-            output = student.process(inp)
-            self._draw_output(output)
+        inp = stimulus.get_value()
+        output = student.process(inp)
+        self._draw_input(inp)
+        self._draw_output(output)
 
     def _draw_input(self, inp):
         glColor3f(0, 1, 0)
@@ -175,12 +192,13 @@ if args.bvh:
     bvh_reader = bvh_reader.BvhReader(args.bvh)
     bvh_reader.scale_factor = args.bvh_scale
     bvh_reader.read()
-    teacher = BvhInput()
+    stimulus = BvhStimulus()
 else:
-    teacher = CircularInput()
+    stimulus = CircularStimulus()
 
-print "teacher: %s" % teacher
+print "stimulus: %s" % stimulus
 
+teacher = Teacher(stimulus)
 student = Student(teacher, args.pretrain)
 
 if args.plot:
