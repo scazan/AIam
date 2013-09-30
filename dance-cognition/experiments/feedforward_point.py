@@ -70,7 +70,6 @@ class NeuralNet:
 class Student:
     def __init__(self, teacher, pretrain_duration):
         self._teacher = teacher
-        self._last_input = None
         self._net = NeuralNet()
         self._input_history = collections.deque(maxlen=HISTORY_SIZE)
         self._training_history = collections.deque(maxlen=HISTORY_SIZE)
@@ -82,33 +81,24 @@ class Student:
         t = 0
         time_increment = 1.0 / 50
         while t < duration:
-            self.train()
-            self.proceed(time_increment)
+            inp = self._teacher.get_input()
+            output = self._teacher.get_output()
+            self._teacher.proceed(time_increment)
+            self.train(inp, output)
             t += time_increment
         print "ok"
 
-    def train(self):
-        self._last_input = self._teacher.get_input()
-        self._last_expected_output = self._teacher.get_output()
-        self._input_history.append(self._last_input)
+    def train(self, inp, output):
+        self._input_history.append(inp)
 
         if self.received_enough_input():
             past_input = self._input_history[0]
-            self._training_history.append((past_input, self._last_expected_output))
+            self._training_history.append((past_input, output))
             past_training_tuple = self._training_history[0]
             self._net.train(*past_training_tuple)
 
-    def proceed(self, time_increment):
-        self._teacher.proceed(time_increment)
-
     def received_enough_input(self):
         return len(self._input_history) == HISTORY_SIZE
-
-    def last_input(self):
-        return self._last_input
-
-    def last_expected_output(self):
-        return self._last_expected_output
 
     def process(self, inp):
         return self._net.process(inp)
@@ -124,11 +114,12 @@ class LearningPlotter:
         t = 0
         time_increment = 1.0 / 50
         while t < self._duration:
-            self._student.train()
-            self._student.proceed(time_increment)
+            inp = self._teacher.get_input()
+            expected_output = self._teacher.get_output()
+            self._teacher.proceed(time_increment)
+            self._student.train(inp, expected_output)
             if self._student.received_enough_input():
-                output = self._student.process(self._student.last_input())
-                expected_output = self._student.last_expected_output()
+                output = self._student.process(inp)
                 error = self._teacher.judge_error(expected_output, output)
                 print >>f, t, error
             t += time_increment
@@ -141,22 +132,24 @@ class ExperimentWindow(window.Window):
         self._x_orientation = 0.0
 
     def render(self):
-        student.train()
-        student.proceed(self.time_increment)
+        inp = teacher.get_input()
+        expected_output = teacher.get_output()
+        teacher.proceed(self.time_increment)
+        student.train(inp, expected_output)
 
         self.configure_3d_projection(-100, 0)
         glRotatef(self._x_orientation, 1.0, 0.0, 0.0)
         glRotatef(self._y_orientation, 0.0, 1.0, 0.0)
         self._draw_unit_cube()
-        self._draw_input()
+        self._draw_input(inp)
 
         if student.received_enough_input():
-            output = student.process(student.last_input())
+            output = student.process(inp)
             self._draw_output(output)
 
-    def _draw_input(self):
+    def _draw_input(self, inp):
         glColor3f(0, 1, 0)
-        self._draw_point(student.last_input())
+        self._draw_point(inp)
 
     def _draw_output(self, output):
         glColor3f(0.5, 0.5, 1.0)
