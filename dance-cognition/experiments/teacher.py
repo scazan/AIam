@@ -75,3 +75,16 @@ class LiveTeacher(Teacher):
     def get_output(self):
         past_input, past_output = self._training_history[0]
         return past_output
+
+def pretrain(student, teacher, duration):
+    print "pre-training..."
+    t = 0
+    time_increment = 1.0 / 50
+    while t < duration:
+        if teacher.collected_enough_training_data():
+            inp = teacher.get_input()
+            output = teacher.get_output()
+            student.train(inp, output)
+        teacher.proceed(time_increment)
+        t += time_increment
+    print "ok"
