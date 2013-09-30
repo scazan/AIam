@@ -1,13 +1,17 @@
 from experiment import *
 
 class BvhStimulus(Stimulus):
+    def __init__(self, bvh_reader):
+        Stimulus.__init__(self)
+        self.bvh_reader = bvh_reader
+
     def get_value(self):
-        vertices = bvh_reader.get_skeleton_vertices(self._t * args.bvh_speed)
-        hips = bvh_reader.normalize_vector(bvh_reader.vertex_to_vector(vertices[0]))
+        vertices = self.bvh_reader.get_skeleton_vertices(self._t * args.bvh_speed)
+        hips = self.bvh_reader.normalize_vector(self.bvh_reader.vertex_to_vector(vertices[0]))
         return hips
 
     def get_duration(self):
-        return bvh_reader.get_duration() / args.bvh_speed
+        return self.bvh_reader.get_duration() / args.bvh_speed
 
 class CircularStimulus(Stimulus):
     def get_value(self):
@@ -42,7 +46,7 @@ args = parser.parse_args()
 experiment = Experiment(PointWindow, args)
 
 if args.bvh:
-    stimulus = BvhStimulus()
+    stimulus = BvhStimulus(experiment.bvh_reader)
 else:
     stimulus = CircularStimulus()
 
