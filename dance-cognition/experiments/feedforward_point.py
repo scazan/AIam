@@ -28,6 +28,9 @@ class Teacher:
     def get_output(self):
         return self.get_input()
 
+    def judge_error(self, expected_output, output):
+        return numpy.linalg.norm(expected_output - output)
+
 class BvhInput(Teacher):
     def __str__(self):
         return "BvhInput"
@@ -67,7 +70,7 @@ class NeuralNet:
 class Student:
     def __init__(self, teacher, pretrain_duration):
         self._teacher = teacher
-        self._input = None
+        self._last_input = None
         self._net = NeuralNet()
         self._input_history = collections.deque(maxlen=HISTORY_SIZE)
         self._training_history = collections.deque(maxlen=HISTORY_SIZE)
@@ -85,13 +88,13 @@ class Student:
         print "ok"
 
     def train(self):
-        self._input = self._teacher.get_input()
-        expected_output = self._teacher.get_output()
-        self._input_history.append(self._input)
+        self._last_input = self._teacher.get_input()
+        self._last_expected_output = self._teacher.get_output()
+        self._input_history.append(self._last_input)
 
         if self.received_enough_input():
             past_input = self._input_history[0]
-            self._training_history.append((past_input, expected_output))
+            self._training_history.append((past_input, self._last_expected_output))
             past_training_tuple = self._training_history[0]
             self._net.train(*past_training_tuple)
 
@@ -102,10 +105,34 @@ class Student:
         return len(self._input_history) == HISTORY_SIZE
 
     def last_input(self):
-        return self._input
+        return self._last_input
+
+    def last_expected_output(self):
+        return self._last_expected_output
 
     def process(self, inp):
         return self._net.process(inp)
+
+class LearningPlotter:
+    def __init__(self, student, teacher, duration):
+        self._student = student
+        self._teacher = teacher
+        self._duration = duration
+
+    def plot(self, filename):
+        f = open(filename, "w")
+        t = 0
+        time_increment = 1.0 / 50
+        while t < self._duration:
+            self._student.train()
+            self._student.proceed(time_increment)
+            if self._student.received_enough_input():
+                output = self._student.process(self._student.last_input())
+                expected_output = self._student.last_expected_output()
+                error = self._teacher.judge_error(expected_output, output)
+                print >>f, t, error
+            t += time_increment
+        f.close()
 
 class ExperimentWindow(window.Window):
     def __init__(self, *args):
@@ -151,6 +178,8 @@ parser.add_argument("-pretrain", type=float)
 parser.add_argument("-bvh")
 parser.add_argument("-bvh-speed", type=float, default=1.0)
 parser.add_argument("-bvh-scale", type=float, default=40)
+parser.add_argument("-plot", type=str)
+parser.add_argument("-plot-duration", type=float, default=10)
 window.Window.add_parser_arguments(parser)
 args = parser.parse_args()
 
@@ -166,4 +195,7 @@ print "teacher: %s" % teacher
 
 student = Student(teacher, args.pretrain)
 
-window.run(ExperimentWindow, args)
+if args.plot:
+    LearningPlotter(student, teacher, args.plot_duration).plot(args.plot)
+else:
+    window.run(ExperimentWindow, args)
