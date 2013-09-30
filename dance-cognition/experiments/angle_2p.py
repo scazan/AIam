@@ -9,7 +9,7 @@ class CircularStimulus(Stimulus):
     def get_duration(self):
         return 2 * math.pi
 
-class Angle2dWindow(ExperimentWindow):
+class AngleWindow(ExperimentWindow):
     def draw_input(self, inp):
         glColor3f(0, 1, 0)
         self._draw_angle(vector2d_to_radians(inp))
@@ -32,6 +32,7 @@ parser = ArgumentParser()
 add_parser_arguments(parser)
 args = parser.parse_args()
 
+experiment = Experiment(AngleWindow, args)
 stimulus = CircularStimulus()
 student = BackpropNet(2, 4, 2)
-run_experiment(student, stimulus, Angle2dWindow, args)
+experiment.run(student, stimulus)

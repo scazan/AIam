@@ -1,9 +1,6 @@
 from experiment import *
 
 class BvhStimulus(Stimulus):
-    def __str__(self):
-        return "BvhStimulus"
-
     def get_value(self):
         vertices = bvh_reader.get_skeleton_vertices(self._t * args.bvh_speed)
         hips = bvh_reader.normalize_vector(bvh_reader.vertex_to_vector(vertices[0]))
@@ -13,9 +10,6 @@ class BvhStimulus(Stimulus):
         return bvh_reader.get_duration() / args.bvh_speed
 
 class CircularStimulus(Stimulus):
-    def __str__(self):
-        return "CircularStimulus"
-
     def get_value(self):
         z = math.cos(self._t)
         y = math.sin(self._t)
@@ -45,12 +39,12 @@ parser = ArgumentParser()
 add_parser_arguments(parser)
 args = parser.parse_args()
 
+experiment = Experiment(PointWindow, args)
+
 if args.bvh:
     stimulus = BvhStimulus()
 else:
     stimulus = CircularStimulus()
 
-print "stimulus: %s" % stimulus
-
 student = BackpropNet(3, 6, 3)
-run_experiment(student, stimulus, PointWindow, args)
+experiment.run(student, stimulus)
