@@ -9,7 +9,6 @@ from OpenGL.GLU import *
 import window
 import math
 from bvh_reader import bvh_reader
-import numpy
 from backprop_net import BackpropNet
 from teacher import *
 from learning_plotter import LearningPlotter
@@ -41,7 +40,7 @@ class CircularStimulus(Stimulus):
         z = math.cos(self._t)
         y = math.sin(self._t)
         x = 0
-        return numpy.array([x, y, z])
+        return [x, y, z]
 
     def get_duration(self):
         return 2 * math.pi
