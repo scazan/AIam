@@ -1,5 +1,4 @@
 from experiment import *
-from bvh_reader.geo import vertex
 
 class BvhStimulus(Stimulus):
     def __init__(self, bvh_reader):
