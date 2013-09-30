@@ -17,19 +17,6 @@ from pybrain.datasets import SupervisedDataSet
 from bvh_reader import bvh_reader
 import numpy
 
-class Teacher:
-    def __init__(self):
-        self._t = 0
-
-    def proceed(self, time_increment):
-        self._t += time_increment
-
-    def get_output(self):
-        return self.get_input()
-
-    def judge_error(self, expected_output, output):
-        return numpy.linalg.norm(expected_output - output)
-
 class BvhInput(Teacher):
     def __str__(self):
         return "BvhInput"
@@ -61,6 +48,19 @@ class NeuralNet:
         dataset = SupervisedDataSet(3, 3)
         dataset.addSample(inp, output)
         self._trainer.trainOnDataset(dataset)
+
+class Teacher:
+    def __init__(self):
+        self._t = 0
+
+    def proceed(self, time_increment):
+        self._t += time_increment
+
+    def get_output(self):
+        return self.get_input()
+
+    def judge_error(self, expected_output, output):
+        return numpy.linalg.norm(expected_output - output)
 
 class Student:
     def __init__(self, teacher, pretrain_duration):
