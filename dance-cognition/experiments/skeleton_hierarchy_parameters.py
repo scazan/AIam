@@ -33,7 +33,8 @@ class SkeletonHierarchyParametrization:
 
 
     def parameters_to_joint(self, parameters):
-        hips = self.bvh_reader.get_hips(0)
+        any_frame = 0
+        hips = self.bvh_reader.get_hips(any_frame)
         self._parameters_to_joint_recurse(parameters, hips)
         return hips
 
