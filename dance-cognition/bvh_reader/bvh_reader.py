@@ -1,8 +1,7 @@
 # adopted from BVHplay (http://sourceforge.net/projects/bvhplay)
 
-from math import radians, cos, sin
 import cgkit.bvh
-from geo import vertex, edge
+from geo import *
 from numpy import array, dot
 import numpy
 
@@ -26,14 +25,21 @@ class joint:
         childjoint.hasparent = 1
         childjoint.parent = self
 
-    def get_vertices_recurse(self, vertices):
-        vertices.append(vertex(
+    def get_vertex(self):
+        return vertex(
             self.worldpos[0],
             self.worldpos[1],
-            self.worldpos[2]))
+            self.worldpos[2])
+
+    def get_vertices(self):
+        result = []
+        self.add_vertices_recurse(result)
+        return result
+
+    def add_vertices_recurse(self, vertices):
+        vertices.append(self.get_vertex())
         for child in self.children:
-            child.get_vertices_recurse(vertices)
-        return vertices
+            child.add_vertices_recurse(vertices)
 
     def populate_edges_from_vertices_recurse(self, vertices, edgelist):
         if self.hasparent:
@@ -88,11 +94,13 @@ class skeleton:
             if z < self.minz: self.minz = z
             if z > self.maxz: self.maxz = z
 
+    def get_hips(self, t=None):
+        self._process_bvhkeyframe(self.keyframes[t], self.hips)
+        return self.hips
+
     def get_vertices(self, t):
         self._process_bvhkeyframe(self.keyframes[t], self.hips)
-        result = []
-        self.hips.get_vertices_recurse(result)
-        return result
+        return self.hips.get_vertices()
 
     def populate_edges_from_vertices(self, vertices, edges):
         self.hips.populate_edges_from_vertices_recurse(vertices, edges)
@@ -115,8 +123,12 @@ class skeleton:
                 keyframe_dict["Xrotation"],
                 keyframe_dict["Yrotation"],
                 keyframe_dict["Zrotation"])
+            joint.rotation = [keyframe_dict["Xrotation"],
+                              keyframe_dict["Yrotation"],
+                              keyframe_dict["Zrotation"]]
         else:
             rotate = False
+            joint.rotation = None
 
         if joint.hasparent:
             parent_trtr = joint.parent.trtr
@@ -129,7 +141,6 @@ class skeleton:
         else:
             trtr = localtoworld
         joint.trtr = trtr
-
 
         worldpos = array([
                   localtoworld[0,3],
@@ -145,48 +156,6 @@ class skeleton:
 
         return frame_data_index
 
-
-def make_transposition_matrix(xpos, ypos, zpos):
-    return array([
-            [1.,    0.,    0.,    xpos],
-            [0.,    1.,    0.,    ypos],
-            [0.,    0.,    1.,    zpos],
-            [0.,    0.,    0.,    1.] ])
-
-def make_rotation_matrix(xrot, yrot, zrot):
-    return dot(make_z_rotation_matrix(zrot),
-               dot(make_y_rotation_matrix(yrot),
-                   make_x_rotation_matrix(xrot)))
-
-def make_z_rotation_matrix(degrees):
-    theta = radians(degrees)
-    mycos = cos(theta)
-    mysin = sin(theta)
-    return array([
-        [mycos,  -mysin, 0.,   0.],
-        [mysin,  mycos,  0.,   0.],
-        [0.,     0.,     1.,   0.],
-        [0.,     0.,     0.,   1.] ])
-
-def make_y_rotation_matrix(degrees):
-    theta = radians(degrees)
-    mycos = cos(theta)
-    mysin = sin(theta)
-    return array([
-        [mycos,  0.,    mysin, 0.],
-        [0.,     1.,    0.,    0.],
-        [-mysin, 0.,    mycos, 0.],
-        [0.,     0.,    0.,    1.] ])
-
-def make_x_rotation_matrix(degrees):
-    theta = radians(degrees)
-    mycos = cos(theta)
-    mysin = sin(theta)
-    return array([
-        [1.,     0.,     0.,     0.],
-        [0.,     mycos,  -mysin, 0.],
-        [0.,     mysin,  mycos,  0.],
-        [0.,     0.,     0.,     1.] ])
 
 
 class BvhReader(cgkit.bvh.BVHReader):
@@ -206,8 +175,15 @@ class BvhReader(cgkit.bvh.BVHReader):
     def get_duration(self):
         return self.skeleton.num_frames * self.skeleton.dt
 
+    def get_hips(self, t):
+        frame_index = self._frame_index(t)
+        return self.skeleton.get_hips(frame_index)
+
+    def _frame_index(self, t):
+        return int(t / self.skeleton.dt) % self.skeleton.num_frames
+
     def get_skeleton_vertices(self, t):
-        frame_index = int(t / self.skeleton.dt) % self.skeleton.num_frames
+        frame_index = self._frame_index(t)
         return self.skeleton.get_vertices(frame_index)
 
     def vertices_to_edges(self, vertices):
