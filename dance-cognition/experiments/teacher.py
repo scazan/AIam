@@ -1,6 +1,6 @@
 import random
 import numpy
-import pickle
+import cPickle
 import os
 
 class Teacher:
@@ -44,7 +44,7 @@ class Teacher:
         cache_filename = self._cache_filename()
         print "loading training data from %s..." % cache_filename
         f = open(cache_filename)
-        self._training_data = pickle.load(f)
+        self._training_data = cPickle.load(f)
         f.close()
         print "ok"
 
@@ -52,7 +52,7 @@ class Teacher:
         cache_filename = self._cache_filename()
         print "saving training data to %s..." % cache_filename
         f = open(cache_filename, "w")
-        pickle.dump(self._training_data, f)
+        cPickle.dump(self._training_data, f)
         f.close()
         print "ok"
 
