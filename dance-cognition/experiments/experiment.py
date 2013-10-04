@@ -31,19 +31,39 @@ class ExperimentWindow(window.Window):
         reduction = student.transform(inp)
         output = student.inverse_transform(reduction)
 
-        # self._draw_reduction(reduction)
+        self._draw_reduction(reduction)
 
         self.configure_3d_projection(-100, 0)
         self._draw_unit_cube()
         self.draw_input(inp)
         self.draw_output(output)
 
-    def _draw_reduction(self, value):
-        glTranslatef(100, 100, 0)
-        glColor3f(0, 1, 0)
-        glPointSize(3)
-        glBegin(GL_POINTS)
-        glVertex2f(value[0] * 100, value[1] * 100)
+    def _draw_reduction(self, reduction):
+        glTranslatef(0, 50, 0)
+        for n in range(len(reduction)):
+            glTranslatef(50, 0, 0)
+            glColor3f(.9, .9, .9)
+            self._draw_rectangle(0, 0, 10, 100)
+            glColor3f(0, 0, 0)
+            glLineWidth(3.0)
+            range_n = student.reduction_range[n]
+            y = (reduction[n] - range_n["min"]) / \
+                (range_n["max"] - range_n["min"]) * 100
+            self._draw_line(0, y, 10, y)
+
+    def _draw_rectangle(self, x1, y1, x2, y2):
+        glBegin(GL_POLYGON)
+        glVertex2f(x1, y1)
+        glVertex2f(x1, y2)
+        glVertex2f(x2, y2)
+        glVertex2f(x2, y1)
+        glVertex2f(x1, y1)
+        glEnd()
+
+    def _draw_line(self, x1, y1, x2, y2):
+        glBegin(GL_LINES)
+        glVertex2f(x1, y1)
+        glVertex2f(x2, y2)
         glEnd()
 
     def _draw_unit_cube(self):
@@ -97,6 +117,10 @@ class Experiment:
         print "training model..."
         student.fit(teacher.get_training_data())
         print student.explained_variance_ratio_, sum(student.explained_variance_ratio_)
+        print "ok"
+
+        print "probing model..."
+        student.probe(teacher.get_training_data())
         print "ok"
 
         print "saving model..."

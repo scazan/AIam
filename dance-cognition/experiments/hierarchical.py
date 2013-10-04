@@ -35,9 +35,9 @@ class HierarchicalWindow(ExperimentWindow):
         for edge in edges:
             vector1 = self.bvh_reader.normalize_vector(self.bvh_reader.vertex_to_vector(edge.v1))
             vector2 = self.bvh_reader.normalize_vector(self.bvh_reader.vertex_to_vector(edge.v2))
-            self._draw_line(vector1, vector2)
+            self._draw_line_between_vectors(vector1, vector2)
 
-    def _draw_line(self, v1, v2):
+    def _draw_line_between_vectors(self, v1, v2):
         glBegin(GL_LINES)
         glVertex3f(*v1)
         glVertex3f(*v2)
