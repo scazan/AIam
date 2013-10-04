@@ -7,6 +7,9 @@ class BvhStimulus(Stimulus):
         Stimulus.__init__(self)
         self.bvh_reader = bvh_reader
 
+    def filename(self):
+        return self.bvh_reader.filename
+
     def get_value(self):
         hips = self.bvh_reader.get_hips(self._t * args.bvh_speed)
         return skeleton_parametrization.joint_to_parameters(hips)
