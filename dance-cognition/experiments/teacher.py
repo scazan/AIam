@@ -4,8 +4,9 @@ import cPickle
 import os
 
 class Teacher:
-    def __init__(self, stimulus):
+    def __init__(self, stimulus, frame_rate):
         self._stimulus = stimulus
+        self._frame_rate = frame_rate
         if self._cacheable():
             if self._cache_exists():
                 self._load_training_data_from_cache()
@@ -18,7 +19,7 @@ class Teacher:
     def _create_training_data(self):
         print "creating training data..."
         self._training_data = []
-        time_increment = 1.0 / 50
+        time_increment = 1.0 / self._frame_rate
         t = 0
         stimulus_duration = self._stimulus.get_duration()
         while t < stimulus_duration:
@@ -42,7 +43,7 @@ class Teacher:
 
     def _load_training_data_from_cache(self):
         cache_filename = self._cache_filename()
-        print "loading training data from %s..." % cache_filename
+        print "loading training data from %s ..." % cache_filename
         f = open(cache_filename)
         self._training_data = cPickle.load(f)
         f.close()
@@ -50,14 +51,14 @@ class Teacher:
 
     def _save_training_data_to_cache(self):
         cache_filename = self._cache_filename()
-        print "saving training data to %s..." % cache_filename
+        print "saving training data to %s ..." % cache_filename
         f = open(cache_filename, "w")
         cPickle.dump(self._training_data, f)
         f.close()
         print "ok"
 
     def _cache_filename(self):
-        return self._stimulus.filename() + ".data"
+        return "%s.%sfps.data" % (self._stimulus.filename(), self._frame_rate)
 
     def _cacheable(self):
         return hasattr(self._stimulus, "filename")

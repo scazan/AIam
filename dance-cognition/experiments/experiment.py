@@ -54,6 +54,7 @@ class ExperimentWindow(window.Window):
 def add_parser_arguments(parser):
     window.Window.add_parser_arguments(parser)
     parser.add_argument("-train")
+    parser.add_argument("-training-data-frame-rate", type=int, default=50)
     parser.add_argument("-model")
     parser.add_argument("-bvh")
     parser.add_argument("-bvh-speed", type=float, default=1.0)
@@ -79,7 +80,7 @@ class Experiment:
         student = _student
 
         if self.args.train:
-            teacher = Teacher(stimulus)
+            teacher = Teacher(stimulus, self.args.training_data_frame_rate)
             self._train(student, teacher, self.args.train)
 
             # if self.args.plot:
