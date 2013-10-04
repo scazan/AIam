@@ -1,5 +1,6 @@
 from experiment import *
 from skeleton_hierarchy_parameters import *
+from dimensionality_reduction import PCA
 
 class BvhStimulus(Stimulus):
     def __init__(self, bvh_reader):
@@ -9,6 +10,9 @@ class BvhStimulus(Stimulus):
     def get_value(self):
         hips = self.bvh_reader.get_hips(self._t * args.bvh_speed)
         return skeleton_parametrization.joint_to_parameters(hips)
+
+    def get_duration(self):
+        return self.bvh_reader.get_duration()
 
 class HierarchicalWindow(ExperimentWindow):
     def draw_input(self, parameters):
@@ -45,8 +49,5 @@ skeleton_parametrization = SkeletonHierarchyParametrization(experiment.bvh_reade
 stimulus = BvhStimulus(experiment.bvh_reader)
 num_skeleton_parameters = len(stimulus.get_value())
 
-student = BackpropNet(
-    num_skeleton_parameters,
-    num_skeleton_parameters * 2,
-    num_skeleton_parameters)
+student = PCA(n_components=4)
 experiment.run(student, stimulus)

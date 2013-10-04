@@ -8,10 +8,10 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 import window
 import math
-from backprop_net import BackpropNet
 from teacher import *
 from learning_plotter import LearningPlotter
 from bvh_reader import bvh_reader as bvh_reader_module
+import pickle
 
 class Stimulus:
     def __init__(self):
@@ -26,19 +26,25 @@ class ExperimentWindow(window.Window):
         window.Window.__init__(self, args)
 
     def render(self):
-        if teacher.collected_enough_training_data():
-            inp = teacher.get_input()
-            expected_output = teacher.get_output()
-            student.train(inp, expected_output)
-        teacher.proceed(self.time_increment)
+        stimulus.proceed(self.time_increment)
+        inp = stimulus.get_value()
+        reduction = student.transform(inp)
+        output = student.inverse_transform(reduction)
+
+        # self._draw_reduction(reduction)
 
         self.configure_3d_projection(-100, 0)
         self._draw_unit_cube()
-
-        inp = stimulus.get_value()
-        output = student.process(inp)
         self.draw_input(inp)
         self.draw_output(output)
+
+    def _draw_reduction(self, value):
+        glTranslatef(100, 100, 0)
+        glColor3f(0, 1, 0)
+        glPointSize(3)
+        glBegin(GL_POINTS)
+        glVertex2f(value[0] * 100, value[1] * 100)
+        glEnd()
 
     def _draw_unit_cube(self):
         glLineWidth(1.0)
@@ -47,13 +53,13 @@ class ExperimentWindow(window.Window):
 
 def add_parser_arguments(parser):
     window.Window.add_parser_arguments(parser)
-    parser.add_argument("-pretrain", type=float)
+    parser.add_argument("-train")
+    parser.add_argument("-model")
     parser.add_argument("-bvh")
     parser.add_argument("-bvh-speed", type=float, default=1.0)
     parser.add_argument("-bvh-scale", type=float, default=40)
     parser.add_argument("-plot", type=str)
     parser.add_argument("-plot-duration", type=float, default=10)
-    parser.add_argument("-shuffle-input", action="store_true")
 
 
 class Experiment:
@@ -72,15 +78,36 @@ class Experiment:
         stimulus = _stimulus
         student = _student
 
-        if self.args.shuffle_input:
-            teacher = ShufflingTeacher(stimulus)
-        else:
-            teacher = LiveTeacher(stimulus)
+        if self.args.train:
+            teacher = Teacher(stimulus)
+            self._train(student, teacher, self.args.train)
 
-        if self.args.pretrain > 0:
-            pretrain(student, teacher, self.args.pretrain)
+            # if self.args.plot:
+            #     LearningPlotter(student, teacher, self.args.plot_duration).plot(self.args.plot)
 
-        if self.args.plot:
-            LearningPlotter(student, teacher, self.args.plot_duration).plot(self.args.plot)
-        else:
+        elif self.args.model:
+            student = self._load_model(self.args.model)
             self.window_class(self, self.args).run()
+
+        else:
+            raise Exception("a model must either be loaded or trained")
+
+    def _train(self, student, teacher, model_filename):
+        print "training model..."
+        student.fit(teacher.get_training_data())
+        print student.explained_variance_ratio_, sum(student.explained_variance_ratio_)
+        print "ok"
+
+        print "saving model..."
+        f = open(model_filename, "w")
+        pickle.dump(student, f)
+        f.close()
+        print "ok"
+        
+    def _load_model(self, model_filename):
+        print "loading model..."
+        f = open(model_filename)
+        model = pickle.load(f)
+        f.close()
+        print "ok"
+        return model

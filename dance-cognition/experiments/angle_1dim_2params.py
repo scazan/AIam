@@ -1,5 +1,6 @@
 from experiment import *
 from angle_parameters import radians_to_vector2d, vector2d_to_radians
+from dimensionality_reduction import PCA
 
 class CircularStimulus(Stimulus):
     def get_value(self):
@@ -34,5 +35,5 @@ args = parser.parse_args()
 
 experiment = Experiment(AngleWindow, args)
 stimulus = CircularStimulus()
-student = BackpropNet(2, 4, 2)
+student = PCA(n_components=1)
 experiment.run(student, stimulus)

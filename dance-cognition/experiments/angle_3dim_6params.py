@@ -1,5 +1,6 @@
 from experiment import *
 from angle_parameters import radians3d_to_vector6d, vector6d_to_radians3d
+from dimensionality_reduction import PCA
 
 class SphericalStimulus(Stimulus):
     def get_value(self):
@@ -36,5 +37,5 @@ args = parser.parse_args()
 
 experiment = Experiment(AngleWindow, args)
 stimulus = SphericalStimulus()
-student = BackpropNet(6, 12, 6)
+student = PCA(n_components=1)
 experiment.run(student, stimulus)
