@@ -20,46 +20,22 @@ class Stimulus:
     def proceed(self, time_increment):
         self._t += time_increment
 
-class Improviser:
-    def __init__(self):
-        self._n_components = student.n_components
-        self._value = [random.random() for n in range(self._n_components)]
-
-    def proceed(self, time_increment):
-        for n in range(self._n_components):
-            self._value[n] = self._clamp(
-                self._value[n] +
-                random.uniform(-.5, .5) * min(time_increment*10, 1.))
-
-    def value(self):
-        return self._value
-
-    def _clamp(self, x):
-        return min(max(x, 0.), 1.)
-    
 class ExperimentWindow(window.Window):
     def __init__(self, experiment, args):
         self.bvh_reader = experiment.bvh_reader
         window.Window.__init__(self, args)
-        if self.args.improvise:
-            self._improviser = Improviser()
 
     def render(self):
-        if self.args.improvise:
-            self._improviser.proceed(self.time_increment)
-            reduction = self._improviser.value()
-        else:
-            stimulus.proceed(self.time_increment)
-            inp = stimulus.get_value()
-            reduction = student.transform(inp)
+        stimulus.proceed(self.time_increment)
+        inp = stimulus.get_value()
+        reduction = student.transform(inp)
         output = student.inverse_transform(reduction)
 
         self._draw_reduction(reduction)
 
         self.configure_3d_projection(-100, 0)
         self._draw_unit_cube()
-        if not self.args.improvise:
-            self.draw_input(inp)
+        self.draw_input(inp)
         self.draw_output(output)
 
     def _draw_reduction(self, reduction):
@@ -100,7 +76,6 @@ def add_parser_arguments(parser):
     parser.add_argument("-train")
     parser.add_argument("-training-data-frame-rate", type=int, default=50)
     parser.add_argument("-model")
-    parser.add_argument("-improvise", action="store_true")
     parser.add_argument("-bvh")
     parser.add_argument("-bvh-speed", type=float, default=1.0)
     parser.add_argument("-bvh-scale", type=float, default=40)
