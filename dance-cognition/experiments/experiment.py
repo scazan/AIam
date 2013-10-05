@@ -6,12 +6,14 @@ from argparse import ArgumentParser
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
-import window
+import wx
+from wx import glcanvas
 import math
 from teacher import *
 from learning_plotter import LearningPlotter
 from bvh_reader import bvh_reader as bvh_reader_module
 import pickle
+from stopwatch import Stopwatch
 
 class Stimulus:
     def __init__(self):
@@ -20,12 +22,68 @@ class Stimulus:
     def proceed(self, time_increment):
         self._t += time_increment
 
-class ExperimentWindow(window.Window):
+class ExperimentWindow(wx.Frame):
     def __init__(self, experiment, args):
         self.bvh_reader = experiment.bvh_reader
-        window.Window.__init__(self, args)
+        self.timer_duration = 1000. / args.frame_rate
+        self.time_increment = 0
+        self.stopwatch = Stopwatch()
 
-    def render(self):
+        self.app = wx.App(False)
+        style = wx.DEFAULT_FRAME_STYLE | wx.NO_FULL_REPAINT_ON_RESIZE
+        wx.Frame.__init__(self, None, wx.ID_ANY, "",
+                          size=wx.Size(800, 600), style=style)
+        self.canvas = glcanvas.GLCanvas(
+            self,
+            attribList=(glcanvas.WX_GL_RGBA,
+                        glcanvas.WX_GL_DOUBLEBUFFER,
+                        glcanvas.WX_GL_DEPTH_SIZE, 24))
+        self.canvas.Bind(wx.EVT_SIZE, self._process_size_event)
+        self.canvas.Bind(wx.EVT_PAINT, self._paint_canvas)
+        self.timer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER,self._on_timer)
+        self.GLinitialized = False
+
+    def run(self):
+        self.Show()
+        self.app.MainLoop()
+
+    def _process_size_event(self, event):
+        self._resized_canvas()
+        event.Skip()
+
+    def _resized_canvas(self):
+        if self.canvas.GetContext():
+            self.Show()
+            self.canvas.SetCurrent()
+            size = self.canvas.GetClientSize()
+            self._canvas_width = size.width
+            self._canvas_height = size.height
+            self._aspect_ratio = float(size.width) / size.height
+            self.canvas.Refresh(False)
+
+    def _paint_canvas(self, event):
+        self.canvas.SetCurrent()
+        if not self.GLinitialized:
+            self.InitGL()
+            self._resized_canvas()
+            self.GLinitialized = True
+            self.stopwatch.start()
+            self.previous_frame_time = self.current_time()
+        self._draw_canvas()
+        self.timer.Start(self.timer_duration)
+        event.Skip()
+
+    def _on_timer(self, event):
+        self.canvas.Refresh()
+
+    def _draw_canvas(self):
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        glLoadIdentity()
+
+        self.now = self.current_time()
+        self.time_increment = self.now - self.previous_frame_time
+
         stimulus.proceed(self.time_increment)
         inp = stimulus.get_value()
         reduction = student.transform(inp)
@@ -37,6 +95,19 @@ class ExperimentWindow(window.Window):
         self._draw_unit_cube()
         self.draw_input(inp)
         self.draw_output(output)
+
+        self.canvas.SwapBuffers()
+        self.previous_frame_time = self.now
+
+    def current_time(self):
+        return self.stopwatch.get_elapsed_time()
+
+    def InitGL(self):
+        glClearColor(1.0, 1.0, 1.0, 0.0)
+        glClearAccum(0.0, 0.0, 0.0, 0.0)
+        glClearDepth(1.0)
+        glShadeModel(GL_SMOOTH)
+        glutInit(sys.argv)
 
     def _draw_reduction(self, reduction):
         glTranslatef(0, 50, 0)
@@ -71,8 +142,35 @@ class ExperimentWindow(window.Window):
         glColor4f(0,0,0,0.2)
         glutWireCube(2.0)
 
+    def configure_3d_projection(self, pixdx=0, pixdy=0):
+        self.fovy = 45
+        self.near = 0.1
+        self.far = 100.0
+
+        fov2 = ((self.fovy*math.pi) / 180.0) / 2.0
+        top = self.near * math.tan(fov2)
+        bottom = -top
+        right = top * self._aspect_ratio
+        left = -right
+        xwsize = right - left
+        ywsize = top - bottom
+        dx = -(pixdx*xwsize/self._canvas_width)
+        dy = -(pixdy*ywsize/self._canvas_height)
+
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        glFrustum (left + dx, right + dx, bottom + dy, top + dy, self.near, self.far)
+        glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
+
+        CAMERA_POSITION = [-8, -0.5, -1.35]
+        CAMERA_Y_ORIENTATION = -88
+        CAMERA_X_ORIENTATION = 9
+        glRotatef(CAMERA_X_ORIENTATION, 1.0, 0.0, 0.0)
+        glRotatef(CAMERA_Y_ORIENTATION, 0.0, 1.0, 0.0)
+        glTranslatef(*CAMERA_POSITION)
+
 def add_parser_arguments(parser):
-    window.Window.add_parser_arguments(parser)
     parser.add_argument("-train")
     parser.add_argument("-training-data-frame-rate", type=int, default=50)
     parser.add_argument("-model")
@@ -81,6 +179,7 @@ def add_parser_arguments(parser):
     parser.add_argument("-bvh-scale", type=float, default=40)
     parser.add_argument("-plot", type=str)
     parser.add_argument("-plot-duration", type=float, default=10)
+    parser.add_argument("-frame-rate", type=float, default=50.0)
 
 
 class Experiment:
