@@ -109,14 +109,29 @@ class ExperimentToolbar(QtGui.QWidget):
 
     def refresh(self):
         for n in range(self.experiment.student.n_components):
-            range_n = self.experiment.student.reduction_range[n]
-            value = (self.experiment.reduction[n] - range_n["min"]) / \
-                (range_n["max"] - range_n["min"]) * 100
-            self._sliders[n].setValue(value)
+            self._sliders[n].setValue(
+                self._reduction_value_to_slider_value(n, self.experiment.reduction[n]))
+
+    def _reduction_value_to_slider_value(self, n, value):
+        range_n = self.experiment.student.reduction_range[n]
+        return (value - range_n["min"]) / \
+            (range_n["max"] - range_n["min"]) * 100
+
+    def _slider_value_to_reduction_value(self, n, value):
+        range_n = self.experiment.student.reduction_range[n]
+        return float(value) / 100 * (range_n["max"] - range_n["min"]) + \
+            range_n["min"]
+
+    def get_reduction(self):
+        return numpy.array(
+            [self._slider_value_to_reduction_value(n, self._sliders[n].value())
+             for n in range(self.experiment.student.n_components)])
+
 
 class MainWindow(QtGui.QWidget):
     def __init__(self, experiment, scene_widget_class, args):
         self.experiment = experiment
+        self.args = args
         QtGui.QWidget.__init__(self)
         self.resize(800, 640)
         layout = QtGui.QHBoxLayout()
@@ -124,8 +139,8 @@ class MainWindow(QtGui.QWidget):
         self._scene.setFixedSize(400, 640)
         layout.addWidget(self._scene)
 
-        self._toolbar = ExperimentToolbar(self, experiment, args)
-        layout.addWidget(self._toolbar)
+        self.toolbar = ExperimentToolbar(self, experiment, args)
+        layout.addWidget(self.toolbar)
 
         self.setLayout(layout)
 
@@ -147,7 +162,8 @@ class MainWindow(QtGui.QWidget):
             self.experiment.proceed(self.time_increment)
 
             self._scene.updateGL()
-            self._toolbar.refresh()
+            if not self.args.interactive_control:
+                self.toolbar.refresh()
 
         self.previous_frame_time = self.now
         self._frame_count += 1
@@ -165,7 +181,7 @@ def add_parser_arguments(parser):
     parser.add_argument("-plot", type=str)
     parser.add_argument("-plot-duration", type=float, default=10)
     parser.add_argument("-frame-rate", type=float, default=50.0)
-
+    parser.add_argument("-interactive-control", action="store_true")
 
 class Experiment:
     def __init__(self, scene, args):
@@ -196,8 +212,8 @@ class Experiment:
             self.student = self._load_model(self.args.model)
 
             app = QtGui.QApplication(sys.argv)
-            win = MainWindow(self, self._scene_class, self.args)
-            win.show()
+            self.window = MainWindow(self, self._scene_class, self.args)
+            self.window.show()
             app.exec_()
 
         else:
@@ -229,7 +245,10 @@ class Experiment:
         return model
 
     def proceed(self, time_increment):
-        self.stimulus.proceed(time_increment)
-        self.input = self.stimulus.get_value()
-        self.reduction = self.student.transform(self.input)
+        if self.args.interactive_control:
+            self.reduction = self.window.toolbar.get_reduction()
+        else:
+            self.stimulus.proceed(time_increment)
+            self.input = self.stimulus.get_value()
+            self.reduction = self.student.transform(self.input)
         self.output = self.student.inverse_transform(self.reduction)
