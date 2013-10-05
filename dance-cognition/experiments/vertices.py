@@ -12,7 +12,7 @@ class BvhStimulus(Stimulus):
              for vertex in vertices])
         return normalized_vectors.flatten()
 
-class VerticesWindow(ExperimentWindow):
+class VerticesScene(ExperimentScene):
     def draw_input(self, inp):
         glColor3f(0, 1, 0)
         input_vectors = inp.reshape([self.bvh_reader.num_joints, 3])
@@ -43,7 +43,7 @@ parser = ArgumentParser()
 add_parser_arguments(parser)
 args = parser.parse_args()
 
-experiment = Experiment(VerticesWindow, args)
+experiment = Experiment(VerticesScene, args)
 stimulus = BvhStimulus(experiment.bvh_reader)
 num_joints = experiment.bvh_reader.num_joints
 

@@ -17,7 +17,7 @@ class BvhStimulus(Stimulus):
     def get_duration(self):
         return self.bvh_reader.get_duration()
 
-class HierarchicalWindow(ExperimentWindow):
+class HierarchicalScene(ExperimentScene):
     def draw_input(self, parameters):
         glColor3f(0, 1, 0)
         self._draw_skeleton(parameters)
@@ -47,7 +47,7 @@ parser = ArgumentParser()
 add_parser_arguments(parser)
 args = parser.parse_args()
 
-experiment = Experiment(HierarchicalWindow, args)
+experiment = Experiment(HierarchicalScene, args=args)
 skeleton_parametrization = SkeletonHierarchyParametrization(experiment.bvh_reader)
 stimulus = BvhStimulus(experiment.bvh_reader)
 num_skeleton_parameters = len(stimulus.get_value())

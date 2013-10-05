@@ -10,7 +10,7 @@ class CircularStimulus(Stimulus):
     def get_duration(self):
         return 2 * math.pi
 
-class AngleWindow(ExperimentWindow):
+class AngleScene(ExperimentScene):
     def draw_input(self, inp):
         glColor3f(0, 1, 0)
         self._draw_angle(vector2d_to_radians(inp))
@@ -33,7 +33,7 @@ parser = ArgumentParser()
 add_parser_arguments(parser)
 args = parser.parse_args()
 
-experiment = Experiment(AngleWindow, args)
+experiment = Experiment(AngleScene, args)
 stimulus = CircularStimulus()
 student = PCA(n_components=1)
 experiment.run(student, stimulus)
