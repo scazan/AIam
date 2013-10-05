@@ -6,8 +6,9 @@ from argparse import ArgumentParser
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
-import wx
-from wx import glcanvas
+from PyQt4 import QtCore
+from PyQt4 import QtGui
+from PyQt4 import QtOpenGL
 import math
 from teacher import *
 from learning_plotter import LearningPlotter
@@ -22,68 +23,16 @@ class Stimulus:
     def proceed(self, time_increment):
         self._t += time_increment
 
-class ExperimentWindow(wx.Frame):
-    def __init__(self, experiment, args):
+class ExperimentWindow(QtOpenGL.QGLWidget):
+    def __init__(self, parent, experiment, args):
+        self.parent = parent
         self.bvh_reader = experiment.bvh_reader
-        self.timer_duration = 1000. / args.frame_rate
         self.time_increment = 0
         self.stopwatch = Stopwatch()
+        self._frame_count = 0
+        QtOpenGL.QGLWidget.__init__(self, parent)
 
-        self.app = wx.App(False)
-        style = wx.DEFAULT_FRAME_STYLE | wx.NO_FULL_REPAINT_ON_RESIZE
-        wx.Frame.__init__(self, None, wx.ID_ANY, "",
-                          size=wx.Size(800, 600), style=style)
-        self.canvas = glcanvas.GLCanvas(
-            self,
-            attribList=(glcanvas.WX_GL_RGBA,
-                        glcanvas.WX_GL_DOUBLEBUFFER,
-                        glcanvas.WX_GL_DEPTH_SIZE, 24))
-        self.canvas.Bind(wx.EVT_SIZE, self._process_size_event)
-        self.canvas.Bind(wx.EVT_PAINT, self._paint_canvas)
-        self.timer = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER,self._on_timer)
-        self.GLinitialized = False
-
-    def run(self):
-        self.Show()
-        self.app.MainLoop()
-
-    def _process_size_event(self, event):
-        self._resized_canvas()
-        event.Skip()
-
-    def _resized_canvas(self):
-        if self.canvas.GetContext():
-            self.Show()
-            self.canvas.SetCurrent()
-            size = self.canvas.GetClientSize()
-            self._canvas_width = size.width
-            self._canvas_height = size.height
-            self._aspect_ratio = float(size.width) / size.height
-            self.canvas.Refresh(False)
-
-    def _paint_canvas(self, event):
-        self.canvas.SetCurrent()
-        if not self.GLinitialized:
-            self.InitGL()
-            self._resized_canvas()
-            self.GLinitialized = True
-            self.stopwatch.start()
-            self.previous_frame_time = self.current_time()
-        self._draw_canvas()
-        self.timer.Start(self.timer_duration)
-        event.Skip()
-
-    def _on_timer(self, event):
-        self.canvas.Refresh()
-
-    def _draw_canvas(self):
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        glLoadIdentity()
-
-        self.now = self.current_time()
-        self.time_increment = self.now - self.previous_frame_time
-
+    def render(self):
         stimulus.proceed(self.time_increment)
         inp = stimulus.get_value()
         reduction = student.transform(inp)
@@ -96,18 +45,42 @@ class ExperimentWindow(wx.Frame):
         self.draw_input(inp)
         self.draw_output(output)
 
-        self.canvas.SwapBuffers()
-        self.previous_frame_time = self.now
-
     def current_time(self):
         return self.stopwatch.get_elapsed_time()
 
-    def InitGL(self):
+    def initializeGL(self):
         glClearColor(1.0, 1.0, 1.0, 0.0)
         glClearAccum(0.0, 0.0, 0.0, 0.0)
         glClearDepth(1.0)
         glShadeModel(GL_SMOOTH)
         glutInit(sys.argv)
+
+    def resizeGL(self, window_width, window_height):
+        self.window_width = window_width
+        self.window_height = window_height
+        if window_height == 0:
+            window_height = 1
+        glViewport(0, 0, window_width, window_height)
+        self.margin = 0
+        self.width = window_width - 2*self.margin
+        self.height = window_height - 2*self.margin
+        self._aspect_ratio = float(window_width) / window_height
+        self.min_dimension = min(self.width, self.height)
+
+    def paintGL(self):
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        glLoadIdentity()
+
+        self.now = self.current_time()
+        if self._frame_count == 0:
+            self.stopwatch.start()
+        else:
+            self.time_increment = self.now - self.previous_frame_time
+            glTranslatef(self.margin, self.margin, 0)
+            self.render()
+
+        self.previous_frame_time = self.now
+        self._frame_count += 1
 
     def _draw_reduction(self, reduction):
         glTranslatef(0, 50, 0)
@@ -154,8 +127,8 @@ class ExperimentWindow(wx.Frame):
         left = -right
         xwsize = right - left
         ywsize = top - bottom
-        dx = -(pixdx*xwsize/self._canvas_width)
-        dy = -(pixdy*ywsize/self._canvas_height)
+        dx = -(pixdx*xwsize/self.width)
+        dy = -(pixdy*ywsize/self.height)
 
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
@@ -169,6 +142,22 @@ class ExperimentWindow(wx.Frame):
         glRotatef(CAMERA_X_ORIENTATION, 1.0, 0.0, 0.0)
         glRotatef(CAMERA_Y_ORIENTATION, 0.0, 1.0, 0.0)
         glTranslatef(*CAMERA_POSITION)
+
+
+class MainWindow(QtGui.QMainWindow):
+    def __init__(self, experiment, main_widget_class, args):
+        QtGui.QMainWindow.__init__(self)
+
+        self.resize(800, 640)
+
+        glWidget = main_widget_class(self, experiment, args)
+        self.setCentralWidget(glWidget)
+
+        timer = QtCore.QTimer(self)
+        timer.setInterval(1000. / args.frame_rate)
+        QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), glWidget.updateGL)
+        timer.start()
+
 
 def add_parser_arguments(parser):
     parser.add_argument("-train")
@@ -207,7 +196,11 @@ class Experiment:
 
         elif self.args.model:
             student = self._load_model(self.args.model)
-            self.window_class(self, self.args).run()
+
+            app = QtGui.QApplication(sys.argv)
+            win = MainWindow(self, self.window_class, self.args)
+            win.show()
+            app.exec_()
 
         else:
             raise Exception("a model must either be loaded or trained")
