@@ -48,8 +48,8 @@ def get_frame_time(input_path):
 num_frames = sum([get_num_frames(input_path) for input_path in input_paths])
 output = open(output_path, "w")
 add_header(input_paths[0])
-print >>output, "Frames: %d" % num_frames
-print >>output, "Frame Time: %d" % get_frame_time(input_paths[0])
 print >>output, "MOTION"
+print >>output, "Frames: %d" % num_frames
+print >>output, "Frame Time: %f" % get_frame_time(input_paths[0])
 for input_path in input_paths:
     add_motion_data(input_path)
