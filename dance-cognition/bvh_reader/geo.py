@@ -18,9 +18,9 @@ def make_transposition_matrix(xpos, ypos, zpos):
             [0.,    0.,    0.,    1.] ])
 
 def make_rotation_matrix(xrot, yrot, zrot):
-    return dot(make_z_rotation_matrix(zrot),
-               dot(make_y_rotation_matrix(yrot),
-                   make_x_rotation_matrix(xrot)))
+    return dot(dot(make_x_rotation_matrix(xrot),
+                   make_y_rotation_matrix(yrot)),
+               make_z_rotation_matrix(zrot))
 
 def make_z_rotation_matrix(degrees):
     theta = radians(degrees)
