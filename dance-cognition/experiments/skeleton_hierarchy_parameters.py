@@ -9,11 +9,11 @@ class SkeletonHierarchyParametrization:
 
     def joint_to_parameters(self, hips):
         parameters = []
-        self._add_joint_parameters_recurse(hips, parameters)
+        self._add_joint_parameters_recurse(hips, parameters, is_hips=True)
         return parameters
 
-    def _add_joint_parameters_recurse(self, joint, parameters):
-        if not joint.hasparent:
+    def _add_joint_parameters_recurse(self, joint, parameters, is_hips=False):
+        if not joint.hasparent and not is_hips:
             self._add_joint_transposition_parameters(joint, parameters)
         if joint.rotation:
             self._add_joint_rotation_parameters(joint, parameters)
@@ -35,20 +35,22 @@ class SkeletonHierarchyParametrization:
     def parameters_to_joint(self, parameters):
         any_frame = 0
         hips = self.bvh_reader.get_hips(any_frame)
-        self._parameters_to_joint_recurse(parameters, hips)
+        self._parameters_to_joint_recurse(parameters, hips, is_hips=True)
         return hips
 
-    def _parameters_to_joint_recurse(self, parameters, joint, parameter_index=0):
+    def _parameters_to_joint_recurse(self, parameters, joint, parameter_index=0, is_hips=False):
         if joint.hasparent:
             parent_trtr = joint.parent.trtr
             localtoworld = dot(parent_trtr, joint.transposition_matrix)
         else:
-            normalized_vector = parameters[parameter_index:parameter_index+3]
-            parameter_index += 3
-            scaled_vector = self.bvh_reader.skeleton_scale_vector(normalized_vector)
-            transposition_matrix = make_transposition_matrix(*scaled_vector)
-
-            localtoworld = dot(joint.transposition_matrix, transposition_matrix)            
+            if is_hips:
+                localtoworld = joint.transposition_matrix
+            else:
+                normalized_vector = parameters[parameter_index:parameter_index+3]
+                parameter_index += 3
+                scaled_vector = self.bvh_reader.skeleton_scale_vector(normalized_vector)
+                transposition_matrix = make_transposition_matrix(*scaled_vector)
+                localtoworld = dot(joint.transposition_matrix, transposition_matrix)
             trtr = localtoworld
 
         if joint.rotation:
