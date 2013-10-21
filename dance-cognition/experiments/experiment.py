@@ -177,7 +177,6 @@ def add_parser_arguments(parser):
     parser.add_argument("-model")
     parser.add_argument("-bvh")
     parser.add_argument("-bvh-speed", type=float, default=1.0)
-    parser.add_argument("-bvh-scale", type=float, default=40)
     parser.add_argument("-plot", type=str)
     parser.add_argument("-plot-duration", type=float, default=10)
     parser.add_argument("-frame-rate", type=float, default=50.0)
@@ -189,7 +188,6 @@ class Experiment:
         self._scene_class = scene
         if args.bvh:
             self.bvh_reader = bvh_reader_module.BvhReader(args.bvh)
-            self.bvh_reader.scale_factor = args.bvh_scale
             self.bvh_reader.read()
         else:
             self.bvh_reader = None

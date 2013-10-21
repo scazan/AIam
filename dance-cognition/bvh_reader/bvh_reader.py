@@ -1,9 +1,11 @@
-# adopted from BVHplay (http://sourceforge.net/projects/bvhplay)
+# adopted from BVHplay (http://sourceforge.
 
 import cgkit.bvh
 from geo import *
 from numpy import array, dot
 import numpy
+import os
+import cPickle
 
 class joint:
     def __init__(self, name, index):
@@ -59,40 +61,6 @@ class skeleton:
         self.keyframes = keyframes
         self.num_frames = num_frames
         self.dt = dt
-
-# Precompute hips min and max values in all 3 dimensions.
-# First determine how far into a keyframe we need to look to find the
-# XYZ hip positions
-        offset = 0
-        for channel in self.hips.channels:
-            if(channel == "Xposition"): xoffset = offset
-            if(channel == "Yposition"): yoffset = offset
-            if(channel == "Zposition"): zoffset = offset
-            offset += 1
-        self.minx = 999999999999
-        self.miny = 999999999999
-        self.minz = 999999999999
-        self.maxx = -999999999999
-        self.maxy = -999999999999
-        self.maxz = -999999999999
-# We can't just look at the keyframe values, we also have to correct
-# by the static hips OFFSET value, since sometimes this can be quite
-# large.  I feel it's bad BVH file form to have a non-zero HIPS offset
-# position, but there are definitely files that do this.
-        xcorrect = self.hips.transposition[0]
-        ycorrect = self.hips.transposition[1]
-        zcorrect = self.hips.transposition[2]
-
-        for keyframe in self.keyframes:
-            x = keyframe[xoffset] + xcorrect
-            y = keyframe[yoffset] + ycorrect
-            z = keyframe[zoffset] + zcorrect
-            if x < self.minx: self.minx = x
-            if x > self.maxx: self.maxx = x
-            if y < self.miny: self.miny = y
-            if y > self.maxy: self.maxy = y
-            if z < self.minz: self.minz = z
-            if z > self.maxz: self.maxz = z
 
     def get_hips(self, t=None):
         self._process_bvhkeyframe(self.keyframes[t], self.hips)
@@ -157,13 +125,43 @@ class skeleton:
         return frame_data_index
 
 
+class ScaleInfo:
+    min_x = None
 
 class BvhReader(cgkit.bvh.BVHReader):
-    def __init__(self, *args):
-        cgkit.bvh.BVHReader.__init__(self, *args)
-        self.scale_factor = 1
-
     def read(self):
+        if self._cache_exists():
+            self._read()
+            self._load_from_cache()
+        else:
+            self._read()
+            self._probe_range()
+            self._save_to_cache()
+
+    def _cache_exists(self):
+        return os.path.exists(self._cache_filename())
+
+    def _load_from_cache(self):
+        cache_filename = self._cache_filename()
+        print "loading BVH cache from %s ..." % cache_filename
+        f = open(cache_filename)
+        self._scale_info = ScaleInfo()
+        self._scale_info.__dict__ = cPickle.load(f)
+        f.close()
+        print "ok"
+
+    def _save_to_cache(self):
+        cache_filename = self._cache_filename()
+        print "saving BVH cache to %s ..." % cache_filename
+        f = open(cache_filename, "w")
+        cPickle.dump(self._scale_info.__dict__, f)
+        f.close()
+        print "ok"
+
+    def _cache_filename(self):
+        return "%s.cache" % self.filename
+
+    def _read(self):
         cgkit.bvh.BVHReader.read(self)
         self._joint_index = 0
         hips = self._process_node(self.root)
@@ -199,15 +197,15 @@ class BvhReader(cgkit.bvh.BVHReader):
 
     def normalize_vector(self, v):
         return array([
-            (v[0] - self.skeleton.minx) / self.scale_factor,
-            (v[1] - self.skeleton.miny) / self.scale_factor,
-            (v[2] - self.skeleton.minz) / self.scale_factor])
+            (v[0] - self._scale_info.min_x) / self._scale_info.scale_factor * 2 - 1,
+            (v[1] - self._scale_info.min_y) / self._scale_info.scale_factor * 2 - 1,
+            (v[2] - self._scale_info.min_z) / self._scale_info.scale_factor * 2 - 1])
 
     def skeleton_scale_vector(self, v):
         return array([
-            v[0] * self.scale_factor + self.skeleton.minx,
-            v[1] * self.scale_factor + self.skeleton.miny,
-            v[2] * self.scale_factor + self.skeleton.minz])
+            v[0] * self._scale_info.scale_factor + self._scale_info.min_x,
+            v[1] * self._scale_info.scale_factor + self._scale_info.min_y,
+            v[2] * self._scale_info.scale_factor + self._scale_info.min_z])
 
     def onHierarchy(self, root):
         self.root = root
@@ -255,3 +253,29 @@ class BvhReader(cgkit.bvh.BVHReader):
 
         for child in joint.children:
             self._print_joint_recurse(vertices, child)
+
+    def _probe_range(self):
+        print "probing BVH vertex range..."
+        self._scale_info = ScaleInfo()
+        for n in range(self.num_frames):
+            vertices = self.skeleton.get_vertices(n)
+            for vertex in vertices:
+                self._update_range_with_vector(*self.vertex_to_vector(vertex))
+        self._scale_info.scale_factor = max([
+                self._scale_info.max_x - self._scale_info.min_x,
+                self._scale_info.max_y - self._scale_info.min_y,
+                self._scale_info.max_z - self._scale_info.min_z])
+        print "ok"
+
+    def _update_range_with_vector(self, x, y, z):
+        if self._scale_info.min_x is None:
+            self._scale_info.min_x = self._scale_info.max_x = x
+            self._scale_info.min_y = self._scale_info.max_y = y
+            self._scale_info.min_z = self._scale_info.max_z = z
+        else:
+            self._scale_info.min_x = min(self._scale_info.min_x, x)
+            self._scale_info.min_y = min(self._scale_info.min_y, y)
+            self._scale_info.min_z = min(self._scale_info.min_z, z)
+            self._scale_info.max_x = max(self._scale_info.max_x, x)
+            self._scale_info.max_y = max(self._scale_info.max_y, y)
+            self._scale_info.max_z = max(self._scale_info.max_z, z)

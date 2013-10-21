@@ -45,23 +45,14 @@ class BvhViewer(window.Window):
         vertices = self.reader.get_skeleton_vertices(self.t * args.speed)
         edges = self.reader.vertices_to_edges(vertices)
         for edge in edges:
-            self._draw_line(self._normalize(self._vertex_to_vector3d(edge.v1)),
-                            self._normalize(self._vertex_to_vector3d(edge.v2)))
+            self._draw_line(self.reader.normalize_vector(self.reader.vertex_to_vector(edge.v1)),
+                            self.reader.normalize_vector(self.reader.vertex_to_vector(edge.v2)))
 
     def _draw_line(self, v1, v2):
         glBegin(GL_LINES)
         glVertex3f(*v1)
         glVertex3f(*v2)
         glEnd()
-
-    def _vertex_to_vector3d(self, sv):
-        return Vector3d(sv.tr[0], sv.tr[1], sv.tr[2])
-
-    def _normalize(self, v):
-        return Vector3d(
-            (v.x - self.reader.skeleton.minx) / args.scale,
-            (v.y - self.reader.skeleton.miny) / args.scale,
-            (v.z - self.reader.skeleton.minz) / args.scale)
         
     def _draw_unit_cube(self):
         glColor4f(0,0,0,0.2)
@@ -83,7 +74,6 @@ parser = ArgumentParser()
 window.Window.add_parser_arguments(parser)
 parser.add_argument("-bvh")
 parser.add_argument("-speed", type=float, default=1.0)
-parser.add_argument("-scale", type=float, default=40)
 args = parser.parse_args()
 
 bvh_reader = BvhReader(args.bvh)
