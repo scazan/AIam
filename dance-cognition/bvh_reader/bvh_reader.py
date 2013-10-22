@@ -87,10 +87,25 @@ class skeleton:
 
         if "Xrotation" in keyframe_dict:
             rotate = True
-            rotation_matrix = make_rotation_matrix(
-                keyframe_dict["Xrotation"],
-                keyframe_dict["Yrotation"],
-                keyframe_dict["Zrotation"])
+            rotation_matrix = array([
+                    [1.,0.,0.,0.],
+                    [0.,1.,0.,0.],
+                    [0.,0.,1.,0.],
+                    [0.,0.,0.,1.] ])
+            for channel in joint.channels:
+                if channel == "Xrotation":
+                    rotation_matrix = dot(
+                        rotation_matrix,
+                        make_x_rotation_matrix(keyframe_dict["Xrotation"]))
+                elif channel == "Yrotation":
+                    rotation_matrix = dot(
+                        rotation_matrix,
+                        make_y_rotation_matrix(keyframe_dict["Yrotation"]))
+                elif channel == "Zrotation":
+                    rotation_matrix = dot(
+                        rotation_matrix,
+                        make_z_rotation_matrix(keyframe_dict["Zrotation"]))
+
             joint.rotation = [keyframe_dict["Xrotation"],
                               keyframe_dict["Yrotation"],
                               keyframe_dict["Zrotation"]]
