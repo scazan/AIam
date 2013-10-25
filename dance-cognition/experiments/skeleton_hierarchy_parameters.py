@@ -15,7 +15,7 @@ class SkeletonHierarchyParametrization:
     def _add_joint_parameters_recurse(self, joint, parameters, is_hips=False):
         if not joint.hasparent and not is_hips:
             self._add_joint_transposition_parameters(joint, parameters)
-        if joint.rotation:
+        if joint.rotation_definition:
             self._add_joint_rotation_parameters(joint, parameters)
         for child in joint.children:
             self._add_joint_parameters_recurse(child, parameters)
@@ -27,7 +27,8 @@ class SkeletonHierarchyParametrization:
         parameters.extend(normalized_vector)
 
     def _add_joint_rotation_parameters(self, joint, parameters):
-        rotation_radians = [math.radians(d) for d in joint.rotation]
+        rotation_radians = [math.radians(degrees)
+                            for channel, degrees in joint.rotation_definition]
         rotation_parameters = radians3d_to_vector6d(*rotation_radians)
         parameters.extend(rotation_parameters)
 
@@ -53,12 +54,19 @@ class SkeletonHierarchyParametrization:
                 localtoworld = dot(joint.transposition_matrix, transposition_matrix)
             trtr = localtoworld
 
-        if joint.rotation:
+        if joint.rotation_definition:
             rotation_parameters = parameters[parameter_index:parameter_index+6]
             parameter_index += 6
             rotation_radians = vector6d_to_radians3d(rotation_parameters)
-            rotation_degrees = [math.degrees(r) for r in rotation_radians]
-            rotation_matrix = make_rotation_matrix(*rotation_degrees)
+
+            index = 0
+            rotation_definition = []
+            for channel, _degrees in joint.rotation_definition:
+                degrees = math.degrees(rotation_radians[index])
+                rotation_definition.append((channel, degrees))
+                index += 1
+            rotation_matrix = make_rotation_matrix(rotation_definition)
+
             trtr = dot(localtoworld, rotation_matrix)
         else:
             trtr = localtoworld

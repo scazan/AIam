@@ -17,6 +17,27 @@ def make_transposition_matrix(xpos, ypos, zpos):
             [0.,    0.,    1.,    zpos],
             [0.,    0.,    0.,    1.] ])
 
+def make_rotation_matrix(definition):
+    rotation_matrix = array([
+            [1.,0.,0.,0.],
+            [0.,1.,0.,0.],
+            [0.,0.,1.,0.],
+            [0.,0.,0.,1.] ])
+    for channel, degrees in definition:
+        if channel == "Xrotation":
+            rotation_matrix = dot(
+                rotation_matrix,
+                make_x_rotation_matrix(degrees))
+        elif channel == "Yrotation":
+            rotation_matrix = dot(
+                rotation_matrix,
+                make_y_rotation_matrix(degrees))
+        elif channel == "Zrotation":
+            rotation_matrix = dot(
+                rotation_matrix,
+                make_z_rotation_matrix(degrees))
+    return rotation_matrix
+
 def make_z_rotation_matrix(degrees):
     theta = radians(degrees)
     mycos = cos(theta)

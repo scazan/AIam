@@ -87,31 +87,16 @@ class skeleton:
 
         if "Xrotation" in keyframe_dict:
             rotate = True
-            rotation_matrix = array([
-                    [1.,0.,0.,0.],
-                    [0.,1.,0.,0.],
-                    [0.,0.,1.,0.],
-                    [0.,0.,0.,1.] ])
+            rotation_definition = []
             for channel in joint.channels:
-                if channel == "Xrotation":
-                    rotation_matrix = dot(
-                        rotation_matrix,
-                        make_x_rotation_matrix(keyframe_dict["Xrotation"]))
-                elif channel == "Yrotation":
-                    rotation_matrix = dot(
-                        rotation_matrix,
-                        make_y_rotation_matrix(keyframe_dict["Yrotation"]))
-                elif channel == "Zrotation":
-                    rotation_matrix = dot(
-                        rotation_matrix,
-                        make_z_rotation_matrix(keyframe_dict["Zrotation"]))
-
-            joint.rotation = [keyframe_dict["Xrotation"],
-                              keyframe_dict["Yrotation"],
-                              keyframe_dict["Zrotation"]]
+                if channel in ["Xrotation", "Yrotation", "Zrotation"]:
+                    degrees = keyframe_dict[channel]
+                    rotation_definition.append((channel, degrees))
+            rotation_matrix = make_rotation_matrix(rotation_definition)
+            joint.rotation_definition = rotation_definition
         else:
             rotate = False
-            joint.rotation = None
+            joint.rotation_definition = None
 
         if joint.hasparent:
             parent_trtr = joint.parent.trtr
