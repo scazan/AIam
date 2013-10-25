@@ -48,6 +48,7 @@ class HierarchicalScene(ExperimentScene):
 
 parser = ArgumentParser()
 add_parser_arguments(parser)
+parser.add_argument("--num-components", "-n", type=int, default=4)
 args = parser.parse_args()
 
 experiment = Experiment(HierarchicalScene, args=args)
@@ -55,5 +56,5 @@ skeleton_parametrization = SkeletonHierarchyParametrization(experiment.bvh_reade
 stimulus = BvhStimulus(experiment.bvh_reader)
 num_skeleton_parameters = len(stimulus.get_value())
 
-student = PCA(n_components=4)
+student = PCA(n_components=args.num_components)
 experiment.run(student, stimulus)
