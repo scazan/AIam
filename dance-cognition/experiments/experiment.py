@@ -101,8 +101,9 @@ class ExperimentToolbar(QtGui.QWidget):
         self._sliders = []
         for n in range(self.experiment.student.n_components):
             slider = QtGui.QSlider(QtCore.Qt.Horizontal)
-            slider.setRange(0, 100)
+            slider.setRange(0, 1000)
             slider.setSingleStep(1)
+            slider.setValue(500)
             layout.addWidget(slider)
             self._sliders.append(slider)
         self.setLayout(layout)
@@ -115,11 +116,11 @@ class ExperimentToolbar(QtGui.QWidget):
     def _reduction_value_to_slider_value(self, n, value):
         range_n = self.experiment.student.reduction_range[n]
         return (value - range_n["min"]) / \
-            (range_n["max"] - range_n["min"]) * 100
+            (range_n["max"] - range_n["min"]) * 1000
 
     def _slider_value_to_reduction_value(self, n, value):
         range_n = self.experiment.student.reduction_range[n]
-        return float(value) / 100 * (range_n["max"] - range_n["min"]) + \
+        return float(value) / 1000 * (range_n["max"] - range_n["min"]) + \
             range_n["min"]
 
     def get_reduction(self):
@@ -177,6 +178,7 @@ def add_parser_arguments(parser):
     parser.add_argument("-model")
     parser.add_argument("-bvh")
     parser.add_argument("-bvh-speed", type=float, default=1.0)
+    parser.add_argument("-zoom", type=float, default=1.0)
     parser.add_argument("-plot", type=str)
     parser.add_argument("-plot-duration", type=float, default=10)
     parser.add_argument("-frame-rate", type=float, default=50.0)
