@@ -25,11 +25,13 @@ class ExperimentScene(QtOpenGL.QGLWidget):
     def __init__(self, parent, experiment, args):
         self.experiment = experiment
         self.bvh_reader = experiment.bvh_reader
+        self.args = args
         QtOpenGL.QGLWidget.__init__(self, parent)
 
     def render(self):
         self.configure_3d_projection(-100, 0)
-        self._draw_unit_cube()
+        if self.args.unit_cube:
+            self._draw_unit_cube()
         if self.experiment.input is not None:
             self.draw_input(self.experiment.input)
         if self.experiment.output is not None:
@@ -183,7 +185,7 @@ def add_parser_arguments(parser):
     parser.add_argument("-plot-duration", type=float, default=10)
     parser.add_argument("-frame-rate", type=float, default=50.0)
     parser.add_argument("-interactive-control", action="store_true")
-
+    parser.add_argument("-unit-cube", action="store_true")
 class Experiment:
     def __init__(self, scene, args):
         self.args = args

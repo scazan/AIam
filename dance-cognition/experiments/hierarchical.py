@@ -33,15 +33,18 @@ class HierarchicalScene(ExperimentScene):
         glLineWidth(2.0)
         edges = self.bvh_reader.vertices_to_edges(vertices)
         for edge in edges:
-            vector1 = self.bvh_reader.normalize_vector(self.bvh_reader.vertex_to_vector(edge.v1))
-            vector2 = self.bvh_reader.normalize_vector(self.bvh_reader.vertex_to_vector(edge.v2))
-            self._draw_line_between_vectors(vector1, vector2)
+            self._draw_line_between_vectors(
+                self._zoom_vertex(edge.v1),
+                self._zoom_vertex(edge.v2))
 
     def _draw_line_between_vectors(self, v1, v2):
         glBegin(GL_LINES)
         glVertex3f(*v1)
         glVertex3f(*v2)
         glEnd()
+
+    def _zoom_vertex(self, vertex):
+        return self.args.zoom * self.bvh_reader.normalize_vector(self.bvh_reader.vertex_to_vector(vertex))
 
 parser = ArgumentParser()
 add_parser_arguments(parser)

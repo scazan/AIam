@@ -45,8 +45,11 @@ class BvhViewer(window.Window):
         vertices = self.reader.get_skeleton_vertices(self.t * args.speed)
         edges = self.reader.vertices_to_edges(vertices)
         for edge in edges:
-            self._draw_line(self.reader.normalize_vector(self.reader.vertex_to_vector(edge.v1)),
-                            self.reader.normalize_vector(self.reader.vertex_to_vector(edge.v2)))
+            self._draw_line(self._zoom_vertex(edge.v1),
+                            self._zoom_vertex(edge.v2))
+
+    def _zoom_vertex(self, vertex):
+        return args.zoom * self.reader.normalize_vector(self.reader.vertex_to_vector(vertex))
 
     def _draw_line(self, v1, v2):
         glBegin(GL_LINES)
@@ -74,6 +77,7 @@ parser = ArgumentParser()
 window.Window.add_parser_arguments(parser)
 parser.add_argument("-bvh")
 parser.add_argument("-speed", type=float, default=1.0)
+parser.add_argument("-zoom", type=float, default=1.0)
 args = parser.parse_args()
 
 bvh_reader = BvhReader(args.bvh)
