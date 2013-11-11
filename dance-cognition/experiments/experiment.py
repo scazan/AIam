@@ -30,14 +30,18 @@ class ExperimentScene(QtOpenGL.QGLWidget):
 
     def render(self):
         self.configure_3d_projection(-100, 0)
-
         glScale(self.args.zoom, self.args.zoom, self.args.zoom)
+        self._draw_io(self.experiment.input, self.draw_input, self.args.input_y_offset)
+        self._draw_io(self.experiment.output, self.draw_output, self.args.output_y_offset)
+
+    def _draw_io(self, value, rendering_method, y_offset):
+        glPushMatrix()
+        glTranslatef(0, y_offset, 0)
         if self.args.unit_cube:
             self._draw_unit_cube()
-        if self.experiment.input is not None:
-            self.draw_input(self.experiment.input)
-        if self.experiment.output is not None:
-            self.draw_output(self.experiment.output)
+        if value is not None:
+            rendering_method(value)
+        glPopMatrix()
 
     def initializeGL(self):
         glClearColor(1.0, 1.0, 1.0, 0.0)
@@ -156,3 +160,5 @@ class Experiment:
         parser.add_argument("-frame-rate", type=float, default=50.0)
         parser.add_argument("-unit-cube", action="store_true")
         parser.add_argument("-zoom", type=float, default=1.0)
+        parser.add_argument("-input-y-offset", type=float, default=.0)
+        parser.add_argument("-output-y-offset", type=float, default=.0)

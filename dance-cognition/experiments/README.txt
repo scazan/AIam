@@ -10,10 +10,10 @@ http://cgkit.sourceforge.net
 PREDICTION WITH BACKPROP NET
 
 python predict_point.py -unit-cube -pretrain 500
-python predict_vertices.py -bvh scenes/valencia_all.bvh -pretrain 500
-python predict_hierarchical.py -bvh scenes/valencia_all.bvh -pretrain 500
+python predict_vertices.py -bvh scenes/valencia_all.bvh
+python predict_hierarchical.py -bvh scenes/valencia_all.bvh -zoom 3 -output-y-offset 1
 
 
 DIMENSIONALITY REDUCTION WITH PCA
 
-python dim_reduce_hierarchical.py -bvh scenes/valencia_all.bvh -model models/valencia.model 
+python dim_reduce_hierarchical.py -bvh scenes/valencia_all.bvh -model models/valencia.model -zoom 3 -output-y-offset 1
