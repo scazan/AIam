@@ -156,8 +156,39 @@ class MainWindow(QtGui.QWidget):
 class Experiment:
     @staticmethod
     def add_parser_arguments(parser):
+        parser.add_argument("-train")
+        parser.add_argument("-training-data-frame-rate", type=int, default=50)
+        parser.add_argument("-model")
+        parser.add_argument("-bvh")
+        parser.add_argument("-bvh-speed", type=float, default=1.0)
         parser.add_argument("-frame-rate", type=float, default=50.0)
         parser.add_argument("-unit-cube", action="store_true")
         parser.add_argument("-zoom", type=float, default=1.0)
         parser.add_argument("-input-y-offset", type=float, default=.0)
         parser.add_argument("-output-y-offset", type=float, default=.0)
+
+    def __init__(self, scene, args):
+        self.args = args
+        self._scene_class = scene
+        if args.bvh:
+            self.bvh_reader = bvh_reader_module.BvhReader(args.bvh)
+            self.bvh_reader.read()
+        else:
+            self.bvh_reader = None
+        self.input = None
+        self.output = None
+
+    def save_model(self, model_filename):
+        print "saving model..."
+        f = open(model_filename, "w")
+        pickle.dump(self.student, f)
+        f.close()
+        print "ok"
+        
+    def load_model(self, model_filename):
+        print "loading model..."
+        f = open(model_filename)
+        model = pickle.load(f)
+        f.close()
+        print "ok"
+        return model

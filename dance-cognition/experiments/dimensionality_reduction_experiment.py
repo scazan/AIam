@@ -41,25 +41,12 @@ class DimensionalityReductionExperiment(Experiment):
     @staticmethod
     def add_parser_arguments(parser):
         Experiment.add_parser_arguments(parser)
-        parser.add_argument("-train")
-        parser.add_argument("-training-data-frame-rate", type=int, default=50)
-        parser.add_argument("-model")
-        parser.add_argument("-bvh")
-        parser.add_argument("-bvh-speed", type=float, default=1.0)
         parser.add_argument("-plot", type=str)
         parser.add_argument("-plot-duration", type=float, default=10)
         parser.add_argument("-interactive-control", action="store_true")
 
     def __init__(self, scene, args):
-        self.args = args
-        self._scene_class = scene
-        if args.bvh:
-            self.bvh_reader = bvh_reader_module.BvhReader(args.bvh)
-            self.bvh_reader.read()
-        else:
-            self.bvh_reader = None
-        self.input = None
-        self.output = None
+        Experiment.__init__(self, scene, args)
         self.reduction = None
 
     def run(self, student, stimulus):
@@ -68,13 +55,14 @@ class DimensionalityReductionExperiment(Experiment):
 
         if self.args.train:
             teacher = Teacher(stimulus, self.args.training_data_frame_rate)
-            self._train(teacher, self.args.train)
+            self._train_model(teacher, self.args.train)
+            self.save_model(self.args.train)
 
             # if self.args.plot:
             #     LearningPlotter(student, teacher, self.args.plot_duration).plot(self.args.plot)
 
         elif self.args.model:
-            self.student = self._load_model(self.args.model)
+            self.student = self.load_model(self.args.model)
 
             app = QtGui.QApplication(sys.argv)
             self.window = MainWindow(
@@ -85,7 +73,7 @@ class DimensionalityReductionExperiment(Experiment):
         else:
             raise Exception("a model must either be loaded or trained")
 
-    def _train(self, teacher, model_filename):
+    def _train_model(self, teacher, model_filename):
         print "training model..."
         self.student.fit(teacher.get_training_data())
         print "explained variance ratio: %s (sum %s)" % (
@@ -95,20 +83,6 @@ class DimensionalityReductionExperiment(Experiment):
         print "probing model..."
         self.student.probe(teacher.get_training_data())
         print "ok"
-
-        print "saving model..."
-        f = open(model_filename, "w")
-        pickle.dump(self.student, f)
-        f.close()
-        print "ok"
-        
-    def _load_model(self, model_filename):
-        print "loading model..."
-        f = open(model_filename)
-        model = pickle.load(f)
-        f.close()
-        print "ok"
-        return model
 
     def proceed(self, time_increment):
         if self.args.interactive_control:

@@ -14,11 +14,7 @@ class PredictionExperiment(Experiment):
     @staticmethod
     def add_parser_arguments(parser):
         Experiment.add_parser_arguments(parser)
-        parser.add_argument("-pretrain", type=float)
-        parser.add_argument("-bvh")
-        parser.add_argument("-bvh-speed", type=float, default=1.0)
-        parser.add_argument("-plot", type=str)
-        parser.add_argument("-plot-duration", type=float, default=10)
+        parser.add_argument("-training-duration", type=float)
         parser.add_argument("-shuffle-input", action="store_true")
 
     def __init__(self, scene, args):
@@ -32,34 +28,53 @@ class PredictionExperiment(Experiment):
         self.input = None
         self.output = None
 
-    def run(self, _student, _stimulus):
-        global student, teacher, stimulus
-        stimulus = _stimulus
-        student = _student
+    def run(self, student, stimulus):
+        self.stimulus = stimulus
+        self.student = student
 
         if self.args.shuffle_input:
-            teacher = ShufflingTeacher(stimulus)
+            self.teacher = ShufflingTeacher(stimulus)
         else:
-            teacher = LiveTeacher(stimulus)
+            self.teacher = LiveTeacher(stimulus)
 
-        if self.args.pretrain > 0:
-            pretrain(student, teacher, self.args.pretrain)
+        if self.args.train:
+            self._train_model(self.args.train, self.args.training_duration)
+            self.save_model(self.args.train)
 
-        if self.args.plot:
-            LearningPlotter(student, teacher, self.args.plot_duration).plot(self.args.plot)
-        else:
+        elif self.args.model:
+            self.student = self.load_model(self.args.model)
+        
             app = QtGui.QApplication(sys.argv)
             self.window = MainWindow(
                 self, self._scene_class, ExperimentToolbar, self.args)
             self.window.show()
             app.exec_()
 
-    def proceed(self, time_increment):
-        if teacher.collected_enough_training_data():
-            inp = teacher.get_input()
-            expected_output = teacher.get_output()
-            student.train(inp, expected_output)
-        teacher.proceed(time_increment)
+        elif self.args.plot:
+            LearningPlotter(student, teacher, self.args.plot_duration).plot(self.args.plot)
 
-        self.input = stimulus.get_value()
-        self.output = student.process(self.input)
+        else:
+            raise Exception("a model must either be loaded or trained")
+
+    def proceed(self, time_increment):
+        if self.teacher.collected_enough_training_data():
+            inp = self.teacher.get_input()
+            expected_output = self.teacher.get_output()
+            self.student.train(inp, expected_output)
+        self.teacher.proceed(time_increment)
+
+        self.input = self.stimulus.get_value()
+        self.output = self.student.process(self.input)
+
+    def _train_model(self, model_filename, duration):
+        print "training model..."
+        t = 0
+        time_increment = 1.0 / 50
+        while t < duration:
+            if self.teacher.collected_enough_training_data():
+                inp = self.teacher.get_input()
+                output = self.teacher.get_output()
+                self.student.train(inp, output)
+            self.teacher.proceed(time_increment)
+            t += time_increment
+        print "ok"
