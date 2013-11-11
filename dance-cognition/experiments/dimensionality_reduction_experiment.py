@@ -45,7 +45,6 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("-model")
         parser.add_argument("-bvh")
         parser.add_argument("-bvh-speed", type=float, default=1.0)
-        parser.add_argument("-zoom", type=float, default=1.0)
         parser.add_argument("-plot", type=str)
         parser.add_argument("-plot-duration", type=float, default=10)
         parser.add_argument("-interactive-control", action="store_true")

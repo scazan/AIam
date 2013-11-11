@@ -30,6 +30,8 @@ class ExperimentScene(QtOpenGL.QGLWidget):
 
     def render(self):
         self.configure_3d_projection(-100, 0)
+
+        glScale(self.args.zoom, self.args.zoom, self.args.zoom)
         if self.args.unit_cube:
             self._draw_unit_cube()
         if self.experiment.input is not None:
@@ -153,3 +155,4 @@ class Experiment:
     def add_parser_arguments(parser):
         parser.add_argument("-frame-rate", type=float, default=50.0)
         parser.add_argument("-unit-cube", action="store_true")
+        parser.add_argument("-zoom", type=float, default=1.0)
