@@ -51,7 +51,7 @@ add_parser_arguments(parser)
 parser.add_argument("--num-components", "-n", type=int, default=4)
 args = parser.parse_args()
 
-experiment = Experiment(HierarchicalScene, args=args)
+experiment = DimensionalityReductionExperiment(HierarchicalScene, args=args)
 skeleton_parametrization = SkeletonHierarchyParametrization(experiment.bvh_reader)
 stimulus = BvhStimulus(experiment.bvh_reader)
 num_skeleton_parameters = len(stimulus.get_value())

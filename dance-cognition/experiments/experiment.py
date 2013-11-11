@@ -1,0 +1,148 @@
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/..")
+
+from argparse import ArgumentParser
+from OpenGL.GL import *
+from OpenGL.GLUT import *
+from OpenGL.GLU import *
+from PyQt4 import QtCore, QtGui, QtOpenGL
+import math
+from teacher import *
+from learning_plotter import LearningPlotter
+from bvh_reader import bvh_reader as bvh_reader_module
+import pickle
+from stopwatch import Stopwatch
+
+class Stimulus:
+    def __init__(self):
+        self._t = 0
+
+    def proceed(self, time_increment):
+        self._t += time_increment
+
+class ExperimentScene(QtOpenGL.QGLWidget):
+    def __init__(self, parent, experiment, args):
+        self.experiment = experiment
+        self.bvh_reader = experiment.bvh_reader
+        self.args = args
+        QtOpenGL.QGLWidget.__init__(self, parent)
+
+    def render(self):
+        self.configure_3d_projection(-100, 0)
+        if self.args.unit_cube:
+            self._draw_unit_cube()
+        if self.experiment.input is not None:
+            self.draw_input(self.experiment.input)
+        if self.experiment.output is not None:
+            self.draw_output(self.experiment.output)
+
+    def initializeGL(self):
+        glClearColor(1.0, 1.0, 1.0, 0.0)
+        glClearAccum(0.0, 0.0, 0.0, 0.0)
+        glClearDepth(1.0)
+        glShadeModel(GL_SMOOTH)
+        glutInit(sys.argv)
+
+    def resizeGL(self, window_width, window_height):
+        self.window_width = window_width
+        self.window_height = window_height
+        if window_height == 0:
+            window_height = 1
+        glViewport(0, 0, window_width, window_height)
+        self.margin = 0
+        self.width = window_width - 2*self.margin
+        self.height = window_height - 2*self.margin
+        self._aspect_ratio = float(window_width) / window_height
+        self.min_dimension = min(self.width, self.height)
+
+    def paintGL(self):
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        glLoadIdentity()
+        glTranslatef(self.margin, self.margin, 0)
+        self.render()
+
+    def _draw_unit_cube(self):
+        glLineWidth(1.0)
+        glColor4f(0,0,0,0.2)
+        glutWireCube(2.0)
+
+    def configure_3d_projection(self, pixdx=0, pixdy=0):
+        self.fovy = 45
+        self.near = 0.1
+        self.far = 100.0
+
+        fov2 = ((self.fovy*math.pi) / 180.0) / 2.0
+        top = self.near * math.tan(fov2)
+        bottom = -top
+        right = top * self._aspect_ratio
+        left = -right
+        xwsize = right - left
+        ywsize = top - bottom
+        dx = -(pixdx*xwsize/self.width)
+        dy = -(pixdy*ywsize/self.height)
+
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        glFrustum (left + dx, right + dx, bottom + dy, top + dy, self.near, self.far)
+        glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
+
+        CAMERA_POSITION = [-8, -0.5, -1.35]
+        CAMERA_Y_ORIENTATION = -88
+        CAMERA_X_ORIENTATION = 9
+        glRotatef(CAMERA_X_ORIENTATION, 1.0, 0.0, 0.0)
+        glRotatef(CAMERA_Y_ORIENTATION, 0.0, 1.0, 0.0)
+        glTranslatef(*CAMERA_POSITION)
+
+
+class ExperimentToolbar(QtGui.QWidget):
+    def __init__(self, parent, experiment, args):
+        self.experiment = experiment
+        self.args = args
+        QtOpenGL.QGLWidget.__init__(self, parent)
+
+    def refresh(self):
+        pass
+
+class MainWindow(QtGui.QWidget):
+    def __init__(self, experiment, scene_widget_class, toolbar_class, args):
+        self.experiment = experiment
+        self.args = args
+        QtGui.QWidget.__init__(self)
+        self.resize(800, 640)
+        layout = QtGui.QHBoxLayout()
+        self._scene = scene_widget_class(self, experiment, args)
+        self._scene.setFixedSize(400, 640)
+        layout.addWidget(self._scene)
+
+        self.toolbar = toolbar_class(self, experiment, args)
+        layout.addWidget(self.toolbar)
+
+        self.setLayout(layout)
+
+        self.time_increment = 0
+        self.stopwatch = Stopwatch()
+        self._frame_count = 0
+
+        timer = QtCore.QTimer(self)
+        timer.setInterval(1000. / args.frame_rate)
+        QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), self._update)
+        timer.start()
+
+    def _update(self):
+        self.now = self.current_time()
+        if self._frame_count == 0:
+            self.stopwatch.start()
+        else:
+            self.time_increment = self.now - self.previous_frame_time
+            self.experiment.proceed(self.time_increment)
+
+            self._scene.updateGL()
+            self.toolbar.refresh()
+
+        self.previous_frame_time = self.now
+        self._frame_count += 1
+
+    def current_time(self):
+        return self.stopwatch.get_elapsed_time()
