@@ -36,20 +36,20 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
              for n in range(self.experiment.student.n_components)])
 
 
-def add_parser_arguments(parser):
-    parser.add_argument("-train")
-    parser.add_argument("-training-data-frame-rate", type=int, default=50)
-    parser.add_argument("-model")
-    parser.add_argument("-bvh")
-    parser.add_argument("-bvh-speed", type=float, default=1.0)
-    parser.add_argument("-zoom", type=float, default=1.0)
-    parser.add_argument("-plot", type=str)
-    parser.add_argument("-plot-duration", type=float, default=10)
-    parser.add_argument("-frame-rate", type=float, default=50.0)
-    parser.add_argument("-interactive-control", action="store_true")
-    parser.add_argument("-unit-cube", action="store_true")
+class DimensionalityReductionExperiment(Experiment):
+    @staticmethod
+    def add_parser_arguments(parser):
+        Experiment.add_parser_arguments(parser)
+        parser.add_argument("-train")
+        parser.add_argument("-training-data-frame-rate", type=int, default=50)
+        parser.add_argument("-model")
+        parser.add_argument("-bvh")
+        parser.add_argument("-bvh-speed", type=float, default=1.0)
+        parser.add_argument("-zoom", type=float, default=1.0)
+        parser.add_argument("-plot", type=str)
+        parser.add_argument("-plot-duration", type=float, default=10)
+        parser.add_argument("-interactive-control", action="store_true")
 
-class DimensionalityReductionExperiment:
     def __init__(self, scene, args):
         self.args = args
         self._scene_class = scene

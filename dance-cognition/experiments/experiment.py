@@ -146,3 +146,10 @@ class MainWindow(QtGui.QWidget):
 
     def current_time(self):
         return self.stopwatch.get_elapsed_time()
+
+
+class Experiment:
+    @staticmethod
+    def add_parser_arguments(parser):
+        parser.add_argument("-frame-rate", type=float, default=50.0)
+        parser.add_argument("-unit-cube", action="store_true")

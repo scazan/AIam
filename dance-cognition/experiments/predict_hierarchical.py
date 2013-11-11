@@ -10,7 +10,7 @@ class BvhStimulus(Stimulus):
         hips = self.bvh_reader.get_hips(self._t * args.bvh_speed)
         return skeleton_parametrization.joint_to_parameters(hips)
 
-class HierarchicalWindow(ExperimentWindow):
+class HierarchicalScene(ExperimentScene):
     def draw_input(self, parameters):
         glColor3f(0, 1, 0)
         self._draw_skeleton(parameters)
@@ -37,10 +37,10 @@ class HierarchicalWindow(ExperimentWindow):
         glEnd()
 
 parser = ArgumentParser()
-add_parser_arguments(parser)
+PredictionExperiment.add_parser_arguments(parser)
 args = parser.parse_args()
 
-experiment = Experiment(HierarchicalWindow, args)
+experiment = PredictionExperiment(HierarchicalScene, args)
 skeleton_parametrization = SkeletonHierarchyParametrization(experiment.bvh_reader)
 stimulus = BvhStimulus(experiment.bvh_reader)
 num_skeleton_parameters = len(stimulus.get_value())

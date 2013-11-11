@@ -47,7 +47,7 @@ class HierarchicalScene(ExperimentScene):
         return self.args.zoom * self.bvh_reader.normalize_vector(self.bvh_reader.vertex_to_vector(vertex))
 
 parser = ArgumentParser()
-add_parser_arguments(parser)
+DimensionalityReductionExperiment.add_parser_arguments(parser)
 parser.add_argument("--num-components", "-n", type=int, default=4)
 args = parser.parse_args()
 

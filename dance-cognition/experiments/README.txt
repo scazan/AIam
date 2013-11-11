@@ -9,7 +9,7 @@ http://cgkit.sourceforge.net
 
 PREDICTION WITH BACKPROP NET
 
-python predict_point.py -pretrain 500
+python predict_point.py -unit-cube -pretrain 500
 python predict_vertices.py -bvh scenes/valencia_all.bvh -pretrain 500
 python predict_hierarchical.py -bvh scenes/valencia_all.bvh -pretrain 500
 
