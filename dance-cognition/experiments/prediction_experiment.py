@@ -1,5 +1,6 @@
 from experiment import *
 from backprop_net import BackpropNet
+from prediction_teacher import *
 
 class Stimulus:
     def __init__(self):

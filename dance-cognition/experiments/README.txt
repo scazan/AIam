@@ -16,4 +16,10 @@ python predict_hierarchical.py -bvh scenes/valencia_all.bvh -zoom 3 -output-y-of
 
 DIMENSIONALITY REDUCTION WITH PCA
 
+Train:
+
+python dim_reduce_hierarchical.py -bvh scenes/valencia_all.bvh -train models/valencia.model -training-data-frame-rate 10 -n 7
+
+Use:
+
 python dim_reduce_hierarchical.py -bvh scenes/valencia_all.bvh -model models/valencia.model -zoom 3 -output-y-offset 1

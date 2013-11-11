@@ -1,4 +1,5 @@
 from experiment import *
+from dimensionality_reduction_teacher import *
 
 class DimensionalityReductionToolbar(ExperimentToolbar):
     def __init__(self, *args):
