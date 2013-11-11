@@ -1,4 +1,4 @@
-from experiment import *
+from prediction_experiment import *
 
 class BvhStimulus(Stimulus):
     def __init__(self, bvh_reader):
@@ -23,7 +23,7 @@ class CircularStimulus(Stimulus):
     def get_duration(self):
         return 2 * math.pi
 
-class PointScene(ExperimentScene):
+class PointWindow(ExperimentWindow):
     def draw_input(self, inp):
         glColor3f(0, 1, 0)
         self._draw_point(inp)
@@ -43,7 +43,7 @@ parser = ArgumentParser()
 add_parser_arguments(parser)
 args = parser.parse_args()
 
-experiment = Experiment(PointScene, args)
+experiment = Experiment(PointWindow, args)
 
 if args.bvh:
     stimulus = BvhStimulus(experiment.bvh_reader)
