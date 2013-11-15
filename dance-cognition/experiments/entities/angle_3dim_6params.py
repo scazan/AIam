@@ -1,8 +1,7 @@
 from experiment import *
 from angle_parameters import radians3d_to_vector6d, vector6d_to_radians3d
-from dimensionality_reduction import PCA
 
-class SphericalStimulus(Stimulus):
+class Stimulus(BaseStimulus):
     def get_value(self):
         r1 = (self._t / 1) % (2*math.pi)
         r2 = (self._t / 2) % (2*math.pi)
@@ -12,7 +11,7 @@ class SphericalStimulus(Stimulus):
     def get_duration(self):
         return 2 * math.pi * 4
 
-class AngleScene(ExperimentScene):
+class Scene(BaseScene):
     def draw_input(self, inp):
         glColor3f(0, 1, 0)
         self._draw_3dim_angle(*vector6d_to_radians3d(inp))
@@ -29,13 +28,3 @@ class AngleScene(ExperimentScene):
         glBegin(GL_POINTS)
         glVertex3f(1, 0, 0)
         glEnd()
-
-
-parser = ArgumentParser()
-add_parser_arguments(parser)
-args = parser.parse_args()
-
-experiment = Experiment(AngleScene, args)
-stimulus = SphericalStimulus()
-student = PCA(n_components=1)
-experiment.run(student, stimulus)

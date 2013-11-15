@@ -36,6 +36,8 @@ def make_rotation_matrix(definition):
             rotation_matrix = dot(
                 rotation_matrix,
                 make_z_rotation_matrix(degrees))
+        else:
+            raise Exception("unknown channel %r" % channel)
     return rotation_matrix
 
 def make_z_rotation_matrix(degrees):
