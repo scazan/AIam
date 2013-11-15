@@ -11,12 +11,13 @@ PREDICTION WITH BACKPROP NET
 
 Train:
 
+python predict_point.py -train prediction_models/point_circular.model 
 python predict_vertices.py -bvh scenes/valencia_all.bvh -train prediction_models/valencia_vertices.model -training-duration 500
 python predict_hierarchical.py -bvh scenes/valencia_all.bvh -train prediction_models/valencia_hierarchical.model -training-duration 500
 
 Use:
 
-python predict_point.py -unit-cube
+python predict_point.py -model prediction_models/point_circular.model -unit-cube
 python predict_vertices.py -bvh scenes/valencia_all.bvh -model prediction_models/valencia_vertices.model
 python predict_hierarchical.py -bvh scenes/valencia_all.bvh -zoom 3 -output-y-offset 1 -model prediction_models/valencia_hierarchical.model
 

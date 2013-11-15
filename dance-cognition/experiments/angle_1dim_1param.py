@@ -1,4 +1,4 @@
-from experiment import *
+from prediction_experiment import *
 
 class CircularStimulus(Stimulus):
     def get_value(self):

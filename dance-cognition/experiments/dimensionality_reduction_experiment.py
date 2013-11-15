@@ -41,8 +41,6 @@ class DimensionalityReductionExperiment(Experiment):
     @staticmethod
     def add_parser_arguments(parser):
         Experiment.add_parser_arguments(parser)
-        parser.add_argument("-plot", type=str)
-        parser.add_argument("-plot-duration", type=float, default=10)
         parser.add_argument("-interactive-control", action="store_true")
 
     def __init__(self, scene, args):
@@ -57,9 +55,6 @@ class DimensionalityReductionExperiment(Experiment):
             teacher = Teacher(stimulus, self.args.training_data_frame_rate)
             self._train_model(teacher, self.args.train)
             self.save_model(self.args.train)
-
-            # if self.args.plot:
-            #     LearningPlotter(student, teacher, self.args.plot_duration).plot(self.args.plot)
 
         elif self.args.model:
             self.student = self.load_model(self.args.model)

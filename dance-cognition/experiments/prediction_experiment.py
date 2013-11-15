@@ -14,8 +14,10 @@ class PredictionExperiment(Experiment):
     @staticmethod
     def add_parser_arguments(parser):
         Experiment.add_parser_arguments(parser)
-        parser.add_argument("-training-duration", type=float)
+        parser.add_argument("-training-duration", type=float, default=100)
         parser.add_argument("-shuffle-input", action="store_true")
+        parser.add_argument("-plot", type=str)
+        parser.add_argument("-plot-duration", type=float, default=10)
 
     def __init__(self, scene, args):
         self.args = args
