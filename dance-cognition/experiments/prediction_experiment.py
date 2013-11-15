@@ -2,9 +2,11 @@ from experiment import *
 from backprop_net import BackpropNet
 from prediction_teacher import *
 
-class Stimulus:
-    def __init__(self):
+class BaseStimulus:
+    def __init__(self, experiment):
         self._t = 0
+        self.args = experiment.args
+        self.bvh_reader = experiment.bvh_reader
 
     def proceed(self, time_increment):
         self._t += time_increment

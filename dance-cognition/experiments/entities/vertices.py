@@ -1,18 +1,14 @@
 from prediction_experiment import *
 
-class BvhStimulus(Stimulus):
-    def __init__(self, bvh_reader):
-        Stimulus.__init__(self)
-        self.bvh_reader = bvh_reader
-
+class Stimulus(BaseStimulus):
     def get_value(self):
-        vertices = self.bvh_reader.get_skeleton_vertices(self._t * args.bvh_speed)
+        vertices = self.bvh_reader.get_skeleton_vertices(self._t * self.args.bvh_speed)
         normalized_vectors = numpy.array(
             [self.bvh_reader.normalize_vector(self.bvh_reader.vertex_to_vector(vertex))
              for vertex in vertices])
         return normalized_vectors.flatten()
 
-class VerticesScene(ExperimentScene):
+class Scene(BaseScene):
     def draw_input(self, inp):
         glColor3f(0, 1, 0)
         input_vectors = inp.reshape([self.bvh_reader.num_joints, 3])
@@ -38,17 +34,3 @@ class VerticesScene(ExperimentScene):
         glVertex3f(*v1)
         glVertex3f(*v2)
         glEnd()
-
-parser = ArgumentParser()
-PredictionExperiment.add_parser_arguments(parser)
-args = parser.parse_args()
-
-experiment = PredictionExperiment(VerticesScene, args)
-stimulus = BvhStimulus(experiment.bvh_reader)
-num_joints = experiment.bvh_reader.num_joints
-
-student = BackpropNet(
-    num_joints * 3,
-    num_joints * 6,
-    num_joints * 3)
-experiment.run(student, stimulus)

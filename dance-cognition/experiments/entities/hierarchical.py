@@ -1,13 +1,18 @@
+from prediction_experiment import *
 import math
 from angle_parameters import radians3d_to_vector6d, vector6d_to_radians3d
 from bvh_reader.geo import *
 from numpy import array, dot
 
-class SkeletonHierarchyParametrization:
-    def __init__(self, bvh_reader):
-        self.bvh_reader = bvh_reader
+class Stimulus(BaseStimulus):
+    def get_value(self):
+        hips = self.bvh_reader.get_hips(self._t * self.args.bvh_speed)
+        return self._joint_to_parameters(hips)
 
-    def joint_to_parameters(self, hips):
+    def get_duration(self):
+        return self.bvh_reader.get_duration() / self.args.bvh_speed
+
+    def _joint_to_parameters(self, hips):
         parameters = []
         self._add_joint_parameters_recurse(hips, parameters, is_hips=True)
         return parameters
@@ -32,8 +37,27 @@ class SkeletonHierarchyParametrization:
         rotation_parameters = radians3d_to_vector6d(*rotation_radians)
         parameters.extend(rotation_parameters)
 
+class Scene(BaseScene):
+    def draw_input(self, parameters):
+        glColor3f(0, 1, 0)
+        self._draw_skeleton(parameters)
 
-    def parameters_to_joint(self, parameters):
+    def draw_output(self, parameters):
+        glColor3f(0.5, 0.5, 1.0)
+        self._draw_skeleton(parameters)
+
+    def _draw_skeleton(self, parameters):
+        hips = self._parameters_to_joint(parameters)
+        vertices = hips.get_vertices()
+        
+        glLineWidth(2.0)
+        edges = self.bvh_reader.vertices_to_edges(vertices)
+        for edge in edges:
+            vector1 = self.bvh_reader.normalize_vector(self.bvh_reader.vertex_to_vector(edge.v1))
+            vector2 = self.bvh_reader.normalize_vector(self.bvh_reader.vertex_to_vector(edge.v2))
+            self._draw_line(vector1, vector2)
+
+    def _parameters_to_joint(self, parameters):
         any_frame = 0
         hips = self.bvh_reader.get_hips(any_frame)
         self._parameters_to_joint_recurse(parameters, hips, is_hips=True)
@@ -83,3 +107,9 @@ class SkeletonHierarchyParametrization:
             parameter_index = self._parameters_to_joint_recurse(parameters, child, parameter_index)
 
         return parameter_index
+
+    def _draw_line(self, v1, v2):
+        glBegin(GL_LINES)
+        glVertex3f(*v1)
+        glVertex3f(*v2)
+        glEnd()

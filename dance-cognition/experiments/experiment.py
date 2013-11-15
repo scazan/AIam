@@ -13,14 +13,14 @@ from bvh_reader import bvh_reader as bvh_reader_module
 import pickle
 from stopwatch import Stopwatch
 
-class Stimulus:
+class BaseStimulus:
     def __init__(self):
         self._t = 0
 
     def proceed(self, time_increment):
         self._t += time_increment
 
-class ExperimentScene(QtOpenGL.QGLWidget):
+class BaseScene(QtOpenGL.QGLWidget):
     def __init__(self, parent, experiment, args):
         self.experiment = experiment
         self.bvh_reader = experiment.bvh_reader
@@ -156,6 +156,7 @@ class MainWindow(QtGui.QWidget):
 class Experiment:
     @staticmethod
     def add_parser_arguments(parser):
+        parser.add_argument("entity", type=str)
         parser.add_argument("-train")
         parser.add_argument("-training-data-frame-rate", type=int, default=50)
         parser.add_argument("-model")
