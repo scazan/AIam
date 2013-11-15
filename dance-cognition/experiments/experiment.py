@@ -160,10 +160,10 @@ class Experiment:
     @staticmethod
     def add_parser_arguments(parser):
         parser.add_argument("entity", type=str)
-        parser.add_argument("-train")
+        parser.add_argument("-train", action="store_true")
         parser.add_argument("-training-data-frame-rate", type=int, default=50)
-        parser.add_argument("-model")
-        parser.add_argument("-bvh")
+        parser.add_argument("-model", type=str)
+        parser.add_argument("-bvh", type=str)
         parser.add_argument("-bvh-speed", type=float, default=1.0)
         parser.add_argument("-frame-rate", type=float, default=50.0)
         parser.add_argument("-unit-cube", action="store_true")

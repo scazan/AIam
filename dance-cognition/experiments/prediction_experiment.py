@@ -19,6 +19,8 @@ class PredictionExperiment(Experiment):
             self.bvh_reader.read()
         else:
             self.bvh_reader = None
+        if self.args.model is None:
+            self.args.model = "models/prediction/%s.model" % args.entity
         self.input = None
         self.output = None
 
@@ -32,10 +34,13 @@ class PredictionExperiment(Experiment):
             self.teacher = LiveTeacher(stimulus)
 
         if self.args.train:
-            self._train_model(self.args.train, self.args.training_duration)
-            self.save_model(self.args.train)
+            self._train_model()
+            self.save_model(self.args.model)
 
-        elif self.args.model:
+        elif self.args.plot:
+            LearningPlotter(student, teacher, self.args.plot_duration).plot(self.args.plot)
+
+        else:
             self.student = self.load_model(self.args.model)
         
             app = QtGui.QApplication(sys.argv)
@@ -43,12 +48,6 @@ class PredictionExperiment(Experiment):
                 self, self._scene_class, ExperimentToolbar, self.args)
             self.window.show()
             app.exec_()
-
-        elif self.args.plot:
-            LearningPlotter(student, teacher, self.args.plot_duration).plot(self.args.plot)
-
-        else:
-            raise Exception("a model must either be loaded or trained")
 
     def proceed(self, time_increment):
         if self.teacher.collected_enough_training_data():
@@ -60,11 +59,11 @@ class PredictionExperiment(Experiment):
         self.input = self.stimulus.get_value()
         self.output = self.student.process(self.input)
 
-    def _train_model(self, model_filename, duration):
+    def _train_model(self):
         print "training model..."
         t = 0
         time_increment = 1.0 / 50
-        while t < duration:
+        while t < self.args.training_duration:
             if self.teacher.collected_enough_training_data():
                 inp = self.teacher.get_input()
                 output = self.teacher.get_output()

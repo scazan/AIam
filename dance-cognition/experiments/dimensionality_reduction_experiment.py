@@ -45,6 +45,8 @@ class DimensionalityReductionExperiment(Experiment):
 
     def __init__(self, scene, args):
         Experiment.__init__(self, scene, args)
+        if self.args.model is None:
+            self.args.model = "models/dimensionality_reduction/%s.model" % args.entity
         self.reduction = None
 
     def run(self, student, stimulus):
@@ -53,10 +55,10 @@ class DimensionalityReductionExperiment(Experiment):
 
         if self.args.train:
             teacher = Teacher(stimulus, self.args.training_data_frame_rate)
-            self._train_model(teacher, self.args.train)
-            self.save_model(self.args.train)
+            self._train_model(teacher)
+            self.save_model(self.args.model)
 
-        elif self.args.model:
+        else:
             self.student = self.load_model(self.args.model)
 
             app = QtGui.QApplication(sys.argv)
@@ -65,10 +67,7 @@ class DimensionalityReductionExperiment(Experiment):
             self.window.show()
             app.exec_()
 
-        else:
-            raise Exception("a model must either be loaded or trained")
-
-    def _train_model(self, teacher, model_filename):
+    def _train_model(self, teacher):
         print "training model..."
         self.student.fit(teacher.get_training_data())
         print "explained variance ratio: %s (sum %s)" % (

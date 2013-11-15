@@ -1,6 +1,6 @@
-from prediction_experiment import *
+from experiment import *
 
-class CircularStimulus(Stimulus):
+class Stimulus(BaseStimulus):
     def get_value(self):
         r = self._t % (2*math.pi) - math.pi
         return [r]
@@ -8,7 +8,7 @@ class CircularStimulus(Stimulus):
     def get_duration(self):
         return 2 * math.pi
 
-class AngleScene(ExperimentScene):
+class Scene(BaseScene):
     def draw_input(self, inp):
         glColor3f(0, 1, 0)
         self._draw_angle(inp[0])
@@ -26,12 +26,3 @@ class AngleScene(ExperimentScene):
         glBegin(GL_POINTS)
         glVertex3f(x, y, z)
         glEnd()
-
-parser = ArgumentParser()
-add_parser_arguments(parser)
-args = parser.parse_args()
-
-experiment = Experiment(AngleScene, args)
-stimulus = CircularStimulus()
-student = BackpropNet(1, 2, 1)
-experiment.run(student, stimulus)
