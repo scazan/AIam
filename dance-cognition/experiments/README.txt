@@ -27,6 +27,10 @@ Train:
 
 python dim_reduce_hierarchical.py -bvh scenes/valencia_all.bvh -train dimensionality_reduction_models/valencia.model -training-data-frame-rate 10 -n 7
 
-Use:
+Mimic:
 
 python dim_reduce_hierarchical.py -bvh scenes/valencia_all.bvh -model dimensionality_reduction_models/valencia.model -zoom 3 -output-y-offset 1
+
+Explore interactively:
+
+python dim_reduce_hierarchical.py -bvh scenes/valencia_all.bvh -model dimensionality_reduction_models/valencia.model -zoom 3 -output-y-offset 0.5 -interactive

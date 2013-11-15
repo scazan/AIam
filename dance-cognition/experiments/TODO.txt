@@ -1,0 +1,3 @@
+add movement across space to hierarchical parametrization
+test dim reduction with higher training data frame rate
+validate/improve rotation parametrization (using quaternions?)
