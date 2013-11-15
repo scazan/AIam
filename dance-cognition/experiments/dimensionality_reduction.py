@@ -12,3 +12,8 @@ class PCA(sklearn.decomposition.PCA):
                 "min": min(reductions_n),
                 "max": max(reductions_n)
                 })
+
+    def fit(self, *args):
+        sklearn.decomposition.PCA.fit(self, *args)
+        print "explained variance ratio: %s (sum %s)" % (
+            self.explained_variance_ratio_, sum(self.explained_variance_ratio_))

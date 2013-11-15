@@ -70,8 +70,6 @@ class DimensionalityReductionExperiment(Experiment):
     def _train_model(self, teacher):
         print "training model..."
         self.student.fit(teacher.get_training_data())
-        print "explained variance ratio: %s (sum %s)" % (
-            self.student.explained_variance_ratio_, sum(self.student.explained_variance_ratio_))
         print "ok"
 
         print "probing model..."
