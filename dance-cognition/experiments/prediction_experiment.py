@@ -2,16 +2,6 @@ from experiment import *
 from backprop_net import BackpropNet
 from prediction_teacher import *
 
-class BaseStimulus:
-    def __init__(self, experiment):
-        self._t = 0
-        self.args = experiment.args
-        self.bvh_reader = experiment.bvh_reader
-
-    def proceed(self, time_increment):
-        self._t += time_increment
-
-
 class PredictionExperiment(Experiment):
     @staticmethod
     def add_parser_arguments(parser):

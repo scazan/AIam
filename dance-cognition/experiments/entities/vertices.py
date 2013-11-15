@@ -1,4 +1,4 @@
-from prediction_experiment import *
+from experiment import *
 
 class Stimulus(BaseStimulus):
     def get_value(self):

@@ -8,14 +8,17 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from PyQt4 import QtCore, QtGui, QtOpenGL
 import math
+import numpy
 from learning_plotter import LearningPlotter
 from bvh_reader import bvh_reader as bvh_reader_module
 import pickle
 from stopwatch import Stopwatch
 
 class BaseStimulus:
-    def __init__(self):
+    def __init__(self, experiment):
         self._t = 0
+        self.args = experiment.args
+        self.bvh_reader = experiment.bvh_reader
 
     def proceed(self, time_increment):
         self._t += time_increment

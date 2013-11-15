@@ -1,4 +1,4 @@
-from prediction_experiment import *
+from experiment import *
 import math
 from angle_parameters import radians3d_to_vector6d, vector6d_to_radians3d
 from bvh_reader.geo import *
