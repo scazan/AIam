@@ -161,6 +161,7 @@ class Experiment:
     def add_parser_arguments(parser):
         parser.add_argument("entity", type=str)
         parser.add_argument("-train", action="store_true")
+        parser.add_argument("-training-duration", type=float)
         parser.add_argument("-training-data-frame-rate", type=int, default=50)
         parser.add_argument("-model", type=str)
         parser.add_argument("-bvh", type=str)
@@ -196,3 +197,13 @@ class Experiment:
         f.close()
         print "ok"
         return model
+
+    def _training_duration(self):
+        if self.args.training_duration:
+            return self.args.training_duration
+        elif hasattr(self.stimulus, "get_duration"):
+            return self.stimulus.get_duration()
+        else:
+            raise Exception(
+                "training duration specified in neither arguments nor the %s class" % \
+                    self.stimulus.__class__.__name__)

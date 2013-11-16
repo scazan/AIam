@@ -11,24 +11,22 @@ class Teacher:
             if self._cache_exists():
                 self._load_training_data_from_cache()
             else:
-                self._create_training_data()
+                self._create_training_data(stimulus.get_duration())
                 self._save_training_data_to_cache()
-        else:
-            self._create_training_data()
 
-    def _create_training_data(self):
+    def _create_training_data(self, duration):
         print "creating training data..."
         self._training_data = []
         time_increment = 1.0 / self._frame_rate
         t = 0
-        stimulus_duration = self._stimulus.get_duration()
-        while t < stimulus_duration:
+        while t < duration:
             self._add_training_datum()
             self.proceed(time_increment)
             t += time_increment
         print "ok"
 
-    def get_training_data(self):
+    def get_training_data(self, duration):
+        self._create_training_data(duration)
         return numpy.array(self._training_data)
 
     def proceed(self, time_increment):
@@ -61,4 +59,5 @@ class Teacher:
         return "%s.%sfps.data" % (self._stimulus.filename(), self._frame_rate)
 
     def _cacheable(self):
-        return hasattr(self._stimulus, "filename")
+        return hasattr(self._stimulus, "filename") and \
+            hasattr(self._stimulus, "get_duration")

@@ -68,12 +68,14 @@ class DimensionalityReductionExperiment(Experiment):
             app.exec_()
 
     def _train_model(self, teacher):
+        training_data = teacher.get_training_data(self._training_duration())
+
         print "training model..."
-        self.student.fit(teacher.get_training_data())
+        self.student.fit(training_data)
         print "ok"
 
         print "probing model..."
-        self.student.probe(teacher.get_training_data())
+        self.student.probe(training_data)
         print "ok"
 
     def proceed(self, time_increment):

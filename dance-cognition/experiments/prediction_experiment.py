@@ -6,7 +6,6 @@ class PredictionExperiment(Experiment):
     @staticmethod
     def add_parser_arguments(parser):
         Experiment.add_parser_arguments(parser)
-        parser.add_argument("-training-duration", type=float, default=100)
         parser.add_argument("-shuffle-input", action="store_true")
         parser.add_argument("-plot", type=str)
         parser.add_argument("-plot-duration", type=float, default=10)
@@ -63,7 +62,8 @@ class PredictionExperiment(Experiment):
         print "training model..."
         t = 0
         time_increment = 1.0 / 50
-        while t < self.args.training_duration:
+        training_duration = self._training_duration()
+        while t < training_duration:
             if self.teacher.collected_enough_training_data():
                 inp = self.teacher.get_input()
                 output = self.teacher.get_output()
