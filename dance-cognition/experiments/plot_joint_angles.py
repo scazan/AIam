@@ -7,6 +7,8 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/..")
 from argparse import ArgumentParser
 from bvh_reader import bvh_reader as bvh_reader_module
 import math
+from PIL import Image
+import numpy
 
 class JointAnglePlotter:
     @staticmethod
@@ -15,13 +17,14 @@ class JointAnglePlotter:
         parser.add_argument("output")
         parser.add_argument("-radius", type=int, default=100)
         parser.add_argument("-spacing", type=int, default=10)
-        parser.add_argument("-dot-size", type=int, default=2)
-        parser.add_argument("-joint")
 
     def __init__(self, args):
         self.args = args
         self.bvh_reader = bvh_reader_module.BvhReader(args.bvh)
         self.bvh_reader.read()
+
+        self.width = self.args.spacing * 6 + self.args.radius * 6
+        self.height = self.args.spacing * 2 + self.args.radius * 2
         self._create_outputs()
 
         self.dimension_plots = {}
@@ -38,10 +41,11 @@ class JointAnglePlotter:
         self._identify_joints_with_rotation(hips)
         self.num_joints_with_rotation = self.joint_index
 
-        self.outs = []
+        self.image_buffers = []
         for n in range(self.num_joints_with_rotation):
-            output_path = "%s%d.svg" % (args.output, n)
-            self.outs.append(open(output_path, "w"))
+            image_buffer = numpy.empty(self.width * self.height * 3)
+            image_buffer.fill(255)
+            self.image_buffers.append(image_buffer)
 
     def _identify_joints_with_rotation(self, joint):
         if joint.rotation_definition:
@@ -51,35 +55,20 @@ class JointAnglePlotter:
             self._identify_joints_with_rotation(child)
 
     def plot(self):
-        self._add_headers()
         for n in range(self.bvh_reader.skeleton.num_frames):
             hips = self.bvh_reader.skeleton.get_hips(n)
             self._process_joint_recurse(hips)
-        self._add_footers()
+        self._save_images()
 
-    def _add_headers(self):
-        for out in self.outs:
-            self._add_header(out)
+    def _save_images(self):
+        for n in range(self.num_joints_with_rotation):
+            output_path = "%s%d.png" % (args.output, n)
+            image = Image.fromstring("RGB", (self.width, self.height),
+                                     data=self._array_to_string(self.image_buffers[n]))
+            image.save(output_path)
 
-    def _add_header(self, out):
-        width = self.args.spacing * 6 + self.args.radius * 6
-        height = self.args.spacing * 2 + self.args.radius * 2
-        out.write('<svg xmlns="http://www.w3.org/2000/svg" version="1.1">\n')
-        out.write('<g>\n')
-        out.write('<rect width="%d" height="%d" fill="white" />\n' % (
-                width, height))
-        for dimension_plot in self.dimension_plots.values():
-            out.write(
-                '<circle cx="%d" cy="%d" r="%d" fill="none" stroke="#f0f0f0" stroke-width="1" />\n' % (
-                    dimension_plot["cx"], dimension_plot["cy"], self.args.radius))
-
-    def _add_footers(self):
-        for out in self.outs:
-            self._add_footer(out)
-
-    def _add_footer(self, out):
-        out.write('</g>\n')
-        out.write('</svg>\n')
+    def _array_to_string(self, xs):
+        return "".join([chr(int(x)) for x in xs])
 
     def _process_joint_recurse(self, joint):
         if joint.rotation_definition:
@@ -88,18 +77,18 @@ class JointAnglePlotter:
             self._process_joint_recurse(child)
 
     def _process_rotation_definition(self, joint):
-        out = self.outs[joint.index_with_rotation]
+        image_buffer = self.image_buffers[joint.index_with_rotation]
         for channel, degrees in joint.rotation_definition:
-            self._plot_angle(out, channel, degrees)
+            self._plot_angle(image_buffer, channel, degrees)
 
-    def _plot_angle(self, out, channel, degrees):
+    def _plot_angle(self, image_buffer, channel, degrees):
         dimension_plot = self.dimension_plots[channel]
-        out.write(
-            '<circle cx="%d" cy="%d" r="%d" fill="black" fill-opacity="0.1"/>\n' % (
-                dimension_plot["cx"] + self.args.radius * math.cos(math.radians(degrees)),
-                dimension_plot["cy"] + self.args.radius * math.sin(math.radians(degrees)),
-                self.args.dot_size))
-
+        x = int(dimension_plot["cx"] + self.args.radius * math.cos(math.radians(degrees)))
+        y = int(dimension_plot["cy"] + self.args.radius * math.sin(math.radians(degrees)))
+        p = (y * self.width + x) * 3
+        image_buffer[p] = 0
+        image_buffer[p+1] = 0
+        image_buffer[p+2] = 0
 
 parser = ArgumentParser()
 JointAnglePlotter.add_parser_arguments(parser)
