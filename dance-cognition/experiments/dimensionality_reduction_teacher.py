@@ -7,6 +7,7 @@ class Teacher:
     def __init__(self, stimulus, frame_rate):
         self._stimulus = stimulus
         self._frame_rate = frame_rate
+        self._training_data = None
         if self._cacheable():
             if self._cache_exists():
                 self._load_training_data_from_cache()
@@ -26,7 +27,8 @@ class Teacher:
         print "ok"
 
     def get_training_data(self, duration):
-        self._create_training_data(duration)
+        if self._training_data is None:
+            self._create_training_data(duration)
         return numpy.array(self._training_data)
 
     def proceed(self, time_increment):

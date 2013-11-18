@@ -12,6 +12,9 @@ class Stimulus(BaseStimulus):
     def get_duration(self):
         return self.bvh_reader.get_duration() / self.args.bvh_speed
 
+    def filename(self):
+        return self.bvh_reader.filename
+
     def _joint_to_parameters(self, hips):
         parameters = []
         self._add_joint_parameters_recurse(hips, parameters, is_hips=True)
