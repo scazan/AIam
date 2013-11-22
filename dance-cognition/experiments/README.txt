@@ -11,7 +11,7 @@ PREDICTION WITH BACKPROP NET
 
 Train:
 
-python predict.py point -train
+python predict.py point -train -training-duration 100
 python predict.py vertices -bvh scenes/valencia_all.bvh -train -training-duration 500
 python predict.py hierarchical -bvh scenes/valencia_all.bvh -train -training-duration 500
 
