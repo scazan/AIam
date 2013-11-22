@@ -6,7 +6,7 @@ class joint(BaseStimulus):
     def get_value(self):
         joint = self.bvh_reader.get_joint(
             self.args.joint, self._t * self.args.bvh_speed)
-        return radians3d_to_quaternion(*joint.rotation_as_euler_angles())
+        return euler_to_quaternion(*joint.rotation_as_euler_angles())
 
     def get_duration(self):
         return self.bvh_reader.get_duration() / self.args.bvh_speed
@@ -19,7 +19,7 @@ class spiral(BaseStimulus):
         x = (self._t / 1) % (2*math.pi)
         y = (self._t / 2) % (2*math.pi)
         z = (self._t / 4) % (2*math.pi)
-        return radians3d_to_quaternion(x, y, z)
+        return euler_to_quaternion(x, y, z)
 
     def get_duration(self):
         return 2 * math.pi * 4
@@ -49,7 +49,7 @@ class Scene(BaseScene):
         glEnd()
 
 
-def radians3d_to_quaternion(x, y, z):
+def euler_to_quaternion(x, y, z):
     rotation_matrix = make_rotation_matrix(
         [("Xrotation", math.degrees(x)),
          ("Yrotation", math.degrees(y)),

@@ -1,6 +1,6 @@
 from experiment import *
 import math
-from angle_parameters import radians3d_to_vector6d, vector6d_to_radians3d
+from angle_parameters import euler_to_vector6d, vector6d_to_euler
 from bvh_reader.geo import *
 from numpy import array, dot
 
@@ -37,7 +37,7 @@ class Stimulus(BaseStimulus):
     def _add_joint_rotation_parameters(self, joint, parameters):
         rotation_radians = [math.radians(degrees)
                             for channel, degrees in joint.rotation_definition]
-        rotation_parameters = radians3d_to_vector6d(*rotation_radians)
+        rotation_parameters = euler_to_vector6d(*rotation_radians)
         parameters.extend(rotation_parameters)
 
 class Scene(BaseScene):
@@ -84,7 +84,7 @@ class Scene(BaseScene):
         if joint.rotation_definition:
             rotation_parameters = parameters[parameter_index:parameter_index+6]
             parameter_index += 6
-            rotation_radians = vector6d_to_radians3d(rotation_parameters)
+            rotation_radians = vector6d_to_euler(rotation_parameters)
 
             index = 0
             rotation_definition = []

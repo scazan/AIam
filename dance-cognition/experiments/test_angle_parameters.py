@@ -20,18 +20,18 @@ class AngleParametersTest(unittest.TestCase):
             r -= math.pi*2
         return r
 
-    def test_radians3d_to_vector6d_and_back(self):
-        radians3ds = [
+    def test_euler_to_vector6d_and_back(self):
+        eulers = [
             (0.1, 0.3, 1.8),
             (4.1, 2.3, 3.8),
             (5.1, 0.1, 2.8),
             ]
-        for radians3d in radians3ds:
-            self._assert_radians3d_almost_equals(
-                radians3d, 
-                vector6d_to_radians3d(radians3d_to_vector6d(*radians3d)))
+        for euler in eulers:
+            self._assert_euler_almost_equals(
+                euler, 
+                vector6d_to_euler(euler_to_vector6d(*euler)))
 
-    def _assert_radians3d_almost_equals(self, x, y):
+    def _assert_euler_almost_equals(self, x, y):
         self._assert_radians_equal(x[0], y[0])
         self._assert_radians_equal(x[1], y[1])
         self._assert_radians_equal(x[2], y[2])
