@@ -29,8 +29,8 @@ class JointAnglePlotter:
 
         self.dimension_plots = {}
         n = 0
-        for channel in ["Xrotation", "Yrotation", "Zrotation"]:
-            self.dimension_plots[channel] = {
+        for axis in ["x", "y", "z"]:
+            self.dimension_plots[axis] = {
                 "cx": self.args.spacing * (1+n*2) + self.args.radius * (n*2) + self.args.radius,
                 "cy": self.args.spacing + self.args.radius}
             n += 1
@@ -46,7 +46,7 @@ class JointAnglePlotter:
             output["image_buffer"] = image_buffer
 
     def _identify_joints_with_rotation(self, joint):
-        if joint.rotation_definition:
+        if joint.rotation:
             joint.index_with_rotation = len(self.outputs)
             self.outputs.append({"joint": joint})
         for child in joint.children:
@@ -72,20 +72,20 @@ class JointAnglePlotter:
         return "".join([chr(int(x)) for x in xs])
 
     def _process_joint_recurse(self, joint):
-        if joint.rotation_definition:
-            self._process_rotation_definition(joint)
+        if joint.rotation:
+            self._process_rotation(joint)
         for child in joint.children:
             self._process_joint_recurse(child)
 
-    def _process_rotation_definition(self, joint):
+    def _process_rotation(self, joint):
         image_buffer = self.outputs[joint.index_with_rotation]["image_buffer"]
-        for channel, degrees in joint.rotation_definition:
-            self._plot_angle(image_buffer, channel, degrees)
+        for axis, angle in zip(joint.rotation.axes[1:], joint.rotation.angles):
+            self._plot_angle(image_buffer, axis, angle)
 
-    def _plot_angle(self, image_buffer, channel, degrees):
-        dimension_plot = self.dimension_plots[channel]
-        x = int(dimension_plot["cx"] + self.args.radius * math.cos(math.radians(degrees)))
-        y = int(dimension_plot["cy"] + self.args.radius * math.sin(math.radians(degrees)))
+    def _plot_angle(self, image_buffer, axis, angle):
+        dimension_plot = self.dimension_plots[axis]
+        x = int(dimension_plot["cx"] + self.args.radius * math.cos(angle))
+        y = int(dimension_plot["cy"] + self.args.radius * math.sin(angle))
         p = (y * self.width + x) * 3
         image_buffer[p] = 0
         image_buffer[p+1] = 0

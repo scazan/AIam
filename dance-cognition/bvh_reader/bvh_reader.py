@@ -6,6 +6,13 @@ from numpy import array, dot
 import numpy
 import os
 import cPickle
+from transformations import euler_matrix
+
+CHANNEL_TO_AXIS = {
+    "Xrotation": "x",
+    "Yrotation": "y",
+    "Zrotation": "z",
+}
 
 class joint:
     def __init__(self, name, index):
@@ -53,9 +60,6 @@ class joint:
         for child in self.children:
             child.populate_edges_from_vertices_recurse(vertices, edgelist)
 
-    def rotation_as_euler_angles(self):
-        return rotation_definition_to_euler_angles(self.rotation_definition)
-
 
 class skeleton:
     def __init__(self, hips, keyframes, num_frames=0, dt=.033333333):
@@ -102,16 +106,18 @@ class skeleton:
 
         if "Xrotation" in keyframe_dict:
             rotate = True
-            rotation_definition = []
+            angles = []
+            axes = "r"
             for channel in joint.channels:
                 if channel in ["Xrotation", "Yrotation", "Zrotation"]:
                     degrees = keyframe_dict[channel]
-                    rotation_definition.append((channel, degrees))
-            rotation_matrix = make_rotation_matrix(rotation_definition)
-            joint.rotation_definition = rotation_definition
+                    axes += CHANNEL_TO_AXIS[channel]
+                    angles.append(radians(degrees))
+            joint.rotation = Euler(angles, axes)
+            rotation_matrix = euler_matrix(*angles, axes=axes)
         else:
             rotate = False
-            joint.rotation_definition = None
+            joint.rotation = None
 
         if joint.hasparent:
             parent_trtr = joint.parent.trtr

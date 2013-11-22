@@ -3,6 +3,7 @@ import math
 from angle_parameters import euler_to_vector6d, vector6d_to_euler
 from bvh_reader.geo import *
 from numpy import array, dot
+from transformations import euler_matrix
 
 class Stimulus(BaseStimulus):
     def get_value(self):
@@ -23,7 +24,7 @@ class Stimulus(BaseStimulus):
     def _add_joint_parameters_recurse(self, joint, parameters, is_hips=False):
         if not joint.hasparent and not is_hips:
             self._add_joint_transposition_parameters(joint, parameters)
-        if joint.rotation_definition:
+        if joint.rotation:
             self._add_joint_rotation_parameters(joint, parameters)
         for child in joint.children:
             self._add_joint_parameters_recurse(child, parameters)
@@ -35,9 +36,7 @@ class Stimulus(BaseStimulus):
         parameters.extend(normalized_vector)
 
     def _add_joint_rotation_parameters(self, joint, parameters):
-        rotation_radians = [math.radians(degrees)
-                            for channel, degrees in joint.rotation_definition]
-        rotation_parameters = euler_to_vector6d(*rotation_radians)
+        rotation_parameters = euler_to_vector6d(*joint.rotation.angles)
         parameters.extend(rotation_parameters)
 
 class Scene(BaseScene):
@@ -81,18 +80,11 @@ class Scene(BaseScene):
                 localtoworld = dot(joint.transposition_matrix, transposition_matrix)
             trtr = localtoworld
 
-        if joint.rotation_definition:
+        if joint.rotation:
             rotation_parameters = parameters[parameter_index:parameter_index+6]
             parameter_index += 6
-            rotation_radians = vector6d_to_euler(rotation_parameters)
-
-            index = 0
-            rotation_definition = []
-            for channel, _degrees in joint.rotation_definition:
-                degrees = math.degrees(rotation_radians[index])
-                rotation_definition.append((channel, degrees))
-                index += 1
-            rotation_matrix = make_rotation_matrix(rotation_definition)
+            rotation_angles = vector6d_to_euler(rotation_parameters)
+            rotation_matrix = euler_matrix(*rotation_angles, axes=joint.rotation.axes)
 
             trtr = dot(localtoworld, rotation_matrix)
         else:
