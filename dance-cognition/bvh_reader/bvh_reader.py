@@ -106,13 +106,11 @@ class skeleton:
 
         if "Xrotation" in keyframe_dict:
             rotate = True
-            angles = []
-            axes = "r"
-            for channel in joint.channels:
-                if channel in ["Xrotation", "Yrotation", "Zrotation"]:
-                    degrees = keyframe_dict[channel]
-                    axes += CHANNEL_TO_AXIS[channel]
-                    angles.append(radians(degrees))
+            rotation_channels = filter(lambda channel:
+                                           channel in ["Xrotation", "Yrotation", "Zrotation"],
+                                       joint.channels)
+            angles = [radians(keyframe_dict[channel]) for channel in rotation_channels]
+            axes = "r" + "".join([CHANNEL_TO_AXIS[channel] for channel in rotation_channels])
             joint.rotation = Euler(angles, axes)
             rotation_matrix = euler_matrix(*angles, axes=axes)
         else:
