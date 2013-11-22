@@ -1,4 +1,6 @@
+validate/improve rotation parametrization (using quaternions?)
+  visualize quaternion representation + its antipodal inverse, to see if antipodal symmetry explains encountered problems with discontinuity (angle_3dim_quaternion)
+  test using joint ranges (mean+limits)
 add movement across space to hierarchical parametrization
 test dim reduction with higher training data frame rate
-validate/improve rotation parametrization (using quaternions?)
 explore random trajectories within dense areas of reduction space
