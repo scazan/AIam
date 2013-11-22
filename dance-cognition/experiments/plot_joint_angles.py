@@ -37,20 +37,18 @@ class JointAnglePlotter:
 
     def _create_outputs(self):
         hips = self.bvh_reader.skeleton.get_hips(0)
-        self.joint_index = 0
+        self.outputs = []
         self._identify_joints_with_rotation(hips)
-        self.num_joints_with_rotation = self.joint_index
 
-        self.image_buffers = []
-        for n in range(self.num_joints_with_rotation):
+        for output in self.outputs:
             image_buffer = numpy.empty(self.width * self.height * 3)
             image_buffer.fill(255)
-            self.image_buffers.append(image_buffer)
+            output["image_buffer"] = image_buffer
 
     def _identify_joints_with_rotation(self, joint):
         if joint.rotation_definition:
-            joint.index_with_rotation = self.joint_index
-            self.joint_index += 1
+            joint.index_with_rotation = len(self.outputs)
+            self.outputs.append({"joint": joint})
         for child in joint.children:
             self._identify_joints_with_rotation(child)
 
@@ -61,11 +59,14 @@ class JointAnglePlotter:
         self._save_images()
 
     def _save_images(self):
-        for n in range(self.num_joints_with_rotation):
-            output_path = "%s%d.png" % (args.output, n)
+        n = 0
+        for output in self.outputs:
+            output_path = "%s%03d_%s.png" % (
+                args.output, n, output["joint"].name)
             image = Image.fromstring("RGB", (self.width, self.height),
-                                     data=self._array_to_string(self.image_buffers[n]))
+                                     data=self._array_to_string(output["image_buffer"]))
             image.save(output_path)
+            n += 1
 
     def _array_to_string(self, xs):
         return "".join([chr(int(x)) for x in xs])
@@ -77,7 +78,7 @@ class JointAnglePlotter:
             self._process_joint_recurse(child)
 
     def _process_rotation_definition(self, joint):
-        image_buffer = self.image_buffers[joint.index_with_rotation]
+        image_buffer = self.outputs[joint.index_with_rotation]["image_buffer"]
         for channel, degrees in joint.rotation_definition:
             self._plot_angle(image_buffer, channel, degrees)
 
