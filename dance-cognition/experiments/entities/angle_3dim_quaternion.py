@@ -1,12 +1,12 @@
 from experiment import *
 from bvh_reader.geo import *
-from transformations import quaternion_from_matrix, quaternion_matrix
+from transformations import quaternion_from_matrix, quaternion_matrix, quaternion_from_euler
 
 class joint(BaseStimulus):
     def get_value(self):
         joint = self.bvh_reader.get_joint(
             self.args.joint, self._t * self.args.bvh_speed)
-        return euler_to_quaternion(*joint.rotation_as_euler_angles())
+        return quaternion_from_euler(*joint.rotation_as_euler_angles())
 
     def get_duration(self):
         return self.bvh_reader.get_duration() / self.args.bvh_speed
@@ -19,7 +19,7 @@ class spiral(BaseStimulus):
         x = (self._t / 1) % (2*math.pi)
         y = (self._t / 2) % (2*math.pi)
         z = (self._t / 4) % (2*math.pi)
-        return euler_to_quaternion(x, y, z)
+        return quaternion_from_euler(x, y, z)
 
     def get_duration(self):
         return 2 * math.pi * 4
@@ -47,11 +47,3 @@ class Scene(BaseScene):
         glBegin(GL_POINTS)
         glVertex3f(worldpos[0], worldpos[1], worldpos[2])
         glEnd()
-
-
-def euler_to_quaternion(x, y, z):
-    rotation_matrix = make_rotation_matrix(
-        [("Xrotation", math.degrees(x)),
-         ("Yrotation", math.degrees(y)),
-         ("Zrotation", math.degrees(z))])
-    return quaternion_from_matrix(rotation_matrix)
