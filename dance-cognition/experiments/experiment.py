@@ -13,6 +13,7 @@ from learning_plotter import LearningPlotter
 from bvh_reader import bvh_reader as bvh_reader_module
 import pickle
 from stopwatch import Stopwatch
+import imp
 
 class BaseStimulus:
     def __init__(self, experiment):
@@ -160,6 +161,7 @@ class Experiment:
     @staticmethod
     def add_parser_arguments(parser):
         parser.add_argument("entity", type=str)
+        parser.add_argument("-stimulus", default="Stimulus")
         parser.add_argument("-train", action="store_true")
         parser.add_argument("-training-duration", type=float)
         parser.add_argument("-training-data-frame-rate", type=int, default=50)
@@ -172,9 +174,8 @@ class Experiment:
         parser.add_argument("-input-y-offset", type=float, default=.0)
         parser.add_argument("-output-y-offset", type=float, default=.0)
 
-    def __init__(self, scene, args):
+    def __init__(self, args):
         self.args = args
-        self._scene_class = scene
         if args.bvh:
             self.bvh_reader = bvh_reader_module.BvhReader(args.bvh)
             self.bvh_reader.read()
@@ -182,6 +183,10 @@ class Experiment:
             self.bvh_reader = None
         self.input = None
         self.output = None
+        entity_module = imp.load_source("entity", "entities/%s.py" % args.entity)
+        self._scene_class = entity_module.Scene
+        stimulus_class = getattr(entity_module, args.stimulus)
+        self.stimulus = stimulus_class(self)
 
     def save_model(self, model_filename):
         print "saving model..."

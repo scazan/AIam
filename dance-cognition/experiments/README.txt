@@ -9,16 +9,16 @@ http://cgkit.sourceforge.net
 
 PREDICTION WITH BACKPROP NET
 
-Train:
+python predict.py point -stimulus circle -train -training-duration 100
+python predict.py point -stimulus circle -unit-cube
 
-python predict.py point -train -training-duration 100
+python predict.py point -stimulus joint -bvh scenes/valencia_all.bvh -train -training-duration 100
+python predict.py point -stimulus joint -bvh scenes/valencia_all.bvh -unit-cube
+
 python predict.py vertices -bvh scenes/valencia_all.bvh -train -training-duration 500
-python predict.py hierarchical -bvh scenes/valencia_all.bvh -train -training-duration 500
-
-Use:
-
-python predict.py point -unit-cube
 python predict.py vertices -bvh scenes/valencia_all.bvh
+
+python predict.py hierarchical -bvh scenes/valencia_all.bvh -train -training-duration 500
 python predict.py hierarchical -bvh scenes/valencia_all.bvh -zoom 3 -output-y-offset 1
 
 

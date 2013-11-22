@@ -1,19 +1,15 @@
 from experiment import *
 
-# class Stimulus(BaseStimulus):
-#     def __init__(self, bvh_reader):
-#         Stimulus.__init__(self)
-#         self.bvh_reader = bvh_reader
+class joint(BaseStimulus):
+    def get_value(self):
+        vertices = self.bvh_reader.get_skeleton_vertices(self._t * self.args.bvh_speed)
+        hips = self.bvh_reader.normalize_vector(self.bvh_reader.vertex_to_vector(vertices[0]))
+        return hips
 
-#     def get_value(self):
-#         vertices = self.bvh_reader.get_skeleton_vertices(self._t * args.bvh_speed)
-#         hips = self.bvh_reader.normalize_vector(self.bvh_reader.vertex_to_vector(vertices[0]))
-#         return hips
+    def get_duration(self):
+        return self.bvh_reader.get_duration() / args.bvh_speed
 
-#     def get_duration(self):
-#         return self.bvh_reader.get_duration() / args.bvh_speed
-
-class Stimulus(BaseStimulus):
+class circle(BaseStimulus):
     def get_value(self):
         z = math.cos(self._t)
         y = math.sin(self._t)

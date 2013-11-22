@@ -10,27 +10,18 @@ class PredictionExperiment(Experiment):
         parser.add_argument("-plot", type=str)
         parser.add_argument("-plot-duration", type=float, default=10)
 
-    def __init__(self, scene, args):
-        self.args = args
-        self._scene_class = scene
-        if args.bvh:
-            self.bvh_reader = bvh_reader_module.BvhReader(args.bvh)
-            self.bvh_reader.read()
-        else:
-            self.bvh_reader = None
+    def __init__(self, args):
+        Experiment.__init__(self, args)
         if self.args.model is None:
             self.args.model = "models/prediction/%s.model" % args.entity
-        self.input = None
-        self.output = None
 
-    def run(self, student, stimulus):
-        self.stimulus = stimulus
+    def run(self, student):
         self.student = student
 
         if self.args.shuffle_input:
-            self.teacher = ShufflingTeacher(stimulus)
+            self.teacher = ShufflingTeacher(self.stimulus)
         else:
-            self.teacher = LiveTeacher(stimulus)
+            self.teacher = LiveTeacher(self.stimulus)
 
         if self.args.train:
             self._train_model()
