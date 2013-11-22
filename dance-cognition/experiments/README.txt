@@ -35,3 +35,9 @@ python dim_reduce.py hierarchical -bvh scenes/valencia_all.bvh -zoom 3 -output-y
 Explore interactively:
 
 python dim_reduce.py hierarchical -bvh scenes/valencia_all.bvh -zoom 3 -output-y-offset 0.5 -interactive
+
+
+QUATERNION EXPERIMENTS
+
+python dim_reduce.py angle_3dim_quaternion -stimulus joint -bvh scenes/valencia_all.bvh -joint RShoulder -train -n 3
+python dim_reduce.py angle_3dim_quaternion -stimulus joint -bvh scenes/valencia_all.bvh -joint RShoulder -unit-cube

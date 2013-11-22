@@ -53,6 +53,8 @@ class joint:
         for child in self.children:
             child.populate_edges_from_vertices_recurse(vertices, edgelist)
 
+    def rotation_as_euler_angles(self):
+        return rotation_definition_to_euler_angles(self.rotation_definition)
 
 
 class skeleton:
@@ -65,6 +67,19 @@ class skeleton:
     def get_hips(self, t=None):
         self._process_bvhkeyframe(self.keyframes[t], self.hips)
         return self.hips
+
+    def get_joint(self, name, t):
+        hips = self.get_hips(t)
+        return self._find_joint_recurse(hips, name)
+
+    def _find_joint_recurse(self, joint, searched_name):
+        if joint.name == searched_name:
+            return joint
+        else:
+            for child in joint.children:
+                potential_find = self._find_joint_recurse(child, searched_name)
+                if potential_find:
+                    return potential_find
 
     def get_vertices(self, t):
         self._process_bvhkeyframe(self.keyframes[t], self.hips)
@@ -176,6 +191,10 @@ class BvhReader(cgkit.bvh.BVHReader):
     def get_hips(self, t):
         frame_index = self._frame_index(t)
         return self.skeleton.get_hips(frame_index)
+
+    def get_joint(self, joint_name, t):
+        frame_index = self._frame_index(t)
+        return self.skeleton.get_joint(joint_name, frame_index)
 
     def _frame_index(self, t):
         return int(t / self.skeleton.dt) % self.skeleton.num_frames

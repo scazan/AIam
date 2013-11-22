@@ -40,6 +40,17 @@ def make_rotation_matrix(definition):
             raise Exception("unknown channel %r" % channel)
     return rotation_matrix
 
+def rotation_definition_to_euler_angles(definition):
+    euler_angles = [None, None, None]
+    for channel, degrees in definition:
+        if channel == "Xrotation":
+            euler_angles[0] = radians(degrees)
+        elif channel == "Yrotation":
+            euler_angles[1] = radians(degrees)
+        elif channel == "Zrotation":
+            euler_angles[2] = radians(degrees)
+    return euler_angles
+
 def make_z_rotation_matrix(degrees):
     theta = radians(degrees)
     mycos = cos(theta)
