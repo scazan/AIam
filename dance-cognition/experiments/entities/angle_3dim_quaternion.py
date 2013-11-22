@@ -27,13 +27,14 @@ class spiral(BaseStimulus):
 class Scene(BaseScene):
     def draw_input(self, inp):
         glColor3f(0, 1, 0)
-        self._draw_3dim_angle(quaternion_matrix(inp))
+        self._draw_3dim_angle(inp)
 
     def draw_output(self, output):
         glColor3f(0.5, 0.5, 1.0)
-        self._draw_3dim_angle(quaternion_matrix(output))
+        self._draw_3dim_angle(output)
 
-    def _draw_3dim_angle(self, rotation_matrix):
+    def _draw_3dim_angle(self, quaternion):
+        rotation_matrix = quaternion_matrix(quaternion)
         transposition_matrix = make_transposition_matrix(1., 0., 0.)
         localtoworld = numpy.dot(rotation_matrix, transposition_matrix)
         worldpos = array([
