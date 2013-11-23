@@ -37,10 +37,13 @@ Explore interactively:
 python dim_reduce.py hierarchical -bvh scenes/valencia_all.bvh -zoom 3 -output-y-offset 0.5 -interactive
 
 
-"VECTOR6D" EXPERIMENTS (Euler angle components as vectors. Weak result.)
+VECTOR6D EXPERIMENTS (Euler angle components as vectors)
 
 python dim_reduce.py angle_3dim_6params -train -n 5
 python dim_reduce.py angle_3dim_6params -unit-cube
+
+python dim_reduce.py angle_3dim_6params -stimulus joint -bvh scenes/valencia_all.bvh -joint RShoulder -train -n 5
+python dim_reduce.py angle_3dim_6params -stimulus joint -bvh scenes/valencia_all.bvh -joint RShoulder -unit-cube
 
 
 QUATERNION EXPERIMENT
