@@ -1,9 +1,12 @@
 from experiment import *
 import math
-from angle_parameters import euler_to_vector6d, vector6d_to_euler
+from angle_parameters import EulerTo3Vectors, EulerToQuaternion
 from bvh_reader.geo import *
 from numpy import array, dot
 from transformations import euler_matrix
+
+rotation_parametrization = EulerTo3Vectors
+#rotation_parametrization = EulerToQuaternion
 
 class Stimulus(BaseStimulus):
     def get_value(self):
@@ -36,7 +39,8 @@ class Stimulus(BaseStimulus):
         parameters.extend(normalized_vector)
 
     def _add_joint_rotation_parameters(self, joint, parameters):
-        rotation_parameters = euler_to_vector6d(*joint.rotation.angles)
+        rotation_parameters = rotation_parametrization.rotation_to_parameters(
+            joint.rotation)
         parameters.extend(rotation_parameters)
 
 class Scene(BaseScene):
@@ -83,7 +87,8 @@ class Scene(BaseScene):
         if joint.rotation:
             rotation_parameters = parameters[parameter_index:parameter_index+6]
             parameter_index += 6
-            rotation_angles = vector6d_to_euler(rotation_parameters)
+            rotation_angles = rotation_parametrization.parameters_to_rotation(
+                rotation_parameters, joint.rotation.axes)
             rotation_matrix = euler_matrix(*rotation_angles, axes=joint.rotation.axes)
 
             trtr = dot(localtoworld, rotation_matrix)

@@ -1,6 +1,7 @@
 import numpy
 import random
 import math
+from transformations import quaternion_from_euler, euler_from_quaternion
 
 def radians_to_vector2d(radians):
     return numpy.array([math.cos(radians), math.sin(radians)])
@@ -24,3 +25,21 @@ def vector6d_to_euler(vector6d):
     r2 = vector2d_to_radians(vector6d[2:4])
     r3 = vector2d_to_radians(vector6d[4:6])
     return r1, r2, r3
+
+class EulerTo3Vectors:
+    @staticmethod
+    def rotation_to_parameters(euler):
+        return euler_to_vector6d(*euler.angles)
+
+    @staticmethod
+    def parameters_to_rotation(parameters, axes):
+        return vector6d_to_euler(parameters)
+
+class EulerToQuaternion:
+    @staticmethod
+    def rotation_to_parameters(euler):
+        return quaternion_from_euler(*euler.angles, axes=euler.axes)
+
+    @staticmethod
+    def parameters_to_rotation(quaternion, axes):
+        return euler_from_quaternion(quaternion, axes)
