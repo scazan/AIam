@@ -27,6 +27,8 @@ def vector6d_to_euler(vector6d):
     return r1, r2, r3
 
 class EulerTo3Vectors:
+    num_parameters = 6
+
     @staticmethod
     def rotation_to_parameters(euler):
         return euler_to_vector6d(*euler.angles)
@@ -36,6 +38,8 @@ class EulerTo3Vectors:
         return vector6d_to_euler(parameters)
 
 class EulerToQuaternion:
+    num_parameters = 4
+
     @staticmethod
     def rotation_to_parameters(euler):
         return quaternion_from_euler(*euler.angles, axes=euler.axes)

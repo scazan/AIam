@@ -85,8 +85,9 @@ class Scene(BaseScene):
             trtr = localtoworld
 
         if joint.rotation:
-            rotation_parameters = parameters[parameter_index:parameter_index+6]
-            parameter_index += 6
+            rotation_parameters = parameters[
+                parameter_index:parameter_index+rotation_parametrization.num_parameters]
+            parameter_index += rotation_parametrization.num_parameters
             rotation_angles = rotation_parametrization.parameters_to_rotation(
                 rotation_parameters, joint.rotation.axes)
             rotation_matrix = euler_matrix(*rotation_angles, axes=joint.rotation.axes)
