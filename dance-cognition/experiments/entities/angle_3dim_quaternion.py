@@ -1,6 +1,5 @@
 from experiment import *
-from bvh_reader.geo import *
-from transformations import quaternion_from_matrix, quaternion_matrix, quaternion_from_euler
+from transformations import quaternion_from_euler, euler_from_quaternion
 
 class joint(BaseStimulus):
     def get_value(self):
@@ -36,16 +35,13 @@ class Scene(BaseScene):
         self._draw_3dim_angle(output)
 
     def _draw_3dim_angle(self, quaternion):
-        rotation_matrix = quaternion_matrix(quaternion)
-        transposition_matrix = make_transposition_matrix(1., 0., 0.)
-        localtoworld = numpy.dot(rotation_matrix, transposition_matrix)
-        worldpos = array([
-                  localtoworld[0,3],
-                  localtoworld[1,3],
-                  localtoworld[2,3],
-                  localtoworld[3,3] ])
-
-        glPointSize(3)
-        glBegin(GL_POINTS)
-        glVertex3f(worldpos[0], worldpos[1], worldpos[2])
+        x, y, z = euler_from_quaternion(quaternion, "rxyz")
+        glRotatef(math.degrees(x), 1., 0., 0.)
+        glRotatef(math.degrees(y), 0., 1., 0.)
+        glRotatef(math.degrees(z), 0., 0., 1.)
+        glScale(.5, .5, .5)
+        glBegin(GL_LINE_STRIP)
+        glVertex3f(0, 0, 0)
+        glVertex3f(1, 0, 0)
+        glVertex3f(1, 1, 0)
         glEnd()
