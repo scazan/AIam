@@ -1,4 +1,4 @@
 add movement across space to hierarchical parametrization
-test dim reduction with higher training data frame rate
 explore random trajectories within dense areas of reduction space
+explore areas outside of known regions of reduction space (outside the probed range)
 ensure that quaternion discontinuity problem (see README) cannot appear in real cases
