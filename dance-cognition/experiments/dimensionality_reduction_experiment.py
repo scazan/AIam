@@ -43,10 +43,10 @@ class DimensionalityReductionExperiment(Experiment):
         Experiment.add_parser_arguments(parser)
         parser.add_argument("-interactive-control", action="store_true")
 
-    def __init__(self, args):
-        Experiment.__init__(self, args)
+    def __init__(self, parser):
+        Experiment.__init__(self, parser)
         if self.args.model is None:
-            self.args.model = "models/dimensionality_reduction/%s.model" % args.entity
+            self.args.model = "models/dimensionality_reduction/%s.model" % self.args.entity
         self.reduction = None
 
     def run(self, student):

@@ -10,10 +10,10 @@ class PredictionExperiment(Experiment):
         parser.add_argument("-plot", type=str)
         parser.add_argument("-plot-duration", type=float, default=10)
 
-    def __init__(self, args):
-        Experiment.__init__(self, args)
+    def __init__(self, parser):
+        Experiment.__init__(self, parser)
         if self.args.model is None:
-            self.args.model = "models/prediction/%s.model" % args.entity
+            self.args.model = "models/prediction/%s.model" % self.args.entity
 
     def run(self, student):
         self.student = student

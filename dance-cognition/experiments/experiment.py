@@ -15,11 +15,20 @@ import pickle
 from stopwatch import Stopwatch
 import imp
 
+class BaseEntity:
+    @staticmethod
+    def add_parser_arguments(parser):
+        pass
+
+    def __init__(self, args):
+        pass
+
 class BaseStimulus:
     def __init__(self, experiment):
         self._t = 0
         self.args = experiment.args
         self.bvh_reader = experiment.bvh_reader
+        self.entity = experiment.entity
 
     def proceed(self, time_increment):
         self._t += time_increment
@@ -28,6 +37,7 @@ class BaseScene(QtOpenGL.QGLWidget):
     def __init__(self, parent, experiment, args):
         self.experiment = experiment
         self.bvh_reader = experiment.bvh_reader
+        self.entity = experiment.entity
         self.args = args
         QtOpenGL.QGLWidget.__init__(self, parent)
 
@@ -175,7 +185,16 @@ class Experiment:
         parser.add_argument("-input-y-offset", type=float, default=.0)
         parser.add_argument("-output-y-offset", type=float, default=.0)
 
-    def __init__(self, args):
+    def __init__(self, parser):
+        args, _remaining_args = parser.parse_known_args()
+        entity_module = imp.load_source("entity", "entities/%s.py" % args.entity)
+        if hasattr(entity_module, "Entity"):
+            entity_class = entity_module.Entity
+        else:
+            entity_class = BaseEntity
+        entity_class.add_parser_arguments(parser)
+
+        args = parser.parse_args()
         self.args = args
         if args.bvh:
             self.bvh_reader = bvh_reader_module.BvhReader(args.bvh)
@@ -184,7 +203,7 @@ class Experiment:
             self.bvh_reader = None
         self.input = None
         self.output = None
-        entity_module = imp.load_source("entity", "entities/%s.py" % args.entity)
+        self.entity = entity_class(args)
         self._scene_class = entity_module.Scene
         stimulus_class = getattr(entity_module, args.stimulus)
         self.stimulus = stimulus_class(self)

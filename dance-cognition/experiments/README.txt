@@ -22,19 +22,20 @@ python predict.py hierarchical -bvh scenes/valencia_all.bvh -train -training-dur
 python predict.py hierarchical -bvh scenes/valencia_all.bvh -zoom 3 -output-y-offset 1
 
 
-DIMENSIONALITY REDUCTION WITH PCA
+DIMENSIONALITY REDUCTION WITH PCA: ROTATION AS VECTORS
 
-Train:
+Train / mimic / explore interactively:
 
-python dim_reduce.py hierarchical -bvh scenes/valencia_all.bvh -train -training-data-frame-rate 10 -n 7
+python dim_reduce.py hierarchical -r vectors -bvh scenes/valencia_all.bvh -train -training-data-frame-rate 10 -n 7
+python dim_reduce.py hierarchical -r vectors -bvh scenes/valencia_all.bvh -zoom 3 -output-y-offset 1
+python dim_reduce.py hierarchical -r vectors -bvh scenes/valencia_all.bvh -zoom 3 -output-y-offset 0.5 -interactive
 
-Mimic:
 
-python dim_reduce.py hierarchical -bvh scenes/valencia_all.bvh -zoom 3 -output-y-offset 1
+DIMENSIONALITY REDUCTION WITH PCA: ROTATION AS QUATERNION
 
-Explore interactively:
-
-python dim_reduce.py hierarchical -bvh scenes/valencia_all.bvh -zoom 3 -output-y-offset 0.5 -interactive
+python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh -train -training-data-frame-rate 10 -n 7
+python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh -zoom 3 -output-y-offset 1
+python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh -zoom 3 -output-y-offset 0.5 -interactive
 
 
 VECTOR6D EXPERIMENTS (Euler angle components as vectors)

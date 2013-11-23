@@ -5,8 +5,20 @@ from bvh_reader.geo import *
 from numpy import array, dot
 from transformations import euler_matrix
 
-rotation_parametrization = EulerTo3Vectors
-#rotation_parametrization = EulerToQuaternion
+rotation_parametrizations = {
+    "vectors": EulerTo3Vectors,
+    "quaternion": EulerToQuaternion,
+    }
+
+class Entity(BaseEntity):
+    @staticmethod
+    def add_parser_arguments(parser):
+        parser.add_argument("--rotation-parametrization", "-r",
+                            choices=["vectors", "quaternion"])
+
+    def __init__(self, args):
+        self.rotation_parametrization = rotation_parametrizations[
+            args.rotation_parametrization]
 
 class Stimulus(BaseStimulus):
     def get_value(self):
@@ -17,7 +29,7 @@ class Stimulus(BaseStimulus):
         return self.bvh_reader.get_duration() / self.args.bvh_speed
 
     def filename(self):
-        return self.bvh_reader.filename
+        return "%s.%s" % (self.bvh_reader.filename, self.args.rotation_parametrization)
 
     def _joint_to_parameters(self, hips):
         parameters = []
@@ -39,7 +51,7 @@ class Stimulus(BaseStimulus):
         parameters.extend(normalized_vector)
 
     def _add_joint_rotation_parameters(self, joint, parameters):
-        rotation_parameters = rotation_parametrization.rotation_to_parameters(
+        rotation_parameters = self.entity.rotation_parametrization.rotation_to_parameters(
             joint.rotation)
         parameters.extend(rotation_parameters)
 
@@ -86,9 +98,9 @@ class Scene(BaseScene):
 
         if joint.rotation:
             rotation_parameters = parameters[
-                parameter_index:parameter_index+rotation_parametrization.num_parameters]
-            parameter_index += rotation_parametrization.num_parameters
-            rotation_angles = rotation_parametrization.parameters_to_rotation(
+                parameter_index:parameter_index+self.entity.rotation_parametrization.num_parameters]
+            parameter_index += self.entity.rotation_parametrization.num_parameters
+            rotation_angles = self.entity.rotation_parametrization.parameters_to_rotation(
                 rotation_parameters, joint.rotation.axes)
             rotation_matrix = euler_matrix(*rotation_angles, axes=joint.rotation.axes)
 

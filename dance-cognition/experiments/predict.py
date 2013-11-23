@@ -2,9 +2,8 @@ from prediction_experiment import *
 
 parser = ArgumentParser()
 PredictionExperiment.add_parser_arguments(parser)
-args = parser.parse_args()
 
-experiment = PredictionExperiment(args)
+experiment = PredictionExperiment(parser)
 num_parameters = len(experiment.stimulus.get_value())
 
 student = BackpropNet(
