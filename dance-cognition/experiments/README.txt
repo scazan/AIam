@@ -40,8 +40,8 @@ python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh -zo
 
 VECTOR6D EXPERIMENTS (Euler angle components as vectors)
 
-python dim_reduce.py angle_3dim_6params -train -n 5
-python dim_reduce.py angle_3dim_6params -unit-cube
+python dim_reduce.py angle_3dim_6params -stimulus spiral -train -n 5
+python dim_reduce.py angle_3dim_6params -stimulus spiral -unit-cube
 
 python dim_reduce.py angle_3dim_6params -stimulus joint -bvh scenes/valencia_all.bvh -joint RShoulder -train -n 5
 python dim_reduce.py angle_3dim_6params -stimulus joint -bvh scenes/valencia_all.bvh -joint RShoulder -unit-cube
