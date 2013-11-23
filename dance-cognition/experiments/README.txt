@@ -47,7 +47,12 @@ python dim_reduce.py angle_3dim_6params -stimulus joint -bvh scenes/valencia_all
 python dim_reduce.py angle_3dim_6params -stimulus joint -bvh scenes/valencia_all.bvh -joint RShoulder -unit-cube
 
 
-QUATERNION EXPERIMENT
+QUATERNION EXPERIMENTS
 
+Artificial case with discontinuity problem:
+python dim_reduce.py angle_3dim_quaternion -stimulus spiral -train -n 3
+python dim_reduce.py angle_3dim_quaternion -stimulus spiral -unit-cube
+
+Real case without discontinuity problem:
 python dim_reduce.py angle_3dim_quaternion -stimulus joint -bvh scenes/valencia_all.bvh -joint RShoulder -train -n 3
 python dim_reduce.py angle_3dim_quaternion -stimulus joint -bvh scenes/valencia_all.bvh -joint RShoulder -unit-cube
