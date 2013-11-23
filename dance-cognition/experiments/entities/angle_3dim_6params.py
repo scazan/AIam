@@ -14,13 +14,14 @@ class Stimulus(BaseStimulus):
 class Scene(BaseScene):
     def draw_input(self, inp):
         glColor3f(0, 1, 0)
-        self._draw_3dim_angle(*vector6d_to_euler(inp))
+        self._draw_3dim_angle(inp)
 
     def draw_output(self, output):
         glColor3f(0.5, 0.5, 1.0)
-        self._draw_3dim_angle(*vector6d_to_euler(output))
+        self._draw_3dim_angle(output)
 
-    def _draw_3dim_angle(self, r1, r2, r3):
+    def _draw_3dim_angle(self, vector6d):
+        r1, r2, r3 = vector6d_to_euler(vector6d)
         glPointSize(3)
         glRotatef(math.degrees(r1), 1., 0., 0.)
         glRotatef(math.degrees(r2), 0., 1., 0.)
