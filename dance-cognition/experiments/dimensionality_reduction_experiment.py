@@ -83,5 +83,5 @@ class DimensionalityReductionExperiment(Experiment):
         else:
             self.stimulus.proceed(time_increment)
             self.input = self.stimulus.get_value()
-            self.reduction = self.student.transform(self.input)
-        self.output = self.student.inverse_transform(self.reduction)
+            self.reduction = self.student.transform(numpy.array([self.input]))[0]
+        self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
