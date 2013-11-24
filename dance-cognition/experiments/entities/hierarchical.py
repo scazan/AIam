@@ -15,6 +15,8 @@ class Entity(BaseEntity):
     def add_parser_arguments(parser):
         parser.add_argument("--rotation-parametrization", "-r",
                             choices=["vectors", "quaternion"])
+        parser.add_argument("--transpose", action="store_true")
+        parser.add_argument("--transposition-weight", type=float, default=1.)
 
     def __init__(self, args):
         self.rotation_parametrization = rotation_parametrizations[
@@ -33,11 +35,11 @@ class Stimulus(BaseStimulus):
 
     def _joint_to_parameters(self, hips):
         parameters = []
-        self._add_joint_parameters_recurse(hips, parameters, is_hips=True)
+        self._add_joint_parameters_recurse(hips, parameters)
         return parameters
 
-    def _add_joint_parameters_recurse(self, joint, parameters, is_hips=False):
-        if not joint.hasparent and not is_hips:
+    def _add_joint_parameters_recurse(self, joint, parameters):
+        if not joint.hasparent and self.args.transpose:
             self._add_joint_transposition_parameters(joint, parameters)
         if joint.rotation:
             self._add_joint_rotation_parameters(joint, parameters)
@@ -48,7 +50,8 @@ class Stimulus(BaseStimulus):
         vertex = joint.get_vertex()
         normalized_vector = self.bvh_reader.normalize_vector(
             self.bvh_reader.vertex_to_vector(vertex))
-        parameters.extend(normalized_vector)
+        weighted_vector = self.args.transposition_weight * normalized_vector
+        parameters.extend(weighted_vector)
 
     def _add_joint_rotation_parameters(self, joint, parameters):
         rotation_parameters = self.entity.rotation_parametrization.rotation_to_parameters(
@@ -78,22 +81,23 @@ class Scene(BaseScene):
     def _parameters_to_joint(self, parameters):
         any_frame = 0
         hips = self.bvh_reader.get_hips(any_frame)
-        self._parameters_to_joint_recurse(parameters, hips, is_hips=True)
+        self._parameters_to_joint_recurse(parameters, hips)
         return hips
 
-    def _parameters_to_joint_recurse(self, parameters, joint, parameter_index=0, is_hips=False):
+    def _parameters_to_joint_recurse(self, parameters, joint, parameter_index=0):
         if joint.hasparent:
             parent_trtr = joint.parent.trtr
             localtoworld = dot(parent_trtr, joint.transposition_matrix)
         else:
-            if is_hips:
-                localtoworld = joint.transposition_matrix
-            else:
-                normalized_vector = parameters[parameter_index:parameter_index+3]
+            if self.args.transpose:
+                weighted_vector = parameters[parameter_index:parameter_index+3]
                 parameter_index += 3
+                normalized_vector = numpy.array(weighted_vector) / self.args.transposition_weight
                 scaled_vector = self.bvh_reader.skeleton_scale_vector(normalized_vector)
                 transposition_matrix = make_transposition_matrix(*scaled_vector)
                 localtoworld = dot(joint.transposition_matrix, transposition_matrix)
+            else:
+                localtoworld = joint.transposition_matrix
             trtr = localtoworld
 
         if joint.rotation:

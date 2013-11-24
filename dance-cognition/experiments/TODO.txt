@@ -1,4 +1,5 @@
-add movement across space to hierarchical parametrization
+automatic detection of whether training data cache can be used (currently, it needs to be removed manually when some parameter such as --transposition-weight is changed)
+  perhaps using profiles?
 explore random trajectories within dense areas of reduction space
 explore areas outside of known regions of reduction space (outside the probed range)
 ensure that quaternion discontinuity problem (see README) cannot appear in real cases
