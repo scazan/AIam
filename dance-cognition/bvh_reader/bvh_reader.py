@@ -1,5 +1,9 @@
 # adopted from BVHplay (http://sourceforge.
 
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../experiments")
+
 import cgkit.bvh
 from geo import *
 from numpy import array, dot
