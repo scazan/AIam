@@ -40,9 +40,9 @@ python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh -zo
 
 DIMENSIONALITY REDUCTION WITH PCA: INCLUDING MOVEMENT ACROSS SPACE
 
-python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh -train -training-data-frame-rate 10 -n 7 --transpose --transposition-weight 5
-python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh --transpose --transposition-weight 5 -zoom 1 -output-y-offset 1
-python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh --transpose --transposition-weight 5 -zoom 1 -interactive
+python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh -train -training-data-frame-rate 10 -n 7 --translate --translation-weight 5
+python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh --translate --translation-weight 5 -zoom 1 -output-y-offset 1
+python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh --translate --translation-weight 5 -zoom 1 -interactive
 
 
 VECTOR6D EXPERIMENTS (Euler angle components as vectors)

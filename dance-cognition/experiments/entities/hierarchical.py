@@ -15,8 +15,8 @@ class Entity(BaseEntity):
     def add_parser_arguments(parser):
         parser.add_argument("--rotation-parametrization", "-r",
                             choices=["vectors", "quaternion"])
-        parser.add_argument("--transpose", action="store_true")
-        parser.add_argument("--transposition-weight", type=float, default=1.)
+        parser.add_argument("--translate", action="store_true")
+        parser.add_argument("--translation-weight", type=float, default=1.)
 
     def __init__(self, args):
         self.rotation_parametrization = rotation_parametrizations[
@@ -39,18 +39,18 @@ class Stimulus(BaseStimulus):
         return parameters
 
     def _add_joint_parameters_recurse(self, joint, parameters):
-        if not joint.hasparent and self.args.transpose:
-            self._add_joint_transposition_parameters(joint, parameters)
+        if not joint.hasparent and self.args.translate:
+            self._add_joint_translation_parameters(joint, parameters)
         if joint.rotation:
             self._add_joint_rotation_parameters(joint, parameters)
         for child in joint.children:
             self._add_joint_parameters_recurse(child, parameters)
 
-    def _add_joint_transposition_parameters(self, joint, parameters):
+    def _add_joint_translation_parameters(self, joint, parameters):
         vertex = joint.get_vertex()
         normalized_vector = self.bvh_reader.normalize_vector(
             self.bvh_reader.vertex_to_vector(vertex))
-        weighted_vector = self.args.transposition_weight * normalized_vector
+        weighted_vector = self.args.translation_weight * normalized_vector
         parameters.extend(weighted_vector)
 
     def _add_joint_rotation_parameters(self, joint, parameters):
@@ -87,17 +87,17 @@ class Scene(BaseScene):
     def _parameters_to_joint_recurse(self, parameters, joint, parameter_index=0):
         if joint.hasparent:
             parent_trtr = joint.parent.trtr
-            localtoworld = dot(parent_trtr, joint.transposition_matrix)
+            localtoworld = dot(parent_trtr, joint.translation_matrix)
         else:
-            if self.args.transpose:
+            if self.args.translate:
                 weighted_vector = parameters[parameter_index:parameter_index+3]
                 parameter_index += 3
-                normalized_vector = numpy.array(weighted_vector) / self.args.transposition_weight
+                normalized_vector = numpy.array(weighted_vector) / self.args.translation_weight
                 scaled_vector = self.bvh_reader.skeleton_scale_vector(normalized_vector)
-                transposition_matrix = make_transposition_matrix(*scaled_vector)
-                localtoworld = dot(joint.transposition_matrix, transposition_matrix)
+                translation_matrix = make_translation_matrix(*scaled_vector)
+                localtoworld = dot(joint.translation_matrix, translation_matrix)
             else:
-                localtoworld = joint.transposition_matrix
+                localtoworld = joint.translation_matrix
             trtr = localtoworld
 
         if joint.rotation:

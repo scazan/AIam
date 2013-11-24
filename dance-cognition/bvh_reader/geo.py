@@ -15,7 +15,7 @@ class Euler:
         self.angles = angles
         self.axes = axes
 
-def make_transposition_matrix(xpos, ypos, zpos):
+def make_translation_matrix(xpos, ypos, zpos):
     return array([
             [1.,    0.,    0.,    xpos],
             [0.,    1.,    0.,    ypos],

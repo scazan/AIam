@@ -26,8 +26,8 @@ class joint:
         self.channels = []
         self.hasparent = 0
         self.parent = 0
-        self.transposition = array([0.,0.,0.])
-        self.transposition_matrix = array([
+        self.translation = array([0.,0.,0.])
+        self.translation_matrix = array([
             [0.,0.,0.,0.],
             [0.,0.,0.,0.],
             [0.,0.,0.,0.],
@@ -103,7 +103,7 @@ class skeleton:
             frame_data_index += 1
 
         if "Xposition" in keyframe_dict:
-            transposition_matrix = make_transposition_matrix(
+            translation_matrix = make_translation_matrix(
                 keyframe_dict["Xposition"],
                 keyframe_dict["Yposition"],
                 keyframe_dict["Zposition"])
@@ -123,9 +123,9 @@ class skeleton:
 
         if joint.hasparent:
             parent_trtr = joint.parent.trtr
-            localtoworld = dot(parent_trtr, joint.transposition_matrix)
+            localtoworld = dot(parent_trtr, joint.translation_matrix)
         else:
-            localtoworld = dot(joint.transposition_matrix, transposition_matrix)
+            localtoworld = dot(joint.translation_matrix, translation_matrix)
 
         if rotate:
             trtr = dot(localtoworld, rotation_matrix)
@@ -252,14 +252,14 @@ class BvhReader(cgkit.bvh.BVHReader):
         b1 = joint(name, self._joint_index)
         self._joint_index += 1
         b1.channels = node.channels
-        b1.transposition[0] = node.offset[0]
-        b1.transposition[1] = node.offset[1]
-        b1.transposition[2] = node.offset[2]
+        b1.translation[0] = node.offset[0]
+        b1.translation[1] = node.offset[1]
+        b1.translation[2] = node.offset[2]
 
-        b1.transposition_matrix = make_transposition_matrix(
-            b1.transposition[0],
-            b1.transposition[1],
-            b1.transposition[2])
+        b1.translation_matrix = make_translation_matrix(
+            b1.translation[0],
+            b1.translation[1],
+            b1.translation[2])
 
         for child in node.children:
             b2 = self._process_node(child, name)
