@@ -5,6 +5,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
     def __init__(self, *args):
         ExperimentToolbar.__init__(self, *args)
         layout = QtGui.QVBoxLayout()
+        self._add_interactive_control_button(layout)
         self._sliders = []
         for n in range(self.experiment.student.n_components):
             slider = QtGui.QSlider(QtCore.Qt.Horizontal)
@@ -15,8 +16,16 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
             self._sliders.append(slider)
         self.setLayout(layout)
 
+    def _add_interactive_control_button(self, layout):
+        button = QtGui.QCheckBox("Explore interactively", self)
+        button.stateChanged.connect(self._changed_interactive_control)
+        layout.addWidget(button)
+
+    def _changed_interactive_control(self, state):
+        self.experiment.interactive_control = (state == QtCore.Qt.Checked)
+
     def refresh(self):
-        if not self.args.interactive_control:
+        if not self.experiment.interactive_control:
             for n in range(self.experiment.student.n_components):
                 self._sliders[n].setValue(
                     self._reduction_value_to_slider_value(n, self.experiment.reduction[n]))
@@ -38,16 +47,12 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
 
 
 class DimensionalityReductionExperiment(Experiment):
-    @staticmethod
-    def add_parser_arguments(parser):
-        Experiment.add_parser_arguments(parser)
-        parser.add_argument("-interactive-control", action="store_true")
-
     def __init__(self, parser):
         Experiment.__init__(self, parser)
         if self.args.model is None:
             self.args.model = "models/dimensionality_reduction/%s.model" % self.args.entity
         self.reduction = None
+        self.interactive_control = False
 
     def run(self, student):
         self.student = student
@@ -78,7 +83,7 @@ class DimensionalityReductionExperiment(Experiment):
         print "ok"
 
     def proceed(self, time_increment):
-        if self.args.interactive_control:
+        if self.interactive_control:
             self.reduction = self.window.toolbar.get_reduction()
         else:
             self.stimulus.proceed(time_increment)
