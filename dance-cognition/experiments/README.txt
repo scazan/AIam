@@ -57,6 +57,10 @@ Artificial case with discontinuity problem:
 python dim_reduce.py angle_3dim_quaternion -stimulus spiral -train -n 3
 python dim_reduce.py angle_3dim_quaternion -stimulus spiral -unit-cube
 
-Real case without discontinuity problem:
+Real case with discontinuity problem::
+python dim_reduce.py angle_3dim_quaternion -stimulus joint -bvh scenes/HDM_bk_03-01_01_120.bvh -joint hip -train -training-data-frame-rate 10 -n 1
+python dim_reduce.py angle_3dim_quaternion -stimulus joint -bvh scenes/HDM_bk_03-01_01_120.bvh -joint hip -unit-cube -bvh-speed 5
+
+Real case without discontinuity problem (one out of countless others):
 python dim_reduce.py angle_3dim_quaternion -stimulus joint -bvh scenes/valencia_all.bvh -joint RShoulder -train -n 3
 python dim_reduce.py angle_3dim_quaternion -stimulus joint -bvh scenes/valencia_all.bvh -joint RShoulder -unit-cube
