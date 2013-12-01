@@ -1,6 +1,8 @@
 from experiment import *
 from dimensionality_reduction_teacher import *
 
+SLIDER_PRECISION = 1000
+
 class DimensionalityReductionToolbar(ExperimentToolbar):
     def __init__(self, *args):
         ExperimentToolbar.__init__(self, *args)
@@ -9,9 +11,9 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._sliders = []
         for n in range(self.experiment.student.n_components):
             slider = QtGui.QSlider(QtCore.Qt.Horizontal)
-            slider.setRange(0, 1000)
+            slider.setRange(0, SLIDER_PRECISION)
             slider.setSingleStep(1)
-            slider.setValue(500)
+            slider.setValue(self._reduction_value_to_slider_value(n, 0.5))
             layout.addWidget(slider)
             self._sliders.append(slider)
         self.setLayout(layout)
@@ -33,11 +35,11 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
     def _reduction_value_to_slider_value(self, n, value):
         range_n = self.experiment.student.reduction_range[n]
         return (value - range_n["min"]) / \
-            (range_n["max"] - range_n["min"]) * 1000
+            (range_n["max"] - range_n["min"]) * SLIDER_PRECISION
 
     def _slider_value_to_reduction_value(self, n, value):
         range_n = self.experiment.student.reduction_range[n]
-        return float(value) / 1000 * (range_n["max"] - range_n["min"]) + \
+        return float(value) / SLIDER_PRECISION * (range_n["max"] - range_n["min"]) + \
             range_n["min"]
 
     def get_reduction(self):
