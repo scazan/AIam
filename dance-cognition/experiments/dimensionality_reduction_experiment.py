@@ -8,6 +8,25 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         ExperimentToolbar.__init__(self, *args)
         layout = QtGui.QVBoxLayout()
         self._add_interactive_control_button(layout)
+        self._set_exploration_ranges()
+        self._add_sliders(layout)
+        self.setLayout(layout)
+
+    def _set_exploration_ranges(self):
+        for n in range(self.experiment.student.n_components):
+            self._set_exploration_range(self.experiment.student.reduction_range[n])
+
+    def _set_exploration_range(self, reduction_range):
+        center = (reduction_range["min"] + reduction_range["max"]) / 2
+        reduction_range["explored_range"] = \
+            (reduction_range["max"] - reduction_range["min"]) \
+            * (1.0 + self.args.explore_beyond_observations)
+        reduction_range["explored_min"] = \
+            center - reduction_range["explored_range"]/2
+        reduction_range["explored_max"] = \
+            center + reduction_range["explored_range"]/2
+
+    def _add_sliders(self, layout):
         self._sliders = []
         for n in range(self.experiment.student.n_components):
             slider = QtGui.QSlider(QtCore.Qt.Horizontal)
@@ -16,7 +35,6 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
             slider.setValue(self._reduction_value_to_slider_value(n, 0.5))
             layout.addWidget(slider)
             self._sliders.append(slider)
-        self.setLayout(layout)
 
     def _add_interactive_control_button(self, layout):
         button = QtGui.QCheckBox("Explore interactively", self)
@@ -34,13 +52,13 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
 
     def _reduction_value_to_slider_value(self, n, value):
         range_n = self.experiment.student.reduction_range[n]
-        return (value - range_n["min"]) / \
-            (range_n["max"] - range_n["min"]) * SLIDER_PRECISION
+        return int((value - range_n["explored_min"]) / \
+            range_n["explored_range"] * SLIDER_PRECISION)
 
     def _slider_value_to_reduction_value(self, n, value):
         range_n = self.experiment.student.reduction_range[n]
-        return float(value) / SLIDER_PRECISION * (range_n["max"] - range_n["min"]) + \
-            range_n["min"]
+        return float(value) / SLIDER_PRECISION * range_n["explored_range"] + \
+            range_n["explored_min"]
 
     def get_reduction(self):
         return numpy.array(
