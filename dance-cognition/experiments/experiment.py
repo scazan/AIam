@@ -129,13 +129,17 @@ class MainWindow(QtGui.QWidget):
         self.experiment = experiment
         self.args = args
         QtGui.QWidget.__init__(self)
-        self.resize(800, 640)
         layout = QtGui.QHBoxLayout()
+        size_policy = QtGui.QSizePolicy(
+            QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
+        size_policy.setHorizontalStretch(2)
+
         self._scene = scene_widget_class(self, experiment, args)
-        self._scene.setFixedSize(400, 640)
+        self._scene.setSizePolicy(size_policy)
         layout.addWidget(self._scene)
 
         self.toolbar = toolbar_class(self, experiment, args)
+        self.toolbar.setSizePolicy(size_policy)
         layout.addWidget(self.toolbar)
 
         self.setLayout(layout)
@@ -148,6 +152,9 @@ class MainWindow(QtGui.QWidget):
         timer.setInterval(1000. / args.frame_rate)
         QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), self._update)
         timer.start()
+
+    def sizeHint(self):
+        return QtCore.QSize(800, 640)
 
     def _update(self):
         self.now = self.current_time()
