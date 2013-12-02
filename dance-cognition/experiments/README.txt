@@ -26,20 +26,20 @@ DIMENSIONALITY REDUCTION WITH PCA: ROTATION AS VECTORS
 
 Train / mimic / explore interactively:
 
-python dim_reduce.py hierarchical -r vectors -bvh scenes/valencia_all.bvh -train -training-data-frame-rate 10 -n 7
-python dim_reduce.py hierarchical -r vectors -bvh scenes/valencia_all.bvh -zoom 3 -output-y-offset 1
+python dim_reduce.py hierarchical -r vectors -bvh scenes/valencia_all.bvh -training-data-frame-rate 10 -train -n 7
+python dim_reduce.py hierarchical -r vectors -bvh scenes/valencia_all.bvh -training-data-frame-rate 10 -zoom 3 -output-y-offset 1
 
 
 DIMENSIONALITY REDUCTION WITH PCA: ROTATION AS QUATERNION
 
-python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh -train -training-data-frame-rate 10 -n 7
-python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh -zoom 3 -output-y-offset 1
+python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh -training-data-frame-rate 10 -train -n 7
+python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh -training-data-frame-rate 10 -zoom 3 -output-y-offset 1
 
 
 DIMENSIONALITY REDUCTION WITH PCA: INCLUDING MOVEMENT ACROSS SPACE
 
-python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh -train -training-data-frame-rate 10 -n 7 --translate --translation-weight 5
-python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh --translate --translation-weight 5 -zoom 1.8 -output-y-offset 1
+python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh -training-data-frame-rate 10 -train -n 7 --translate --translation-weight 5
+python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh -training-data-frame-rate 10 --translate --translation-weight 5 -zoom 1.8 -output-y-offset 1
 
 
 VECTOR6D EXPERIMENTS (Euler angle components as vectors)
@@ -58,8 +58,8 @@ python dim_reduce.py angle_3dim_quaternion -stimulus spiral -train -n 3
 python dim_reduce.py angle_3dim_quaternion -stimulus spiral -unit-cube
 
 Real case with discontinuity problem::
-python dim_reduce.py angle_3dim_quaternion -stimulus joint -bvh scenes/HDM_bk_03-01_01_120.bvh -joint hip -train -training-data-frame-rate 10 -n 1
-python dim_reduce.py angle_3dim_quaternion -stimulus joint -bvh scenes/HDM_bk_03-01_01_120.bvh -joint hip -unit-cube -bvh-speed 5
+python dim_reduce.py angle_3dim_quaternion -stimulus joint -bvh scenes/HDM_bk_03-01_01_120.bvh -joint hip -training-data-frame-rate 10 -train -n 1
+python dim_reduce.py angle_3dim_quaternion -stimulus joint -bvh scenes/HDM_bk_03-01_01_120.bvh -joint hip -training-data-frame-rate 10 -unit-cube -bvh-speed 5
 
 Real case without discontinuity problem (one out of countless others):
 python dim_reduce.py angle_3dim_quaternion -stimulus joint -bvh scenes/valencia_all.bvh -joint RShoulder -train -n 3

@@ -24,10 +24,17 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self.follow_button = QtGui.QRadioButton("Follow", self)
         layout.addWidget(self.follow_button)
 
+        self.improvise_button = QtGui.QRadioButton("Improvise", self)
+        layout.addWidget(self.improvise_button)
+
         self.explore_button = QtGui.QRadioButton("Explore interactively", self)
         layout.addWidget(self.explore_button)
 
-        self.follow_button.setChecked(True)
+        if self.args.improvise:
+            self.improvise_button.setChecked(True)
+        else:
+            self.follow_button.setChecked(True)
+
         self._layout.addLayout(layout)
 
     def _add_random_button(self):
@@ -47,11 +54,11 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
 
     def _add_deviate_button(self):
         layout = QtGui.QHBoxLayout()
-        self._deviation_slider = QtGui.QSlider(QtCore.Qt.Horizontal)
-        self._deviation_slider.setRange(0, SLIDER_PRECISION)
-        self._deviation_slider.setSingleStep(1)
-        self._deviation_slider.setValue(0.0)
-        layout.addWidget(self._deviation_slider)
+        self.deviation_slider = QtGui.QSlider(QtCore.Qt.Horizontal)
+        self.deviation_slider.setRange(0, SLIDER_PRECISION)
+        self.deviation_slider.setSingleStep(1)
+        self.deviation_slider.setValue(0.0)
+        layout.addWidget(self.deviation_slider)
         button = QtGui.QPushButton("Deviate", self)
         button.clicked.connect(self._set_deviated_reduction)
         layout.addWidget(button)
@@ -70,7 +77,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
     
     def _random_deviation_n(self, n):
         reduction_range = self.experiment.student.reduction_range[n]
-        max_deviation = float(self._deviation_slider.value()) / SLIDER_PRECISION \
+        max_deviation = float(self.deviation_slider.value()) / SLIDER_PRECISION \
             * (reduction_range["max"] - reduction_range["min"])
         return random.uniform(-max_deviation, max_deviation)
 
@@ -109,7 +116,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._layout.addWidget(group_box)
 
     def refresh(self):
-        if self.follow_button.isChecked():
+        if not self.explore_button.isChecked():
             for n in range(self.experiment.student.n_components):
                 self._sliders[n].setValue(
                     self._reduction_value_to_slider_value(n, self.experiment.reduction[n]))
@@ -136,6 +143,7 @@ class DimensionalityReductionExperiment(Experiment):
         Experiment.add_parser_arguments(parser)
         parser.add_argument("--num-components", "-n", type=int, default=4)
         parser.add_argument("--explore-beyond-observations", type=float, default=0.2)
+        parser.add_argument("--improvise", action="store_true")
 
     def __init__(self, parser):
         Experiment.__init__(self, parser)
@@ -145,14 +153,16 @@ class DimensionalityReductionExperiment(Experiment):
 
     def run(self, student):
         self.student = student
+        teacher = Teacher(self.stimulus, self.args.training_data_frame_rate)
+        self._training_data = teacher.get_training_data(self._training_duration())
 
         if self.args.train:
-            teacher = Teacher(self.stimulus, self.args.training_data_frame_rate)
-            self._train_model(teacher)
+            self._train_model()
             self.save_model(self.args.model)
 
         else:
             self.student = self.load_model(self.args.model)
+            self._improviser = None
 
             app = QtGui.QApplication(sys.argv)
             app.setStyleSheet(open("stylesheet.qss").read())
@@ -161,15 +171,13 @@ class DimensionalityReductionExperiment(Experiment):
             self.window.show()
             app.exec_()
 
-    def _train_model(self, teacher):
-        training_data = teacher.get_training_data(self._training_duration())
-
+    def _train_model(self):
         print "training model..."
-        self.student.fit(training_data)
+        self.student.fit(self._training_data)
         print "ok"
 
         print "probing model..."
-        self.student.probe(training_data)
+        self.student.probe(self._training_data)
         print "ok"
 
     def proceed(self, time_increment):
@@ -179,4 +187,82 @@ class DimensionalityReductionExperiment(Experiment):
             self.stimulus.proceed(time_increment)
             self.input = self.stimulus.get_value()
             self.reduction = self.student.transform(numpy.array([self.input]))[0]
+        elif self.window.toolbar.improvise_button.isChecked():
+            if self._improviser is None:
+                self._start_improvisation()
+            self._improviser.proceed(time_increment)
+            self.reduction = self._improviser.get_value()
         self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
+
+    def _start_improvisation(self):
+        if self.reduction is None:
+            departure = self.student.transform(numpy.array([
+                        self.stimulus.get_value()]))[0]
+        else:
+            departure = self.reduction
+        self._improviser = Improviser(
+            knowns=self.student.observed_reductions, departure=departure)
+
+
+from navigator import Navigator
+import copy
+
+class Improviser:
+    def __init__(self, knowns, departure):
+        self._knowns = knowns
+        self._value = departure
+        self._navigator = Navigator(knowns)
+        self._path = None
+
+    def proceed(self, time_increment):
+        self._time_to_process = time_increment
+        while self._time_to_process > 0:
+            self._process_within_state()
+
+    def get_value(self):
+        return self._value
+
+    def _process_within_state(self):
+        if self._path is None:
+            self._generate_path()
+            self._activate_next_path_strip()
+        elif self._reached_destination():
+            self._path = None
+        elif self._reached_path_strip_destination():
+            self._remaining_path.pop(0)
+            self._activate_next_path_strip()
+        else:
+            self._move_along_path_strip()
+
+    def _generate_path(self):
+        self._path = self._navigator.generate_path(
+            departure=self._value,
+            destination=self._random_destination(),
+            resolution=10)
+        path_duration = 5.0
+        self._path_strip_duration = path_duration / len(self._path)
+        self._remaining_path = copy.copy(self._path)
+
+    def _random_destination(self):
+        return random.choice(self._knowns)
+
+    def _reached_destination(self):
+        return len(self._remaining_path) == 1
+
+    def _reached_path_strip_destination(self):
+        return self._travel_time_in_strip >= self._path_strip_duration
+
+    def _activate_next_path_strip(self):
+        if len(self._remaining_path) >= 2:
+            self._current_strip_departure = self._remaining_path[0]
+            self._current_strip_destination = self._remaining_path[1]
+            self._travel_time_in_strip = 0.0
+            
+    def _move_along_path_strip(self):
+        remaining_time_in_strip = self._path_strip_duration - self._travel_time_in_strip
+        duration_to_move = min(self._time_to_process, remaining_time_in_strip)
+        self._value = self._current_strip_departure + \
+            (self._current_strip_destination - self._current_strip_departure) * \
+            self._travel_time_in_strip / (self._path_strip_duration)
+        self._travel_time_in_strip += duration_to_move
+        self._time_to_process -= duration_to_move
