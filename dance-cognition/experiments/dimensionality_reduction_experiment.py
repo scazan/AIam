@@ -67,6 +67,12 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
 
 
 class DimensionalityReductionExperiment(Experiment):
+    @staticmethod
+    def add_parser_arguments(parser):
+        Experiment.add_parser_arguments(parser)
+        parser.add_argument("--num-components", "-n", type=int, default=4)
+        parser.add_argument("--explore-beyond-observations", type=float, default=0.2)
+
     def __init__(self, parser):
         Experiment.__init__(self, parser)
         if self.args.model is None:
