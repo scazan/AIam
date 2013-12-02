@@ -82,7 +82,6 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
 
     def _add_sliders(self):
         group_box = QtGui.QGroupBox("Reduction")
-        group_box.setStyleSheet("QGroupBox { border: 1px solid #a0a0a0; border-radius: 9px; margin-top: 0.5em; } QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 3px 0 3px; }")
         layout = QtGui.QVBoxLayout()
         self._sliders = []
         for n in range(self.experiment.student.n_components):
@@ -147,6 +146,7 @@ class DimensionalityReductionExperiment(Experiment):
             self.student = self.load_model(self.args.model)
 
             app = QtGui.QApplication(sys.argv)
+            app.setStyleSheet(open("stylesheet.qss").read())
             self.window = MainWindow(
                 self, self._scene_class, DimensionalityReductionToolbar, self.args)
             self.window.show()
