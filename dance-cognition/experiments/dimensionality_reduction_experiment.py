@@ -6,11 +6,11 @@ SLIDER_PRECISION = 1000
 class DimensionalityReductionToolbar(ExperimentToolbar):
     def __init__(self, *args):
         ExperimentToolbar.__init__(self, *args)
-        layout = QtGui.QVBoxLayout()
-        self._add_interactive_control_button(layout)
+        self._layout = QtGui.QVBoxLayout()
+        self._add_interactive_control_button()
         self._set_exploration_ranges()
-        self._add_sliders(layout)
-        self.setLayout(layout)
+        self._add_sliders()
+        self.setLayout(self._layout)
 
     def _set_exploration_ranges(self):
         for n in range(self.experiment.student.n_components):
@@ -26,20 +26,20 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         reduction_range["explored_max"] = \
             center + reduction_range["explored_range"]/2
 
-    def _add_sliders(self, layout):
+    def _add_sliders(self):
         self._sliders = []
         for n in range(self.experiment.student.n_components):
             slider = QtGui.QSlider(QtCore.Qt.Horizontal)
             slider.setRange(0, SLIDER_PRECISION)
             slider.setSingleStep(1)
             slider.setValue(self._reduction_value_to_slider_value(n, 0.5))
-            layout.addWidget(slider)
+            self._layout.addWidget(slider)
             self._sliders.append(slider)
 
-    def _add_interactive_control_button(self, layout):
+    def _add_interactive_control_button(self):
         button = QtGui.QCheckBox("Explore interactively", self)
         button.stateChanged.connect(self._changed_interactive_control)
-        layout.addWidget(button)
+        self._layout.addWidget(button)
 
     def _changed_interactive_control(self, state):
         self.experiment.interactive_control = (state == QtCore.Qt.Checked)
