@@ -81,14 +81,20 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
             center + reduction_range["explored_range"]/2
 
     def _add_sliders(self):
+        group_box = QtGui.QGroupBox("Reduction")
+        group_box.setStyleSheet("QGroupBox { border: 1px solid #a0a0a0; border-radius: 9px; margin-top: 0.5em; } QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 3px 0 3px; }")
+        layout = QtGui.QVBoxLayout()
         self._sliders = []
         for n in range(self.experiment.student.n_components):
             slider = QtGui.QSlider(QtCore.Qt.Horizontal)
             slider.setRange(0, SLIDER_PRECISION)
             slider.setSingleStep(1)
             slider.setValue(self._reduction_value_to_slider_value(n, 0.5))
-            self._layout.addWidget(slider)
+            layout.addWidget(slider)
             self._sliders.append(slider)
+        layout.addStretch(1)
+        group_box.setLayout(layout)
+        self._layout.addWidget(group_box)
 
     def _changed_interactive_control(self, state):
         self.experiment.interactive_control = (state == QtCore.Qt.Checked)
