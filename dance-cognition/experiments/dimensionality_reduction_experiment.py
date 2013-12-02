@@ -14,14 +14,26 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self.setLayout(self._layout)
 
     def _add_buttons(self):
-        self._add_interactive_control_button()
+        self._add_mode_buttons()
         self._add_random_button()
         self._add_deviate_button()
 
-    def _add_interactive_control_button(self):
-        button = QtGui.QCheckBox("Explore interactively", self)
-        button.stateChanged.connect(self._changed_interactive_control)
-        self._layout.addWidget(button)
+    def _add_mode_buttons(self):
+        layout = QtGui.QVBoxLayout()
+
+        self._follow_button = QtGui.QRadioButton("Follow", self)
+        self._follow_button.toggled.connect(self._changed_mode)
+        layout.addWidget(self._follow_button)
+
+        self._explore_button = QtGui.QRadioButton("Explore interactively", self)
+        self._explore_button.toggled.connect(self._changed_mode)
+        layout.addWidget(self._explore_button)
+
+        self._follow_button.setChecked(True)
+        self._layout.addLayout(layout)
+
+    def _changed_mode(self, _checked):
+        self.experiment.interactive_control = (self._explore_button.isChecked())
 
     def _add_random_button(self):
         button = QtGui.QPushButton("Random", self)
@@ -100,9 +112,6 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         layout.addStretch(1)
         group_box.setLayout(layout)
         self._layout.addWidget(group_box)
-
-    def _changed_interactive_control(self, state):
-        self.experiment.interactive_control = (state == QtCore.Qt.Checked)
 
     def refresh(self):
         if not self.experiment.interactive_control:
