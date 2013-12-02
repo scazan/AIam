@@ -14,21 +14,19 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self.setLayout(self._layout)
 
     def _add_buttons(self):
-        self._button_layout = QtGui.QHBoxLayout()
         self._add_interactive_control_button()
         self._add_random_button()
         self._add_deviate_button()
-        self._layout.addLayout(self._button_layout)
 
     def _add_interactive_control_button(self):
         button = QtGui.QCheckBox("Explore interactively", self)
         button.stateChanged.connect(self._changed_interactive_control)
-        self._button_layout.addWidget(button)
+        self._layout.addWidget(button)
 
     def _add_random_button(self):
         button = QtGui.QPushButton("Random", self)
         button.clicked.connect(self._set_random_reduction)
-        self._button_layout.addWidget(button)
+        self._layout.addWidget(button)
 
     def _set_random_reduction(self):
         for n in range(self.experiment.student.n_components):
@@ -41,9 +39,16 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
                                   reduction_range["explored_max"])))
 
     def _add_deviate_button(self):
+        layout = QtGui.QHBoxLayout()
+        self._deviation_slider = QtGui.QSlider(QtCore.Qt.Horizontal)
+        self._deviation_slider.setRange(0, SLIDER_PRECISION)
+        self._deviation_slider.setSingleStep(1)
+        self._deviation_slider.setValue(0.0)
+        layout.addWidget(self._deviation_slider)
         button = QtGui.QPushButton("Deviate", self)
         button.clicked.connect(self._set_deviated_reduction)
-        self._button_layout.addWidget(button)
+        layout.addWidget(button)
+        self._layout.addLayout(layout)
 
     def _set_deviated_reduction(self):
         random_observation = self.experiment.stimulus.get_random_value()
@@ -58,7 +63,8 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
     
     def _random_deviation_n(self, n):
         reduction_range = self.experiment.student.reduction_range[n]
-        max_deviation = 0.1 * (reduction_range["max"] - reduction_range["min"])
+        max_deviation = float(self._deviation_slider.value()) / SLIDER_PRECISION \
+            * (reduction_range["max"] - reduction_range["min"])
         return random.uniform(-max_deviation, max_deviation)
 
     def _set_reduction(self, reduction):
