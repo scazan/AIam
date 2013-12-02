@@ -131,7 +131,7 @@ class MainWindow(QtGui.QWidget):
         layout = QtGui.QHBoxLayout()
         size_policy = QtGui.QSizePolicy(
             QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
-        size_policy.setHorizontalStretch(2)
+        size_policy.setHorizontalStretch(1)
 
         self._scene = scene_widget_class(self, experiment, args)
         self._scene.setSizePolicy(size_policy)
