@@ -1,5 +1,6 @@
 from experiment import *
 from dimensionality_reduction_teacher import *
+import random
 
 SLIDER_PRECISION = 1000
 
@@ -7,10 +8,36 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
     def __init__(self, *args):
         ExperimentToolbar.__init__(self, *args)
         self._layout = QtGui.QVBoxLayout()
-        self._add_interactive_control_button()
+        self._add_buttons()
         self._set_exploration_ranges()
         self._add_sliders()
         self.setLayout(self._layout)
+
+    def _add_buttons(self):
+        self._button_layout = QtGui.QHBoxLayout()
+        self._add_interactive_control_button()
+        self._add_random_reduction_button()
+        self._layout.addLayout(self._button_layout)
+
+    def _add_interactive_control_button(self):
+        button = QtGui.QCheckBox("Explore interactively", self)
+        button.stateChanged.connect(self._changed_interactive_control)
+        self._button_layout.addWidget(button)
+
+    def _add_random_reduction_button(self):
+        button = QtGui.QPushButton("Random", self)
+        button.clicked.connect(self._set_random_reduction)
+        self._button_layout.addWidget(button)
+
+    def _set_random_reduction(self):
+        for n in range(self.experiment.student.n_components):
+            self._set_random_reduction_n(
+                n, self.experiment.student.reduction_range[n])
+
+    def _set_random_reduction_n(self, n, reduction_range):
+        self._sliders[n].setValue(self._reduction_value_to_slider_value(
+                n, random.uniform(reduction_range["explored_min"],
+                                  reduction_range["explored_max"])))
 
     def _set_exploration_ranges(self):
         for n in range(self.experiment.student.n_components):
@@ -35,11 +62,6 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
             slider.setValue(self._reduction_value_to_slider_value(n, 0.5))
             self._layout.addWidget(slider)
             self._sliders.append(slider)
-
-    def _add_interactive_control_button(self):
-        button = QtGui.QCheckBox("Explore interactively", self)
-        button.stateChanged.connect(self._changed_interactive_control)
-        self._layout.addWidget(button)
 
     def _changed_interactive_control(self, state):
         self.experiment.interactive_control = (state == QtCore.Qt.Checked)
