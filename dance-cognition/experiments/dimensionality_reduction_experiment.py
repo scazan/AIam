@@ -16,7 +16,8 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
     def _add_buttons(self):
         self._button_layout = QtGui.QHBoxLayout()
         self._add_interactive_control_button()
-        self._add_random_reduction_button()
+        self._add_random_button()
+        self._add_deviate_button()
         self._layout.addLayout(self._button_layout)
 
     def _add_interactive_control_button(self):
@@ -24,7 +25,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         button.stateChanged.connect(self._changed_interactive_control)
         self._button_layout.addWidget(button)
 
-    def _add_random_reduction_button(self):
+    def _add_random_button(self):
         button = QtGui.QPushButton("Random", self)
         button.clicked.connect(self._set_random_reduction)
         self._button_layout.addWidget(button)
@@ -38,6 +39,32 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._sliders[n].setValue(self._reduction_value_to_slider_value(
                 n, random.uniform(reduction_range["explored_min"],
                                   reduction_range["explored_max"])))
+
+    def _add_deviate_button(self):
+        button = QtGui.QPushButton("Deviate", self)
+        button.clicked.connect(self._set_deviated_reduction)
+        self._button_layout.addWidget(button)
+
+    def _set_deviated_reduction(self):
+        random_observation = self.experiment.stimulus.get_random_value()
+        undeviated_reduction = self.experiment.student.transform(numpy.array([
+                    random_observation]))[0]
+        deviated_reduction = undeviated_reduction + self._random_deviation()
+        self._set_reduction(deviated_reduction)
+
+    def _random_deviation(self):
+        return [self._random_deviation_n(n)
+                for n in range(self.experiment.student.n_components)]
+    
+    def _random_deviation_n(self, n):
+        reduction_range = self.experiment.student.reduction_range[n]
+        max_deviation = 0.1 * (reduction_range["max"] - reduction_range["min"])
+        return random.uniform(-max_deviation, max_deviation)
+
+    def _set_reduction(self, reduction):
+        for n in range(self.experiment.student.n_components):
+            self._sliders[n].setValue(self._reduction_value_to_slider_value(
+                    n, reduction[n]))
 
     def _set_exploration_ranges(self):
         for n in range(self.experiment.student.n_components):

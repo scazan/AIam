@@ -4,6 +4,7 @@ from angle_parameters import EulerTo3Vectors, EulerToQuaternion
 from bvh_reader.geo import *
 from numpy import array, dot
 from transformations import euler_matrix
+import random
 
 rotation_parametrizations = {
     "vectors": EulerTo3Vectors,
@@ -25,6 +26,11 @@ class Entity(BaseEntity):
 class Stimulus(BaseStimulus):
     def get_value(self):
         hips = self.bvh_reader.get_hips(self._t * self.args.bvh_speed)
+        return self._joint_to_parameters(hips)
+
+    def get_random_value(self):
+        hips = self.bvh_reader.get_hips(
+            random.uniform(0, self.bvh_reader.get_duration()))
         return self._joint_to_parameters(hips)
 
     def get_duration(self):
