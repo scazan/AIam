@@ -9,7 +9,6 @@ from OpenGL.GLU import *
 from PyQt4 import QtCore, QtGui, QtOpenGL
 import math
 import numpy
-from learning_plotter import LearningPlotter
 from bvh_reader import bvh_reader as bvh_reader_module
 import pickle
 from stopwatch import Stopwatch
