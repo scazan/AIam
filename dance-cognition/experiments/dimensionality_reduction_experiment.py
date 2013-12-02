@@ -21,19 +21,14 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
     def _add_mode_buttons(self):
         layout = QtGui.QVBoxLayout()
 
-        self._follow_button = QtGui.QRadioButton("Follow", self)
-        self._follow_button.toggled.connect(self._changed_mode)
-        layout.addWidget(self._follow_button)
+        self.follow_button = QtGui.QRadioButton("Follow", self)
+        layout.addWidget(self.follow_button)
 
-        self._explore_button = QtGui.QRadioButton("Explore interactively", self)
-        self._explore_button.toggled.connect(self._changed_mode)
-        layout.addWidget(self._explore_button)
+        self.explore_button = QtGui.QRadioButton("Explore interactively", self)
+        layout.addWidget(self.explore_button)
 
-        self._follow_button.setChecked(True)
+        self.follow_button.setChecked(True)
         self._layout.addLayout(layout)
-
-    def _changed_mode(self, _checked):
-        self.experiment.interactive_control = (self._explore_button.isChecked())
 
     def _add_random_button(self):
         button = QtGui.QPushButton("Random", self)
@@ -114,7 +109,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._layout.addWidget(group_box)
 
     def refresh(self):
-        if not self.experiment.interactive_control:
+        if self.follow_button.isChecked():
             for n in range(self.experiment.student.n_components):
                 self._sliders[n].setValue(
                     self._reduction_value_to_slider_value(n, self.experiment.reduction[n]))
@@ -147,7 +142,6 @@ class DimensionalityReductionExperiment(Experiment):
         if self.args.model is None:
             self.args.model = "models/dimensionality_reduction/%s.model" % self.args.entity
         self.reduction = None
-        self.interactive_control = False
 
     def run(self, student):
         self.student = student
@@ -179,9 +173,9 @@ class DimensionalityReductionExperiment(Experiment):
         print "ok"
 
     def proceed(self, time_increment):
-        if self.interactive_control:
+        if self.window.toolbar.explore_button.isChecked():
             self.reduction = self.window.toolbar.get_reduction()
-        else:
+        elif self.window.toolbar.follow_button.isChecked():
             self.stimulus.proceed(time_increment)
             self.input = self.stimulus.get_value()
             self.reduction = self.student.transform(numpy.array([self.input]))[0]
