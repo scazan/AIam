@@ -197,7 +197,7 @@ class DimensionalityReductionExperiment(Experiment):
             if self._improviser is None or self._improviser.reached_destination():
                 self._start_improvisation()
             self._improviser.proceed(self.time_increment)
-            self.reduction = self._improviser.get_value()
+            self.reduction = self._improviser.current_position()
         self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
 
     def _follow(self):

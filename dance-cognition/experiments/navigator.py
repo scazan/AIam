@@ -30,7 +30,7 @@ class Navigator:
 class PathFollower:
     def __init__(self, path, duration):
         self._duration = duration
-        self._value = path[0]
+        self._position = path[0]
         self._path_strip_duration = duration / len(path)
         self._remaining_path = copy.copy(path)
         self._activate_next_path_strip()
@@ -40,8 +40,8 @@ class PathFollower:
         while self._time_to_process > 0 and not self.reached_destination():
             self._process_within_state()
 
-    def get_value(self):
-        return self._value
+    def current_position(self):
+        return self._position
 
     def _process_within_state(self):
         if self._reached_path_strip_destination():
@@ -65,7 +65,7 @@ class PathFollower:
     def _move_along_path_strip(self):
         remaining_time_in_strip = self._path_strip_duration - self._travel_time_in_strip
         duration_to_move = min(self._time_to_process, remaining_time_in_strip)
-        self._value = self._current_strip_departure + \
+        self._position = self._current_strip_departure + \
             (self._current_strip_destination - self._current_strip_departure) * \
             self._travel_time_in_strip / (self._path_strip_duration)
         self._travel_time_in_strip += duration_to_move
