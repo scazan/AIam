@@ -12,7 +12,7 @@ class MapView(QtOpenGL.QGLWidget):
         QtOpenGL.QGLWidget.__init__(self, parent)
 
     def render(self):
-        self._main_window = self.parent().parent()
+        self._main_window = self.parent()
         self.render_map()
         self.render_path()
 
@@ -83,21 +83,10 @@ class MapView(QtOpenGL.QGLWidget):
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self):
-        self._map_view = None
-
         QtGui.QMainWindow.__init__(self)
-
-        widget = QtGui.QWidget()
-        self.setCentralWidget(widget)
-
         self._map_view = MapView(self)
-
-        layout = QtGui.QVBoxLayout()
-        layout.addWidget(self._map_view)
-        widget.setLayout(layout)
-
+        self.setCentralWidget(self._map_view)
         self._create_menu()
-
         self._generate_map()
         self._create_navigator()
         self._generate_path()
@@ -127,8 +116,7 @@ class MainWindow(QtGui.QMainWindow):
         destination = self._random_map_position()
         self.path = self._navigator.generate_path(
             departure=departure, destination=destination, resolution=10)
-        if self._map_view:
-            self._map_view.repaint()
+        self._map_view.repaint()
 
 app = QtGui.QApplication(sys.argv)
 window = MainWindow()
