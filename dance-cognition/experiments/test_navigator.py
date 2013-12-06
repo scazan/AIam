@@ -20,7 +20,7 @@ class MapView(QtOpenGL.QGLWidget):
         glColor3f(0, 1, 0)
         glPointSize(3.0)
         glBegin(GL_POINTS)
-        for x,y in self._main_window.knowns:
+        for x,y in self._main_window.map_points:
             glVertex2f(x*self.width, y*self.height)
         glEnd()
 
@@ -113,17 +113,17 @@ class MainWindow(QtGui.QMainWindow):
         self._menu.addAction(action)        
 
     def generate_random_map(self):
-        self.knowns = [self.random_map_position() for n in range(100)]
+        self.map_points = [self.random_map_position() for n in range(100)]
 
     def random_map_position(self):
         return numpy.array([random.uniform(0., 1.),
                             random.uniform(0., 1.)])
 
     def create_navigator(self):
-        self.navigator = Navigator(knowns=self.knowns)
+        self.navigator = Navigator(map_points=self.map_points)
 
     def generate_path(self):
-        departure = random.choice(self.knowns)
+        departure = random.choice(self.map_points)
         destination = self.random_map_position()
         self.path = self.navigator.generate_path(
             departure=departure, destination=destination, resolution=10)

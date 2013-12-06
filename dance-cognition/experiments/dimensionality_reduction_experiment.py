@@ -220,17 +220,17 @@ class DimensionalityReductionExperiment(Experiment):
         else:
             departure = self.reduction
         self._improviser = Improviser(
-            knowns=self.student.observed_reductions, departure=departure)
+            map_points=self.student.observed_reductions, departure=departure)
 
 
 from navigator import Navigator
 import copy
 
 class Improviser:
-    def __init__(self, knowns, departure):
-        self._knowns = knowns
+    def __init__(self, map_points, departure):
+        self._map_points = map_points
         self._value = departure
-        self._navigator = Navigator(knowns)
+        self._navigator = Navigator(map_points)
         self._path = None
 
     def proceed(self, time_increment):
@@ -263,7 +263,7 @@ class Improviser:
         self._remaining_path = copy.copy(self._path)
 
     def _random_destination(self):
-        return random.choice(self._knowns)
+        return random.choice(self._map_points)
 
     def _reached_destination(self):
         return len(self._remaining_path) == 1

@@ -1,6 +1,6 @@
 class Navigator:
-    def __init__(self, knowns):
-        self.knowns = knowns
+    def __init__(self, map_points):
+        self.map_points = map_points
 
     def generate_path(self, departure, destination, resolution):
         self._departure = departure
