@@ -257,7 +257,7 @@ class Improviser:
         self._path = self._navigator.generate_path(
             departure=self._value,
             destination=self._random_destination(),
-            resolution=10)
+            resolution=100)
         path_duration = 5.0
         self._path_strip_duration = path_duration / len(self._path)
         self._remaining_path = copy.copy(self._path)
