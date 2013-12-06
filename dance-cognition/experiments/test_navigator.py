@@ -6,6 +6,7 @@ from PyQt4 import QtCore, QtGui, QtOpenGL
 import numpy
 import random
 from navigator import Navigator
+from sklearn.datasets import make_classification
 
 class MapView(QtOpenGL.QGLWidget):
     def __init__(self, parent):
@@ -112,7 +113,15 @@ class MainWindow(QtGui.QMainWindow):
         self._generate_path()
 
     def _generate_map(self):
-        self.map_points = [self._random_map_position() for n in range(100)]
+        samples, labels = make_classification(
+            n_features=2, n_redundant=0, n_informative=1,
+            n_clusters_per_class=1)
+        self.map_points = self._normalize(samples)
+
+    def _normalize(self, points):
+        min_value = min([min(point) for point in points])
+        max_value = max([max(point) for point in points])
+        return (points - min_value) / (max_value - min_value)
 
     def _random_map_position(self):
         return numpy.array([random.uniform(0., 1.),
