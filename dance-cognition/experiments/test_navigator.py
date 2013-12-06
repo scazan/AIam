@@ -83,24 +83,24 @@ class MapView(QtOpenGL.QGLWidget):
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self):
-        self.map_view = None
+        self._map_view = None
 
         QtGui.QMainWindow.__init__(self)
 
         widget = QtGui.QWidget()
         self.setCentralWidget(widget)
 
-        self.map_view = MapView(self)
+        self._map_view = MapView(self)
 
         layout = QtGui.QVBoxLayout()
-        layout.addWidget(self.map_view)
+        layout.addWidget(self._map_view)
         widget.setLayout(layout)
 
         self._create_menu()
 
-        self.generate_random_map()
-        self.create_navigator()
-        self.generate_path()
+        self._generate_map()
+        self._create_navigator()
+        self._generate_path()
 
     def _create_menu(self):
         self._menu = self.menuBar().addMenu("Navigator test")
@@ -109,26 +109,26 @@ class MainWindow(QtGui.QMainWindow):
     def _add_generate_path_action(self):
         action = QtGui.QAction('Generate &path', self)
         action.setShortcut('Ctrl+P')
-        action.triggered.connect(self.generate_path)
+        action.triggered.connect(self._generate_path)
         self._menu.addAction(action)        
 
-    def generate_random_map(self):
-        self.map_points = [self.random_map_position() for n in range(100)]
+    def _generate_map(self):
+        self.map_points = [self._random_map_position() for n in range(100)]
 
-    def random_map_position(self):
+    def _random_map_position(self):
         return numpy.array([random.uniform(0., 1.),
                             random.uniform(0., 1.)])
 
-    def create_navigator(self):
-        self.navigator = Navigator(map_points=self.map_points)
+    def _create_navigator(self):
+        self._navigator = Navigator(map_points=self.map_points)
 
-    def generate_path(self):
+    def _generate_path(self):
         departure = random.choice(self.map_points)
-        destination = self.random_map_position()
-        self.path = self.navigator.generate_path(
+        destination = self._random_map_position()
+        self.path = self._navigator.generate_path(
             departure=departure, destination=destination, resolution=10)
-        if self.map_view:
-            self.map_view.repaint()
+        if self._map_view:
+            self._map_view.repaint()
 
 app = QtGui.QApplication(sys.argv)
 window = MainWindow()
