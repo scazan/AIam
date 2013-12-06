@@ -88,12 +88,11 @@ class MainWindow(QtGui.QMainWindow):
         self.setCentralWidget(self._map_view)
         self._create_menu()
         self._generate_map()
-        self._create_navigator()
-        self._generate_path()
 
     def _create_menu(self):
         self._menu = self.menuBar().addMenu("Navigator test")
         self._add_generate_path_action()
+        self._add_generate_map_action()
 
     def _add_generate_path_action(self):
         action = QtGui.QAction('Generate &path', self)
@@ -101,8 +100,16 @@ class MainWindow(QtGui.QMainWindow):
         action.triggered.connect(self._generate_path)
         self._menu.addAction(action)        
 
+    def _add_generate_map_action(self):
+        action = QtGui.QAction('Generate &map', self)
+        action.setShortcut('Ctrl+M')
+        action.triggered.connect(self._generate_map)
+        self._menu.addAction(action)        
+
     def _generate_map(self):
         self.map_points = [self._random_map_position() for n in range(100)]
+        self._create_navigator()
+        self._generate_path()
 
     def _random_map_position(self):
         return numpy.array([random.uniform(0., 1.),
