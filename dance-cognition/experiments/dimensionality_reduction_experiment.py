@@ -2,6 +2,7 @@ from experiment import *
 from dimensionality_reduction_teacher import *
 import random
 from leaky_integrator import LeakyIntegrator
+from navigator import Navigator, PathFollower
 
 SLIDER_PRECISION = 1000
 
@@ -169,6 +170,7 @@ class DimensionalityReductionExperiment(Experiment):
         else:
             self.student = self.load_model(self.args.model)
             self._improviser = None
+            self._navigator = Navigator(map_points=self.student.observed_reductions)
 
             app = QtGui.QApplication(sys.argv)
             app.setStyleSheet(open("stylesheet.qss").read())
@@ -192,7 +194,7 @@ class DimensionalityReductionExperiment(Experiment):
         elif self.window.toolbar.follow_button.isChecked():
             self._follow()
         elif self.window.toolbar.improvise_button.isChecked():
-            if self._improviser is None:
+            if self._improviser is None or self._improviser.reached_destination():
                 self._start_improvisation()
             self._improviser.proceed(self.time_increment)
             self.reduction = self._improviser.get_value()
@@ -219,69 +221,8 @@ class DimensionalityReductionExperiment(Experiment):
                         self.stimulus.get_value()]))[0]
         else:
             departure = self.reduction
-        self._improviser = Improviser(
-            map_points=self.student.observed_reductions, departure=departure)
-
-
-from navigator import Navigator
-import copy
-
-class Improviser:
-    def __init__(self, map_points, departure):
-        self._map_points = map_points
-        self._value = departure
-        self._navigator = Navigator(map_points)
-        self._path = None
-
-    def proceed(self, time_increment):
-        self._time_to_process = time_increment
-        while self._time_to_process > 0:
-            self._process_within_state()
-
-    def get_value(self):
-        return self._value
-
-    def _process_within_state(self):
-        if self._path is None:
-            self._generate_path()
-            self._activate_next_path_strip()
-        elif self._reached_destination():
-            self._path = None
-        elif self._reached_path_strip_destination():
-            self._remaining_path.pop(0)
-            self._activate_next_path_strip()
-        else:
-            self._move_along_path_strip()
-
-    def _generate_path(self):
-        self._path = self._navigator.generate_path(
-            departure=self._value,
-            destination=self._random_destination(),
+        path = self._navigator.generate_path(
+            departure=departure,
+            destination=random.choice(self.student.observed_reductions),
             resolution=100)
-        path_duration = 5.0
-        self._path_strip_duration = path_duration / len(self._path)
-        self._remaining_path = copy.copy(self._path)
-
-    def _random_destination(self):
-        return random.choice(self._map_points)
-
-    def _reached_destination(self):
-        return len(self._remaining_path) == 1
-
-    def _reached_path_strip_destination(self):
-        return self._travel_time_in_strip >= self._path_strip_duration
-
-    def _activate_next_path_strip(self):
-        if len(self._remaining_path) >= 2:
-            self._current_strip_departure = self._remaining_path[0]
-            self._current_strip_destination = self._remaining_path[1]
-            self._travel_time_in_strip = 0.0
-            
-    def _move_along_path_strip(self):
-        remaining_time_in_strip = self._path_strip_duration - self._travel_time_in_strip
-        duration_to_move = min(self._time_to_process, remaining_time_in_strip)
-        self._value = self._current_strip_departure + \
-            (self._current_strip_destination - self._current_strip_departure) * \
-            self._travel_time_in_strip / (self._path_strip_duration)
-        self._travel_time_in_strip += duration_to_move
-        self._time_to_process -= duration_to_move
+        self._improviser = PathFollower(path, duration=5.0)
