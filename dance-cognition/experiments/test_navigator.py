@@ -12,6 +12,7 @@ class MapView(QtOpenGL.QGLWidget):
         QtOpenGL.QGLWidget.__init__(self, parent)
 
     def render(self):
+        self._main_window = self.parent().parent()
         self.render_map()
         self.render_path()
 
@@ -19,15 +20,15 @@ class MapView(QtOpenGL.QGLWidget):
         glColor3f(0, 1, 0)
         glPointSize(3.0)
         glBegin(GL_POINTS)
-        for x,y in self.parent().knowns:
+        for x,y in self._main_window.knowns:
             glVertex2f(x*self.width, y*self.height)
         glEnd()
 
     def render_path(self):
         glColor3f(0.5, 0.5, 1.0)
 
-        departure_x, departure_y = self.parent().path[0]
-        destination_x, destination_y = self.parent().path[-1]
+        departure_x, departure_y = self._main_window.path[0]
+        destination_x, destination_y = self._main_window.path[-1]
         glLineWidth(1.0)
         glRectf(departure_x*self.width-3,
                 departure_y*self.height-3,
@@ -41,12 +42,12 @@ class MapView(QtOpenGL.QGLWidget):
 
         glPointSize(3.0)
         glBegin(GL_POINTS)
-        for x,y in self.parent().path[1:-1]:
+        for x,y in self._main_window.path[1:-1]:
             glVertex2f(x*self.width, y*self.height)
         glEnd()
 
         glBegin(GL_LINE_STRIP)
-        for x,y in self.parent().path:
+        for x,y in self._main_window.path:
             glVertex2f(x*self.width, y*self.height)
         glEnd()
 
@@ -77,22 +78,39 @@ class MapView(QtOpenGL.QGLWidget):
         glTranslatef(self.margin, self.margin, 0)
         self.render()
 
-class MainWindow(QtGui.QWidget):
+    def sizeHint(self):
+        return QtCore.QSize(500, 500)
+
+class MainWindow(QtGui.QMainWindow):
     def __init__(self):
-        QtGui.QWidget.__init__(self)
-        layout = QtGui.QHBoxLayout()
-        size_policy = QtGui.QSizePolicy(
-            QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
-        size_policy.setHorizontalStretch(1)
+        self.map_view = None
+
+        QtGui.QMainWindow.__init__(self)
+
+        widget = QtGui.QWidget()
+        self.setCentralWidget(widget)
 
         self.map_view = MapView(self)
-        layout.addWidget(self.map_view)
 
-        self.setLayout(layout)
+        layout = QtGui.QVBoxLayout()
+        layout.addWidget(self.map_view)
+        widget.setLayout(layout)
+
+        self._create_menu()
 
         self.generate_random_map()
         self.create_navigator()
         self.generate_path()
+
+    def _create_menu(self):
+        self._menu = self.menuBar().addMenu("Navigator test")
+        self._add_generate_path_action()
+
+    def _add_generate_path_action(self):
+        action = QtGui.QAction('Generate &path', self)
+        action.setShortcut('Ctrl+P')
+        action.triggered.connect(self.generate_path)
+        self._menu.addAction(action)        
 
     def generate_random_map(self):
         self.knowns = [self.random_map_position() for n in range(100)]
@@ -109,9 +127,8 @@ class MainWindow(QtGui.QWidget):
         destination = self.random_map_position()
         self.path = self.navigator.generate_path(
             departure=departure, destination=destination, resolution=10)
-
-    def sizeHint(self):
-        return QtCore.QSize(500, 500)
+        if self.map_view:
+            self.map_view.repaint()
 
 app = QtGui.QApplication(sys.argv)
 window = MainWindow()
