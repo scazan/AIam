@@ -123,16 +123,12 @@ class MainWindow(QtGui.QMainWindow):
         max_value = max([max(point) for point in points])
         return (points - min_value) / (max_value - min_value)
 
-    def _random_map_position(self):
-        return numpy.array([random.uniform(0., 1.),
-                            random.uniform(0., 1.)])
-
     def _create_navigator(self):
         self._navigator = Navigator(map_points=self.map_points)
 
     def _generate_path(self):
         departure = random.choice(self.map_points)
-        destination = self._random_map_position()
+        destination = random.choice(self.map_points)
         self.path = self._navigator.generate_path(
             departure=departure, destination=destination, resolution=10)
         self._map_view.repaint()
