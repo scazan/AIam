@@ -1,6 +1,7 @@
 from experiment import *
 from dimensionality_reduction_teacher import *
 import random
+from leaky_integrator import LeakyIntegrator
 
 SLIDER_PRECISION = 1000
 
@@ -10,7 +11,8 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._layout = QtGui.QVBoxLayout()
         self._add_buttons()
         self._set_exploration_ranges()
-        self._add_sliders()
+        self._add_velocity_view()
+        self._add_reduction_sliders()
         self.setLayout(self._layout)
 
     def _add_buttons(self):
@@ -100,7 +102,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         reduction_range["explored_max"] = \
             center + reduction_range["explored_range"]/2
 
-    def _add_sliders(self):
+    def _add_reduction_sliders(self):
         group_box = QtGui.QGroupBox("Reduction")
         layout = QtGui.QVBoxLayout()
         self._sliders = []
@@ -136,6 +138,9 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
             [self._slider_value_to_reduction_value(n, self._sliders[n].value())
              for n in range(self.experiment.student.n_components)])
 
+    def _add_velocity_view(self):
+        self.velocity_label = QtGui.QLabel("")
+        self._layout.addWidget(self.velocity_label)
 
 class DimensionalityReductionExperiment(Experiment):
     @staticmethod
@@ -150,6 +155,7 @@ class DimensionalityReductionExperiment(Experiment):
         if self.args.model is None:
             self.args.model = "models/dimensionality_reduction/%s.model" % self.args.entity
         self.reduction = None
+        self._velocity_integrator = LeakyIntegrator()
 
     def run(self, student):
         self.student = student
@@ -180,19 +186,32 @@ class DimensionalityReductionExperiment(Experiment):
         self.student.probe(self._training_data)
         print "ok"
 
-    def proceed(self, time_increment):
+    def proceed(self):
         if self.window.toolbar.explore_button.isChecked():
             self.reduction = self.window.toolbar.get_reduction()
         elif self.window.toolbar.follow_button.isChecked():
-            self.stimulus.proceed(time_increment)
-            self.input = self.stimulus.get_value()
-            self.reduction = self.student.transform(numpy.array([self.input]))[0]
+            self._follow()
         elif self.window.toolbar.improvise_button.isChecked():
             if self._improviser is None:
                 self._start_improvisation()
-            self._improviser.proceed(time_increment)
+            self._improviser.proceed(self.time_increment)
             self.reduction = self._improviser.get_value()
         self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
+
+    def _follow(self):
+        self.stimulus.proceed(self.time_increment)
+        self.input = self.stimulus.get_value()
+        next_reduction = self.student.transform(numpy.array([self.input]))[0]
+        if self.reduction is not None:
+            self._measure_velocity(self.reduction, next_reduction)
+        self.reduction = next_reduction
+
+    def _measure_velocity(self, r1, r2):
+        distance = numpy.linalg.norm(r1 - r2)
+        self._velocity_integrator.integrate(
+            distance / self.time_increment, self.time_increment)
+        self.window.toolbar.velocity_label.setText("%.1f" %
+            self._velocity_integrator.value())
 
     def _start_improvisation(self):
         if self.reduction is None:

@@ -39,12 +39,12 @@ class PredictionExperiment(Experiment):
             self.window.show()
             app.exec_()
 
-    def proceed(self, time_increment):
+    def proceed(self):
         if self.teacher.collected_enough_training_data():
             inp = self.teacher.get_input()
             expected_output = self.teacher.get_output()
             self.student.train(inp, expected_output)
-        self.teacher.proceed(time_increment)
+        self.teacher.proceed(self.time_increment)
 
         self.input = self.stimulus.get_value()
         self.output = self.student.process(self.input)

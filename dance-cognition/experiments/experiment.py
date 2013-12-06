@@ -143,7 +143,7 @@ class MainWindow(QtGui.QWidget):
 
         self.setLayout(layout)
 
-        self.time_increment = 0
+        self.experiment.time_increment = 0
         self.stopwatch = Stopwatch()
         self._frame_count = 0
 
@@ -160,8 +160,8 @@ class MainWindow(QtGui.QWidget):
         if self._frame_count == 0:
             self.stopwatch.start()
         else:
-            self.time_increment = self.now - self.previous_frame_time
-            self.experiment.proceed(self.time_increment)
+            self.experiment.time_increment = self.now - self.previous_frame_time
+            self.experiment.proceed()
 
             self._scene.updateGL()
             self.toolbar.refresh()
