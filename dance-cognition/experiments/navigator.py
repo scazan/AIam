@@ -31,8 +31,8 @@ class PathFollower:
     def __init__(self, path, duration):
         self._duration = duration
         self._position = path[0]
-        self._path_strip_duration = duration / len(path)
         self._remaining_path = copy.copy(path)
+        self._path_distance = numpy.linalg.norm(path[0] - path[-1])
         self._activate_next_path_strip()
 
     def proceed(self, time_increment):
@@ -54,19 +54,22 @@ class PathFollower:
         return len(self._remaining_path) <= 1
 
     def _reached_path_strip_destination(self):
-        return self._travel_time_in_strip >= self._path_strip_duration
+        return self._travel_time_in_strip >= self._current_strip_duration
 
     def _activate_next_path_strip(self):
         if len(self._remaining_path) >= 2:
             self._current_strip_departure = self._remaining_path[0]
             self._current_strip_destination = self._remaining_path[1]
+            self._current_strip_duration = numpy.linalg.norm(
+                self._current_strip_destination - self._current_strip_departure) / \
+                self._path_distance * self._duration
             self._travel_time_in_strip = 0.0
             
     def _move_along_path_strip(self):
-        remaining_time_in_strip = self._path_strip_duration - self._travel_time_in_strip
+        remaining_time_in_strip = self._current_strip_duration - self._travel_time_in_strip
         duration_to_move = min(self._time_to_process, remaining_time_in_strip)
         self._position = self._current_strip_departure + \
             (self._current_strip_destination - self._current_strip_departure) * \
-            self._travel_time_in_strip / (self._path_strip_duration)
+            self._travel_time_in_strip / (self._current_strip_duration)
         self._travel_time_in_strip += duration_to_move
         self._time_to_process -= duration_to_move
