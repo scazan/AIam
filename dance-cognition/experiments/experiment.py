@@ -10,7 +10,7 @@ from PyQt4 import QtCore, QtGui, QtOpenGL
 import math
 import numpy
 from bvh_reader import bvh_reader as bvh_reader_module
-import pickle
+import cPickle
 from stopwatch import Stopwatch
 import imp
 
@@ -217,14 +217,14 @@ class Experiment:
     def save_model(self, model_filename):
         print "saving model..."
         f = open(model_filename, "w")
-        pickle.dump(self.student, f)
+        cPickle.dump(self.student, f)
         f.close()
         print "ok"
         
     def load_model(self, model_filename):
         print "loading model..."
         f = open(model_filename)
-        model = pickle.load(f)
+        model = cPickle.load(f)
         f.close()
         print "ok"
         return model
