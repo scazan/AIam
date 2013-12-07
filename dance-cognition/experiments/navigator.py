@@ -1,31 +1,45 @@
 import sklearn.neighbors
 import numpy
 import copy
+from scipy import interpolate
 
 class Navigator:
     def __init__(self, map_points):
         self.map_points = map_points
+        self._n_dimensions = len(map_points[0])
         self._nearest_neighbor_classifier = sklearn.neighbors.KNeighborsClassifier(
             n_neighbors=1, weights='uniform')
         self._nearest_neighbor_classifier.fit(map_points, map_points)
 
-    def generate_path(self, departure, destination, resolution):
+    def generate_path(self, departure, destination, num_segments):
         self._departure = departure
         self._destination = destination
-        self._resolution = resolution
-        self._path = [departure]
-        for n in range(resolution-1):
+        self._num_segments = num_segments
+        self._segments = [departure]
+        for n in range(num_segments-1):
             self._add_path_segment(n)
-        return self._path
+        return self._segments
+
+    def interpolate_path(self, points, resolution):
+        numpy_points = numpy.array(points)
+        return list(numpy.column_stack(
+                [self._spline_interpolation_1d(numpy_points[:,n], resolution)
+                 for n in range(self._n_dimensions)]))
+
+    def _spline_interpolation_1d(self, points, resolution):
+        x = numpy.arange(0., 1., 1./len(points))
+        x_new = numpy.arange(0., 1., 1./resolution)
+        curve = interpolate.splrep(x, points, s=1)
+        return interpolate.splev(x_new, curve, der=0)
 
     def _add_path_segment(self, n):
-        previous_point = self._path[-1]
+        previous_point = self._segments[-1]
         next_point_straightly = previous_point + (self._destination - previous_point) \
-            / (self._resolution - n - 1)
+            / (self._num_segments - n - 1)
         next_point_in_map = self._nearest_neighbor_classifier.predict(
             next_point_straightly)[0]
         if not numpy.array_equal(next_point_in_map, previous_point):
-            self._path.append(next_point_in_map)
+            self._segments.append(next_point_in_map)
 
 class PathFollower:
     def __init__(self, path, duration):

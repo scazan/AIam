@@ -23,6 +23,7 @@ class MapView(QtOpenGL.QGLWidget):
 
     def render(self):
         self._render_map()
+        self._render_path_segments()
         self._render_path()
         self._render_traveller()
 
@@ -37,11 +38,11 @@ class MapView(QtOpenGL.QGLWidget):
     def _vertex(self, x, y):
         return x*self.width, y*self.height
         
-    def _render_path(self):
+    def _render_path_segments(self):
         glColor3f(0.5, 0.5, 1.0)
 
-        departure_x, departure_y = self._experiment.path[0]
-        destination_x, destination_y = self._experiment.path[-1]
+        departure_x, departure_y = self._experiment.path_segments[0]
+        destination_x, destination_y = self._experiment.path_segments[-1]
         glLineWidth(1.0)
         glRectf(departure_x*self.width-3,
                 departure_y*self.height-3,
@@ -55,10 +56,18 @@ class MapView(QtOpenGL.QGLWidget):
 
         glPointSize(3.0)
         glBegin(GL_POINTS)
-        for x,y in self._experiment.path[1:-1]:
+        for x,y in self._experiment.path_segments[1:-1]:
             glVertex2f(*self._vertex(x, y))
         glEnd()
 
+        glBegin(GL_LINE_STRIP)
+        for x,y in self._experiment.path_segments:
+            glVertex2f(*self._vertex(x, y))
+        glEnd()
+
+    def _render_path(self):
+        glLineWidth(1.0)
+        glColor3f(0.5, 0.5, 1.0)
         glBegin(GL_LINE_STRIP)
         for x,y in self._experiment.path:
             glVertex2f(*self._vertex(x, y))
@@ -184,8 +193,13 @@ class Experiment:
     def generate_path(self):
         departure = random.choice(self.map_points)
         destination = random.choice(self.map_points)
-        self.path = self._navigator.generate_path(
-            departure=departure, destination=destination, resolution=10)
+        self.path_segments = self._navigator.generate_path(
+            departure=departure,
+            destination=destination,
+            num_segments=10)
+        self.path = self._navigator.interpolate_path(
+            self.path_segments,
+            resolution=100)
         self.path_follower = PathFollower(self.path, duration=5.0)
 
     def proceed(self, time_increment):

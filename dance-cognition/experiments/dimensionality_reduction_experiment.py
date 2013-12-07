@@ -224,5 +224,5 @@ class DimensionalityReductionExperiment(Experiment):
         path = self._navigator.generate_path(
             departure=departure,
             destination=random.choice(self.student.observed_reductions),
-            resolution=100)
+            num_segments=100)
         self._improviser = PathFollower(path, duration=5.0)
