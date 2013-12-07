@@ -11,6 +11,8 @@ import random
 from navigator import Navigator, PathFollower
 from sklearn.datasets import make_classification
 from stopwatch import Stopwatch
+from argparse import ArgumentParser
+import cPickle
 
 FRAME_RATE = 50
 
@@ -26,7 +28,7 @@ class MapView(QtOpenGL.QGLWidget):
 
     def _render_map(self):
         glColor3f(0, 1, 0)
-        glPointSize(3.0)
+        glPointSize(1.0)
         glBegin(GL_POINTS)
         for x,y in self._experiment.map_points:
             glVertex2f(*self._vertex(x, y))
@@ -150,11 +152,26 @@ class MainWindow(QtGui.QMainWindow):
         self._frame_count += 1
 
 class Experiment:
+    def __init__(self, args):
+        self._args = args
+
     def generate_map(self):
-        samples, labels = make_classification(
+        if self._args.model:
+            self.map_points = self._load_map_points_from_model()
+        else:
+            self.map_points = self._generate_random_map_points()
+
+    def _load_map_points_from_model(self):
+        f = open(self._args.model)
+        model = cPickle.load(f)
+        f.close()
+        return self._normalize(model.observed_reductions)
+
+    def _generate_random_map_points(self):
+        samples, _labels = make_classification(
             n_features=2, n_redundant=0, n_informative=1,
             n_clusters_per_class=1, n_samples=1000)
-        self.map_points = self._normalize(samples)
+        return self._normalize(samples)
 
     def _normalize(self, points):
         min_value = min([min(point) for point in points])
@@ -174,7 +191,11 @@ class Experiment:
     def proceed(self, time_increment):
         self.path_follower.proceed(time_increment)
 
-experiment = Experiment()
+parser = ArgumentParser()
+parser.add_argument("-model")
+args = parser.parse_args()
+
+experiment = Experiment(args)
 app = QtGui.QApplication(sys.argv)
 window = MainWindow(experiment)
 window.show()
