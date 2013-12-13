@@ -221,8 +221,11 @@ class DimensionalityReductionExperiment(Experiment):
                         self.stimulus.get_value()]))[0]
         else:
             departure = self.reduction
-        path = self._navigator.generate_path(
+        path_segments = self._navigator.generate_path(
             departure=departure,
             destination=random.choice(self.student.observed_reductions),
-            num_segments=100)
+            num_segments=10)
+        path = self._navigator.interpolate_path(
+            path_segments,
+            resolution=100)
         self._improviser = PathFollower(path, duration=5.0)
