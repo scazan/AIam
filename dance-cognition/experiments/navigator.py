@@ -22,15 +22,42 @@ class Navigator:
 
     def interpolate_path(self, points, resolution):
         numpy_points = numpy.array(points)
-        return list(numpy.column_stack(
+        unclamped_path = numpy.column_stack(
                 [self._spline_interpolation_1d(numpy_points[:,n], resolution)
-                 for n in range(self._n_dimensions)]))
+                 for n in range(self._n_dimensions)])
+        return list(self._clamp_path(unclamped_path, numpy_points))
 
     def _spline_interpolation_1d(self, points, resolution):
         x = numpy.arange(0., 1., 1./len(points))
         x_new = numpy.arange(0., 1., 1./resolution)
         curve = InterpolatedUnivariateSpline(x, points)
         return curve(x_new)
+
+    def _clamp_path(self, path, interval_points):
+        mins = [min(interval_points[:,n]) for n in range(self._n_dimensions)]
+        maxs = [max(interval_points[:,n]) for n in range(self._n_dimensions)]
+        return path[self._first_index_in_interval(path, mins, maxs):
+                        self._last_index_in_interval(path, mins, maxs)]
+
+    def _first_index_in_interval(self, path, mins, maxs):
+        i = 0
+        while i < len(path):
+            if self._in_interval(path[i], mins, maxs):
+                return i
+            i += 1
+
+    def _last_index_in_interval(self, path, mins, maxs):
+        i = len(path) - 1
+        while i >= 0:
+            if self._in_interval(path[i], mins, maxs):
+                return i
+            i -= 1
+
+    def _in_interval(self, point, mins, maxs):
+        for n in range(self._n_dimensions):
+            if point[n] < mins[n] or point[n] > maxs[n]:
+                return False
+        return True
 
     def _add_path_segment(self, n):
         previous_point = self._segments[-1]
