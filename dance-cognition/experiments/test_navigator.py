@@ -60,11 +60,6 @@ class MapView(QtOpenGL.QGLWidget):
             glVertex2f(*self._vertex(x, y))
         glEnd()
 
-        glBegin(GL_LINE_STRIP)
-        for x,y in self._experiment.path_segments:
-            glVertex2f(*self._vertex(x, y))
-        glEnd()
-
     def _render_path(self):
         glLineWidth(1.0)
         glColor3f(0.5, 0.5, 1.0)
