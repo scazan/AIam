@@ -195,7 +195,7 @@ class Experiment:
         self.path = self._navigator.interpolate_path(
             self.path_segments,
             resolution=100)
-        self.path_follower = PathFollower(self.path, duration=5.0)
+        self.path_follower = PathFollower(self.path, velocity=0.1)
 
     def proceed(self, time_increment):
         self.path_follower.proceed(time_increment)

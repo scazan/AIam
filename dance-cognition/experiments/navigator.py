@@ -69,11 +69,11 @@ class Navigator:
             self._segments.append(next_point_in_map)
 
 class PathFollower:
-    def __init__(self, path, duration):
-        self._duration = duration
+    def __init__(self, path, velocity):
         self._position = path[0]
         self._remaining_path = copy.copy(path)
         self._path_distance = numpy.linalg.norm(path[0] - path[-1])
+        self._duration = self._path_distance / velocity
         self._activate_next_path_strip()
 
     def proceed(self, time_increment):

@@ -228,4 +228,4 @@ class DimensionalityReductionExperiment(Experiment):
         path = self._navigator.interpolate_path(
             path_segments,
             resolution=100)
-        self._improviser = PathFollower(path, duration=5.0)
+        self._improviser = PathFollower(path, velocity=100.0)
