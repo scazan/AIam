@@ -150,6 +150,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--num-components", "-n", type=int, default=4)
         parser.add_argument("--explore-beyond-observations", type=float, default=0.2)
         parser.add_argument("--improvise", action="store_true")
+        parser.add_argument("--plot-velocity")
 
     def __init__(self, parser):
         Experiment.__init__(self, parser)
@@ -166,6 +167,10 @@ class DimensionalityReductionExperiment(Experiment):
         if self.args.train:
             self._train_model()
             self.save_model(self.args.model)
+
+        elif self.args.plot_velocity:
+            self.student = self.load_model(self.args.model)
+            self._plot_velocity()
 
         else:
             self.student = self.load_model(self.args.model)
@@ -193,6 +198,7 @@ class DimensionalityReductionExperiment(Experiment):
             self.reduction = self.window.toolbar.get_reduction()
         elif self.window.toolbar.follow_button.isChecked():
             self._follow()
+            self.window.toolbar.velocity_label.setText("%.1f" % self._velocity)
         elif self.window.toolbar.improvise_button.isChecked():
             if self._improviser is None or self._improviser.reached_destination():
                 self._start_improvisation()
@@ -212,8 +218,7 @@ class DimensionalityReductionExperiment(Experiment):
         distance = numpy.linalg.norm(r1 - r2)
         self._velocity_integrator.integrate(
             distance / self.time_increment, self.time_increment)
-        self.window.toolbar.velocity_label.setText("%.1f" %
-            self._velocity_integrator.value())
+        self._velocity = self._velocity_integrator.value()
 
     def _start_improvisation(self):
         if self.reduction is None:
@@ -229,3 +234,14 @@ class DimensionalityReductionExperiment(Experiment):
             path_segments,
             resolution=100)
         self._improviser = PathFollower(path, velocity=100.0)
+
+    def _plot_velocity(self):
+        f = open(self.args.plot_velocity, "w")
+        t = 0
+        self.time_increment = 1.0 / self.args.frame_rate
+        self._follow()
+        while t < self.stimulus.get_duration():
+            self._follow()
+            print >>f, self._velocity
+            t += self.time_increment
+        f.close()
