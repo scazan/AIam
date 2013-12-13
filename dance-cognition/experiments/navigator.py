@@ -1,7 +1,7 @@
 import sklearn.neighbors
 import numpy
 import copy
-from scipy import interpolate
+from scipy.interpolate import InterpolatedUnivariateSpline
 
 class Navigator:
     def __init__(self, map_points):
@@ -29,8 +29,8 @@ class Navigator:
     def _spline_interpolation_1d(self, points, resolution):
         x = numpy.arange(0., 1., 1./len(points))
         x_new = numpy.arange(0., 1., 1./resolution)
-        curve = interpolate.splrep(x, points, s=1)
-        return interpolate.splev(x_new, curve, der=0)
+        curve = InterpolatedUnivariateSpline(x, points)
+        return curve(x_new)
 
     def _add_path_segment(self, n):
         previous_point = self._segments[-1]
