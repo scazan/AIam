@@ -69,23 +69,31 @@ class Navigator:
             self._segments.append(next_point_in_map)
 
 
+class Envelope:
+    _min_relative_velocity = .1
+
+    def envelope(self, x):
+        return self._clamp(self.unclamped_envelope(x))
+
+    def _clamp(self, x):
+        return self._min_relative_velocity + (1 - self._min_relative_velocity) * x
+
+class SymmetricalEnvelope(Envelope):
+    def unclamped_envelope(self, x):
+        if x < .5:
+            return self._clamp(self.rising_envelope(x*2))
+        else:
+            return self._clamp(self.rising_envelope((1-x) * 2))
+
 class constant_envelope:
     def envelope(self, x):
         return 1.
 
-class SymmetricalEnvelope:
-    def envelope(self, x):
-        if x < .5:
-            return self.rising_envelope(x*2)
-        else:
-            return self.rising_envelope((1-x) * 2)
-
 class exponential_envelope(SymmetricalEnvelope):
-    _min_relative_velocity = .1
     _slope = 3.
 
     def rising_envelope(self, x):
-        return self._min_relative_velocity + (1 - self._min_relative_velocity) * pow(x, self._slope)
+        return pow(x, self._slope)
 
 class PathFollower:
     def __init__(self, path, velocity, envelope="constant"):
