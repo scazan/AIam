@@ -197,7 +197,7 @@ class Experiment:
             resolution=100)
         self.path_followers = [
             PathFollower(self.path, velocity=0.1, envelope="constant"),
-            PathFollower(self.path, velocity=0.1, envelope="exponential"),
+            PathFollower(self.path, velocity=0.1, envelope="sine"),
             ]
 
     def proceed(self, time_increment):

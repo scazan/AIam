@@ -233,7 +233,7 @@ class DimensionalityReductionExperiment(Experiment):
         path = self._navigator.interpolate_path(
             path_segments,
             resolution=100)
-        self._improviser = PathFollower(path, velocity=100.0)
+        self._improviser = PathFollower(path, velocity=50.0, envelope="sine")
 
     def _plot_velocity(self):
         f = open(self.args.plot_velocity, "w")

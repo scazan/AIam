@@ -2,6 +2,7 @@ import sklearn.neighbors
 import numpy
 import copy
 from scipy.interpolate import InterpolatedUnivariateSpline
+import math
 
 class Navigator:
     def __init__(self, map_points):
@@ -94,6 +95,11 @@ class exponential_envelope(SymmetricalEnvelope):
 
     def rising_envelope(self, x):
         return pow(x, self._slope)
+
+class sine_envelope(Envelope):
+    def unclamped_envelope(self, x):
+        return (math.sin((x + .75) * math.pi*2) + 1) / 2
+
 
 class PathFollower:
     def __init__(self, path, velocity, envelope="constant"):
