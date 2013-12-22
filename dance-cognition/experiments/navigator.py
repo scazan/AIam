@@ -69,7 +69,7 @@ class Navigator:
             self._segments.append(next_point_in_map)
 
 
-class linear_envelope:
+class constant_envelope:
     def envelope(self, x):
         return 1.
 
@@ -84,14 +84,32 @@ class exponential_envelope:
             return self._min_relative_velocity + (1 - self._min_relative_velocity) * pow((1-x)*2, self._slope)
 
 class PathFollower:
-    def __init__(self, path, velocity, envelope="linear"):
+    def __init__(self, path, velocity, envelope="constant"):
         self._path = path
-        self._velocity_envelope = eval("%s_envelope" % envelope)()
-        self._peak_velocity = velocity
-        self._position = path[0]
-        self._remaining_path = copy.copy(path)
-        self._path_distance = numpy.linalg.norm(path[0] - path[-1])
+        self._desired_average_velocity = velocity
+        velocity_envelope = eval("%s_envelope" % envelope)()
+        self._velocity_correction = 1.
+        if envelope != "constant":
+            self._velocity_correction = \
+                self._estimate_duration(constant_envelope()) / \
+                self._estimate_duration(velocity_envelope)
+        self._velocity_envelope = velocity_envelope
+        self._restart()
+
+    def _restart(self):
+        self._position = self._path[0]
+        self._remaining_path = copy.copy(self._path)
         self._activate_next_path_strip()
+
+    def _estimate_duration(self, velocity_envelope):
+        self._velocity_envelope = velocity_envelope
+        self._restart()
+        duration = 0.
+        time_increment = .01
+        while not self.reached_destination():
+            self.proceed(time_increment)
+            duration += time_increment
+        return duration
 
     def proceed(self, time_increment):
         self._time_to_process = time_increment
@@ -126,7 +144,9 @@ class PathFollower:
         return numpy.linalg.norm(self._current_strip_destination - self._current_strip_departure)
 
     def _current_strip_velocity(self):
-        return self._velocity_envelope.envelope((self._relative_cursor())) * self._peak_velocity
+        return self._velocity_envelope.envelope((self._relative_cursor())) \
+            * self._desired_average_velocity \
+            / self._velocity_correction
 
     def _relative_cursor(self):
         return 1 - len(self._remaining_path) / float(len(self._path))

@@ -196,7 +196,7 @@ class Experiment:
             self.path_segments,
             resolution=100)
         self.path_followers = [
-            PathFollower(self.path, velocity=0.1, envelope="linear"),
+            PathFollower(self.path, velocity=0.1, envelope="constant"),
             PathFollower(self.path, velocity=0.1, envelope="exponential"),
             ]
 
