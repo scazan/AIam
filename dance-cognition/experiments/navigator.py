@@ -105,16 +105,17 @@ class PathFollower:
         self._velocity_envelope = velocity_envelope
         self._restart()
         duration = 0.
-        time_increment = .01
         while not self.reached_destination():
-            self.proceed(time_increment)
-            duration += time_increment
+            duration += self.proceed()
         return duration
 
-    def proceed(self, time_increment):
-        self._time_to_process = time_increment
-        while self._time_to_process > 0 and not self.reached_destination():
+    def proceed(self, max_time_to_process=None):
+        self._time_processed = 0.
+        self._max_time_to_process = max_time_to_process
+        while (self._max_time_to_process is None or self._max_time_to_process > 0) \
+                and not self.reached_destination():
             self._process_within_state()
+        return self._time_processed
 
     def current_position(self):
         return self._position
@@ -153,9 +154,14 @@ class PathFollower:
 
     def _move_along_path_strip(self):
         remaining_time_in_strip = self._current_strip_duration - self._travel_time_in_strip
-        duration_to_move = min(self._time_to_process, remaining_time_in_strip)
+        if self._max_time_to_process is None:
+            duration_to_move = remaining_time_in_strip
+        else:
+            duration_to_move = min(self._max_time_to_process, remaining_time_in_strip)
         self._position = self._current_strip_departure + \
             (self._current_strip_destination - self._current_strip_departure) * \
             self._travel_time_in_strip / (self._current_strip_duration)
         self._travel_time_in_strip += duration_to_move
-        self._time_to_process -= duration_to_move
+        self._time_processed += duration_to_move
+        if self._max_time_to_process is not None:
+            self._max_time_to_process -= duration_to_move
