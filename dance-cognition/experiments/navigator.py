@@ -68,12 +68,29 @@ class Navigator:
         if not numpy.array_equal(next_point_in_map, previous_point):
             self._segments.append(next_point_in_map)
 
+
+class linear_envelope:
+    def envelope(self, x):
+        return 1.
+
+class exponential_envelope:
+    _min_relative_velocity = .1
+    _slope = 3.
+
+    def envelope(self, x):
+        if x < .5:
+            return self._min_relative_velocity + (1 - self._min_relative_velocity) * pow(x*2, self._slope)
+        else:
+            return self._min_relative_velocity + (1 - self._min_relative_velocity) * pow((1-x)*2, self._slope)
+
 class PathFollower:
-    def __init__(self, path, velocity):
+    def __init__(self, path, velocity, envelope="linear"):
+        self._path = path
+        self._velocity_envelope = eval("%s_envelope" % envelope)()
+        self._peak_velocity = velocity
         self._position = path[0]
         self._remaining_path = copy.copy(path)
         self._path_distance = numpy.linalg.norm(path[0] - path[-1])
-        self._duration = self._path_distance / velocity
         self._activate_next_path_strip()
 
     def proceed(self, time_increment):
@@ -101,11 +118,19 @@ class PathFollower:
         if len(self._remaining_path) >= 2:
             self._current_strip_departure = self._remaining_path[0]
             self._current_strip_destination = self._remaining_path[1]
-            self._current_strip_duration = numpy.linalg.norm(
-                self._current_strip_destination - self._current_strip_departure) / \
-                self._path_distance * self._duration
+            self._current_strip_duration = self._current_strip_distance() / \
+                self._current_strip_velocity()
             self._travel_time_in_strip = 0.0
-            
+
+    def _current_strip_distance(self):
+        return numpy.linalg.norm(self._current_strip_destination - self._current_strip_departure)
+
+    def _current_strip_velocity(self):
+        return self._velocity_envelope.envelope((self._relative_cursor())) * self._peak_velocity
+
+    def _relative_cursor(self):
+        return 1 - len(self._remaining_path) / float(len(self._path))
+
     def _move_along_path_strip(self):
         remaining_time_in_strip = self._current_strip_duration - self._travel_time_in_strip
         duration_to_move = min(self._time_to_process, remaining_time_in_strip)

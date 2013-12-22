@@ -25,7 +25,8 @@ class MapView(QtOpenGL.QGLWidget):
         self._render_map()
         self._render_path_segments()
         self._render_path()
-        self._render_traveller()
+        for path_follower in self._experiment.path_followers:
+            self._render_path_follower_position(path_follower)
 
     def _render_map(self):
         glColor3f(0, 1, 0)
@@ -68,12 +69,11 @@ class MapView(QtOpenGL.QGLWidget):
             glVertex2f(*self._vertex(x, y))
         glEnd()
 
-    def _render_traveller(self):
+    def _render_path_follower_position(self, path_follower):
         glColor3f(1, 0, 0)
         glPointSize(3.0)
         glBegin(GL_POINTS)
-        glVertex2f(*self._vertex(
-                *self._experiment.path_follower.current_position()))
+        glVertex2f(*self._vertex(*path_follower.current_position()))
         glEnd()
 
     def initializeGL(self):
@@ -195,10 +195,14 @@ class Experiment:
         self.path = self._navigator.interpolate_path(
             self.path_segments,
             resolution=100)
-        self.path_follower = PathFollower(self.path, velocity=0.1)
+        self.path_followers = [
+            PathFollower(self.path, velocity=0.1, envelope="linear"),
+            PathFollower(self.path, velocity=0.1, envelope="exponential"),
+            ]
 
     def proceed(self, time_increment):
-        self.path_follower.proceed(time_increment)
+        for path_follower in self.path_followers:
+            path_follower.proceed(time_increment)
 
 parser = ArgumentParser()
 parser.add_argument("-model")
