@@ -10,50 +10,48 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
     def __init__(self, *args):
         ExperimentToolbar.__init__(self, *args)
         self._layout = QtGui.QVBoxLayout()
-        self._add_buttons()
+        self._add_mode_tabs()
         self._set_exploration_ranges()
-        self._add_velocity_view()
         self._add_reduction_sliders()
         self.setLayout(self._layout)
 
-    def _add_buttons(self):
-        self._add_mode_buttons()
-        self._add_random_button()
-        self._add_deviate_button()
-
-    def _add_mode_buttons(self):
-        layout = QtGui.QVBoxLayout()
-
-        self.follow_button = QtGui.QRadioButton("Follow", self)
-        layout.addWidget(self.follow_button)
-
-        self.improvise_button = QtGui.QRadioButton("Improvise", self)
-        layout.addWidget(self.improvise_button)
-
-        self.explore_button = QtGui.QRadioButton("Explore interactively", self)
-        layout.addWidget(self.explore_button)
+    def _add_mode_tabs(self):
+        self.tabs = QtGui.QTabWidget()
+        self._add_follow_tab()
+        self._add_explore_tab()
+        self._add_improvise_tab()
+        self._layout.addWidget(self.tabs)
 
         if self.args.improvise:
-            self.improvise_button.setChecked(True)
+            self.tabs.setCurrentWidget(self.improvise_tab)
         else:
-            self.follow_button.setChecked(True)
+            self.tabs.setCurrentWidget(self.follow_tab)
 
-        self._layout.addLayout(layout)
+    def _add_follow_tab(self):
+        self.follow_tab = QtGui.QWidget()
+        self._follow_tab_layout = QtGui.QVBoxLayout()
+        self._add_velocity_view()
+        self._follow_tab_layout.addStretch(1)
+        self.follow_tab.setLayout(self._follow_tab_layout)
+        self.tabs.addTab(self.follow_tab, "Follow")
+
+    def _add_velocity_view(self):
+        self.velocity_label = QtGui.QLabel("")
+        self._follow_tab_layout.addWidget(self.velocity_label)
+
+    def _add_explore_tab(self):
+        self.explore_tab = QtGui.QWidget()
+        self._explore_tab_layout = QtGui.QVBoxLayout()
+        self._add_random_button()
+        self._add_deviate_button()
+        self._explore_tab_layout.addStretch(1)
+        self.explore_tab.setLayout(self._explore_tab_layout)
+        self.tabs.addTab(self.explore_tab, "Explore")
 
     def _add_random_button(self):
         button = QtGui.QPushButton("Random", self)
         button.clicked.connect(self._set_random_reduction)
-        self._layout.addWidget(button)
-
-    def _set_random_reduction(self):
-        for n in range(self.experiment.student.n_components):
-            self._set_random_reduction_n(
-                n, self.experiment.student.reduction_range[n])
-
-    def _set_random_reduction_n(self, n, reduction_range):
-        self._sliders[n].setValue(self._reduction_value_to_slider_value(
-                n, random.uniform(reduction_range["explored_min"],
-                                  reduction_range["explored_max"])))
+        self._explore_tab_layout.addWidget(button)
 
     def _add_deviate_button(self):
         layout = QtGui.QHBoxLayout()
@@ -65,7 +63,24 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         button = QtGui.QPushButton("Deviate", self)
         button.clicked.connect(self._set_deviated_reduction)
         layout.addWidget(button)
-        self._layout.addLayout(layout)
+        self._explore_tab_layout.addLayout(layout)
+
+    def _add_improvise_tab(self):
+        self.improvise_tab = QtGui.QWidget()
+        self._improvise_tab_layout = QtGui.QVBoxLayout()
+        self._improvise_tab_layout.addStretch(1)
+        self.improvise_tab.setLayout(self._improvise_tab_layout)
+        self.tabs.addTab(self.improvise_tab, "Improvise")
+
+    def _set_random_reduction(self):
+        for n in range(self.experiment.student.n_components):
+            self._set_random_reduction_n(
+                n, self.experiment.student.reduction_range[n])
+
+    def _set_random_reduction_n(self, n, reduction_range):
+        self._sliders[n].setValue(self._reduction_value_to_slider_value(
+                n, random.uniform(reduction_range["explored_min"],
+                                  reduction_range["explored_max"])))
 
     def _set_deviated_reduction(self):
         random_observation = self.experiment.stimulus.get_random_value()
@@ -119,7 +134,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._layout.addWidget(group_box)
 
     def refresh(self):
-        if not self.explore_button.isChecked():
+        if self.tabs.currentWidget() != self.explore_tab:
             for n in range(self.experiment.student.n_components):
                 self._sliders[n].setValue(
                     self._reduction_value_to_slider_value(n, self.experiment.reduction[n]))
@@ -138,10 +153,6 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         return numpy.array(
             [self._slider_value_to_reduction_value(n, self._sliders[n].value())
              for n in range(self.experiment.student.n_components)])
-
-    def _add_velocity_view(self):
-        self.velocity_label = QtGui.QLabel("")
-        self._layout.addWidget(self.velocity_label)
 
 class DimensionalityReductionExperiment(Experiment):
     @staticmethod
@@ -194,12 +205,13 @@ class DimensionalityReductionExperiment(Experiment):
         print "ok"
 
     def proceed(self):
-        if self.window.toolbar.explore_button.isChecked():
+        if self.window.toolbar.tabs.currentWidget() == self.window.toolbar.explore_tab:
             self.reduction = self.window.toolbar.get_reduction()
-        elif self.window.toolbar.follow_button.isChecked():
+        elif self.window.toolbar.tabs.currentWidget() == self.window.toolbar.follow_tab:
             self._follow()
-            self.window.toolbar.velocity_label.setText("%.1f" % self._velocity)
-        elif self.window.toolbar.improvise_button.isChecked():
+            if hasattr(self, "_velocity"):
+                self.window.toolbar.velocity_label.setText("%.1f" % self._velocity)
+        elif self.window.toolbar.tabs.currentWidget() == self.window.toolbar.improvise_tab:
             if self._improviser is None or self._improviser.reached_destination():
                 self._start_improvisation()
             self._improviser.proceed(self.time_increment)
