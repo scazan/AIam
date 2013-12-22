@@ -73,15 +73,19 @@ class constant_envelope:
     def envelope(self, x):
         return 1.
 
-class exponential_envelope:
+class SymmetricalEnvelope:
+    def envelope(self, x):
+        if x < .5:
+            return self.rising_envelope(x*2)
+        else:
+            return self.rising_envelope((1-x) * 2)
+
+class exponential_envelope(SymmetricalEnvelope):
     _min_relative_velocity = .1
     _slope = 3.
 
-    def envelope(self, x):
-        if x < .5:
-            return self._min_relative_velocity + (1 - self._min_relative_velocity) * pow(x*2, self._slope)
-        else:
-            return self._min_relative_velocity + (1 - self._min_relative_velocity) * pow((1-x)*2, self._slope)
+    def rising_envelope(self, x):
+        return self._min_relative_velocity + (1 - self._min_relative_velocity) * pow(x, self._slope)
 
 class PathFollower:
     def __init__(self, path, velocity, envelope="constant"):
