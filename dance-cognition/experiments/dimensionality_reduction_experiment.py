@@ -36,8 +36,11 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self.tabs.addTab(self.follow_tab, "Follow")
 
     def _add_velocity_view(self):
+        layout = QtGui.QHBoxLayout()
+        layout.addWidget(QtGui.QLabel("Input velocity: "))
         self.velocity_label = QtGui.QLabel("")
-        self._follow_tab_layout.addWidget(self.velocity_label)
+        layout.addWidget(self.velocity_label)
+        self._follow_tab_layout.addLayout(layout)
 
     def _add_explore_tab(self):
         self.explore_tab = QtGui.QWidget()
