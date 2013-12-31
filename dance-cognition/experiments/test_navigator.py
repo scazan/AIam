@@ -124,13 +124,20 @@ class MainWindow(QtGui.QMainWindow):
 
     def _create_menu(self):
         self._menu = self.menuBar().addMenu("Navigator test")
-        self._add_generate_path_action()
+        self._add_generate_new_path_action()
+        self._add_extend_path_action()
         self._add_generate_map_action()
 
-    def _add_generate_path_action(self):
-        action = QtGui.QAction('Generate &path', self)
+    def _add_generate_new_path_action(self):
+        action = QtGui.QAction('Generate new &path', self)
         action.setShortcut('Ctrl+P')
-        action.triggered.connect(self._experiment.generate_path)
+        action.triggered.connect(self._experiment.generate_new_path)
+        self._menu.addAction(action)
+
+    def _add_extend_path_action(self):
+        action = QtGui.QAction('&Extend path', self)
+        action.setShortcut('Ctrl+E')
+        action.triggered.connect(self._experiment.extend_path)
         self._menu.addAction(action)
 
     def _add_generate_map_action(self):
@@ -142,7 +149,7 @@ class MainWindow(QtGui.QMainWindow):
     def _generate_map_and_path(self):
         self._experiment.generate_map()
         self._experiment.create_navigator()
-        self._experiment.generate_path()
+        self._experiment.generate_new_path()
 
     def _update(self):
         self.now = self.stopwatch.get_elapsed_time()
@@ -185,9 +192,17 @@ class Experiment:
     def create_navigator(self):
         self._navigator = Navigator(map_points=self.map_points)
 
-    def generate_path(self):
+    def generate_new_path(self):
         departure = random.choice(self.map_points)
         destination = random.choice(self.map_points)
+        self._generate_path(departure, destination)
+
+    def extend_path(self):
+        departure = self.path[-1]
+        destination = random.choice(self.map_points)
+        self._generate_path(departure, destination)
+
+    def _generate_path(self, departure, destination):
         self.path_segments = self._navigator.generate_path(
             departure=departure,
             destination=destination,
