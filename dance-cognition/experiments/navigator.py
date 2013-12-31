@@ -37,13 +37,13 @@ class Navigator:
     def _clamp_path(self, unclamped_interpolated_path, uninterpolated_path):
         startpoint = uninterpolated_path[0]
         endpoint = uninterpolated_path[-1]
-        index_nearest_start = min(range(len(unclamped_interpolated_path)),
-                                  key=lambda i: self._distance(unclamped_interpolated_path[i],
-                                                               startpoint))
-        index_nearest_end = min(range(len(unclamped_interpolated_path)),
-                                  key=lambda i: self._distance(unclamped_interpolated_path[i],
-                                                               endpoint))
+        index_nearest_start = self._nearest_index(unclamped_interpolated_path, startpoint)
+        index_nearest_end = self._nearest_index(unclamped_interpolated_path, endpoint)
         return unclamped_interpolated_path[index_nearest_start:index_nearest_end]
+
+    def _nearest_index(self, iterable, target):
+        return min(range(len(iterable)),
+                   key=lambda i: self._distance(iterable[i], target))
 
     def _distance(self, a, b):
         return numpy.linalg.norm(a - b)
