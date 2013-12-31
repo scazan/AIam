@@ -37,15 +37,7 @@ class Navigator:
     def _clamp_path(self, path, interval_points):
         mins = [min(interval_points[:,n]) for n in range(self._n_dimensions)]
         maxs = [max(interval_points[:,n]) for n in range(self._n_dimensions)]
-        return path[self._first_index_in_interval(path, mins, maxs):
-                        self._last_index_in_interval(path, mins, maxs)]
-
-    def _first_index_in_interval(self, path, mins, maxs):
-        i = 0
-        while i < len(path):
-            if self._in_interval(path[i], mins, maxs):
-                return i
-            i += 1
+        return path[0:self._last_index_in_interval(path, mins, maxs)]
 
     def _last_index_in_interval(self, path, mins, maxs):
         i = len(path) - 1

@@ -1,9 +1,6 @@
 automatic detection of whether training data cache can be used (currently, it needs to be removed manually when some parameter such as --translation-weight is changed)
   perhaps using profiles?
 
-explore random trajectories within dense areas of reduction space
-  eliminate discontinuities between paths (better clamping of curve endpoints)
-
 ensure that quaternion discontinuity problem (see README) cannot appear in real cases
   work started with analyze_quaternions.py
 
