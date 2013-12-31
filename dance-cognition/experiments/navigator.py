@@ -26,7 +26,7 @@ class Navigator:
         unclamped_interpolated_path = numpy.column_stack(
                 [self._spline_interpolation_1d(uninterpolated_path_numpy[:,n], resolution)
                  for n in range(self._n_dimensions)])
-        return list(self._clamp_path(unclamped_interpolated_path, uninterpolated_path_numpy))
+        return list(self._clamp_path(unclamped_interpolated_path, uninterpolated_path))
 
     def _spline_interpolation_1d(self, points, resolution):
         x = numpy.arange(0., 1., 1./len(points))
@@ -34,24 +34,19 @@ class Navigator:
         curve = InterpolatedUnivariateSpline(x, points)
         return curve(x_new)
 
-    def _clamp_path(self, unclamped_interpolated_path, uninterpolated_path_numpy):
-        mins = [min(uninterpolated_path_numpy[:,n]) for n in range(self._n_dimensions)]
-        maxs = [max(uninterpolated_path_numpy[:,n]) for n in range(self._n_dimensions)]
-        last_index = self._last_index_in_interval(unclamped_interpolated_path, mins, maxs)
-        return unclamped_interpolated_path[0:last_index]
+    def _clamp_path(self, unclamped_interpolated_path, uninterpolated_path):
+        startpoint = uninterpolated_path[0]
+        endpoint = uninterpolated_path[-1]
+        index_nearest_start = min(range(len(unclamped_interpolated_path)),
+                                  key=lambda i: self._distance(unclamped_interpolated_path[i],
+                                                               startpoint))
+        index_nearest_end = min(range(len(unclamped_interpolated_path)),
+                                  key=lambda i: self._distance(unclamped_interpolated_path[i],
+                                                               endpoint))
+        return unclamped_interpolated_path[index_nearest_start:index_nearest_end]
 
-    def _last_index_in_interval(self, path, mins, maxs):
-        i = len(path) - 1
-        while i >= 0:
-            if self._in_interval(path[i], mins, maxs):
-                return i
-            i -= 1
-
-    def _in_interval(self, point, mins, maxs):
-        for n in range(self._n_dimensions):
-            if point[n] < mins[n] or point[n] > maxs[n]:
-                return False
-        return True
+    def _distance(self, a, b):
+        return numpy.linalg.norm(a - b)
 
     def _add_path_segment(self, n):
         previous_point = self._segments[-1]
