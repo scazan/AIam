@@ -188,8 +188,8 @@ class DimensionalityReductionExperiment(Experiment):
 
         else:
             self.student = self.load_model(self.args.model)
-            self._improviser = None
-            self._navigator = Navigator(map_points=self.student.observed_reductions)
+            self.navigator = Navigator(map_points=self.student.observed_reductions)
+            self._improviser = Improviser(self)
 
             app = QtGui.QApplication(sys.argv)
             app.setStyleSheet(open("stylesheet.qss").read())
@@ -215,8 +215,6 @@ class DimensionalityReductionExperiment(Experiment):
             if hasattr(self, "_velocity"):
                 self.window.toolbar.velocity_label.setText("%.1f" % self._velocity)
         elif self.window.toolbar.tabs.currentWidget() == self.window.toolbar.improvise_tab:
-            if self._improviser is None or self._improviser.reached_destination():
-                self._start_improvisation()
             self._improviser.proceed(self.time_increment)
             self.reduction = self._improviser.current_position()
         self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
@@ -235,21 +233,6 @@ class DimensionalityReductionExperiment(Experiment):
             distance / self.time_increment, self.time_increment)
         self._velocity = self._velocity_integrator.value()
 
-    def _start_improvisation(self):
-        if self.reduction is None:
-            departure = self.student.transform(numpy.array([
-                        self.stimulus.get_value()]))[0]
-        else:
-            departure = self.reduction
-        path_segments = self._navigator.generate_path(
-            departure=departure,
-            destination=random.choice(self.student.observed_reductions),
-            num_segments=10)
-        path = self._navigator.interpolate_path(
-            path_segments,
-            resolution=100)
-        self._improviser = PathFollower(path, velocity=50.0, envelope="sine")
-
     def _plot_velocity(self):
         f = open(self.args.plot_velocity, "w")
         t = 0
@@ -260,3 +243,40 @@ class DimensionalityReductionExperiment(Experiment):
             print >>f, self._velocity
             t += self.time_increment
         f.close()
+
+
+class ImproviserParameters:
+    num_segments = 10
+    resolution = 100
+    velocity = 50
+    envelope = "sine"
+
+class Improviser:
+    def __init__(self, experiment, params=ImproviserParameters()):
+        self.experiment = experiment
+        self.params = params
+        self._select_next_move()
+
+    def _select_next_move(self):
+        if self.experiment.reduction is None:
+            departure = self.experiment.student.transform(numpy.array([
+                        self.experiment.stimulus.get_value()]))[0]
+        else:
+            departure = self.experiment.reduction
+        path_segments = self.experiment.navigator.generate_path(
+            departure=departure,
+            destination=random.choice(self.experiment.student.observed_reductions),
+            num_segments=self.params.num_segments)
+        path = self.experiment.navigator.interpolate_path(
+            path_segments,
+            resolution=self.params.resolution)
+        self._path_follower = PathFollower(
+            path, velocity=self.params.velocity, envelope=self.params.envelope)
+
+    def proceed(self, time_increment):
+        if self._path_follower.reached_destination():
+            self._select_next_move()
+        self._path_follower.proceed(time_increment)
+
+    def current_position(self):
+        return self._path_follower.current_position()
