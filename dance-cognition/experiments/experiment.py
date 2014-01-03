@@ -123,6 +123,32 @@ class ExperimentToolbar(QtGui.QWidget):
     def refresh(self):
         pass
 
+    def add_parameter_fields(self, parameters, parent):
+        layout = QtGui.QFormLayout()
+        for parameter in parameters:
+            field = self._create_parameter_field(parameter)
+            layout.addRow(QtGui.QLabel(parameter.name), field)
+        parent.addLayout(layout)
+
+    def _create_parameter_field(self, parameter):
+        if parameter.choices is not None:
+            index = 0
+            default_index = 0
+            field = QtGui.QComboBox()
+            for value in parameter.choices:
+                field.addItem(value)
+                if parameter.default == value:
+                    default_index = index
+                index += 1
+                field.setCurrentIndex(default_index)
+        elif parameter.type == str:
+            field = QtGui.QLineEdit(parameter.default)
+        elif parameter.type in [int, float]:
+            field = QtGui.QLineEdit(str(parameter.default))
+        else:
+            raise Exception("don't know how to create field for %s" % parameter)
+        return field
+
 class MainWindow(QtGui.QWidget):
     def __init__(self, experiment, scene_widget_class, toolbar_class, args):
         self.experiment = experiment
@@ -238,3 +264,35 @@ class Experiment:
             raise Exception(
                 "training duration specified in neither arguments nor the %s class" % \
                     self.stimulus.__class__.__name__)
+
+
+class Parameter:
+    def __init__(self, name, type=str, default=None, choices=None):
+        self.name = name
+        self.type = type
+        self.default = default
+        self.choices = choices
+
+    def __repr__(self):
+        return "Parameter(name=%s, type=%s, default=%s, choices=%s)" % (
+            self.name, self.type, self.default, self.choices)
+
+class Parameters:
+    def __init__(self):
+        self._parameters = []
+        self._parameters_by_name = {}
+
+    def add_parameter(self, *args, **kwargs):
+        parameter = Parameter(*args, **kwargs)
+        self._parameters.append(parameter)
+        self._parameters_by_name[parameter.name] = parameter
+
+    def __getattr__(self, name):
+        if name in self._parameters_by_name:
+            return self._parameters_by_name[name].default
+        else:
+            raise AttributeError()
+
+    def __iter__(self):
+        return self._parameters.__iter__()
+

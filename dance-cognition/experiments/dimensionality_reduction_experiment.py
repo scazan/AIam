@@ -71,7 +71,8 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
     def _add_improvise_tab(self):
         self.improvise_tab = QtGui.QWidget()
         self._improvise_tab_layout = QtGui.QVBoxLayout()
-        self._improvise_tab_layout.addStretch(1)
+        self.add_parameter_fields(
+            self.experiment.improviser_params, self._improvise_tab_layout)
         self.improvise_tab.setLayout(self._improvise_tab_layout)
         self.tabs.addTab(self.improvise_tab, "Improvise")
 
@@ -189,7 +190,8 @@ class DimensionalityReductionExperiment(Experiment):
         else:
             self.student = self.load_model(self.args.model)
             self.navigator = Navigator(map_points=self.student.observed_reductions)
-            self._improviser = Improviser(self)
+            self.improviser_params = ImproviserParameters()
+            self._improviser = Improviser(self, self.improviser_params)
 
             app = QtGui.QApplication(sys.argv)
             app.setStyleSheet(open("stylesheet.qss").read())
@@ -245,14 +247,16 @@ class DimensionalityReductionExperiment(Experiment):
         f.close()
 
 
-class ImproviserParameters:
-    num_segments = 10
-    resolution = 100
-    velocity = 50
-    envelope = "sine"
+class ImproviserParameters(Parameters):
+    def __init__(self):
+        Parameters.__init__(self)
+        self.add_parameter("num_segments", type=int, default=10)
+        self.add_parameter("resolution", type=int, default=100)
+        self.add_parameter("velocity", type=float, default=50)
+        self.add_parameter("envelope", choices=["constant", "sine", "exponential"], default="sine")
 
 class Improviser:
-    def __init__(self, experiment, params=ImproviserParameters()):
+    def __init__(self, experiment, params):
         self.experiment = experiment
         self.params = params
         self._select_next_move()
