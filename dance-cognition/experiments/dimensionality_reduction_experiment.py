@@ -267,9 +267,10 @@ class Improviser:
                         self.experiment.stimulus.get_value()]))[0]
         else:
             departure = self.experiment.reduction
+        destination = self.experiment.navigator.select_destination()
         path_segments = self.experiment.navigator.generate_path(
             departure=departure,
-            destination=random.choice(self.experiment.student.observed_reductions),
+            destination=destination,
             num_segments=self.params.num_segments)
         path = self.experiment.navigator.interpolate_path(
             path_segments,

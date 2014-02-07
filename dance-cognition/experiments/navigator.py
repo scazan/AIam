@@ -3,6 +3,7 @@ import numpy
 import copy
 from scipy.interpolate import InterpolatedUnivariateSpline
 import math
+import random
 
 class Navigator:
     def __init__(self, map_points):
@@ -12,6 +13,9 @@ class Navigator:
             n_neighbors=1, weights='uniform')
         self._nearest_neighbor_classifier.fit(map_points, map_points)
 
+    def select_destination(self):
+        return random.choice(self.map_points)
+        
     def generate_path(self, departure, destination, num_segments):
         self._departure = departure
         self._destination = destination

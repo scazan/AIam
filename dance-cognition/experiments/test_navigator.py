@@ -7,7 +7,6 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from PyQt4 import QtCore, QtGui, QtOpenGL
 import numpy
-import random
 from navigator import Navigator, PathFollower
 from sklearn.datasets import make_classification
 from stopwatch import Stopwatch
@@ -193,13 +192,13 @@ class Experiment:
         self._navigator = Navigator(map_points=self.map_points)
 
     def generate_new_path(self):
-        departure = random.choice(self.map_points)
-        destination = random.choice(self.map_points)
+        departure = self._navigator.select_destination()
+        destination = self._navigator.select_destination()
         self._generate_path(departure, destination)
 
     def extend_path(self):
         departure = self.path[-1]
-        destination = random.choice(self.map_points)
+        destination = self._navigator.select_destination()
         self._generate_path(departure, destination)
 
     def _generate_path(self, departure, destination):
