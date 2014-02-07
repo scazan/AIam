@@ -262,20 +262,30 @@ class Improviser:
         self._select_next_move()
 
     def _select_next_move(self):
+        path_segments = self._generate_path()
+        path = self._interpolate_path(path_segments)
+        self._path_follower = self._create_path_follower(path)
+
+    def _generate_path(self):
+        return self.experiment.navigator.generate_path(
+            departure=self._departure(),
+            destination=self.experiment.navigator.select_destination(),
+            num_segments=self.params.num_segments)
+
+    def _departure(self):
         if self.experiment.reduction is None:
-            departure = self.experiment.student.transform(numpy.array([
+            return self.experiment.student.transform(numpy.array([
                         self.experiment.stimulus.get_value()]))[0]
         else:
-            departure = self.experiment.reduction
-        destination = self.experiment.navigator.select_destination()
-        path_segments = self.experiment.navigator.generate_path(
-            departure=departure,
-            destination=destination,
-            num_segments=self.params.num_segments)
-        path = self.experiment.navigator.interpolate_path(
+            return self.experiment.reduction
+
+    def _interpolate_path(self, path_segments):
+        return self.experiment.navigator.interpolate_path(
             path_segments,
             resolution=self.params.resolution)
-        self._path_follower = PathFollower(
+
+    def _create_path_follower(self, path):
+        return PathFollower(
             path, velocity=self.params.velocity, envelope=self.params.envelope)
 
     def proceed(self, time_increment):
