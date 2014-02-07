@@ -141,13 +141,27 @@ class ExperimentToolbar(QtGui.QWidget):
                     default_index = index
                 index += 1
                 field.setCurrentIndex(default_index)
+            field.currentIndexChanged.connect(
+                lambda value: self._edited_choice_parameter(parameter, value))
         elif parameter.type == str:
             field = QtGui.QLineEdit(parameter.default)
         elif parameter.type in [int, float]:
             field = QtGui.QLineEdit(str(parameter.default))
+            field.textEdited.connect(lambda value: self._edited_text_parameter(parameter, value))
         else:
             raise Exception("don't know how to create field for %s" % parameter)
         return field
+
+    def _edited_text_parameter(self, parameter, string):
+        if string == "":
+            return
+        if parameter.type == int:
+            parameter.setValue(int(string))
+        elif parameter.type == float:
+            parameter.setValue(float(string))
+
+    def _edited_choice_parameter(self, parameter, index):
+        parameter.setValue(parameter.choices[index])
 
 class MainWindow(QtGui.QWidget):
     def __init__(self, experiment, scene_widget_class, toolbar_class, args):
@@ -272,6 +286,13 @@ class Parameter:
         self.type = type
         self.default = default
         self.choices = choices
+        self._value = default
+
+    def value(self):
+        return self._value
+
+    def setValue(self, value):
+        self._value = value
 
     def __repr__(self):
         return "Parameter(name=%s, type=%s, default=%s, choices=%s)" % (
@@ -289,10 +310,9 @@ class Parameters:
 
     def __getattr__(self, name):
         if name in self._parameters_by_name:
-            return self._parameters_by_name[name].default
+            return self._parameters_by_name[name].value()
         else:
             raise AttributeError()
 
     def __iter__(self):
         return self._parameters.__iter__()
-
