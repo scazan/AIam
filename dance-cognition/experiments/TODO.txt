@@ -1,3 +1,7 @@
+improvisation
+  eliminate exception caused by path being too short (occurs now and then)
+  explore paths beyond known terrotories
+
 automatic detection of whether training data cache can be used (currently, it needs to be removed manually when some parameter such as --translation-weight is changed)
   perhaps using profiles?
 
