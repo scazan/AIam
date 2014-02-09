@@ -14,6 +14,7 @@ from argparse import ArgumentParser
 import cPickle
 
 FRAME_RATE = 50
+SLIDER_PRECISION = 1000
 
 class MapView(QtOpenGL.QGLWidget):
     def __init__(self, parent, experiment):
@@ -108,9 +109,14 @@ class MapView(QtOpenGL.QGLWidget):
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, experiment):
         QtGui.QMainWindow.__init__(self)
+        experiment.window = self
         self._experiment = experiment
-        self._map_view = MapView(self, experiment)
-        self.setCentralWidget(self._map_view)
+        self._central_widget = QtGui.QWidget()
+        self._layout = QtGui.QVBoxLayout()
+        self._central_widget.setLayout(self._layout)
+        self.setCentralWidget(self._central_widget)
+        self._add_novelty_slider()
+        self._add_map_view()
         self._create_menu()
         self._generate_map_and_path()
 
@@ -120,6 +126,17 @@ class MainWindow(QtGui.QMainWindow):
         timer.setInterval(1000. / FRAME_RATE)
         QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), self._update)
         timer.start()
+
+    def _add_map_view(self):
+        self._map_view = MapView(self, experiment)
+        self._layout.addWidget(self._map_view)
+
+    def _add_novelty_slider(self):
+        self.novelty_slider = QtGui.QSlider(QtCore.Qt.Horizontal)
+        self.novelty_slider.setRange(0, SLIDER_PRECISION)
+        self.novelty_slider.setSingleStep(1)
+        self.novelty_slider.setValue(0.0)
+        self._layout.addWidget(self.novelty_slider)
 
     def _create_menu(self):
         self._menu = self.menuBar().addMenu("Navigator test")
@@ -192,14 +209,19 @@ class Experiment:
         self._navigator = Navigator(map_points=self.map_points)
 
     def generate_new_path(self):
-        departure = self._navigator.select_destination()
-        destination = self._navigator.select_destination()
+        departure = self._select_destination()
+        destination = self._select_destination()
         self._generate_path(departure, destination)
 
     def extend_path(self):
         departure = self.path[-1]
-        destination = self._navigator.select_destination()
+        destination = self._select_destination()
         self._generate_path(departure, destination)
+
+    def _select_destination(self):
+        novelty = float(self.window.novelty_slider.value()) / SLIDER_PRECISION
+        return self._navigator.select_destination(
+            desired_distance_to_nearest_map_point=novelty)
 
     def _generate_path(self, departure, destination):
         self.path_segments = self._navigator.generate_path(

@@ -13,9 +13,36 @@ class Navigator:
             n_neighbors=1, weights='uniform')
         self._nearest_neighbor_classifier.fit(map_points, map_points)
 
-    def select_destination(self):
-        return random.choice(self.map_points)
-        
+    def select_destination(self, desired_distance_to_nearest_map_point=.0,
+                           num_trials=10):
+        if desired_distance_to_nearest_map_point == .0:
+            return random.choice(self.map_points)
+        else:
+            return self._choose_best_random_destination(
+                desired_distance_to_nearest_map_point, num_trials)
+
+    def _choose_best_random_destination(self, desired_distance_to_nearest_map_point,
+                                        num_trials):
+        choices = [self._select_random_point_in_map_space()
+                   for n in range(num_trials)]
+        return min(
+            choices,
+            key=lambda point: self._deviation_from_desired_distance(
+                point, desired_distance_to_nearest_map_point))
+
+    def _select_random_point_in_map_space(self):
+        return numpy.array([
+            random.uniform(0., 1.),
+            random.uniform(0., 1.)])
+
+    def _deviation_from_desired_distance(self, point, desired_distance_to_nearest_map_point):
+        actual_distance = self._distance_to_nearest_map_point(point)
+        return abs(actual_distance - desired_distance_to_nearest_map_point)
+
+    def _distance_to_nearest_map_point(self, point):
+        nearest_map_point = self._nearest_neighbor_classifier.predict(point)[0]
+        return self._distance(point, nearest_map_point)
+
     def generate_path(self, departure, destination, num_segments):
         self._departure = departure
         self._destination = destination
