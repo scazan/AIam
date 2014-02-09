@@ -132,17 +132,7 @@ class ExperimentToolbar(QtGui.QWidget):
 
     def _create_parameter_field(self, parameter):
         if parameter.choices is not None:
-            index = 0
-            default_index = 0
-            field = QtGui.QComboBox()
-            for value in parameter.choices:
-                field.addItem(value)
-                if parameter.default == value:
-                    default_index = index
-                index += 1
-                field.setCurrentIndex(default_index)
-            field.currentIndexChanged.connect(
-                lambda value: self._edited_choice_parameter(parameter, value))
+            return self._create_list_choice_field(parameter)
         elif parameter.type == str:
             field = QtGui.QLineEdit(parameter.default)
         elif parameter.type in [int, float]:
@@ -150,6 +140,20 @@ class ExperimentToolbar(QtGui.QWidget):
             field.textEdited.connect(lambda value: self._edited_text_parameter(parameter, value))
         else:
             raise Exception("don't know how to create field for %s" % parameter)
+        return field
+
+    def _create_list_choice_field(self, parameter):
+        index = 0
+        default_index = 0
+        field = QtGui.QComboBox()
+        for value in parameter.choices:
+            field.addItem(value)
+            if parameter.default == value:
+                default_index = index
+            index += 1
+            field.setCurrentIndex(default_index)
+        field.currentIndexChanged.connect(
+            lambda value: self._edited_choice_parameter(parameter, value))
         return field
 
     def _edited_text_parameter(self, parameter, string):
