@@ -31,9 +31,8 @@ class Navigator:
                 point, desired_distance_to_nearest_map_point))
 
     def _select_random_point_in_map_space(self):
-        return numpy.array([
-            random.uniform(0., 1.),
-            random.uniform(0., 1.)])
+        return numpy.array([random.uniform(0., 1.)
+                            for n in range(self._n_dimensions)])
 
     def _deviation_from_desired_distance(self, point, desired_distance_to_nearest_map_point):
         actual_distance = self._distance_to_nearest_map_point(point)

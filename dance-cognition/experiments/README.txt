@@ -64,3 +64,18 @@ python dim_reduce.py angle_3dim_quaternion -stimulus joint -bvh scenes/HDM_bk_03
 Real case without discontinuity problem (one out of countless others):
 python dim_reduce.py angle_3dim_quaternion -stimulus joint -bvh scenes/valencia_all.bvh -joint RShoulder -train -n 3
 python dim_reduce.py angle_3dim_quaternion -stimulus joint -bvh scenes/valencia_all.bvh -joint RShoulder -unit-cube
+
+
+
+NAVIGATOR EXPERIMENTS
+
+Random map:
+
+python test_navigator.py
+
+
+Valencia model (2d):
+
+python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh -training-data-frame-rate 10 -train -n 2 --translate --translation-weight 5
+cp models/dimensionality_reduction/hierarchical.model models/dimensionality_reduction/valencia_hierarchical_2n.model
+python test_navigator.py -model models/dimensionality_reduction/valencia_hierarchical_2n.model 

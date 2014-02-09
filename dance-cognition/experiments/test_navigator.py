@@ -192,7 +192,7 @@ class Experiment:
         f = open(self._args.model)
         model = cPickle.load(f)
         f.close()
-        return self._normalize(model.observed_reductions)
+        return model.normalized_observed_reductions
 
     def _generate_random_map_points(self):
         samples, _labels = make_classification(

@@ -4,8 +4,6 @@ import random
 from leaky_integrator import LeakyIntegrator
 from navigator import Navigator, PathFollower
 
-SLIDER_PRECISION = 1000
-
 class DimensionalityReductionToolbar(ExperimentToolbar):
     def __init__(self, *args):
         ExperimentToolbar.__init__(self, *args)
@@ -82,7 +80,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
                 n, self.experiment.student.reduction_range[n])
 
     def _set_random_reduction_n(self, n, reduction_range):
-        self._sliders[n].setValue(self._reduction_value_to_slider_value(
+        self._sliders[n].setValue(self._normalized_reduction_value_to_slider_value(
                 n, random.uniform(reduction_range["explored_min"],
                                   reduction_range["explored_max"])))
 
@@ -104,23 +102,19 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         return random.uniform(-max_deviation, max_deviation)
 
     def _set_reduction(self, reduction):
+        normalized_reduction = self.experiment.student.normalize_reduction(reduction)
         for n in range(self.experiment.student.n_components):
-            self._sliders[n].setValue(self._reduction_value_to_slider_value(
-                    n, reduction[n]))
+            self._sliders[n].setValue(self._normalized_reduction_value_to_slider_value(
+                    n, normalized_reduction[n]))
 
     def _set_exploration_ranges(self):
         for n in range(self.experiment.student.n_components):
             self._set_exploration_range(self.experiment.student.reduction_range[n])
 
     def _set_exploration_range(self, reduction_range):
-        center = (reduction_range["min"] + reduction_range["max"]) / 2
-        reduction_range["explored_range"] = \
-            (reduction_range["max"] - reduction_range["min"]) \
-            * (1.0 + self.args.explore_beyond_observations)
-        reduction_range["explored_min"] = \
-            center - reduction_range["explored_range"]/2
-        reduction_range["explored_max"] = \
-            center + reduction_range["explored_range"]/2
+        reduction_range["explored_range"] = (1.0 + self.args.explore_beyond_observations)
+        reduction_range["explored_min"] = .5 - reduction_range["explored_range"]/2
+        reduction_range["explored_max"] = .5 + reduction_range["explored_range"]/2
 
     def _add_reduction_sliders(self):
         group_box = QtGui.QGroupBox("Reduction")
@@ -130,7 +124,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
             slider = QtGui.QSlider(QtCore.Qt.Horizontal)
             slider.setRange(0, SLIDER_PRECISION)
             slider.setSingleStep(1)
-            slider.setValue(self._reduction_value_to_slider_value(n, 0.5))
+            slider.setValue(self._normalized_reduction_value_to_slider_value(n, 0.5))
             layout.addWidget(slider)
             self._sliders.append(slider)
         layout.addStretch(1)
@@ -139,24 +133,26 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
 
     def refresh(self):
         if self.tabs.currentWidget() != self.explore_tab:
+            normalized_reduction = self.experiment.student.normalize_reduction(self.experiment.reduction)
             for n in range(self.experiment.student.n_components):
                 self._sliders[n].setValue(
-                    self._reduction_value_to_slider_value(n, self.experiment.reduction[n]))
+                    self._normalized_reduction_value_to_slider_value(n, normalized_reduction[n]))
 
-    def _reduction_value_to_slider_value(self, n, value):
+    def _normalized_reduction_value_to_slider_value(self, n, value):
         range_n = self.experiment.student.reduction_range[n]
         return int((value - range_n["explored_min"]) / \
             range_n["explored_range"] * SLIDER_PRECISION)
 
-    def _slider_value_to_reduction_value(self, n, value):
+    def _slider_value_to_normalized_reduction_value(self, n, value):
         range_n = self.experiment.student.reduction_range[n]
         return float(value) / SLIDER_PRECISION * range_n["explored_range"] + \
             range_n["explored_min"]
 
     def get_reduction(self):
-        return numpy.array(
-            [self._slider_value_to_reduction_value(n, self._sliders[n].value())
+        normalized_reduction = numpy.array(
+            [self._slider_value_to_normalized_reduction_value(n, self._sliders[n].value())
              for n in range(self.experiment.student.n_components)])
+        return self.experiment.student.unnormalize_reduction(normalized_reduction)
 
 class DimensionalityReductionExperiment(Experiment):
     @staticmethod
@@ -189,7 +185,7 @@ class DimensionalityReductionExperiment(Experiment):
 
         else:
             self.student = self.load_model(self.args.model)
-            self.navigator = Navigator(map_points=self.student.observed_reductions)
+            self.navigator = Navigator(map_points=self.student.normalized_observed_reductions)
             self.improviser_params = ImproviserParameters()
             self._improviser = Improviser(self, self.improviser_params)
 
@@ -215,7 +211,7 @@ class DimensionalityReductionExperiment(Experiment):
         elif self.window.toolbar.tabs.currentWidget() == self.window.toolbar.follow_tab:
             self._follow()
             if hasattr(self, "_velocity"):
-                self.window.toolbar.velocity_label.setText("%.1f" % self._velocity)
+                self.window.toolbar.velocity_label.setText("%.3f" % self._velocity)
         elif self.window.toolbar.tabs.currentWidget() == self.window.toolbar.improvise_tab:
             self._improviser.proceed(self.time_increment)
             self.reduction = self._improviser.current_position()
@@ -226,7 +222,9 @@ class DimensionalityReductionExperiment(Experiment):
         self.input = self.stimulus.get_value()
         next_reduction = self.student.transform(numpy.array([self.input]))[0]
         if self.reduction is not None:
-            self._measure_velocity(self.reduction, next_reduction)
+            self._measure_velocity(
+                self.student.normalize_reduction(self.reduction),
+                self.student.normalize_reduction(next_reduction))
         self.reduction = next_reduction
 
     def _measure_velocity(self, r1, r2):
@@ -250,16 +248,18 @@ class DimensionalityReductionExperiment(Experiment):
 class ImproviserParameters(Parameters):
     def __init__(self):
         Parameters.__init__(self)
+        self.add_parameter("novelty", type=float, default=0,
+                           choices=ParameterFloatRange(0., 1.))
         self.add_parameter("num_segments", type=int, default=10)
         self.add_parameter("resolution", type=int, default=100)
-        self.add_parameter("velocity", type=float, default=50)
+        self.add_parameter("velocity", type=float, default=.5)
         self.add_parameter("envelope", choices=["constant", "sine", "exponential"], default="sine")
 
 class Improviser:
     def __init__(self, experiment, params):
         self.experiment = experiment
         self.params = params
-        self._select_next_move()
+        self._path_follower = None
 
     def _select_next_move(self):
         path_segments = self._generate_path()
@@ -269,15 +269,20 @@ class Improviser:
     def _generate_path(self):
         return self.experiment.navigator.generate_path(
             departure=self._departure(),
-            destination=self.experiment.navigator.select_destination(),
+            destination=self._select_destination(),
             num_segments=self.params.num_segments)
 
     def _departure(self):
         if self.experiment.reduction is None:
-            return self.experiment.student.transform(numpy.array([
+            unnormalized_departure = self.experiment.student.transform(numpy.array([
                         self.experiment.stimulus.get_value()]))[0]
         else:
-            return self.experiment.reduction
+            unnormalized_departure = self.experiment.reduction
+        return self.experiment.student.normalize_reduction(unnormalized_departure)
+
+    def _select_destination(self):
+        return self.experiment.navigator.select_destination(
+            desired_distance_to_nearest_map_point=self.params.novelty)
 
     def _interpolate_path(self, path_segments):
         return self.experiment.navigator.interpolate_path(
@@ -289,9 +294,12 @@ class Improviser:
             path, velocity=self.params.velocity, envelope=self.params.envelope)
 
     def proceed(self, time_increment):
+        if self._path_follower is None:
+            self._select_next_move()
         if self._path_follower.reached_destination():
             self._select_next_move()
         self._path_follower.proceed(time_increment)
 
     def current_position(self):
-        return self._path_follower.current_position()
+        normalized_position = self._path_follower.current_position()
+        return self.experiment.student.unnormalize_reduction(normalized_position)
