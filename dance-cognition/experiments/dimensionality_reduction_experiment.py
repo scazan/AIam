@@ -254,7 +254,7 @@ class ImproviserParameters(Parameters):
         self.add_parameter("num_segments", type=int, default=10)
         self.add_parameter("resolution", type=int, default=100)
         self.add_parameter("velocity", type=float, default=.5)
-        self.add_parameter("min_relative_velocity", type=float, default=.1,
+        self.add_parameter("min_relative_velocity", type=float, default=.3,
                            choices=ParameterFloatRange(.001, 1.))
         self.add_parameter("envelope", choices=["constant", "sine", "exponential"], default="sine")
 
