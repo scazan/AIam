@@ -1,6 +1,11 @@
 improvisation
   eliminate exception caused by path being too short (occurs now and then)
-  explore paths beyond known terrotories
+  pull towards periphery also when novelty is low
+
+singular matrix exception:
+  rm scenes/valencia_all.bvh.quaternion.10fps.data && python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh -training-data-frame-rate 10 -train -n 7 --translate --translation-weight 10
+
+reduce "ice skating"
 
 automatic detection of whether training data cache can be used (currently, it needs to be removed manually when some parameter such as --translation-weight is changed)
   perhaps using profiles?
