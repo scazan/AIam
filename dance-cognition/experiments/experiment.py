@@ -115,6 +115,9 @@ class BaseScene(QtOpenGL.QGLWidget):
         glRotatef(CAMERA_Y_ORIENTATION, 0.0, 1.0, 0.0)
         glTranslatef(*CAMERA_POSITION)
 
+    def sizeHint(self):
+        return QtCore.QSize(600, 640)
+
 
 class ExperimentToolbar(QtGui.QWidget):
     def __init__(self, parent, experiment, args):
@@ -198,16 +201,11 @@ class MainWindow(QtGui.QWidget):
         self.args = args
         QtGui.QWidget.__init__(self)
         layout = QtGui.QHBoxLayout()
-        size_policy = QtGui.QSizePolicy(
-            QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
-        size_policy.setHorizontalStretch(1)
-
         self._scene = scene_widget_class(self, experiment, args)
-        self._scene.setSizePolicy(size_policy)
         layout.addWidget(self._scene)
 
         self.toolbar = toolbar_class(self, experiment, args)
-        self.toolbar.setSizePolicy(size_policy)
+        self.toolbar.setFixedSize(400, 640)
         layout.addWidget(self.toolbar)
 
         self.setLayout(layout)
@@ -220,9 +218,6 @@ class MainWindow(QtGui.QWidget):
         timer.setInterval(1000. / args.frame_rate)
         QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), self._update)
         timer.start()
-
-    def sizeHint(self):
-        return QtCore.QSize(800, 640)
 
     def _update(self):
         self.now = self.current_time()
