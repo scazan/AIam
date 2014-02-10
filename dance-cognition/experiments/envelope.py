@@ -1,7 +1,8 @@
 import math
 
 class Envelope:
-    _min_relative_velocity = .1
+    def __init__(self, min_relative_velocity=.1):
+        self._min_relative_velocity = min_relative_velocity
 
     def envelope(self, x):
         return self._clamp(self.unclamped_envelope(x))
@@ -16,7 +17,7 @@ class SymmetricalEnvelope(Envelope):
         else:
             return self._clamp(self.rising_envelope((1-x) * 2))
 
-class constant_envelope:
+class constant_envelope(Envelope):
     def envelope(self, x):
         return 1.
 

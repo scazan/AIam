@@ -89,17 +89,15 @@ class Navigator:
 
 
 class PathFollower:
-    def __init__(self, path, velocity, envelope="constant"):
+    def __init__(self, path, velocity, envelope):
         self._path = path
         self._desired_average_velocity = velocity
-        envelope_class = getattr(envelope_module, "%s_envelope" % envelope)
-        velocity_envelope = envelope_class()
         self._velocity_correction = 1.
-        if envelope != "constant":
+        if envelope.__class__ != envelope_module.constant_envelope():
             self._velocity_correction = \
                 self._estimate_duration(envelope_module.constant_envelope()) / \
-                self._estimate_duration(velocity_envelope)
-        self._velocity_envelope = velocity_envelope
+                self._estimate_duration(envelope)
+        self._velocity_envelope = envelope
         self._restart()
 
     def _restart(self):

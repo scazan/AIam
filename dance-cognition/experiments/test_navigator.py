@@ -8,6 +8,7 @@ from OpenGL.GLU import *
 from PyQt4 import QtCore, QtGui, QtOpenGL
 import numpy
 from navigator import Navigator, PathFollower
+import envelope
 from sklearn.datasets import make_classification
 from stopwatch import Stopwatch
 from argparse import ArgumentParser
@@ -232,8 +233,8 @@ class Experiment:
             self.path_segments,
             resolution=100)
         self.path_followers = [
-            PathFollower(self.path, velocity=0.1, envelope="constant"),
-            PathFollower(self.path, velocity=0.1, envelope="sine"),
+            PathFollower(self.path, velocity=0.1, envelope=envelope.constant_envelope()),
+            PathFollower(self.path, velocity=0.1, envelope=envelope.sine_envelope()),
             ]
 
     def proceed(self, time_increment):

@@ -3,6 +3,7 @@ from dimensionality_reduction_teacher import *
 import random
 from leaky_integrator import LeakyIntegrator
 from navigator import Navigator, PathFollower
+import envelope as envelope_module
 
 class DimensionalityReductionToolbar(ExperimentToolbar):
     def __init__(self, *args):
@@ -253,6 +254,8 @@ class ImproviserParameters(Parameters):
         self.add_parameter("num_segments", type=int, default=10)
         self.add_parameter("resolution", type=int, default=100)
         self.add_parameter("velocity", type=float, default=.5)
+        self.add_parameter("min_relative_velocity", type=float, default=.1,
+                           choices=ParameterFloatRange(.001, 1.))
         self.add_parameter("envelope", choices=["constant", "sine", "exponential"], default="sine")
 
 class Improviser:
@@ -290,8 +293,9 @@ class Improviser:
             resolution=self.params.resolution)
 
     def _create_path_follower(self, path):
-        return PathFollower(
-            path, velocity=self.params.velocity, envelope=self.params.envelope)
+        envelope_class = getattr(envelope_module, "%s_envelope" % self.params.envelope)
+        envelope = envelope_class(min_relative_velocity=self.params.min_relative_velocity)
+        return PathFollower(path, self.params.velocity, envelope)
 
     def proceed(self, time_increment):
         if self._path_follower is None:
