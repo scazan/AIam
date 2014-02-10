@@ -2,7 +2,7 @@ import sklearn.neighbors
 import numpy
 import copy
 from scipy.interpolate import InterpolatedUnivariateSpline
-import math
+import envelope as envelope_module
 import random
 
 class Navigator:
@@ -88,46 +88,16 @@ class Navigator:
             self._segments.append(next_point_in_map)
 
 
-class Envelope:
-    _min_relative_velocity = .1
-
-    def envelope(self, x):
-        return self._clamp(self.unclamped_envelope(x))
-
-    def _clamp(self, x):
-        return self._min_relative_velocity + (1 - self._min_relative_velocity) * x
-
-class SymmetricalEnvelope(Envelope):
-    def unclamped_envelope(self, x):
-        if x < .5:
-            return self._clamp(self.rising_envelope(x*2))
-        else:
-            return self._clamp(self.rising_envelope((1-x) * 2))
-
-class constant_envelope:
-    def envelope(self, x):
-        return 1.
-
-class exponential_envelope(SymmetricalEnvelope):
-    _slope = 3.
-
-    def rising_envelope(self, x):
-        return pow(x, self._slope)
-
-class sine_envelope(Envelope):
-    def unclamped_envelope(self, x):
-        return (math.sin((x + .75) * math.pi*2) + 1) / 2
-
-
 class PathFollower:
     def __init__(self, path, velocity, envelope="constant"):
         self._path = path
         self._desired_average_velocity = velocity
-        velocity_envelope = eval("%s_envelope" % envelope)()
+        envelope_class = getattr(envelope_module, "%s_envelope" % envelope)
+        velocity_envelope = envelope_class()
         self._velocity_correction = 1.
         if envelope != "constant":
             self._velocity_correction = \
-                self._estimate_duration(constant_envelope()) / \
+                self._estimate_duration(envelope_module.constant_envelope()) / \
                 self._estimate_duration(velocity_envelope)
         self._velocity_envelope = velocity_envelope
         self._restart()
