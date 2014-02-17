@@ -70,6 +70,7 @@ class Scene(BaseScene):
         BaseScene.__init__(self, *args, **kwargs)
         if self.experiment.args.friction:
             self._output_constrainer = FrictionConstrainer(BalanceDetector())
+        self._output_translation = None
 
     def draw_input(self, parameters):
         glColor3f(0, 1, 0)
@@ -78,10 +79,17 @@ class Scene(BaseScene):
 
     def draw_output(self, parameters):
         glColor3f(0.5, 0.5, 1.0)
+        vertices = self._constrained_output_vertices(parameters)
+        if self._output_translation is None:
+            self.centralize_output()
+        glTranslatef(*self._output_translation)
+        self._draw_vertices(vertices)
+
+    def _constrained_output_vertices(self, parameters):
         vertices = self._parameters_to_vertices(parameters)
         if self.experiment.args.friction:
             vertices = self._output_constrainer.constrain(vertices)
-        self._draw_vertices(vertices)
+        return vertices
 
     def _parameters_to_vertices(self, parameters):
         hips = self._parameters_to_joint(parameters)
@@ -148,3 +156,8 @@ class Scene(BaseScene):
         glVertex3f(*v1)
         glVertex3f(*v2)
         glEnd()
+
+    def centralize_output(self):
+        vertices = self._constrained_output_vertices(self.experiment.output)
+        hip_vertex = self.bvh_reader.normalize_vector(vertices[0])
+        self._output_translation = [-hip_vertex[0], -hip_vertex[1], -hip_vertex[2]]

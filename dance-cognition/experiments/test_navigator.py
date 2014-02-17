@@ -107,15 +107,13 @@ class MapView(QtOpenGL.QGLWidget):
     def sizeHint(self):
         return QtCore.QSize(500, 500)
 
-class MainWindow(QtGui.QMainWindow):
+class MainWindow(QtGui.QWidget):
     def __init__(self, experiment):
         QtGui.QMainWindow.__init__(self)
         experiment.window = self
         self._experiment = experiment
-        self._central_widget = QtGui.QWidget()
         self._layout = QtGui.QVBoxLayout()
-        self._central_widget.setLayout(self._layout)
-        self.setCentralWidget(self._central_widget)
+        self.setLayout(self._layout)
         self._add_novelty_slider()
         self._add_map_view()
         self._create_menu()
@@ -140,7 +138,9 @@ class MainWindow(QtGui.QMainWindow):
         self._layout.addWidget(self.novelty_slider)
 
     def _create_menu(self):
-        self._menu = self.menuBar().addMenu("Navigator test")
+        menu_bar = QtGui.QMenuBar()
+        self._layout.setMenuBar(menu_bar)
+        self._menu = menu_bar.addMenu("Navigator test")
         self._add_generate_new_path_action()
         self._add_extend_path_action()
         self._add_generate_map_action()

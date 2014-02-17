@@ -118,6 +118,9 @@ class BaseScene(QtOpenGL.QGLWidget):
     def sizeHint(self):
         return QtCore.QSize(600, 640)
 
+    def centralize_output(self):
+        pass
+
 
 class ExperimentToolbar(QtGui.QWidget):
     def __init__(self, parent, experiment, args):
@@ -200,15 +203,16 @@ class MainWindow(QtGui.QWidget):
         self.experiment = experiment
         self.args = args
         QtGui.QWidget.__init__(self)
-        layout = QtGui.QHBoxLayout()
+        self._layout = QtGui.QHBoxLayout()
         self._scene = scene_widget_class(self, experiment, args)
-        layout.addWidget(self._scene)
+        self._create_menu()
+        self._layout.addWidget(self._scene)
 
         self.toolbar = toolbar_class(self, experiment, args)
         self.toolbar.setFixedSize(400, 640)
-        layout.addWidget(self.toolbar)
+        self._layout.addWidget(self.toolbar)
 
-        self.setLayout(layout)
+        self.setLayout(self._layout)
 
         self.experiment.time_increment = 0
         self.stopwatch = Stopwatch()
@@ -218,6 +222,18 @@ class MainWindow(QtGui.QWidget):
         timer.setInterval(1000. / args.frame_rate)
         QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), self._update)
         timer.start()
+
+    def _create_menu(self):
+        menu_bar = QtGui.QMenuBar()
+        self._layout.setMenuBar(menu_bar)
+        self._menu = menu_bar.addMenu("Main")
+        self._add_centralize_action()
+
+    def _add_centralize_action(self):
+        action = QtGui.QAction('&Centralize output', self)
+        action.setShortcut('Ctrl+R')
+        action.triggered.connect(self._scene.centralize_output)
+        self._menu.addAction(action)
 
     def _update(self):
         self.now = self.current_time()
