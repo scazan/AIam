@@ -103,6 +103,10 @@ class FrictionConstrainerTest(unittest.TestCase):
             ["      ",
              "  q   ",
              "    O "],
+
+            ["      ",
+             "   q  ",
+             "    O "],
             ])
         self.expect_output_frames([
             [" Q    ",
@@ -114,6 +118,10 @@ class FrictionConstrainerTest(unittest.TestCase):
              "      "],
 
             [" q    ",
+             "   O  ",
+             "      "],
+
+            ["  q   ",
              "   O  ",
              "      "],
             ])
