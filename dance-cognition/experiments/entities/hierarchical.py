@@ -5,6 +5,7 @@ from bvh_reader.geo import *
 from numpy import array, dot
 from transformations import euler_matrix
 import random
+from physics import FrictionConstrainer, BalanceDetector
 
 rotation_parametrizations = {
     "vectors": EulerTo3Vectors,
@@ -18,6 +19,7 @@ class Entity(BaseEntity):
                             choices=["vectors", "quaternion"])
         parser.add_argument("--translate", action="store_true")
         parser.add_argument("--translation-weight", type=float, default=1.)
+        parser.add_argument("--friction", action="store_true")
 
     def __init__(self, args):
         self.rotation_parametrization = rotation_parametrizations[
@@ -54,8 +56,7 @@ class Stimulus(BaseStimulus):
 
     def _add_joint_translation_parameters(self, joint, parameters):
         vertex = joint.get_vertex()
-        normalized_vector = self.bvh_reader.normalize_vector(
-            self.bvh_reader.vertex_to_vector(vertex))
+        normalized_vector = self.bvh_reader.normalize_vector(vertex)
         weighted_vector = self.args.translation_weight * normalized_vector
         parameters.extend(weighted_vector)
 
@@ -65,23 +66,34 @@ class Stimulus(BaseStimulus):
         parameters.extend(rotation_parameters)
 
 class Scene(BaseScene):
+    def __init__(self, *args, **kwargs):
+        BaseScene.__init__(self, *args, **kwargs)
+        if self.experiment.args.friction:
+            self._output_constrainer = FrictionConstrainer(BalanceDetector())
+
     def draw_input(self, parameters):
         glColor3f(0, 1, 0)
-        self._draw_skeleton(parameters)
+        vertices = self._parameters_to_vertices(parameters)
+        self._draw_vertices(vertices)
 
     def draw_output(self, parameters):
         glColor3f(0.5, 0.5, 1.0)
-        self._draw_skeleton(parameters)
+        vertices = self._parameters_to_vertices(parameters)
+        if self.experiment.args.friction:
+            vertices = self._output_constrainer.constrain(vertices)
+        self._draw_vertices(vertices)
 
-    def _draw_skeleton(self, parameters):
+    def _parameters_to_vertices(self, parameters):
         hips = self._parameters_to_joint(parameters)
         vertices = hips.get_vertices()
-        
-        glLineWidth(2.0)
+        return vertices
+
+    def _draw_vertices(self, vertices):
         edges = self.bvh_reader.vertices_to_edges(vertices)
+        glLineWidth(2.0)
         for edge in edges:
-            vector1 = self.bvh_reader.normalize_vector(self.bvh_reader.vertex_to_vector(edge.v1))
-            vector2 = self.bvh_reader.normalize_vector(self.bvh_reader.vertex_to_vector(edge.v2))
+            vector1 = self.bvh_reader.normalize_vector(edge.v1)
+            vector2 = self.bvh_reader.normalize_vector(edge.v2)
             self._draw_line(vector1, vector2)
 
     def _parameters_to_joint(self, parameters):

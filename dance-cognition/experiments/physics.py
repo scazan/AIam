@@ -23,7 +23,6 @@ class FrictionConstrainer:
 class BalanceDetector:
     def identify_supporting_vertex(self, vertices):
         return self._lowest_vertex(vertices)
-        # return 0
 
     def _lowest_vertex(self, vertices):
         return min(

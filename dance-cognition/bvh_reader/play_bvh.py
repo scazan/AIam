@@ -49,7 +49,7 @@ class BvhViewer(window.Window):
                             self._zoom_vertex(edge.v2))
 
     def _zoom_vertex(self, vertex):
-        return args.zoom * self.reader.normalize_vector(self.reader.vertex_to_vector(vertex))
+        return args.zoom * self.reader.normalize_vector(vertex)
 
     def _draw_line(self, v1, v2):
         glBegin(GL_LINES)

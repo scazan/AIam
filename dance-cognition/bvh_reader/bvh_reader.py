@@ -39,10 +39,11 @@ class joint:
         childjoint.parent = self
 
     def get_vertex(self):
-        return vertex(
+        return array([
             self.worldpos[0],
             self.worldpos[1],
-            self.worldpos[2])
+            self.worldpos[2],
+            1])
 
     def get_vertices(self):
         result = []
@@ -215,12 +216,6 @@ class BvhReader(cgkit.bvh.BVHReader):
         edges = []
         self.skeleton.populate_edges_from_vertices(vertices, edges)
         return edges
-
-    def vertex_to_vector(self, v):
-        return array([v.tr[0], v.tr[1], v.tr[2]])
-
-    def vector_to_vertex(self, v):
-        return vertex(v[0], v[1], v[2])
 
     def normalize_vector(self, v):
         return array([
