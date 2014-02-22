@@ -35,14 +35,18 @@ class BvhViewer(window.Window):
         self.configure_3d_projection(-100, 0)
         glRotatef(self._x_orientation, 1.0, 0.0, 0.0)
         glRotatef(self._y_orientation, 0.0, 1.0, 0.0)
-        self._draw_unit_cube()
+        if args.unit_cube:
+            self._draw_unit_cube()
         self._draw_skeleton()
         self.t += self.time_increment
 
     def _draw_skeleton(self):
+        t = self.t * args.speed
+        if t > self.reader.get_duration() and not args.loop:
+            return
         glLineWidth(2.0)
         glColor3f(0,0,0)
-        vertices = self.reader.get_skeleton_vertices(self.t * args.speed)
+        vertices = self.reader.get_skeleton_vertices(t)
         edges = self.reader.vertices_to_edges(vertices)
         for edge in edges:
             self._draw_line(self._zoom_vertex(edge.v1),
@@ -78,6 +82,8 @@ window.Window.add_parser_arguments(parser)
 parser.add_argument("-bvh")
 parser.add_argument("-speed", type=float, default=1.0)
 parser.add_argument("-zoom", type=float, default=1.0)
+parser.add_argument("-unit-cube", action="store_true")
+parser.add_argument("-loop", action="store_true")
 args = parser.parse_args()
 
 bvh_reader = BvhReader(args.bvh)
