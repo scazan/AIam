@@ -181,14 +181,14 @@ class DimensionalityReductionExperiment(Experiment):
 
         if self.args.train:
             self._train_model()
-            self.save_model(self.args.model)
+            save_model(self.student, self.args.model)
 
         elif self.args.plot_velocity:
-            self.student = self.load_model(self.args.model)
+            self.student = load_model(self.args.model)
             self._plot_velocity()
 
         else:
-            self.student = self.load_model(self.args.model)
+            self.student = load_model(self.args.model)
             self.navigator = Navigator(map_points=self.student.normalized_observed_reductions)
             self.improviser_params = ImproviserParameters()
             self._improviser = Improviser(self, self.improviser_params)

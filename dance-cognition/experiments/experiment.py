@@ -9,8 +9,8 @@ from OpenGL.GLU import *
 from PyQt4 import QtCore, QtGui, QtOpenGL
 import math
 import numpy
+from model import load_model, save_model
 from bvh_reader import bvh_reader as bvh_reader_module
-import cPickle
 from stopwatch import Stopwatch
 import imp
 
@@ -296,21 +296,6 @@ class Experiment:
         self._scene_class = entity_module.Scene
         stimulus_class = getattr(entity_module, args.stimulus)
         self.stimulus = stimulus_class(self)
-
-    def save_model(self, model_filename):
-        print "saving model..."
-        f = open(model_filename, "w")
-        cPickle.dump(self.student, f)
-        f.close()
-        print "ok"
-        
-    def load_model(self, model_filename):
-        print "loading model..."
-        f = open(model_filename)
-        model = cPickle.load(f)
-        f.close()
-        print "ok"
-        return model
 
     def _training_duration(self):
         if self.args.training_duration:
