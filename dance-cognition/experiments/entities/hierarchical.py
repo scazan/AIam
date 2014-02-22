@@ -78,7 +78,7 @@ class Scene(BaseScene):
         self._draw_vertices(vertices)
 
     def draw_output(self, parameters):
-        glColor3f(0.5, 0.5, 1.0)
+        glColor3f(0, 0, 0)
         vertices = self._constrained_output_vertices(parameters)
         if self._output_translation is None:
             self.centralize_output()

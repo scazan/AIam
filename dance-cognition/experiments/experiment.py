@@ -62,6 +62,9 @@ class BaseScene(QtOpenGL.QGLWidget):
         glClearAccum(0.0, 0.0, 0.0, 0.0)
         glClearDepth(1.0)
         glShadeModel(GL_SMOOTH)
+        glEnable(GL_LINE_SMOOTH)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glutInit(sys.argv)
 
     def resizeGL(self, window_width, window_height):
