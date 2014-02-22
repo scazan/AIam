@@ -23,6 +23,8 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
 
         if self.args.improvise:
             self.tabs.setCurrentWidget(self.improvise_tab)
+        elif self.args.explore:
+            self.tabs.setCurrentWidget(self.explore_tab)
         else:
             self.tabs.setCurrentWidget(self.follow_tab)
 
@@ -162,6 +164,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--num-components", "-n", type=int, default=4)
         parser.add_argument("--explore-beyond-observations", type=float, default=0.2)
         parser.add_argument("--improvise", action="store_true")
+        parser.add_argument("--explore", action="store_true")
         parser.add_argument("--plot-velocity")
 
     def __init__(self, parser):
@@ -273,7 +276,8 @@ class Improviser:
         return self.experiment.navigator.generate_path(
             departure=self._departure(),
             destination=self._select_destination(),
-            num_segments=self.params.num_segments)
+            num_segments=self.params.num_segments,
+            novelty=self.params.novelty)
 
     def _departure(self):
         if self.experiment.reduction is None:
@@ -284,8 +288,7 @@ class Improviser:
         return self.experiment.student.normalize_reduction(unnormalized_departure)
 
     def _select_destination(self):
-        return self.experiment.navigator.select_destination(
-            desired_distance_to_nearest_map_point=self.params.novelty)
+        return self.experiment.navigator.select_destination(novelty=self.params.novelty)
 
     def _interpolate_path(self, path_segments):
         return self.experiment.navigator.interpolate_path(

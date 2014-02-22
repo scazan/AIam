@@ -220,15 +220,17 @@ class Experiment:
         self._generate_path(departure, destination)
 
     def _select_destination(self):
-        novelty = float(self.window.novelty_slider.value()) / SLIDER_PRECISION
-        return self._navigator.select_destination(
-            desired_distance_to_nearest_map_point=novelty)
+        return self._navigator.select_destination(novelty=self._novelty())
+
+    def _novelty(self):
+        return float(self.window.novelty_slider.value()) / SLIDER_PRECISION
 
     def _generate_path(self, departure, destination):
         self.path_segments = self._navigator.generate_path(
             departure=departure,
             destination=destination,
-            num_segments=10)
+            num_segments=10,
+            novelty=self._novelty())
         self.path = self._navigator.interpolate_path(
             self.path_segments,
             resolution=100)

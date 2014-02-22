@@ -1,5 +1,6 @@
 improvisation
   eliminate exception caused by path being too short (occurs now and then)
+  parametrize 0.3 in navigator.py
   pull towards periphery also when novelty is low
 
 singular matrix exception:
