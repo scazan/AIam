@@ -269,17 +269,18 @@ class DimensionalityReductionExperiment(Experiment):
         reconstructions = numpy.array(reconstructions)
 
         output_components = []
-        for output_component in range(len(self.stimulus.get_value())):
-            variance = numpy.var(reconstructions[:,output_component])
-            output_components.append({"n": output_component,
+        for output_component_index in range(len(self.stimulus.get_value())):
+            variance = numpy.var(reconstructions[:,output_component_index])
+            output_components.append({"index": output_component_index,
                                       "variance": variance})
         output_components_sorted_by_variance = sorted(
             output_components,
             key=lambda output_component: -output_component["variance"])
-        for i in range(5):
+        for i in range(10):
+            output_component = output_components_sorted_by_variance[i]
             print "  %s (%s)" % (
-                output_components_sorted_by_variance[i]["n"],
-                output_components_sorted_by_variance[i]["variance"])
+                self.stimulus.parameter_name(output_component["index"]),
+                output_component["variance"])
 
 
 class ImproviserParameters(Parameters):

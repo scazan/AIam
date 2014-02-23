@@ -26,6 +26,30 @@ class Entity(BaseEntity):
             args.rotation_parametrization]
 
 class Stimulus(BaseStimulus):
+    def __init__(self, *args, **kwargs):
+        BaseStimulus.__init__(self, *args, **kwargs)
+        self._create_parameter_name_table()
+
+    def _create_parameter_name_table(self):
+        self._parameter_names = []
+        hips = self.bvh_reader.get_hips(0)
+        self._extend_parameter_name_table_recurse(hips)
+
+    def _extend_parameter_name_table_recurse(self, joint):
+        if not joint.hasparent and self.args.translate:
+            self._parameter_names.extend(
+                ["translate (X)",
+                 "translate (Y)",
+                 "translate (Z)"])
+        if joint.rotation:
+            for n in range(self.entity.rotation_parametrization.num_parameters):
+                self._parameter_names.append("%s (%s)" % (joint.name, n))
+        for child in joint.children:
+            self._extend_parameter_name_table_recurse(child)
+
+    def parameter_name(self, index):
+        return self._parameter_names[index]
+
     def get_value(self):
         hips = self.bvh_reader.get_hips(self._t * self.args.bvh_speed)
         return self._joint_to_parameters(hips)
