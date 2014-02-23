@@ -166,6 +166,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--improvise", action="store_true")
         parser.add_argument("--explore", action="store_true")
         parser.add_argument("--plot-velocity")
+        parser.add_argument("--analyze-model", action="store_true")
 
     def __init__(self, parser):
         Experiment.__init__(self, parser)
@@ -186,6 +187,10 @@ class DimensionalityReductionExperiment(Experiment):
         elif self.args.plot_velocity:
             self.student = load_model(self.args.model)
             self._plot_velocity()
+
+        elif self.args.analyze_model:
+            self.student = load_model(self.args.model)
+            self._analyze_model()
 
         else:
             self.student = load_model(self.args.model)
@@ -247,6 +252,32 @@ class DimensionalityReductionExperiment(Experiment):
             print >>f, self._velocity
             t += self.time_increment
         f.close()
+
+    def _analyze_model(self):
+        for n in range(self.student.n_components):
+            self._analyze_model_component(n)
+
+    def _analyze_model_component(self, n, resolution=3):
+        print "component %s:" % n
+        normalized_reduction = numpy.array([.5 for i in range(self.student.n_components)])
+        output_components = []
+        for output_component in range(len(self.stimulus.get_value())):
+            reconstructions = []
+            for x in numpy.arange(0., 1., 1./resolution):
+                normalized_reduction[n] = x
+                reduction = self.student.unnormalize_reduction(normalized_reduction)
+                reconstruction = self.student.inverse_transform(reduction)[0]
+                reconstructions.append(reconstruction[output_component])
+            variance = numpy.var(reconstructions)
+            output_components.append({"n": output_component,
+                                      "variance": variance})
+        output_components_sorted_by_variance = sorted(
+            output_components,
+            key=lambda output_component: -output_component["variance"])
+        for i in range(5):
+            print "  %s (%s)" % (
+                output_components_sorted_by_variance[i]["n"],
+                output_components_sorted_by_variance[i]["variance"])
 
 
 class ImproviserParameters(Parameters):
