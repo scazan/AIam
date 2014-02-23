@@ -257,24 +257,30 @@ class DimensionalityReductionExperiment(Experiment):
         for n in range(self.student.n_components):
             self._analyze_model_component(n)
 
-    def _analyze_model_component(self, n, resolution=100, group_by_parameter_category=True):
+    def _analyze_model_component(self, n, resolution=10, group_by_parameter_category=True):
         print "component %s:" % n
-        normalized_reduction = numpy.array([.5 for i in range(self.student.n_components)])
-        reconstructions = []
-        for x in numpy.arange(0., 1., 1./resolution):
-            normalized_reduction[n] = x
-            reduction = self.student.unnormalize_reduction(normalized_reduction)
-            reconstruction = self.student.inverse_transform(reduction)[0]
-            reconstructions.append(reconstruction)
-        reconstructions = numpy.array(reconstructions)
 
+        num_output_components = len(self.stimulus.get_value())
         output_components = []
-        for output_component_index in range(len(self.stimulus.get_value())):
-            variance = numpy.var(reconstructions[:,output_component_index])
+        for output_component_index in range(num_output_components):
             parameter_info = self.stimulus.parameter_info(output_component_index)
             output_components.append({"parameter_category": parameter_info["category"],
                                       "parameter_components": [parameter_info["component"]],
-                                      "variance": variance})
+                                      "variance": 0.})
+
+        for normalized_reduction in self.student.normalized_observed_reductions:
+            reconstructions = []
+            for x in numpy.arange(0., 1., 1./resolution):
+                normalized_reduction[n] = x
+                reduction = self.student.unnormalize_reduction(normalized_reduction)
+                reconstruction = self.student.inverse_transform(reduction)[0]
+                reconstructions.append(reconstruction)
+            reconstructions = numpy.array(reconstructions)
+
+            for output_component_index in range(num_output_components):
+                variance = numpy.var(reconstructions[:,output_component_index])
+                output_components[output_component_index]["variance"] += variance
+
         if group_by_parameter_category:
             output_components = self._group_components_by_category(output_components)
         output_components_sorted_by_variance = sorted(
