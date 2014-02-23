@@ -260,15 +260,17 @@ class DimensionalityReductionExperiment(Experiment):
     def _analyze_model_component(self, n, resolution=3):
         print "component %s:" % n
         normalized_reduction = numpy.array([.5 for i in range(self.student.n_components)])
+        reconstructions = []
+        for x in numpy.arange(0., 1., 1./resolution):
+            normalized_reduction[n] = x
+            reduction = self.student.unnormalize_reduction(normalized_reduction)
+            reconstruction = self.student.inverse_transform(reduction)[0]
+            reconstructions.append(reconstruction)
+        reconstructions = numpy.array(reconstructions)
+
         output_components = []
         for output_component in range(len(self.stimulus.get_value())):
-            reconstructions = []
-            for x in numpy.arange(0., 1., 1./resolution):
-                normalized_reduction[n] = x
-                reduction = self.student.unnormalize_reduction(normalized_reduction)
-                reconstruction = self.student.inverse_transform(reduction)[0]
-                reconstructions.append(reconstruction[output_component])
-            variance = numpy.var(reconstructions)
+            variance = numpy.var(reconstructions[:,output_component])
             output_components.append({"n": output_component,
                                       "variance": variance})
         output_components_sorted_by_variance = sorted(
