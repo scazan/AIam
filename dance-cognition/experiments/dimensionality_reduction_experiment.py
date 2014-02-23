@@ -257,7 +257,7 @@ class DimensionalityReductionExperiment(Experiment):
         for n in range(self.student.n_components):
             self._analyze_model_component(n)
 
-    def _analyze_model_component(self, n, resolution=3):
+    def _analyze_model_component(self, n, resolution=100):
         print "component %s:" % n
         normalized_reduction = numpy.array([.5 for i in range(self.student.n_components)])
         reconstructions = []
