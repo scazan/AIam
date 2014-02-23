@@ -257,7 +257,7 @@ class DimensionalityReductionExperiment(Experiment):
         for n in range(self.student.n_components):
             self._analyze_model_component(n)
 
-    def _analyze_model_component(self, n, resolution=100):
+    def _analyze_model_component(self, n, resolution=100, group_by_parameter_category=True):
         print "component %s:" % n
         normalized_reduction = numpy.array([.5 for i in range(self.student.n_components)])
         reconstructions = []
@@ -271,17 +271,36 @@ class DimensionalityReductionExperiment(Experiment):
         output_components = []
         for output_component_index in range(len(self.stimulus.get_value())):
             variance = numpy.var(reconstructions[:,output_component_index])
-            output_components.append({"index": output_component_index,
+            parameter_info = self.stimulus.parameter_info(output_component_index)
+            output_components.append({"parameter_category": parameter_info["category"],
+                                      "parameter_components": [parameter_info["component"]],
                                       "variance": variance})
+        if group_by_parameter_category:
+            output_components = self._group_components_by_category(output_components)
         output_components_sorted_by_variance = sorted(
             output_components,
             key=lambda output_component: -output_component["variance"])
         for i in range(10):
             output_component = output_components_sorted_by_variance[i]
-            print "  %s (%s)" % (
-                self.stimulus.parameter_name(output_component["index"]),
+            print "  %s [%s] (%s)" % (
+                output_component["parameter_category"],
+                ",".join(output_component["parameter_components"]),
                 output_component["variance"])
 
+    def _group_components_by_category(self, components):
+        result = []
+        for component in components:
+            self._add_component_to_result(component, result)
+        return result
+
+    def _add_component_to_result(self, component, result):
+        for other in result:
+            if other["parameter_category"] == component["parameter_category"]:
+                other["parameter_components"].extend(component["parameter_components"])
+                other["variance"] += component["variance"]
+                return result
+        result.append(component)
+        return result
 
 class ImproviserParameters(Parameters):
     def __init__(self):
