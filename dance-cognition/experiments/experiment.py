@@ -263,12 +263,12 @@ class MainWindow(QtGui.QWidget):
 class Experiment:
     @staticmethod
     def add_parser_arguments(parser):
-        parser.add_argument("entity", type=str)
+        parser.add_argument("-profile", "-p")
+        parser.add_argument("-entity", type=str)
         parser.add_argument("-stimulus", default="Stimulus")
         parser.add_argument("-train", action="store_true")
         parser.add_argument("-training-duration", type=float)
         parser.add_argument("-training-data-frame-rate", type=int, default=50)
-        parser.add_argument("-model", type=str)
         parser.add_argument("-bvh", type=str)
         parser.add_argument("-bvh-speed", type=float, default=1.0)
         parser.add_argument("-joint")
@@ -280,6 +280,13 @@ class Experiment:
 
     def __init__(self, parser):
         args, _remaining_args = parser.parse_known_args()
+        if args.profile:
+            profile_path = "%s/%s.profile" % (self.profiles_dir, args.profile)
+            profile_args_string = open(profile_path).read()
+            profile_args_strings = profile_args_string.split()
+            args, _remaining_args = parser.parse_known_args(profile_args_strings, namespace=args)
+            self._model_path = "%s/%s.model" % (self.profiles_dir, args.profile)
+
         entity_module = imp.load_source("entity", "entities/%s.py" % args.entity)
         if hasattr(entity_module, "Entity"):
             entity_class = entity_module.Entity
@@ -289,6 +296,9 @@ class Experiment:
         entity_module.Scene.add_parser_arguments(parser)
 
         args = parser.parse_args()
+        if args.profile:
+            args = parser.parse_args(profile_args_strings, namespace=args)
+
         self.args = args
         if args.bvh:
             self.bvh_reader = bvh_reader_module.BvhReader(args.bvh)

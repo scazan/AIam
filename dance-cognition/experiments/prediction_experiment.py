@@ -11,9 +11,8 @@ class PredictionExperiment(Experiment):
         parser.add_argument("-plot-duration", type=float, default=10)
 
     def __init__(self, parser):
+        self.profiles_dir = "profiles/prediction"
         Experiment.__init__(self, parser)
-        if self.args.model is None:
-            self.args.model = "models/prediction/%s.model" % self.args.entity
 
     def run(self, student):
         self.student = student
@@ -25,13 +24,13 @@ class PredictionExperiment(Experiment):
 
         if self.args.train:
             self._train_model()
-            save_model(self.student, self.args.model)
+            save_model(self.student, self._model_path)
 
         elif self.args.plot:
             LearningPlotter(student, teacher, self.args.plot_duration).plot(self.args.plot)
 
         else:
-            self.student = load_model(self.args.model)
+            self.student = load_model(self._model_path)
         
             app = QtGui.QApplication(sys.argv)
             self.window = MainWindow(

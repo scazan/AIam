@@ -4,9 +4,10 @@ import cPickle
 import os
 
 class Teacher:
-    def __init__(self, stimulus, frame_rate):
+    def __init__(self, stimulus, frame_rate, profile):
         self._stimulus = stimulus
         self._frame_rate = frame_rate
+        self._profile = profile
         self._training_data = None
         if self._cacheable():
             if self._cache_exists():
@@ -58,8 +59,7 @@ class Teacher:
         print "ok"
 
     def _cache_filename(self):
-        return "%s.%sfps.data" % (self._stimulus.filename(), self._frame_rate)
+        return "profiles/%s.data" % self._profile
 
     def _cacheable(self):
-        return hasattr(self._stimulus, "filename") and \
-            hasattr(self._stimulus, "get_duration")
+        return self._profile and hasattr(self._stimulus, "get_duration")

@@ -11,12 +11,7 @@ improvisation
 singular matrix exception:
   rm scenes/valencia_all.bvh.quaternion.10fps.data && python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh -training-data-frame-rate 10 -train -n 7 --translate --translation-weight 10
 
-automatic detection of whether training data cache can be used (currently, it needs to be removed manually when some parameter such as --translation-weight is changed)
-  perhaps using profiles?
-  relevant factors: bvh, stimulus, potential entity parameters
-    for dim reduction also n_components
-
-MemoryError when running: python dim_reduce.py angle_3dim_quaternion -stimulus joint -bvh scenes/valencia_all.bvh -joint RShoulder -train -n 3
+MemoryError when running: python dim_reduce.py -p angle_quaternion_valencia_joint -train
   perhaps not if reverting to linear PCA?
 
 ensure that quaternion discontinuity problem (see README) cannot appear in real cases

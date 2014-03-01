@@ -1,0 +1,1 @@
+-entity angle_3dim_6params -stimulus joint -bvh scenes/valencia_all.bvh -joint RShoulder -n 5

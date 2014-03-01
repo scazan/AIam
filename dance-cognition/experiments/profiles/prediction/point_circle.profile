@@ -1,0 +1,1 @@
+-entity point -stimulus circle

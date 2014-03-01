@@ -170,15 +170,14 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--training-data-stats", action="store_true")
 
     def __init__(self, parser):
+        self.profiles_dir = "profiles/dimensionality_reduction"
         Experiment.__init__(self, parser)
-        if self.args.model is None:
-            self.args.model = "models/dimensionality_reduction/%s.model" % self.args.entity
         self.reduction = None
         self._velocity_integrator = LeakyIntegrator()
 
     def run(self, student):
         self.student = student
-        teacher = Teacher(self.stimulus, self.args.training_data_frame_rate)
+        teacher = Teacher(self.stimulus, self.args.training_data_frame_rate, self.args.profile)
         self._training_data = teacher.get_training_data(self._training_duration())
 
         if self.args.training_data_stats:
@@ -186,18 +185,18 @@ class DimensionalityReductionExperiment(Experiment):
 
         if self.args.train:
             self._train_model()
-            save_model(self.student, self.args.model)
+            save_model(self.student, self._model_path)
 
         elif self.args.plot_velocity:
-            self.student = load_model(self.args.model)
+            self.student = load_model(self._model_path)
             self._plot_velocity()
 
         elif self.args.analyze_components:
-            self.student = load_model(self.args.model)
+            self.student = load_model(self._model_path)
             self._analyze_components()
 
         else:
-            self.student = load_model(self.args.model)
+            self.student = load_model(self._model_path)
             self.navigator = Navigator(map_points=self.student.normalized_observed_reductions)
             self.improviser_params = ImproviserParameters()
             self._improviser = Improviser(self, self.improviser_params)

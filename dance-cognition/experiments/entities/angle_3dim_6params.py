@@ -18,9 +18,6 @@ class joint(BaseStimulus):
     def get_duration(self):
         return self.bvh_reader.get_duration() / self.args.bvh_speed
 
-    def filename(self):
-        return "%s.point_%s" % (self.bvh_reader.filename, self.args.joint)
-
 class spiral(BaseStimulus):
     def get_value(self):
         x = (self._t / 1) % (2*math.pi)

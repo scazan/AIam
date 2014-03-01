@@ -1,0 +1,1 @@
+-entity point -stimulus joint -bvh scenes/valencia_all.bvh

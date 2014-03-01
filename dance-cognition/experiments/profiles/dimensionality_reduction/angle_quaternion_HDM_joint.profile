@@ -1,0 +1,1 @@
+-entity angle_3dim_quaternion -stimulus joint -bvh scenes/HDM_bk_03-01_01_120.bvh -joint hip -n 1

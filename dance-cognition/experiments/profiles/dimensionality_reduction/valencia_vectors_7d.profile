@@ -1,0 +1,1 @@
+-entity hierarchical -r vectors -bvh scenes/valencia_all.bvh

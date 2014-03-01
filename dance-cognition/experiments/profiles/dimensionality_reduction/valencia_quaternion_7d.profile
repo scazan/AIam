@@ -1,0 +1,1 @@
+-entity hierarchical -r quaternion -bvh scenes/valencia_all.bvh -n 7
