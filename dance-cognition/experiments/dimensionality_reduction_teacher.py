@@ -59,7 +59,7 @@ class Teacher:
         print "ok"
 
     def _cache_filename(self):
-        return "profiles/%s.data" % self._profile
+        return "profiles/dimensionality_reduction/%s.data" % self._profile
 
     def _cacheable(self):
         return self._profile and hasattr(self._stimulus, "get_duration")
