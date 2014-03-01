@@ -39,6 +39,9 @@ DIMENSIONALITY REDUCTION WITH PCA: INCLUDING MOVEMENT ACROSS SPACE
 python dim_reduce.py -p valencia_quaternion_translate_7d -train
 python dim_reduce.py -p valencia_quaternion_translate_7d -zoom 1.8
 
+python dim_reduce.py -p HDM_quaternion_translate_7d -train
+python dim_reduce.py -p HDM_quaternion_translate_7d -zoom 1.8
+
 
 VECTOR6D EXPERIMENTS (Euler angle components as vectors)
 

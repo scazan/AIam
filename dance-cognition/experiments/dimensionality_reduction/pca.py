@@ -33,13 +33,17 @@ class DimensionalityReduction:
         return normalized_component * (
             reduction_range["max"] - reduction_range["min"]) + reduction_range["min"]
 
+    def analyze_accuracy(self, observations):
+        reductions = self.transform(observations)
+        reconstructions = self.inverse_transform(reductions)
+        mean_squared_error = ((observations - reconstructions) ** 2).mean(axis=None)
+        print "mean squared error: %s" % mean_squared_error
 
 class LinearPCA(DimensionalityReduction, sklearn.decomposition.PCA):
-    def fit(self, *args):
-        sklearn.decomposition.PCA.fit(self, *args)
+    def analyze_accuracy(self, observations):
         print "explained variance ratio: %s (sum %s)" % (
             self.explained_variance_ratio_, sum(self.explained_variance_ratio_))
-
+        DimensionalityReduction.analyze_accuracy(self, observations)
 
 class KernelPCA(DimensionalityReduction, sklearn.decomposition.KernelPCA):
     def __init__(self, **kwargs):
