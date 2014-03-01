@@ -1,11 +1,7 @@
 import sklearn.decomposition
 import numpy
 
-class PCA(sklearn.decomposition.KernelPCA):
-    def __init__(self, **kwargs):
-        sklearn.decomposition.KernelPCA.__init__(
-            self, kernel="poly", fit_inverse_transform=True, gamma=0.5, **kwargs)
-
+class DimensionalityReduction:
     def probe(self, observations):
         observed_reductions = self.transform(observations)
         self.reduction_range = []
@@ -36,3 +32,16 @@ class PCA(sklearn.decomposition.KernelPCA):
     def _unnormalize_component(self, normalized_component, reduction_range):
         return normalized_component * (
             reduction_range["max"] - reduction_range["min"]) + reduction_range["min"]
+
+
+class LinearPCA(DimensionalityReduction, sklearn.decomposition.PCA):
+    def fit(self, *args):
+        sklearn.decomposition.PCA.fit(self, *args)
+        print "explained variance ratio: %s (sum %s)" % (
+            self.explained_variance_ratio_, sum(self.explained_variance_ratio_))
+
+
+class KernelPCA(DimensionalityReduction, sklearn.decomposition.KernelPCA):
+    def __init__(self, **kwargs):
+        sklearn.decomposition.KernelPCA.__init__(
+            self, kernel="poly", fit_inverse_transform=True, gamma=0.5, **kwargs)

@@ -1,1 +1,1 @@
--entity hierarchical -r quaternion -bvh scenes/valencia_all.bvh -n 7 --translate --translation-weight 5
+-entity hierarchical --pca-type=KernelPCA -r quaternion -bvh scenes/valencia_all.bvh -n 7 --translate --translation-weight 5

@@ -1,6 +1,6 @@
 from experiment import *
 from dimensionality_reduction_teacher import *
-from dimensionality_reduction import PCA
+import dimensionality_reduction
 import random
 from leaky_integrator import LeakyIntegrator
 from navigator import Navigator, PathFollower
@@ -162,6 +162,9 @@ class DimensionalityReductionExperiment(Experiment):
     @staticmethod
     def add_parser_arguments(parser):
         Experiment.add_parser_arguments(parser)
+        parser.add_argument("--pca-type",
+                            choices=["LinearPCA", "KernelPCA"],
+                            default="LinearPCA")
         parser.add_argument("--num-components", "-n", type=int, default=4)
         parser.add_argument("--explore-beyond-observations", type=float, default=0.2)
         parser.add_argument("--improvise", action="store_true")
@@ -184,7 +187,8 @@ class DimensionalityReductionExperiment(Experiment):
             self._print_training_data_stats()
 
         if self.args.train:
-            self.student = PCA(n_components=self.args.num_components)
+            pca_class = getattr(dimensionality_reduction, self.args.pca_type)
+            self.student = pca_class(n_components=self.args.num_components)
             self._train_model()
             save_model(self.student, self._model_path)
 

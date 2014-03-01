@@ -11,9 +11,6 @@ improvisation
 singular matrix exception:
   rm scenes/valencia_all.bvh.quaternion.10fps.data && python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh -training-data-frame-rate 10 -train -n 7 --translate --translation-weight 10
 
-MemoryError when running: python dim_reduce.py -p angle_quaternion_valencia_joint -train
-  perhaps not if reverting to linear PCA?
-
 ensure that quaternion discontinuity problem (see README) cannot appear in real cases
   work started with analyze_quaternions.py
 
