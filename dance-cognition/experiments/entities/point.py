@@ -3,7 +3,7 @@ from experiment import *
 class joint(BaseStimulus):
     def get_value(self):
         vertices = self.bvh_reader.get_skeleton_vertices(self._t * self.args.bvh_speed)
-        hips = self.bvh_reader.normalize_vector(self.bvh_reader.vertex_to_vector(vertices[0]))
+        hips = self.bvh_reader.normalize_vector(vertices[0])
         return hips
 
     def get_duration(self):

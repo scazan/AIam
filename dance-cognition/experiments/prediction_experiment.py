@@ -25,7 +25,7 @@ class PredictionExperiment(Experiment):
 
         if self.args.train:
             self._train_model()
-            save_model(self.args.model)
+            save_model(self.student, self.args.model)
 
         elif self.args.plot:
             LearningPlotter(student, teacher, self.args.plot_duration).plot(self.args.plot)
