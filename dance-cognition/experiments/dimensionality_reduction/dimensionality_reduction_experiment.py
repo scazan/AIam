@@ -1,6 +1,6 @@
 from experiment import *
 from dimensionality_reduction_teacher import *
-import dimensionality_reduction
+import pca
 import random
 from leaky_integrator import LeakyIntegrator
 from navigator import Navigator, PathFollower
@@ -187,7 +187,7 @@ class DimensionalityReductionExperiment(Experiment):
             self._print_training_data_stats()
 
         if self.args.train:
-            pca_class = getattr(dimensionality_reduction, self.args.pca_type)
+            pca_class = getattr(pca, self.args.pca_type)
             self.student = pca_class(n_components=self.args.num_components)
             self._train_model()
             save_model(self.student, self._model_path)
