@@ -9,7 +9,7 @@ from OpenGL.GLU import *
 from PyQt4 import QtCore, QtGui, QtOpenGL
 import math
 import numpy
-from model import load_model, save_model
+from storage import *
 from bvh_reader import bvh_reader as bvh_reader_module
 from stopwatch import Stopwatch
 import imp
@@ -286,6 +286,7 @@ class Experiment:
             profile_args_strings = profile_args_string.split()
             args, _remaining_args = parser.parse_known_args(profile_args_strings, namespace=args)
             self._model_path = "%s/%s.model" % (self.profiles_dir, args.profile)
+            self._training_data_path = "%s/%s.data" % (self.profiles_dir, args.profile)
 
         entity_module = imp.load_source("entity", "entities/%s.py" % args.entity)
         if hasattr(entity_module, "Entity"):

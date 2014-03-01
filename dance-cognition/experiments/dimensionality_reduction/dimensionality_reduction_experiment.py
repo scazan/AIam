@@ -182,8 +182,7 @@ class DimensionalityReductionExperiment(Experiment):
         self._velocity_integrator = LeakyIntegrator()
 
     def run(self):
-        teacher = Teacher(self.stimulus, self.args.training_data_frame_rate, self.args.profile)
-        self._training_data = teacher.get_training_data(self._training_duration())
+        teacher = Teacher(self.stimulus, self.args.training_data_frame_rate)
 
         if self.args.training_data_stats:
             self._print_training_data_stats()
@@ -191,8 +190,10 @@ class DimensionalityReductionExperiment(Experiment):
         if self.args.train:
             pca_class = getattr(pca, self.args.pca_type)
             self.student = pca_class(n_components=self.args.num_components)
+            self._training_data = teacher.create_training_data(self._training_duration())
             self._train_model()
             save_model(self.student, self._model_path)
+            save_training_data(self._training_data, self._training_data_path)
 
         elif self.args.plot_velocity:
             self.student = load_model(self._model_path)
@@ -207,10 +208,12 @@ class DimensionalityReductionExperiment(Experiment):
 
         elif self.args.analyze_accuracy:
             self.student = load_model(self._model_path)
+            self._training_data = load_training_data(self._training_data_path)
             self.student.analyze_accuracy(self._training_data)
 
         else:
             self.student = load_model(self._model_path)
+            self._training_data = load_training_data(self._training_data_path)
             self.navigator = Navigator(map_points=self.student.normalized_observed_reductions)
             self.improviser_params = ImproviserParameters()
             self._improviser = Improviser(self, self.improviser_params)
