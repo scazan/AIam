@@ -1,5 +1,6 @@
 from experiment import *
 from dimensionality_reduction_teacher import *
+from dimensionality_reduction import PCA
 import random
 from leaky_integrator import LeakyIntegrator
 from navigator import Navigator, PathFollower
@@ -175,8 +176,7 @@ class DimensionalityReductionExperiment(Experiment):
         self.reduction = None
         self._velocity_integrator = LeakyIntegrator()
 
-    def run(self, student):
-        self.student = student
+    def run(self):
         teacher = Teacher(self.stimulus, self.args.training_data_frame_rate, self.args.profile)
         self._training_data = teacher.get_training_data(self._training_duration())
 
@@ -184,6 +184,7 @@ class DimensionalityReductionExperiment(Experiment):
             self._print_training_data_stats()
 
         if self.args.train:
+            self.student = PCA(n_components=self.args.num_components)
             self._train_model()
             save_model(self.student, self._model_path)
 

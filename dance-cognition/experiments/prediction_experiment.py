@@ -14,29 +14,33 @@ class PredictionExperiment(Experiment):
         self.profiles_dir = "profiles/prediction"
         Experiment.__init__(self, parser)
 
-    def run(self, student):
-        self.student = student
-
+    def run(self):
         if self.args.shuffle_input:
             self.teacher = ShufflingTeacher(self.stimulus)
         else:
             self.teacher = LiveTeacher(self.stimulus)
 
         if self.args.train:
+            num_parameters = len(self.stimulus.get_value())
+            self.student = BackpropNet(
+                num_parameters,
+                num_parameters * 2,
+                num_parameters)
             self._train_model()
             save_model(self.student, self._model_path)
 
-        elif self.args.plot:
-            LearningPlotter(student, teacher, self.args.plot_duration).plot(self.args.plot)
-
         else:
             self.student = load_model(self._model_path)
-        
-            app = QtGui.QApplication(sys.argv)
-            self.window = MainWindow(
-                self, self._scene_class, ExperimentToolbar, self.args)
-            self.window.show()
-            app.exec_()
+
+            if self.args.plot:
+                LearningPlotter(student, teacher, self.args.plot_duration).plot(self.args.plot)
+
+            else:
+                app = QtGui.QApplication(sys.argv)
+                self.window = MainWindow(
+                    self, self._scene_class, ExperimentToolbar, self.args)
+                self.window.show()
+                app.exec_()
 
     def proceed(self):
         if self.teacher.collected_enough_training_data():
