@@ -24,20 +24,20 @@ python predict.py -p valencia_hierarchical -zoom 3
 
 DIMENSIONALITY REDUCTION WITH PCA: ROTATION AS VECTORS
 
-python dim_reduce.py -p valencia_vectors_7d -training-data-frame-rate 10 -train
-python dim_reduce.py -p valencia_vectors_7d -training-data-frame-rate 10 -zoom 3
+python dim_reduce.py -p valencia_vectors_7d -train
+python dim_reduce.py -p valencia_vectors_7d -zoom 3
 
 
 DIMENSIONALITY REDUCTION WITH PCA: ROTATION AS QUATERNION
 
-python dim_reduce.py -p valencia_quaternion_7d -training-data-frame-rate 10 -train
-python dim_reduce.py -p valencia_quaternion_7d -training-data-frame-rate 10 -zoom 3
+python dim_reduce.py -p valencia_quaternion_7d -train
+python dim_reduce.py -p valencia_quaternion_7d -zoom 3
 
 
 DIMENSIONALITY REDUCTION WITH PCA: INCLUDING MOVEMENT ACROSS SPACE
 
-python dim_reduce.py -p valencia_quaternion_translate_7d -training-data-frame-rate 10 -train
-python dim_reduce.py -p valencia_quaternion_translate_7d -training-data-frame-rate 10 -zoom 1.8
+python dim_reduce.py -p valencia_quaternion_translate_7d -train
+python dim_reduce.py -p valencia_quaternion_translate_7d -zoom 1.8
 
 
 VECTOR6D EXPERIMENTS (Euler angle components as vectors)
@@ -56,8 +56,8 @@ python dim_reduce.py -p angle_quaternion_spiral -train
 python dim_reduce.py -p angle_quaternion_spiral -unit-cube
 
 Real case with discontinuity problem::
-python dim_reduce.py -p angle_quaternion_HDM_joint -training-data-frame-rate 10 -train
-python dim_reduce.py -p angle_quaternion_HDM_joint -training-data-frame-rate 10 -unit-cube -bvh-speed 5
+python dim_reduce.py -p angle_quaternion_HDM_joint -train
+python dim_reduce.py -p angle_quaternion_HDM_joint -unit-cube -bvh-speed 5
 
 Real case without discontinuity problem (one out of countless others):
 python dim_reduce.py -p angle_quaternion_valencia_joint -train

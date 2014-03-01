@@ -1,1 +1,1 @@
--entity hierarchical -r vectors -bvh scenes/valencia_all.bvh
+-entity hierarchical -r vectors -bvh scenes/valencia_all.bvh -training-data-frame-rate 10
