@@ -35,6 +35,10 @@ class BaseStimulus:
         self._t += time_increment
 
 class BaseScene(QtOpenGL.QGLWidget):
+    @staticmethod
+    def add_parser_arguments(parser):
+        pass
+
     def __init__(self, parent, experiment, args):
         self.experiment = experiment
         self.bvh_reader = experiment.bvh_reader
@@ -282,6 +286,7 @@ class Experiment:
         else:
             entity_class = BaseEntity
         entity_class.add_parser_arguments(parser)
+        entity_module.Scene.add_parser_arguments(parser)
 
         args = parser.parse_args()
         self.args = args
