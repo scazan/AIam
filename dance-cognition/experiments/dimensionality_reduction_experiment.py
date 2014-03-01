@@ -166,7 +166,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--improvise", action="store_true")
         parser.add_argument("--explore", action="store_true")
         parser.add_argument("--plot-velocity")
-        parser.add_argument("--analyze-model", action="store_true")
+        parser.add_argument("--analyze-components", action="store_true")
         parser.add_argument("--training-data-stats", action="store_true")
 
     def __init__(self, parser):
@@ -192,9 +192,9 @@ class DimensionalityReductionExperiment(Experiment):
             self.student = load_model(self.args.model)
             self._plot_velocity()
 
-        elif self.args.analyze_model:
+        elif self.args.analyze_components:
             self.student = load_model(self.args.model)
-            self._analyze_model()
+            self._analyze_components()
 
         else:
             self.student = load_model(self.args.model)
@@ -271,11 +271,11 @@ class DimensionalityReductionExperiment(Experiment):
             t += self.time_increment
         f.close()
 
-    def _analyze_model(self):
+    def _analyze_components(self):
         for n in range(self.student.n_components):
-            self._analyze_model_component(n)
+            self._analyze_component(n)
 
-    def _analyze_model_component(self, n, resolution=10, group_by_parameter_category=True):
+    def _analyze_component(self, n, resolution=10, group_by_parameter_category=True):
         print "component %s:" % n
 
         num_output_components = len(self.stimulus.get_value())
