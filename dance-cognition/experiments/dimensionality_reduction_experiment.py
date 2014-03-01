@@ -167,6 +167,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--explore", action="store_true")
         parser.add_argument("--plot-velocity")
         parser.add_argument("--analyze-model", action="store_true")
+        parser.add_argument("--training-data-stats", action="store_true")
 
     def __init__(self, parser):
         Experiment.__init__(self, parser)
@@ -179,6 +180,9 @@ class DimensionalityReductionExperiment(Experiment):
         self.student = student
         teacher = Teacher(self.stimulus, self.args.training_data_frame_rate)
         self._training_data = teacher.get_training_data(self._training_duration())
+
+        if self.args.training_data_stats:
+            self._print_training_data_stats()
 
         if self.args.train:
             self._train_model()
@@ -213,6 +217,20 @@ class DimensionalityReductionExperiment(Experiment):
         print "probing model..."
         self.student.probe(self._training_data)
         print "ok"
+
+    def _print_training_data_stats(self):
+        format = "%-5s%-20s%-8s%-8s%-8s%-8s"
+        print format % ("n", "descr", "min", "max", "mean", "var")
+        for n in range(len(self._training_data[0])):
+            parameter_info = self.stimulus.parameter_info(n)
+            col = self._training_data[:,n]
+            stats = ["%.2f" % v for v in [min(col), max(col), numpy.mean(col), numpy.var(col)]]
+            print format % (
+                n, "%s %s" % (parameter_info["category"], parameter_info["component"]),
+                stats[0],
+                stats[1],
+                stats[2],
+                stats[3])
 
     def proceed(self):
         if self.window.toolbar.tabs.currentWidget() == self.window.toolbar.explore_tab:
