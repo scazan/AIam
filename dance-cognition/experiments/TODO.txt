@@ -14,6 +14,9 @@ singular matrix exception:
 ensure that quaternion discontinuity problem (see README) cannot appear in real cases
   work started with analyze_quaternions.py
 
+follow
+  test ability to generalize to unseen input (e.g. by dividing data into train and test)
+
 real-time interaction
   switch between interaction modes (follow, improvise etc)?
   more real-time modes in addition to "follow"?
