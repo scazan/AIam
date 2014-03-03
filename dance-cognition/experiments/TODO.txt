@@ -1,8 +1,3 @@
-mean normalization: should all training data be mean normalized, even for kernel PCA?
-  see --training-data-stats
-  testing whether mean normalization helps: measure actual ability to retain original data, and then compare
-  perhaps verify this measure with linear PCA as well?
-
 improvisation
   eliminate exception caused by path being too short (occurs now and then)
   parametrize 0.3 in navigator.py
