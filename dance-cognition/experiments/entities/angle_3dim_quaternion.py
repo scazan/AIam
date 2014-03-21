@@ -3,10 +3,6 @@ from transformations import quaternion_from_euler, euler_from_quaternion
 from quaternions import *
 
 class Entity(BaseEntity):
-    def __init__(self, *args, **kwargs):
-        BaseEntity.__init__(self, *args, **kwargs)
-        self._mean_quaternion = numpy.zeros(4)
-
     @staticmethod
     def add_parser_arguments(parser):
         parser.add_argument("--hemispherize", action="store_true")
