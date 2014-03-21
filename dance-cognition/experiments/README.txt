@@ -58,13 +58,17 @@ Artificial case with discontinuity problem:
 python dim_reduce.py -p angle_quaternion_spiral -train
 python dim_reduce.py -p angle_quaternion_spiral -unit-cube
 
-Real case with discontinuity problem::
+Real case with discontinuity problem:
 python dim_reduce.py -p angle_quaternion_HDM_joint -train
 python dim_reduce.py -p angle_quaternion_HDM_joint -unit-cube -bvh-speed 5
 
 Real case without discontinuity problem (one out of countless others):
 python dim_reduce.py -p angle_quaternion_valencia_joint -train
 python dim_reduce.py -p angle_quaternion_valencia_joint -unit-cube
+
+Full body real case with discontinuity problem?
+python dim_reduce.py -p HDM_quaternion_translate_2d -train
+python dim_reduce.py -p HDM_quaternion_translate_2d -zoom 1.4
 
 
 
