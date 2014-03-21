@@ -1,11 +1,7 @@
 import numpy
 
 def find_mean_quaternion(quaternions):
-    result = numpy.zeros(4)
-    for quaternion in quaternions:
-        quaternion = hemispherize(quaternion, quaternions[0])
-        result += quaternion
-    return result / len(quaternions)
+    return sum([hemispherize(q, quaternions[0]) for q in quaternions]) / len(quaternions)
 
 def hemispherize(q, reference):
     if quaternions_are_close(q, reference):
