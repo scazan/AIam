@@ -18,3 +18,10 @@ real-time interaction
   use mapping as output only with old state-based input?
 
 interactive evolution of trajectories?
+
+
+
+paper
+  friction: refer to Expressive Gait Synthesis Using PCA and Gaussian Modeling (section 7.2)
+  change "linear" to "Euclidian" or "vector space" in footnote
+
