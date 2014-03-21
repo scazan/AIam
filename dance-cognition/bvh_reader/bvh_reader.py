@@ -270,8 +270,8 @@ class BvhReader(cgkit.bvh.BVHReader):
             print "%-3d -> %-3d: %f" % (
                 joint.parent.index, joint.index,
                 numpy.linalg.norm(
-                    self.vertex_to_vector(vertices[joint.parent.index]) -
-                    self.vertex_to_vector(vertices[joint.index])))
+                    self.vertices[joint.parent.index] -
+                    self.vertices[joint.index]))
 
         for child in joint.children:
             self._print_joint_recurse(vertices, child)
@@ -282,7 +282,7 @@ class BvhReader(cgkit.bvh.BVHReader):
         for n in range(self.num_frames):
             vertices = self.skeleton.get_vertices(n)
             for vertex in vertices:
-                self._update_range_with_vector(*self.vertex_to_vector(vertex))
+                self._update_range_with_vector(*vertex[0:3])
         self._scale_info.scale_factor = max([
                 self._scale_info.max_x - self._scale_info.min_x,
                 self._scale_info.max_y - self._scale_info.min_y,
