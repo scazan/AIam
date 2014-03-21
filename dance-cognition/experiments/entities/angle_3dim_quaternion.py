@@ -17,10 +17,7 @@ class Entity(BaseEntity):
 
     def adapt_value_to_model(self, quaternion):
         if self.args.hemispherize:
-            if quaternions_are_close(self._mean_quaternion, quaternion):
-                return quaternion
-            else:
-                return -quaternion
+            return hemispherize(quaternion, self._mean_quaternion)
         else:
             return quaternion
 
