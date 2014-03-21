@@ -24,6 +24,9 @@ class BaseEntity:
     def __init__(self, args):
         self.args = args
 
+    def adapt_value_to_model(self, value):
+        return value
+
 class BaseStimulus:
     def __init__(self, experiment):
         self._t = 0

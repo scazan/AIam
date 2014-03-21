@@ -269,13 +269,16 @@ class DimensionalityReductionExperiment(Experiment):
 
     def _follow(self):
         self.stimulus.proceed(self.time_increment)
-        self.input = self.stimulus.get_value()
+        self.input = self.get_adapted_stimulus_value()
         next_reduction = self.student.transform(numpy.array([self.input]))[0]
         if self.reduction is not None:
             self._measure_velocity(
                 self.student.normalize_reduction(self.reduction),
                 self.student.normalize_reduction(next_reduction))
         self.reduction = next_reduction
+
+    def get_adapted_stimulus_value(self):
+        return self.entity.adapt_value_to_model(self.stimulus.get_value())
 
     def _measure_velocity(self, r1, r2):
         distance = numpy.linalg.norm(r1 - r2)
@@ -327,7 +330,7 @@ class Improviser:
     def _departure(self):
         if self.experiment.reduction is None:
             unnormalized_departure = self.experiment.student.transform(numpy.array([
-                        self.experiment.stimulus.get_value()]))[0]
+                        self.experiment.get_adapted_stimulus_value()]))[0]
         else:
             unnormalized_departure = self.experiment.reduction
         return self.experiment.student.normalize_reduction(unnormalized_departure)
