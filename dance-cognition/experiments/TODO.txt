@@ -9,6 +9,8 @@ singular matrix exception:
 ensure that quaternion discontinuity problem (see README) cannot appear in real cases
   work started with analyze_quaternions.py
 
+investigate whether usage of non-normalized quaternion values (in explore and improv) causes problems
+
 follow
   test ability to generalize to unseen input (e.g. by dividing data into train and test)
 
