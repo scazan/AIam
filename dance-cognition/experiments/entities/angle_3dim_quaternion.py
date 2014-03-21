@@ -1,5 +1,6 @@
 from experiment import *
 from transformations import quaternion_from_euler, euler_from_quaternion
+from quaternions import *
 
 class Entity(BaseEntity):
     def __init__(self, *args, **kwargs):
@@ -12,22 +13,11 @@ class Entity(BaseEntity):
 
     def probe(self, observations):
         if self.args.hemispherize:
-            self._mean_quaternion = self._find_mean_quaternion(observations)
-
-    def _find_mean_quaternion(self, quaternions):
-        result = numpy.zeros(4)
-        for quaternion in quaternions:
-            if not self._quaternions_are_close(quaternions[0], quaternion):
-                quaternion = -quaternion
-            result += quaternion
-        return result / len(quaternions)
-
-    def _quaternions_are_close(self, q1, q2):
-        return numpy.dot(q1, q2) >= 0
+            self._mean_quaternion = find_mean_quaternion(observations)
 
     def adapt_value_to_model(self, quaternion):
         if self.args.hemispherize:
-            if self._quaternions_are_close(self._mean_quaternion, quaternion):
+            if quaternions_are_close(self._mean_quaternion, quaternion):
                 return quaternion
             else:
                 return -quaternion
