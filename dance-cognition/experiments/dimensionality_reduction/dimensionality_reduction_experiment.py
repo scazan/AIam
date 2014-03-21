@@ -185,6 +185,7 @@ class DimensionalityReductionExperiment(Experiment):
         teacher = Teacher(self.stimulus, self.args.training_data_frame_rate)
 
         if self.args.training_data_stats:
+            self._training_data = load_training_data(self._training_data_path)
             self._print_training_data_stats()
 
         if self.args.train:
