@@ -41,7 +41,7 @@ class Stimulus(BaseStimulus):
                  {"category": "translate", "component": "Y"},
                  {"category": "translate", "component": "Z"}])
         if joint.rotation:
-            for n in range(self.entity.rotation_parametrization.num_parameters):
+            for n in range(self.experiment.entity.rotation_parametrization.num_parameters):
                 self._parameter_info.append({"category": joint.name, "component": str(n)})
         for child in joint.children:
             self._extend_parameter_info_table_recurse(child)
@@ -81,7 +81,7 @@ class Stimulus(BaseStimulus):
         parameters.extend(weighted_vector)
 
     def _add_joint_rotation_parameters(self, joint, parameters):
-        rotation_parameters = self.entity.rotation_parametrization.rotation_to_parameters(
+        rotation_parameters = self.experiment.entity.rotation_parametrization.rotation_to_parameters(
             joint.rotation)
         parameters.extend(rotation_parameters)
 
@@ -152,9 +152,10 @@ class Scene(BaseScene):
 
         if joint.rotation:
             rotation_parameters = parameters[
-                parameter_index:parameter_index+self.entity.rotation_parametrization.num_parameters]
-            parameter_index += self.entity.rotation_parametrization.num_parameters
-            rotation_angles = self.entity.rotation_parametrization.parameters_to_rotation(
+                parameter_index:parameter_index+
+                self.experiment.entity.rotation_parametrization.num_parameters]
+            parameter_index += self.experiment.entity.rotation_parametrization.num_parameters
+            rotation_angles = self.experiment.entity.rotation_parametrization.parameters_to_rotation(
                 rotation_parameters, joint.rotation.axes)
             rotation_matrix = euler_matrix(*rotation_angles, axes=joint.rotation.axes)
 

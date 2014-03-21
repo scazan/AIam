@@ -193,27 +193,27 @@ class DimensionalityReductionExperiment(Experiment):
             self.student = pca_class(n_components=self.args.num_components)
             self._training_data = teacher.create_training_data(self._training_duration())
             self._train_model()
-            save_model(self.student, self._model_path)
+            save_model([self.student, self.entity], self._model_path)
             save_training_data(self._training_data, self._training_data_path)
 
         elif self.args.plot_velocity:
-            self.student = load_model(self._model_path)
+            self.student, self.entity = load_model(self._model_path)
             self._plot_velocity()
 
         elif self.args.analyze_components:
-            self.student = load_model(self._model_path)
+            self.student, self.entity = load_model(self._model_path)
             ComponentAnalysis(
                 pca=self.student,
                 num_output_components=len(self.stimulus.get_value()),
                 parameter_info_getter=self.stimulus.parameter_info).analyze()
 
         elif self.args.analyze_accuracy:
-            self.student = load_model(self._model_path)
+            self.student, self.entity = load_model(self._model_path)
             self._training_data = load_training_data(self._training_data_path)
             self.student.analyze_accuracy(self._training_data)
 
         else:
-            self.student = load_model(self._model_path)
+            self.student, self.entity = load_model(self._model_path)
             self._training_data = load_training_data(self._training_data_path)
             self.navigator = Navigator(map_points=self.student.normalized_observed_reductions)
             self.improviser_params = ImproviserParameters()
@@ -227,6 +227,12 @@ class DimensionalityReductionExperiment(Experiment):
             app.exec_()
 
     def _train_model(self):
+        if hasattr(self.entity, "probe"):
+            print "probing entity..."
+            self.entity.probe(self._training_data)
+            self._training_data = map(self.entity.adapt_value_to_model, self._training_data)
+            print "ok"
+
         print "training model..."
         self.student.fit(self._training_data)
         print "ok"

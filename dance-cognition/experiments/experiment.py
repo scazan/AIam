@@ -22,14 +22,14 @@ class BaseEntity:
         pass
 
     def __init__(self, args):
-        pass
+        self.args = args
 
 class BaseStimulus:
     def __init__(self, experiment):
         self._t = 0
+        self.experiment = experiment
         self.args = experiment.args
         self.bvh_reader = experiment.bvh_reader
-        self.entity = experiment.entity
 
     def proceed(self, time_increment):
         self._t += time_increment
@@ -42,7 +42,6 @@ class BaseScene(QtOpenGL.QGLWidget):
     def __init__(self, parent, experiment, args):
         self.experiment = experiment
         self.bvh_reader = experiment.bvh_reader
-        self.entity = experiment.entity
         self.args = args
         QtOpenGL.QGLWidget.__init__(self, parent)
 
