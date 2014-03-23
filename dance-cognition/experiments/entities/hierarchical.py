@@ -20,13 +20,10 @@ class Entity(BaseEntity):
         parser.add_argument("--translate", action="store_true")
         parser.add_argument("--translation-weight", type=float, default=1.)
 
-    def __init__(self, args):
-        self.rotation_parametrization = rotation_parametrizations[
-            args.rotation_parametrization]
-
-class Stimulus(BaseStimulus):
     def __init__(self, *args, **kwargs):
-        BaseStimulus.__init__(self, *args, **kwargs)
+        BaseEntity.__init__(self, *args, **kwargs)
+        self.rotation_parametrization = rotation_parametrizations[
+            self.args.rotation_parametrization]
         self._create_parameter_info_table()
 
     def _create_parameter_info_table(self):
@@ -41,7 +38,7 @@ class Stimulus(BaseStimulus):
                  {"category": "translate", "component": "Y"},
                  {"category": "translate", "component": "Z"}])
         if joint.rotation:
-            for n in range(self.experiment.entity.rotation_parametrization.num_parameters):
+            for n in range(self.rotation_parametrization.num_parameters):
                 self._parameter_info.append({"category": joint.name, "component": str(n)})
         for child in joint.children:
             self._extend_parameter_info_table_recurse(child)
@@ -81,7 +78,7 @@ class Stimulus(BaseStimulus):
         parameters.extend(weighted_vector)
 
     def _add_joint_rotation_parameters(self, joint, parameters):
-        rotation_parameters = self.experiment.entity.rotation_parametrization.rotation_to_parameters(
+        rotation_parameters = self.rotation_parametrization.rotation_to_parameters(
             joint.rotation)
         parameters.extend(rotation_parameters)
 

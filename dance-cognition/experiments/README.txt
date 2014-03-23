@@ -43,15 +43,6 @@ python dim_reduce.py -p HDM_quaternion_translate_7d -train
 python dim_reduce.py -p HDM_quaternion_translate_7d -zoom 1.4
 
 
-VECTOR6D EXPERIMENTS (Euler angle components as vectors)
-
-python dim_reduce.py -p angle_6params_spiral -train
-python dim_reduce.py -p angle_6params_spiral -unit-cube
-
-python dim_reduce.py -p angle_6params_joint -train
-python dim_reduce.py -p angle_6params_joint -unit-cube
-
-
 QUATERNION EXPERIMENTS
 
 Artificial case with discontinuity problem:

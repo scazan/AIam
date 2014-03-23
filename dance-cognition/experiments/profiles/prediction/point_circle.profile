@@ -1,1 +1,1 @@
--entity point -stimulus circle
+-entity point_circle

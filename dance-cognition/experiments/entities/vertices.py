@@ -1,6 +1,6 @@
 from experiment import *
 
-class Stimulus(BaseStimulus):
+class Entity(BaseEntity):
     def get_value(self):
         vertices = self.bvh_reader.get_skeleton_vertices(self._t * self.args.bvh_speed)
         normalized_vectors = numpy.array(

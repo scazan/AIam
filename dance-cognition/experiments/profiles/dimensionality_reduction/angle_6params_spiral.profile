@@ -1,1 +1,0 @@
--entity angle_3dim_6params -stimulus spiral -n 5

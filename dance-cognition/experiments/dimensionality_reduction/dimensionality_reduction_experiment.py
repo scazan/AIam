@@ -90,7 +90,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
                                   reduction_range["explored_max"])))
 
     def _set_deviated_reduction(self):
-        random_observation = self.experiment.stimulus.get_random_value()
+        random_observation = self.experiment.entity.get_random_value()
         undeviated_reduction = self.experiment.student.transform(numpy.array([
                     random_observation]))[0]
         deviated_reduction = undeviated_reduction + self._random_deviation()
@@ -182,7 +182,7 @@ class DimensionalityReductionExperiment(Experiment):
         self._velocity_integrator = LeakyIntegrator()
 
     def run(self):
-        teacher = Teacher(self.stimulus, self.args.training_data_frame_rate)
+        teacher = Teacher(self.entity, self.args.training_data_frame_rate)
 
         if self.args.training_data_stats:
             self._training_data = load_training_data(self._training_data_path)
@@ -193,27 +193,27 @@ class DimensionalityReductionExperiment(Experiment):
             self.student = pca_class(n_components=self.args.num_components)
             self._training_data = teacher.create_training_data(self._training_duration())
             self._train_model()
-            save_model([self.student, self.entity], self._model_path)
+            save_model([self.student, self.entity.model], self._model_path)
             save_training_data(self._training_data, self._training_data_path)
 
         elif self.args.plot_velocity:
-            self.student, self.entity = load_model(self._model_path)
+            self._load_model()
             self._plot_velocity()
 
         elif self.args.analyze_components:
-            self.student, self.entity = load_model(self._model_path)
+            self._load_model()
             ComponentAnalysis(
                 pca=self.student,
-                num_output_components=len(self.stimulus.get_value()),
-                parameter_info_getter=self.stimulus.parameter_info).analyze()
+                num_output_components=len(self.entity.get_value()),
+                parameter_info_getter=self.entity.parameter_info).analyze()
 
         elif self.args.analyze_accuracy:
-            self.student, self.entity = load_model(self._model_path)
+            self._load_model()
             self._training_data = load_training_data(self._training_data_path)
             self.student.analyze_accuracy(self._training_data)
 
         else:
-            self.student, self.entity = load_model(self._model_path)
+            self._load_model()
             self._training_data = load_training_data(self._training_data_path)
             self.navigator = Navigator(map_points=self.student.normalized_observed_reductions)
             self.improviser_params = ImproviserParameters()
@@ -225,6 +225,10 @@ class DimensionalityReductionExperiment(Experiment):
                 self, self._scene_class, DimensionalityReductionToolbar, self.args)
             self.window.show()
             app.exec_()
+
+    def _load_model(self):
+        self.student, entity_model = load_model(self._model_path)
+        self.entity.model = entity_model
 
     def _train_model(self):
         if hasattr(self.entity, "probe"):
@@ -245,7 +249,7 @@ class DimensionalityReductionExperiment(Experiment):
         format = "%-5s%-20s%-8s%-8s%-8s%-8s"
         print format % ("n", "descr", "min", "max", "mean", "var")
         for n in range(len(self._training_data[0])):
-            parameter_info = self.stimulus.parameter_info(n)
+            parameter_info = self.entity.parameter_info(n)
             col = self._training_data[:,n]
             stats = ["%.2f" % v for v in [min(col), max(col), numpy.mean(col), numpy.var(col)]]
             print format % (
@@ -268,7 +272,7 @@ class DimensionalityReductionExperiment(Experiment):
         self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
 
     def _follow(self):
-        self.stimulus.proceed(self.time_increment)
+        self.entity.proceed(self.time_increment)
         self.input = self.get_adapted_stimulus_value()
         next_reduction = self.student.transform(numpy.array([self.input]))[0]
         if self.reduction is not None:
@@ -278,7 +282,7 @@ class DimensionalityReductionExperiment(Experiment):
         self.reduction = next_reduction
 
     def get_adapted_stimulus_value(self):
-        return self.entity.adapt_value_to_model(self.stimulus.get_value())
+        return self.entity.adapt_value_to_model(self.entity.get_value())
 
     def _measure_velocity(self, r1, r2):
         distance = numpy.linalg.norm(r1 - r2)
@@ -291,7 +295,7 @@ class DimensionalityReductionExperiment(Experiment):
         t = 0
         self.time_increment = 1.0 / self.args.frame_rate
         self._follow()
-        while t < self.stimulus.get_duration():
+        while t < self.entity.get_duration():
             self._follow()
             print >>f, self._velocity
             t += self.time_increment

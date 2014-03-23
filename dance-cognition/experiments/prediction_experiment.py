@@ -16,12 +16,12 @@ class PredictionExperiment(Experiment):
 
     def run(self):
         if self.args.shuffle_input:
-            self.teacher = ShufflingTeacher(self.stimulus)
+            self.teacher = ShufflingTeacher(self.entity)
         else:
-            self.teacher = LiveTeacher(self.stimulus)
+            self.teacher = LiveTeacher(self.entity)
 
         if self.args.train:
-            num_parameters = len(self.stimulus.get_value())
+            num_parameters = len(self.entity.get_value())
             self.student = BackpropNet(
                 num_parameters,
                 num_parameters * 2,
@@ -49,7 +49,7 @@ class PredictionExperiment(Experiment):
             self.student.train(inp, expected_output)
         self.teacher.proceed(self.time_increment)
 
-        self.input = self.stimulus.get_value()
+        self.input = self.entity.get_value()
         self.output = self.student.process(self.input)
 
     def _train_model(self):

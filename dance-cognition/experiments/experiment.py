@@ -21,18 +21,15 @@ class BaseEntity:
     def add_parser_arguments(parser):
         pass
 
-    def __init__(self, args):
-        self.args = args
-
-    def adapt_value_to_model(self, value):
-        return value
-
-class BaseStimulus:
     def __init__(self, experiment):
         self._t = 0
         self.experiment = experiment
-        self.args = experiment.args
         self.bvh_reader = experiment.bvh_reader
+        self.args = experiment.args
+        self.model = None
+
+    def adapt_value_to_model(self, value):
+        return value
 
     def proceed(self, time_increment):
         self._t += time_increment
@@ -267,7 +264,6 @@ class Experiment:
     def add_parser_arguments(parser):
         parser.add_argument("-profile", "-p")
         parser.add_argument("-entity", type=str)
-        parser.add_argument("-stimulus", default="Stimulus")
         parser.add_argument("-train", action="store_true")
         parser.add_argument("-training-duration", type=float)
         parser.add_argument("-training-data-frame-rate", type=int, default=50)
@@ -310,20 +306,18 @@ class Experiment:
             self.bvh_reader = None
         self.input = None
         self.output = None
-        self.entity = entity_class(args)
+        self.entity = entity_class(self)
         self._scene_class = entity_module.Scene
-        stimulus_class = getattr(entity_module, args.stimulus)
-        self.stimulus = stimulus_class(self)
 
     def _training_duration(self):
         if self.args.training_duration:
             return self.args.training_duration
-        elif hasattr(self.stimulus, "get_duration"):
-            return self.stimulus.get_duration()
+        elif hasattr(self.entity, "get_duration"):
+            return self.entity.get_duration()
         else:
             raise Exception(
                 "training duration specified in neither arguments nor the %s class" % \
-                    self.stimulus.__class__.__name__)
+                    self.entity.__class__.__name__)
 
 
 class Parameter:

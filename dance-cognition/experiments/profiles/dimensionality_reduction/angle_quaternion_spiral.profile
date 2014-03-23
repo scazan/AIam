@@ -1,2 +1,1 @@
--entity angle_3dim_quaternion -stimulus spiral -n 3
-
+-entity angle_3dim_quaternion_spiral -n 3

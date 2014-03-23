@@ -2,41 +2,24 @@ from experiment import *
 from transformations import quaternion_from_euler, euler_from_quaternion
 from quaternions import *
 
-class Entity(BaseEntity):
+class QuaternionModel:
+    mean_quaternion = None
+
+class QuaternionEntity(BaseEntity):
     @staticmethod
     def add_parser_arguments(parser):
         parser.add_argument("--hemispherize", action="store_true")
 
     def probe(self, observations):
         if self.args.hemispherize:
-            self._mean_quaternion = find_mean_quaternion(observations)
+            self.model = QuaternionModel()
+            self.model.mean_quaternion = find_mean_quaternion(observations)
 
     def adapt_value_to_model(self, quaternion):
         if self.args.hemispherize:
-            return hemispherize(quaternion, self._mean_quaternion)
+            return hemispherize(quaternion, self.model.mean_quaternion)
         else:
             return quaternion
-
-class joint(BaseStimulus):
-    def get_value(self):
-        joint = self.bvh_reader.get_joint(
-            self.args.joint, self._t * self.args.bvh_speed)
-        return quaternion_from_euler(
-            *joint.rotation.angles,
-             axes=joint.rotation.axes)
-
-    def get_duration(self):
-        return self.bvh_reader.get_duration() / self.args.bvh_speed
-
-class spiral(BaseStimulus):
-    def get_value(self):
-        x = (self._t / 1) % (2*math.pi)
-        y = (self._t / 2) % (2*math.pi)
-        z = (self._t / 4) % (2*math.pi)
-        return quaternion_from_euler(x, y, z)
-
-    def get_duration(self):
-        return 2 * math.pi * 4
 
 class Scene(BaseScene):
     def draw_input(self, inp):
