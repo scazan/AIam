@@ -45,5 +45,7 @@ class EulerToQuaternion:
         return quaternion_from_euler(*euler.angles, axes=euler.axes)
 
     @staticmethod
-    def parameters_to_rotation(quaternion, axes):
-        return euler_from_quaternion(quaternion, axes)
+    def parameters_to_rotation(non_normalized_quaternion, axes):
+        normalized_quaternion = non_normalized_quaternion / numpy.linalg.norm(
+            non_normalized_quaternion)
+        return euler_from_quaternion(normalized_quaternion, axes)
