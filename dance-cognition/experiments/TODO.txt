@@ -7,6 +7,8 @@ singular matrix exception:
   rm scenes/valencia_all.bvh.quaternion.10fps.data && python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh -training-data-frame-rate 10 -train -n 7 --translate --translation-weight 10
 
 ensure that quaternion discontinuity problem (see README) cannot appear in real cases
+  see paper recommended by MOCO reviewer
+  use exponential maps instead? (see e.g. Expressive Gait Synthesis Using PCA and Gaussian Modeling, paper119)
   work started with analyze_quaternions.py
 
 investigate whether usage of non-normalized quaternion values (in explore and improv) causes problems
