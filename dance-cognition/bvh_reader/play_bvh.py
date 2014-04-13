@@ -77,6 +77,15 @@ class BvhViewer(window.Window):
             self._y_orientation += x - self._drag_x_previous
             self._x_orientation -= y - self._drag_y_previous
 
+    def keyPressed(self, key, x, y):
+        if key == 'r':
+            self._rewind()
+        else:
+            window.Window.keyPressed(self, key, x, y)
+
+    def _rewind(self):
+        self.t = 0
+
 parser = ArgumentParser()
 window.Window.add_parser_arguments(parser)
 parser.add_argument("-bvh")
