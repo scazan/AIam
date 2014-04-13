@@ -319,6 +319,26 @@ class Experiment:
                 "training duration specified in neither arguments nor the %s class" % \
                     self.entity.__class__.__name__)
 
+class CameraMovement:
+    def __init__(self, source, target, duration=0.25):
+        self._source = source
+        self._target = target
+        self._duration = duration
+        self._t = 0
+    
+    def proceed(self, time_increment):
+        self._t += time_increment
+
+    def is_active(self):
+        return self._t < self._duration
+
+    def translation(self):
+        return self._source + (self._target - self._source) * \
+            self._envelope(self._t / self._duration)
+
+    def _envelope(self, relative_t):
+        return (math.sin((relative_t / 2 + .75) * math.pi*2) + 1) / 2
+
 
 class Parameter:
     def __init__(self, name, type=str, default=None, choices=None):

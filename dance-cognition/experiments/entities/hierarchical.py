@@ -92,6 +92,7 @@ class Scene(BaseScene):
         if self.experiment.args.friction:
             self._output_constrainer = FrictionConstrainer(BalanceDetector())
         self._camera_translation = None
+        self._camera_movement = None
 
     def draw_input(self, parameters):
         glColor3f(0, 1, 0)
@@ -103,6 +104,9 @@ class Scene(BaseScene):
         vertices = self._constrained_output_vertices(parameters)
         if self._camera_translation is None:
             self._camera_translation = -self._output_hip_position()
+        elif self._camera_movement and self._camera_movement.is_active():
+            self._camera_translation = self._camera_movement.translation()
+            self._camera_movement.proceed(self.experiment.time_increment)
         glTranslatef(*self._camera_translation)
         self._draw_vertices(vertices)
 
@@ -180,7 +184,9 @@ class Scene(BaseScene):
         glEnd()
 
     def centralize_output(self):
-        self._camera_translation = -self._output_hip_position()
+        self._camera_movement = CameraMovement(
+            source=self._camera_translation,
+            target=-self._output_hip_position())
 
     def _output_hip_position(self):
         vertices = self._constrained_output_vertices(self.experiment.output)
