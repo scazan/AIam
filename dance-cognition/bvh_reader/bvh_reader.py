@@ -1,4 +1,4 @@
-# adopted from BVHplay (http://sourceforge.
+# adopted from BVHplay (http://sourceforge.net/projects/bvhplay/)
 
 import sys
 import os
