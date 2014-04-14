@@ -65,6 +65,24 @@ class joint:
         for child in self.children:
             child.populate_edges_from_vertices_recurse(vertices, edgelist)
 
+    def Xposition(self):
+        return self.worldpos[0]
+
+    def Yposition(self):
+        return self.worldpos[1]
+
+    def Zposition(self):
+        return self.worldpos[2]
+
+    def Xrotation(self):
+        return self.angles[0]
+
+    def Yrotation(self):
+        return self.angles[1]
+
+    def Zrotation(self):
+        return self.angles[2]
+
 
 class skeleton:
     def __init__(self, hips, keyframes, num_frames=0, dt=.033333333):
@@ -114,10 +132,10 @@ class skeleton:
             rotation_channels = filter(lambda channel:
                                            channel in ["Xrotation", "Yrotation", "Zrotation"],
                                        joint.channels)
-            angles = [radians(keyframe_dict[channel]) for channel in rotation_channels]
+            joint.angles = [radians(keyframe_dict[channel]) for channel in rotation_channels]
             axes = "r" + "".join([CHANNEL_TO_AXIS[channel] for channel in rotation_channels])
-            joint.rotation = Euler(angles, axes)
-            rotation_matrix = euler_matrix(*angles, axes=axes)
+            joint.rotation = Euler(joint.angles, axes)
+            rotation_matrix = euler_matrix(*joint.angles, axes=axes)
         else:
             rotate = False
             joint.rotation = None

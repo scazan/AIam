@@ -110,6 +110,9 @@ class Scene(BaseScene):
         glTranslatef(*self._camera_translation)
         self._draw_vertices(vertices)
 
+    def parameters_to_hips(self, parameters):
+        return self._parameters_to_joint(parameters)
+
     def _constrained_output_vertices(self, parameters):
         vertices = self._parameters_to_vertices(parameters)
         if self.experiment.args.friction:
@@ -156,9 +159,10 @@ class Scene(BaseScene):
                 parameter_index:parameter_index+
                 self.experiment.entity.rotation_parametrization.num_parameters]
             parameter_index += self.experiment.entity.rotation_parametrization.num_parameters
-            rotation_angles = self.experiment.entity.rotation_parametrization.parameters_to_rotation(
+            radians = self.experiment.entity.rotation_parametrization.parameters_to_rotation(
                 rotation_parameters, joint.rotation.axes)
-            rotation_matrix = euler_matrix(*rotation_angles, axes=joint.rotation.axes)
+            joint.angles = [math.degrees(r) for r in radians] # possible optimization: only do this when exporting
+            rotation_matrix = euler_matrix(*radians, axes=joint.rotation.axes)
 
             trtr = dot(localtoworld, rotation_matrix)
         else:

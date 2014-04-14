@@ -11,6 +11,7 @@ import math
 import numpy
 from storage import *
 from bvh_reader import bvh_reader as bvh_reader_module
+from bvh_writer import BvhWriter
 from stopwatch import Stopwatch
 import imp
 
@@ -43,6 +44,7 @@ class BaseScene(QtOpenGL.QGLWidget):
         self.experiment = experiment
         self.bvh_reader = experiment.bvh_reader
         self.args = args
+        self._exporting = False
         QtOpenGL.QGLWidget.__init__(self, parent)
 
     def render(self):
@@ -50,6 +52,8 @@ class BaseScene(QtOpenGL.QGLWidget):
         glScale(self.args.zoom, self.args.zoom, self.args.zoom)
         self._draw_io(self.experiment.input, self.draw_input, self.args.input_y_offset)
         self._draw_io(self.experiment.output, self.draw_output, self.args.output_y_offset)
+        if self._exporting:
+            self._export_output()
 
     def _draw_io(self, value, rendering_method, y_offset):
         glPushMatrix()
@@ -59,6 +63,33 @@ class BaseScene(QtOpenGL.QGLWidget):
         if value is not None:
             rendering_method(value)
         glPopMatrix()
+
+    def start_export(self):
+        print "exporting"
+        self._exporting = True
+
+    def stop_export(self):
+        export_path = "export.bvh"
+        print "saving export to %s" % export_path
+        self.experiment.bvh_writer.write(export_path)
+        self._exporting = False
+
+    def _export_output(self):
+        if self.experiment.output is not None:
+            hips = self.parameters_to_hips(self.experiment.output)
+            frame = self._joint_to_bvh_frame(hips)
+            self.experiment.bvh_writer.add_frame(frame)
+
+    def _joint_to_bvh_frame(self, joint):
+        result = []
+        for channel in joint.channels:
+            result.append(self._bvh_channel_data(joint, channel))
+        for child in joint.children:
+            result += self._joint_to_bvh_frame(child)
+        return result
+
+    def _bvh_channel_data(self, joint, channel):
+        return getattr(joint, channel)()
 
     def initializeGL(self):
         glClearColor(1.0, 1.0, 1.0, 0.0)
@@ -234,12 +265,35 @@ class MainWindow(QtGui.QWidget):
         self._layout.setMenuBar(menu_bar)
         self._menu = menu_bar.addMenu("Main")
         self._add_centralize_action()
+        self._add_export_actions()
 
     def _add_centralize_action(self):
         action = QtGui.QAction('&Centralize output', self)
         action.setShortcut('Ctrl+R')
         action.triggered.connect(self._scene.centralize_output)
         self._menu.addAction(action)
+
+    def _add_export_actions(self):
+        self._start_export_action = QtGui.QAction('&Export output', self)
+        self._start_export_action.setShortcut('Ctrl+E')
+        self._start_export_action.triggered.connect(self._start_export)
+        self._menu.addAction(self._start_export_action)
+
+        self._stop_export_action = QtGui.QAction('&Stop export', self)
+        self._stop_export_action.setShortcut('Ctrl+E')
+        self._stop_export_action.triggered.connect(self._stop_export)
+        self._stop_export_action.setEnabled(False)
+        self._menu.addAction(self._stop_export_action)
+
+    def _start_export(self):
+        self._start_export_action.setEnabled(False)
+        self._stop_export_action.setEnabled(True)
+        self._scene.start_export()
+
+    def _stop_export(self):
+        self._stop_export_action.setEnabled(False)
+        self._start_export_action.setEnabled(True)
+        self._scene.stop_export()
 
     def _update(self):
         self.now = self.current_time()
@@ -302,6 +356,7 @@ class Experiment:
         if args.bvh:
             self.bvh_reader = bvh_reader_module.BvhReader(args.bvh)
             self.bvh_reader.read()
+            self.bvh_writer = BvhWriter(self.bvh_reader)
         else:
             self.bvh_reader = None
         self.input = None
