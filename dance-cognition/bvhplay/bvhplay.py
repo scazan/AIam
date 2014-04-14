@@ -341,23 +341,12 @@ def onSlider(value):
 
 def open_file():      # read_file file_read load_file
   global root  # Root window
-  global myskeleton
-  global skelscreenedges
-  global gridedges
-  global slidert
-  global myviewport
-  global mycamera
-  global mymenu
   global mytransport
-  global redraw_grid
-  global redraw_axes
-  global file_prefix
 
 # No, you aren't allowed to try to load a new BVH in the middle of playing
 # back the current BVH... nice try.
   mytransport.playing = 0
 
-  mycanvas = myviewport.canvas
   if file_prefix == 'NONE':
     filename = askopenfilename(title = 'Open BVH file', parent=root, \
                filetypes =[ ('BVH files', '*.bvh'), ('All files', '*')]     )
@@ -365,6 +354,22 @@ def open_file():      # read_file file_read load_file
     filename = askopenfilename(title = 'Open BVH file', parent=root, \
                initialdir = file_prefix,                             \
                filetypes =[ ('BVH files', '*.bvh'), ('All files', '*')]     )
+
+  _open_file(filename)
+
+def _open_file(filename):
+  global myskeleton
+  global skelscreenedges
+  global gridedges
+  global slidert
+  global myviewport
+  global mycamera
+  global mymenu
+  global redraw_grid
+  global redraw_axes
+  global file_prefix
+
+  mycanvas = myviewport.canvas
 
   print "filename = ",filename  # Remove this line later
   index = filename.rfind('/')  # Unix
@@ -671,6 +676,14 @@ file_prefix = 'NONE'
 # we'd erase and redraw the readout every timestep, which is a waste.
 if mymenu.readout:
     myviewport.draw_readout(mycamera)
+
+from argparse import ArgumentParser
+parser = ArgumentParser()
+parser.add_argument("filename")
+args = parser.parse_args()
+
+if args.filename:
+    _open_file(args.filename)
 
 redraw()
 mainloop()
