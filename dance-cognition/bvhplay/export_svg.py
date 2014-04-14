@@ -17,7 +17,7 @@ parser.add_argument("--stroke-width", type=float, default=1)
 args = parser.parse_args()
 
 skeleton = process_bvhfile(args.filename)
-camera = Camera(args.camera_x, args.camera_y, args.camera_z)
+camera = Camera(args.camera_x, args.camera_y, args.camera_z, cfx=20, ppdist=30)
 skelscreenedges = skeleton.make_skelscreenedges()
 output = open(args.output, "w")
 
@@ -42,6 +42,6 @@ write_svg('<svg xmlns="http://www.w3.org/2000/svg" version="1.1">')
 write_svg('<rect width="%f" height="%f" fill="white" />' % (
             args.frame_width, args.frame_height))
 
-export_frame(0)
+export_frame(1)
 
 write_svg('</svg>')
