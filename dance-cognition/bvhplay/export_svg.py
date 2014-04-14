@@ -2,6 +2,7 @@
 
 from skeleton import process_bvhfile
 from camera import Camera
+import math
 from argparse import ArgumentParser
 
 parser = ArgumentParser()
@@ -18,6 +19,7 @@ parser.add_argument("--begin", type=int)
 parser.add_argument("--end", type=int)
 parser.add_argument("--num-frames", type=int)
 parser.add_argument("--displacement", type=float, default=0)
+parser.add_argument("--min-opacity", type=float, default=0.1)
 args = parser.parse_args()
 
 skeleton = process_bvhfile(args.filename)
@@ -69,6 +71,7 @@ for n in range(num_frames):
     frame_index = begin + int(relative_frame_index * (end - begin))
     print "adding frame %s" % frame_index
     x_offset = args.displacement * n
-    export_frame(frame_index, relative_frame_index, x_offset)
+    opacity = args.min_opacity + (1 - args.min_opacity) * math.pow(relative_frame_index, 3)
+    export_frame(frame_index, opacity, x_offset)
 
 write_svg('</svg>')
