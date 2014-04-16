@@ -69,10 +69,20 @@ class BaseScene(QtOpenGL.QGLWidget):
         self._exporting = True
 
     def stop_export(self):
-        export_path = "export.bvh"
+        if not os.path.exists(self.experiment.args.export_dir):
+            os.mkdir(self.experiment.args.export_dir)
+        export_path = self._get_export_path()
         print "saving export to %s" % export_path
         self.experiment.bvh_writer.write(export_path)
         self._exporting = False
+
+    def _get_export_path(self):
+        i = 1
+        while True:
+            path = "%s/export%03d.bvh" % (self.experiment.args.export_dir, i)
+            if not os.path.exists(path):
+                return path
+            i += 1
 
     def _export_output(self):
         if self.experiment.output is not None:
@@ -329,6 +339,7 @@ class Experiment:
         parser.add_argument("-zoom", type=float, default=1.0)
         parser.add_argument("-input-y-offset", type=float, default=.0)
         parser.add_argument("-output-y-offset", type=float, default=.0)
+        parser.add_argument("-export-dir", default="export")
 
     def __init__(self, parser):
         args, _remaining_args = parser.parse_known_args()

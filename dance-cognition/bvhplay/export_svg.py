@@ -11,7 +11,7 @@ parser.add_argument("--camera-x", "-cx", type=float)
 parser.add_argument("--camera-y", "-cy", type=float)
 parser.add_argument("--camera-z", "-cz", type=float)
 parser.add_argument("--rotation", "-r", type=float)
-parser.add_argument("--output", "-o", default="export.svg")
+parser.add_argument("--output", "-o")
 parser.add_argument("--frame-width", type=float, default=100)
 parser.add_argument("--frame-height", type=float, default=100)
 parser.add_argument("--stroke-width", type=float, default=1)
@@ -22,10 +22,15 @@ parser.add_argument("--displacement", type=float, default=0)
 parser.add_argument("--min-opacity", type=float, default=0.1)
 args = parser.parse_args()
 
+if args.output:
+    output_path = args.output
+else:
+    output_path = args.filename.replace(".bvh", ".svg")
+
 skeleton = process_bvhfile(args.filename)
 camera = Camera(args.camera_x, args.camera_y, args.camera_z, cfx=20, ppdist=30)
 skelscreenedges = skeleton.make_skelscreenedges()
-output = open(args.output, "w")
+output = open(output_path, "w")
 
 def export_frame(t, opacity, x_offset):
     global args
