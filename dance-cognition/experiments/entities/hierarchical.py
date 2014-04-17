@@ -5,7 +5,7 @@ from bvh_reader.geo import *
 from numpy import array, dot
 from transformations import euler_matrix
 import random
-from physics import FrictionConstrainer, BalanceDetector
+from physics import *
 
 rotation_parametrizations = {
     "vectors": EulerTo3Vectors,
@@ -86,11 +86,16 @@ class Scene(BaseScene):
     @staticmethod
     def add_parser_arguments(parser):
         parser.add_argument("--friction", action="store_true")
+        parser.add_argument("--floor", action="store_true")
 
     def __init__(self, *args, **kwargs):
         BaseScene.__init__(self, *args, **kwargs)
         if self.experiment.args.friction:
             self._output_constrainer = FrictionConstrainer(BalanceDetector())
+        elif self.experiment.args.floor:
+            self._output_constrainer = FloorConstrainer()
+        else:
+            self._output_constrainer = None
         self._camera_translation = None
         self._camera_movement = None
 
@@ -115,7 +120,7 @@ class Scene(BaseScene):
 
     def _constrained_output_vertices(self, parameters):
         vertices = self._parameters_to_vertices(parameters)
-        if self.experiment.args.friction:
+        if self._output_constrainer:
             vertices = self._output_constrainer.constrain(vertices)
         return vertices
 

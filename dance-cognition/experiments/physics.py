@@ -1,3 +1,5 @@
+import numpy
+
 class FrictionConstrainer:
     def __init__(self, balance_detector):
         self._balance_detector = balance_detector
@@ -29,3 +31,13 @@ class BalanceDetector:
             range(len(vertices)),
             key=lambda index: vertices[index][1])
         
+class FloorConstrainer:
+    def __init__(self):
+        self._floor_y = None
+
+    def constrain(self, vertices):
+        bottom_y = min([vertex[1] for vertex in vertices])
+        if self._floor_y is None:
+            self._floor_y = bottom_y
+        offset = numpy.array([0, self._floor_y - bottom_y, 0, 0])
+        return [vertex + offset for vertex in vertices]
