@@ -235,7 +235,7 @@ class screenedge:
           y1 = self.sv1.screeny
           x2 = self.sv2.screenx
           y2 = self.sv2.screeny
-          if self.DEBUG or True:
+          if self.DEBUG:
             print "About to call create_line with (%d, %d, %d, %d)"    \
                         % (x1,y1,x2,y2)
           self.id = canvas.create_line(x1,y1,x2,y2, fill=self.color, \
