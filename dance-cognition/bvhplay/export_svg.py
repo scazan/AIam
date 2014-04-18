@@ -20,6 +20,7 @@ parser.add_argument("--end", type=int)
 parser.add_argument("--num-frames", type=int)
 parser.add_argument("--displacement", type=float, default=0)
 parser.add_argument("--min-opacity", type=float, default=0.1)
+parser.add_argument("--constrain-floor", action="store_true")
 args = parser.parse_args()
 
 if args.output:
@@ -33,8 +34,22 @@ skelscreenedges = skeleton.make_skelscreenedges()
 output = open(output_path, "w")
 
 def export_frame(t, opacity, x_offset):
-    global args
+    global args, floor_y
+
     skeleton.populate_skelscreenedges(skelscreenedges, t)
+
+    if args.constrain_floor:
+        frame_bottom_y = min([
+                min(screenedge.sv1.tr[1], screenedge.sv2.tr[1])
+                for screenedge in skelscreenedges])
+        if floor_y is None:
+            floor_y = frame_bottom_y
+        y_offset = floor_y - frame_bottom_y
+
+        for screenedge in skelscreenedges:
+            screenedge.sv1.tr[1] += y_offset
+            screenedge.sv2.tr[1] += y_offset
+
     for screenedge in skelscreenedges:
         screenedge.worldtocam(camera)
         screenedge.camtoscreen(camera, args.frame_width, args.frame_height)
@@ -71,12 +86,21 @@ write_svg('<svg xmlns="http://www.w3.org/2000/svg" version="1.1">')
 write_svg('<rect width="%f" height="%f" fill="white" />' % (
             args.frame_width + args.displacement * num_frames, args.frame_height))
 
+if args.constrain_floor:
+    floor_y = None
+
+def opacity(n, relative_frame_index):
+    return args.min_opacity + (1 - args.min_opacity) * math.pow(relative_frame_index, 3)
+    # if (n-2) % 5 == 0:
+    #     return 1
+    # else:
+    #     return args.min_opacity
+
 for n in range(num_frames):
     relative_frame_index = float(n) / num_frames
     frame_index = begin + int(relative_frame_index * (end - begin))
     print "adding frame %s" % frame_index
     x_offset = args.displacement * n
-    opacity = args.min_opacity + (1 - args.min_opacity) * math.pow(relative_frame_index, 3)
-    export_frame(frame_index, opacity, x_offset)
+    export_frame(frame_index, opacity(n, relative_frame_index), x_offset)
 
 write_svg('</svg>')
