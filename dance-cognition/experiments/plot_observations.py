@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 # gnuplot example for 3 components:
-# splot "observations.dat" with points pointsize 0.1
+# set palette gray
+# splot "observations.dat" with points pointsize 0.4 pointtype 7 palette
 
 # export to EPS:
 # set terminal postscript eps color
@@ -9,13 +10,15 @@
 # replot
 
 from argparse import ArgumentParser
-from model import load_model
+from storage import load_model
 
 parser = ArgumentParser()
 parser.add_argument("model")
-parser.add_argument("--num-components", "-n", type=int, default=3)
+parser.add_argument("--output", "-o", default="observations.dat")
 args = parser.parse_args()
-model = load_model(args.model)
+model = load_model(args.model)[0]
 
+out = open(args.output, "w")
 for observation in model.normalized_observed_reductions:
-    print " ".join([str(value) for value in observation[:args.num_components]])
+    print >>out, " ".join([str(value) for value in observation])
+out.close()
