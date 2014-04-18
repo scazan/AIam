@@ -280,8 +280,33 @@ class MainWindow(QtGui.QWidget):
         menu_bar = QtGui.QMenuBar()
         self._layout.setMenuBar(menu_bar)
         self._menu = menu_bar.addMenu("Main")
+        self._add_start_action()
+        self._add_stop_action()
         self._add_centralize_action()
         self._add_export_actions()
+
+    def _add_start_action(self):
+        self._start_action = QtGui.QAction('&Start', self)
+        self._start_action.setShortcut(' ')
+        self._start_action.triggered.connect(self._start)
+        self._start_action.setEnabled(False)
+        self._menu.addAction(self._start_action)
+
+    def _add_stop_action(self):
+        self._stop_action = QtGui.QAction('&Stop', self)
+        self._stop_action.setShortcut(' ')
+        self._stop_action.triggered.connect(self._stop)
+        self._menu.addAction(self._stop_action)
+
+    def _start(self):
+        self._start_action.setEnabled(False)
+        self._stop_action.setEnabled(True)
+        self.experiment.start()
+
+    def _stop(self):
+        self._stop_action.setEnabled(False)
+        self._start_action.setEnabled(True)
+        self.experiment.stop()
 
     def _add_centralize_action(self):
         action = QtGui.QAction('&Centralize output', self)
@@ -316,8 +341,9 @@ class MainWindow(QtGui.QWidget):
         if self._frame_count == 0:
             self.stopwatch.start()
         else:
-            self.experiment.time_increment = self.now - self.previous_frame_time
-            self.experiment.proceed()
+            if self.experiment.is_running():
+                self.experiment.time_increment = self.now - self.previous_frame_time
+                self.experiment.proceed()
 
             self._scene.updateGL()
             self.toolbar.refresh()
@@ -380,6 +406,16 @@ class Experiment:
         self.output = None
         self.entity = entity_class(self)
         self._scene_class = entity_module.Scene
+        self._running = True
+
+    def start(self):
+        self._running = True
+
+    def stop(self):
+        self._running = False
+
+    def is_running(self):
+        return self._running
 
     def _training_duration(self):
         if self.args.training_duration:
