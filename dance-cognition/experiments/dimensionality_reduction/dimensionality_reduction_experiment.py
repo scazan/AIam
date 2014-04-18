@@ -45,6 +45,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self.cursor_slider.setRange(0, SLIDER_PRECISION)
         self.cursor_slider.setSingleStep(1)
         self.cursor_slider.setValue(0.0)
+        self.cursor_slider.valueChanged.connect(self.experiment.cursor_changed)
         self._follow_tab_layout.addWidget(self.cursor_slider)
 
     def _add_velocity_view(self):
@@ -271,28 +272,34 @@ class DimensionalityReductionExperiment(Experiment):
                 stats[2],
                 stats[3])
 
-    def proceed(self):
+    def update(self):
         if self.window.toolbar.tabs.currentWidget() == self.window.toolbar.explore_tab:
             self.reduction = self.window.toolbar.get_reduction()
         elif self.window.toolbar.tabs.currentWidget() == self.window.toolbar.follow_tab:
             self._follow()
+        elif self.window.toolbar.tabs.currentWidget() == self.window.toolbar.improvise_tab:
+            self.reduction = self._improviser.current_position()
+        self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
+
+    def proceed(self):
+        if self.window.toolbar.tabs.currentWidget() == self.window.toolbar.follow_tab:
+            self.entity.proceed(self.time_increment)
             if hasattr(self, "_velocity"):
                 self.window.toolbar.velocity_label.setText("%.3f" % self._velocity)
             if hasattr(self.window.toolbar, "cursor_slider"):
                 self.window.toolbar.cursor_slider.setValue(
                     self.entity.get_cursor() / self.entity.get_duration() * SLIDER_PRECISION)
-                
         elif self.window.toolbar.tabs.currentWidget() == self.window.toolbar.improvise_tab:
             self._improviser.proceed(self.time_increment)
-            self.reduction = self._improviser.current_position()
-        self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
 
         if self.args.plot_reduction:
             print >>self._reduction_plot, " ".join([
                     str(v) for v in self.student.normalize_reduction(self.reduction)])
 
+    def cursor_changed(self, value):
+        self.entity.set_cursor(float(value) / SLIDER_PRECISION * self.entity.get_duration())
+
     def _follow(self):
-        self.entity.proceed(self.time_increment)
         self.input = self.get_adapted_stimulus_value()
         next_reduction = self.student.transform(numpy.array([self.input]))[0]
         if self.reduction is not None:

@@ -41,6 +41,9 @@ class BaseEntity:
         else:
             return self._t
 
+    def set_cursor(self, t):
+        self._t = t
+
 class BaseScene(QtOpenGL.QGLWidget):
     @staticmethod
     def add_parser_arguments(parser):
@@ -273,7 +276,7 @@ class MainWindow(QtGui.QWidget):
 
         timer = QtCore.QTimer(self)
         timer.setInterval(1000. / args.frame_rate)
-        QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), self._update)
+        QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), self._refresh)
         timer.start()
 
     def _create_menu(self):
@@ -336,7 +339,7 @@ class MainWindow(QtGui.QWidget):
         self._start_export_action.setEnabled(True)
         self._scene.stop_export()
 
-    def _update(self):
+    def _refresh(self):
         self.now = self.current_time()
         if self._frame_count == 0:
             self.stopwatch.start()
@@ -345,6 +348,7 @@ class MainWindow(QtGui.QWidget):
                 self.experiment.time_increment = self.now - self.previous_frame_time
                 self.experiment.proceed()
 
+            self.experiment.update()
             self._scene.updateGL()
             self.toolbar.refresh()
 
@@ -416,6 +420,9 @@ class Experiment:
 
     def is_running(self):
         return self._running
+
+    def update(self):
+        pass
 
     def _training_duration(self):
         if self.args.training_duration:
