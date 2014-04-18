@@ -35,6 +35,12 @@ class BaseEntity:
     def proceed(self, time_increment):
         self._t += time_increment
 
+    def get_cursor(self):
+        if hasattr(self, "get_duration"):
+            return self._t % self.get_duration()
+        else:
+            return self._t
+
 class BaseScene(QtOpenGL.QGLWidget):
     @staticmethod
     def add_parser_arguments(parser):

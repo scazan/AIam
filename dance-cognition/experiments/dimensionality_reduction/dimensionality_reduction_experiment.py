@@ -33,10 +33,19 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
     def _add_follow_tab(self):
         self.follow_tab = QtGui.QWidget()
         self._follow_tab_layout = QtGui.QVBoxLayout()
+        if hasattr(self.experiment.entity, "get_duration"):
+            self._add_cursor_slider()
         self._add_velocity_view()
         self._follow_tab_layout.addStretch(1)
         self.follow_tab.setLayout(self._follow_tab_layout)
         self.tabs.addTab(self.follow_tab, "Follow")
+
+    def _add_cursor_slider(self):
+        self.cursor_slider = QtGui.QSlider(QtCore.Qt.Horizontal)
+        self.cursor_slider.setRange(0, SLIDER_PRECISION)
+        self.cursor_slider.setSingleStep(1)
+        self.cursor_slider.setValue(0.0)
+        self._follow_tab_layout.addWidget(self.cursor_slider)
 
     def _add_velocity_view(self):
         layout = QtGui.QHBoxLayout()
@@ -269,6 +278,10 @@ class DimensionalityReductionExperiment(Experiment):
             self._follow()
             if hasattr(self, "_velocity"):
                 self.window.toolbar.velocity_label.setText("%.3f" % self._velocity)
+            if hasattr(self.window.toolbar, "cursor_slider"):
+                self.window.toolbar.cursor_slider.setValue(
+                    self.entity.get_cursor() / self.entity.get_duration() * SLIDER_PRECISION)
+                
         elif self.window.toolbar.tabs.currentWidget() == self.window.toolbar.improvise_tab:
             self._improviser.proceed(self.time_increment)
             self.reduction = self._improviser.current_position()
