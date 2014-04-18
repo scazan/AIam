@@ -171,6 +171,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--improvise", action="store_true")
         parser.add_argument("--explore", action="store_true")
         parser.add_argument("--plot-velocity")
+        parser.add_argument("--plot-reduction")
         parser.add_argument("--analyze-components", action="store_true")
         parser.add_argument("--analyze-accuracy", action="store_true")
         parser.add_argument("--training-data-stats", action="store_true")
@@ -180,6 +181,8 @@ class DimensionalityReductionExperiment(Experiment):
         Experiment.__init__(self, parser)
         self.reduction = None
         self._velocity_integrator = LeakyIntegrator()
+        if self.args.plot_reduction:
+            self._reduction_plot = open(self.args.plot_reduction, "w")
 
     def run(self):
         teacher = Teacher(self.entity, self.args.training_data_frame_rate)
@@ -270,6 +273,10 @@ class DimensionalityReductionExperiment(Experiment):
             self._improviser.proceed(self.time_increment)
             self.reduction = self._improviser.current_position()
         self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
+
+        if self.args.plot_reduction:
+            print >>self._reduction_plot, " ".join([
+                    str(v) for v in self.student.normalize_reduction(self.reduction)])
 
     def _follow(self):
         self.entity.proceed(self.time_increment)
