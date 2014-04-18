@@ -7,6 +7,16 @@ from leaky_integrator import LeakyIntegrator
 from navigator import Navigator, PathFollower
 import envelope as envelope_module
 
+REDUCTION_PLOT_PATH = "reduction.dat"
+
+class DimensionalityReductionMainWindow(MainWindow):
+    def __init__(self, *args, **kwargs):
+        MainWindow.__init__(self, *args, **kwargs)
+        self._add_toggleable_action(
+            '&Plot reduction', self.experiment.start_plot_reduction,
+            '&Stop plot', self.experiment.stop_plot_reduction,
+            False, 'F1')
+
 class DimensionalityReductionToolbar(ExperimentToolbar):
     def __init__(self, *args):
         ExperimentToolbar.__init__(self, *args)
@@ -181,7 +191,6 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--improvise", action="store_true")
         parser.add_argument("--explore", action="store_true")
         parser.add_argument("--plot-velocity")
-        parser.add_argument("--plot-reduction")
         parser.add_argument("--analyze-components", action="store_true")
         parser.add_argument("--analyze-accuracy", action="store_true")
         parser.add_argument("--training-data-stats", action="store_true")
@@ -191,8 +200,7 @@ class DimensionalityReductionExperiment(Experiment):
         Experiment.__init__(self, parser)
         self.reduction = None
         self._velocity_integrator = LeakyIntegrator()
-        if self.args.plot_reduction:
-            self._reduction_plot = open(self.args.plot_reduction, "w")
+        self._reduction_plot = None
 
     def run(self):
         teacher = Teacher(self.entity, self.args.training_data_frame_rate)
@@ -234,7 +242,7 @@ class DimensionalityReductionExperiment(Experiment):
 
             app = QtGui.QApplication(sys.argv)
             app.setStyleSheet(open("stylesheet.qss").read())
-            self.window = MainWindow(
+            self.window = DimensionalityReductionMainWindow(
                 self, self._scene_class, DimensionalityReductionToolbar, self.args)
             self.window.show()
             app.exec_()
@@ -292,7 +300,7 @@ class DimensionalityReductionExperiment(Experiment):
         elif self.window.toolbar.tabs.currentWidget() == self.window.toolbar.improvise_tab:
             self._improviser.proceed(self.time_increment)
 
-        if self.args.plot_reduction:
+        if self._reduction_plot:
             print >>self._reduction_plot, " ".join([
                     str(v) for v in self.student.normalize_reduction(self.reduction)])
 
@@ -327,6 +335,15 @@ class DimensionalityReductionExperiment(Experiment):
             print >>f, self._velocity
             t += self.time_increment
         f.close()
+
+    def start_plot_reduction(self):
+        self._reduction_plot = open(REDUCTION_PLOT_PATH, "w")
+        print "plotting reduction"
+
+    def stop_plot_reduction(self):
+        self._reduction_plot.close()
+        self._reduction_plot = None
+        print "saved reduction data to %s" % REDUCTION_PLOT_PATH
 
 class ImproviserParameters(Parameters):
     def __init__(self):
