@@ -53,7 +53,7 @@ class BaseScene(QtOpenGL.QGLWidget):
         self.experiment = experiment
         self.bvh_reader = experiment.bvh_reader
         self.args = args
-        self._exporting = False
+        self._exporting_output = False
         QtOpenGL.QGLWidget.__init__(self, parent)
 
     def render(self):
@@ -61,7 +61,7 @@ class BaseScene(QtOpenGL.QGLWidget):
         glScale(self.args.zoom, self.args.zoom, self.args.zoom)
         self._draw_io(self.experiment.input, self.draw_input, self.args.input_y_offset)
         self._draw_io(self.experiment.output, self.draw_output, self.args.output_y_offset)
-        if self._exporting:
+        if self._exporting_output:
             self._export_output()
 
     def _draw_io(self, value, rendering_method, y_offset):
@@ -73,17 +73,17 @@ class BaseScene(QtOpenGL.QGLWidget):
             rendering_method(value)
         glPopMatrix()
 
-    def start_export(self):
-        print "exporting"
-        self._exporting = True
+    def start_export_output(self):
+        print "exporting output"
+        self._exporting_output = True
 
-    def stop_export(self):
+    def stop_export_output(self):
         if not os.path.exists(self.experiment.args.export_dir):
             os.mkdir(self.experiment.args.export_dir)
         export_path = self._get_export_path()
         print "saving export to %s" % export_path
         self.experiment.bvh_writer.write(export_path)
-        self._exporting = False
+        self._exporting_output = False
 
     def _get_export_path(self):
         i = 1
@@ -283,33 +283,15 @@ class MainWindow(QtGui.QWidget):
         menu_bar = QtGui.QMenuBar()
         self._layout.setMenuBar(menu_bar)
         self._menu = menu_bar.addMenu("Main")
-        self._add_start_action()
-        self._add_stop_action()
+        self._add_toggleable_action(
+            "Start", self.experiment.start,
+            "Stop", self.experiment.stop,
+            True, " ")
         self._add_centralize_action()
-        self._add_export_actions()
-
-    def _add_start_action(self):
-        self._start_action = QtGui.QAction('&Start', self)
-        self._start_action.setShortcut(' ')
-        self._start_action.triggered.connect(self._start)
-        self._start_action.setEnabled(False)
-        self._menu.addAction(self._start_action)
-
-    def _add_stop_action(self):
-        self._stop_action = QtGui.QAction('&Stop', self)
-        self._stop_action.setShortcut(' ')
-        self._stop_action.triggered.connect(self._stop)
-        self._menu.addAction(self._stop_action)
-
-    def _start(self):
-        self._start_action.setEnabled(False)
-        self._stop_action.setEnabled(True)
-        self.experiment.start()
-
-    def _stop(self):
-        self._stop_action.setEnabled(False)
-        self._start_action.setEnabled(True)
-        self.experiment.stop()
+        self._add_toggleable_action(
+            '&Export output', self._scene.start_export_output,
+            '&Stop export', self._scene.stop_export_output,
+            False, 'Ctrl+E')
 
     def _add_centralize_action(self):
         action = QtGui.QAction('&Centralize output', self)
@@ -317,27 +299,31 @@ class MainWindow(QtGui.QWidget):
         action.triggered.connect(self._scene.centralize_output)
         self._menu.addAction(action)
 
-    def _add_export_actions(self):
-        self._start_export_action = QtGui.QAction('&Export output', self)
-        self._start_export_action.setShortcut('Ctrl+E')
-        self._start_export_action.triggered.connect(self._start_export)
-        self._menu.addAction(self._start_export_action)
+    def _add_toggleable_action(self,
+                               enable_title, enable_handler,
+                               disable_title, disable_handler,
+                               default, shortcut):
+        enable_action = QtGui.QAction(enable_title, self)
+        enable_action.setShortcut(shortcut)
+        enable_action.triggered.connect(lambda: self._enable(enable_handler, enable_action, disable_action))
+        enable_action.setEnabled(not default)
+        self._menu.addAction(enable_action)
 
-        self._stop_export_action = QtGui.QAction('&Stop export', self)
-        self._stop_export_action.setShortcut('Ctrl+E')
-        self._stop_export_action.triggered.connect(self._stop_export)
-        self._stop_export_action.setEnabled(False)
-        self._menu.addAction(self._stop_export_action)
+        disable_action = QtGui.QAction(disable_title, self)
+        disable_action.setShortcut(shortcut)
+        disable_action.triggered.connect(lambda: self._disable(disable_handler, enable_action, disable_action))
+        disable_action.setEnabled(default)
+        self._menu.addAction(disable_action)
 
-    def _start_export(self):
-        self._start_export_action.setEnabled(False)
-        self._stop_export_action.setEnabled(True)
-        self._scene.start_export()
+    def _enable(self, handler, enable_action, disable_action):
+        enable_action.setEnabled(False)
+        disable_action.setEnabled(True)
+        handler()
 
-    def _stop_export(self):
-        self._stop_export_action.setEnabled(False)
-        self._start_export_action.setEnabled(True)
-        self._scene.stop_export()
+    def _disable(self, handler, enable_action, disable_action):
+        disable_action.setEnabled(False)
+        enable_action.setEnabled(True)
+        handler()
 
     def _refresh(self):
         self.now = self.current_time()
