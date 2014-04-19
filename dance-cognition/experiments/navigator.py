@@ -12,41 +12,36 @@ class Navigator:
         self._nearest_neighbor_classifier = sklearn.neighbors.KNeighborsClassifier(
             n_neighbors=1, weights='uniform')
         self._nearest_neighbor_classifier.fit(map_points, map_points)
+        self._departure = None
 
-    def select_destination(self, novelty=.0, num_trials=10):
-        if novelty == .0:
-            return random.choice(self.map_points)
+    def _select_destination(self, novelty=.0):
+        while True:
+            destination = self._generate_destination(novelty)
+            if self._destination_acceptable(destination):
+                return destination
+
+    def _generate_destination(self, novelty):
+        known_destination = random.choice(self.map_points)
+        return known_destination + self._random_vector_of_magnitude(novelty)
+
+    def _random_vector_of_magnitude(self, magnitude):
+        v = self._random_vector()
+        return v / numpy.linalg.norm(v) * magnitude
+
+    def _random_vector(self):
+        return numpy.array([random.uniform(-1, 1) for n in range(self._n_dimensions)])
+
+    def _destination_acceptable(self, destination):
+        if self._departure is None:
+            return True
         else:
-            return self._choose_best_random_destination(
-                novelty, num_trials)
+            actual_distance = self._distance(self._departure, destination)
+            return actual_distance > .5 # TEMP
 
-    def _choose_best_random_destination(self, novelty,
-                                        num_trials):
-        choices = [self._select_random_point_in_map_space()
-                   for n in range(num_trials)]
-        return min(
-            choices,
-            key=lambda destination: self._score_destination(destination, novelty))
-
-    def _select_random_point_in_map_space(self):
-        return numpy.array([random.uniform(0., 1.)
-                            for n in range(self._n_dimensions)])
-
-    def _score_destination(self, destination, desired_novelty):
-        actual_novelty = self._estimate_novelty(destination)
-        return abs(actual_novelty - desired_novelty)
-
-    def _estimate_novelty(self, destination):
-        return self._distance_to_nearest_map_point(destination)
-
-    def _distance_to_nearest_map_point(self, point):
-        nearest_map_point = self._nearest_neighbor_classifier.predict(point)[0]
-        return self._distance(point, nearest_map_point)
-
-    def generate_path(self, departure, destination, num_segments, novelty):
+    def generate_path(self, departure, num_segments, novelty):
         self._departure = departure
-        self._destination = destination
         self._num_segments = num_segments
+        self._destination = self._select_destination(novelty)
         self._segments = [departure]
         for n in range(num_segments-1):
             self._add_path_segment(n, novelty)

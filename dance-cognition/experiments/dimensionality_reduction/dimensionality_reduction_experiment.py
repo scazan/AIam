@@ -371,7 +371,6 @@ class Improviser:
     def _generate_path(self):
         return self.experiment.navigator.generate_path(
             departure=self._departure(),
-            destination=self._select_destination(),
             num_segments=self.params.num_segments,
             novelty=self.params.novelty)
 
@@ -382,9 +381,6 @@ class Improviser:
         else:
             unnormalized_departure = self.experiment.reduction
         return self.experiment.student.normalize_reduction(unnormalized_departure)
-
-    def _select_destination(self):
-        return self.experiment.navigator.select_destination(novelty=self.params.novelty)
 
     def _interpolate_path(self, path_segments):
         return self.experiment.navigator.interpolate_path(

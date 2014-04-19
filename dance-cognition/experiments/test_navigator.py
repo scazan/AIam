@@ -13,6 +13,7 @@ import envelope
 from sklearn.datasets import make_classification
 from stopwatch import Stopwatch
 from argparse import ArgumentParser
+import random
 
 FRAME_RATE = 50
 SLIDER_PRECISION = 1000
@@ -208,25 +209,19 @@ class Experiment:
         self._navigator = Navigator(map_points=self.map_points)
 
     def generate_new_path(self):
-        departure = self._select_destination()
-        destination = self._select_destination()
-        self._generate_path(departure, destination)
+        departure = random.choice(self.map_points)
+        self._generate_path(departure)
 
     def extend_path(self):
         departure = self.path[-1]
-        destination = self._select_destination()
-        self._generate_path(departure, destination)
-
-    def _select_destination(self):
-        return self._navigator.select_destination(novelty=self._novelty())
+        self._generate_path(departure)
 
     def _novelty(self):
         return float(self.window.novelty_slider.value()) / SLIDER_PRECISION
 
-    def _generate_path(self, departure, destination):
+    def _generate_path(self, departure):
         self.path_segments = self._navigator.generate_path(
-            departure=departure,
-            destination=destination,
+            departure,
             num_segments=10,
             novelty=self._novelty())
         self.path = self._navigator.interpolate_path(
