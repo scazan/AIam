@@ -12,47 +12,59 @@ class Navigator:
         self._nearest_neighbor_classifier = sklearn.neighbors.KNeighborsClassifier(
             n_neighbors=1, weights='uniform')
         self._nearest_neighbor_classifier.fit(map_points, map_points)
+        self._departure = None
 
-    def select_destination(self, novelty=.0, num_trials=10):
-        if novelty == .0:
-            return random.choice(self.map_points)
-        else:
-            return self._choose_best_random_destination(
-                novelty, num_trials)
-
-    def _choose_best_random_destination(self, novelty,
-                                        num_trials):
-        choices = [self._select_random_point_in_map_space()
-                   for n in range(num_trials)]
-        return min(
-            choices,
-            key=lambda destination: self._score_destination(destination, novelty))
-
-    def _select_random_point_in_map_space(self):
+    def random_point_in_map_space(self):
         return numpy.array([random.uniform(0., 1.)
                             for n in range(self._n_dimensions)])
 
-    def _score_destination(self, destination, desired_novelty):
-        actual_novelty = self._estimate_novelty(destination)
-        return abs(actual_novelty - desired_novelty)
+    def generate_path(self, departure, num_segments, novelty, num_trials=10, resolution=100):
+        self._departure = departure
+        self._num_segments = num_segments
+        self._novelty = novelty
+        self._resolution = resolution
+        return self._choose_best_random_path(num_trials)
 
-    def _estimate_novelty(self, destination):
-        return self._distance_to_nearest_map_point(destination)
+    def _choose_best_random_path(self, num_trials):
+        choices = [self._generate_path_to_random_destination()
+                   for n in range(num_trials)]
+        return min(
+            choices,
+            key=lambda path: self._score_path(path))
+
+    def _generate_path_to_random_destination(self):
+        self._destination = self.random_point_in_map_space()
+        self._segments = [self._departure]
+        for n in range(self._num_segments-1):
+            self._add_path_segment(n)
+        return self._interpolate_path(self._segments, self._resolution)
+
+    def _score_path(self, path):
+        novelty_score = self._score_novelty(path)
+        distance_score = self._score_distance(path)
+        return novelty_score * distance_score
+
+    def _score_novelty(self, path):
+        actual_novelty = self._estimate_novelty(path)
+        return abs(actual_novelty - self._novelty)
+
+    def _score_distance(self, path):
+        if self._departure is None:
+            return 1
+        else:
+            actual_distance = self._distance(path[-1], self._departure)
+            desired_distance = .5 # TEMP
+            return abs(actual_distance - desired_distance)
+
+    def _estimate_novelty(self, path):
+        return sum([self._distance_to_nearest_map_point(point)
+                    for point in path]) / len(path)
 
     def _distance_to_nearest_map_point(self, point):
         nearest_map_point = self._nearest_neighbor_classifier.predict(point)[0]
         return self._distance(point, nearest_map_point)
 
-    def generate_path(self, departure, destination, num_segments, novelty):
-        self._departure = departure
-        self._destination = destination
-        self._num_segments = num_segments
-        self._segments = [departure]
-        for n in range(num_segments-1):
-            self._add_path_segment(n, novelty)
-        return self._segments
-
-    def interpolate_path(self, uninterpolated_path, resolution):
+    def _interpolate_path(self, uninterpolated_path, resolution):
         uninterpolated_path_numpy = numpy.array(uninterpolated_path)
         unclamped_interpolated_path = numpy.column_stack(
                 [self._spline_interpolation_1d(uninterpolated_path_numpy[:,n], resolution)
@@ -79,14 +91,14 @@ class Navigator:
     def _distance(self, a, b):
         return numpy.linalg.norm(a - b)
 
-    def _add_path_segment(self, n, novelty):
+    def _add_path_segment(self, n):
         previous_point = self._segments[-1]
         next_point_straightly = previous_point + (self._destination - previous_point) \
             / (self._num_segments - n - 1)
         next_point_in_map = self._nearest_neighbor_classifier.predict(
             next_point_straightly)[0]
         next_point = next_point_in_map + (next_point_straightly - next_point_in_map) * \
-            min(1, novelty*0.3)
+            min(1, self._novelty*0.3)
         if not numpy.array_equal(next_point, previous_point):
             self._segments.append(next_point)
 

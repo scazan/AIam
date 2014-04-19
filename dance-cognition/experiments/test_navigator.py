@@ -24,7 +24,7 @@ class MapView(QtOpenGL.QGLWidget):
 
     def render(self):
         self._render_map()
-        self._render_path_segments()
+        # self._render_path_segments()
         self._render_path()
         for path_follower in self._experiment.path_followers:
             self._render_path_follower_position(path_follower)
@@ -208,29 +208,24 @@ class Experiment:
         self._navigator = Navigator(map_points=self.map_points)
 
     def generate_new_path(self):
-        departure = self._select_destination()
-        destination = self._select_destination()
-        self._generate_path(departure, destination)
+        departure = self._select_departure()
+        self._generate_path(departure)
 
     def extend_path(self):
         departure = self.path[-1]
-        destination = self._select_destination()
-        self._generate_path(departure, destination)
+        self._generate_path(departure)
 
-    def _select_destination(self):
-        return self._navigator.select_destination(novelty=self._novelty())
+    def _select_departure(self):
+        return self._navigator.random_point_in_map_space()
 
     def _novelty(self):
         return float(self.window.novelty_slider.value()) / SLIDER_PRECISION
 
-    def _generate_path(self, departure, destination):
-        self.path_segments = self._navigator.generate_path(
+    def _generate_path(self, departure):
+        self.path = self._navigator.generate_path(
             departure=departure,
-            destination=destination,
             num_segments=10,
-            novelty=self._novelty())
-        self.path = self._navigator.interpolate_path(
-            self.path_segments,
+            novelty=self._novelty(),
             resolution=100)
         self.path_followers = [
             PathFollower(self.path, velocity=0.1, envelope=envelope.constant_envelope()),
