@@ -53,8 +53,10 @@ class Navigator:
             return 1
         else:
             actual_distance = self._distance(path[-1], self._departure)
-            desired_distance = .5 # TEMP
-            return abs(actual_distance - desired_distance)
+            if actual_distance < .3: # TEMP
+                return 10 # TEMP: disqualify
+            else:
+                return 1
 
     def _estimate_novelty(self, path):
         return sum([self._distance_to_nearest_map_point(point)
