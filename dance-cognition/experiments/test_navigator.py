@@ -8,7 +8,7 @@ from OpenGL.GLU import *
 from PyQt4 import QtCore, QtGui, QtOpenGL
 import numpy
 from navigator import Navigator, PathFollower
-from model import load_model
+from storage import load_model
 import envelope
 from sklearn.datasets import make_classification
 from stopwatch import Stopwatch
@@ -190,7 +190,7 @@ class Experiment:
             self.map_points = self._generate_random_map_points()
 
     def _load_map_points_from_model(self):
-        model = load_model(self._args.model)
+        model = load_model(self._args.model)[0]
         return model.normalized_observed_reductions
 
     def _generate_random_map_points(self):
