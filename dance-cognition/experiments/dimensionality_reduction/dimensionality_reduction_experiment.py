@@ -361,12 +361,13 @@ class Improviser:
     def __init__(self, experiment, params):
         self.experiment = experiment
         self.params = params
+        self._generate_paths()
         self._path_follower = None
 
-    def _select_next_move(self):
-        path_segments = self._generate_path()
-        path = self._interpolate_path(path_segments)
-        self._path_follower = self._create_path_follower(path)
+    def _generate_paths(self, num_paths=10):
+        self._paths = []
+        for n in range(num_paths):
+            self._generate_path(
 
     def _generate_path(self):
         return self.experiment.navigator.generate_path(
@@ -375,12 +376,15 @@ class Improviser:
             num_segments=self.params.num_segments,
             novelty=self.params.novelty)
 
+    def _select_next_move(self):
+        path_segments = self._generate_path()
+        path = self._interpolate_path(path_segments)
+        self._path_follower = self._create_path_follower(path)
+
     def _departure(self):
         if self.experiment.reduction is None:
             unnormalized_departure = self.experiment.student.transform(numpy.array([
                         self.experiment.get_adapted_stimulus_value()]))[0]
-        else:
-            unnormalized_departure = self.experiment.reduction
         return self.experiment.student.normalize_reduction(unnormalized_departure)
 
     def _select_destination(self):
