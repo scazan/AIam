@@ -26,8 +26,10 @@ class Navigator:
                    for n in range(num_trials)]
         return min(
             choices,
-            key=lambda point: self._deviation_from_desired_distance(
-                point, novelty))
+            key=lambda destination: self._score_destination(destination, novelty))
+
+    def _score_destination(self, destination):
+        return self._deviation_from_desired_distance(destination, novelty)
 
     def _select_random_point_in_map_space(self):
         return numpy.array([random.uniform(0., 1.)
