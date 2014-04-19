@@ -28,16 +28,16 @@ class Navigator:
             choices,
             key=lambda destination: self._score_destination(destination, novelty))
 
-    def _score_destination(self, destination):
-        return self._deviation_from_desired_distance(destination, novelty)
-
     def _select_random_point_in_map_space(self):
         return numpy.array([random.uniform(0., 1.)
                             for n in range(self._n_dimensions)])
 
-    def _deviation_from_desired_distance(self, point, desired_distance_to_nearest_map_point):
-        actual_distance = self._distance_to_nearest_map_point(point)
-        return abs(actual_distance - desired_distance_to_nearest_map_point)
+    def _score_destination(self, destination, desired_novelty):
+        actual_novelty = self._estimate_novelty(destination)
+        return abs(actual_novelty - desired_novelty)
+
+    def _estimate_novelty(self, destination):
+        return self._distance_to_nearest_map_point(destination)
 
     def _distance_to_nearest_map_point(self, point):
         nearest_map_point = self._nearest_neighbor_classifier.predict(point)[0]
