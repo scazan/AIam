@@ -115,7 +115,7 @@ class MainWindow(QtGui.QWidget):
         self._experiment = experiment
         self._layout = QtGui.QVBoxLayout()
         self.setLayout(self._layout)
-        self._add_novelty_slider()
+        self._add_parameter_form()
         self._add_map_view()
         self._create_menu()
         self._generate_map_and_path()
@@ -131,12 +131,25 @@ class MainWindow(QtGui.QWidget):
         self._map_view = MapView(self, experiment)
         self._layout.addWidget(self._map_view)
 
-    def _add_novelty_slider(self):
+    def _add_parameter_form(self):
+        layout = QtGui.QFormLayout()
+        self._add_novelty_slider(layout)
+        self._add_min_distance_slider(layout)
+        self._layout.addLayout(layout)
+
+    def _add_novelty_slider(self, layout):
         self.novelty_slider = QtGui.QSlider(QtCore.Qt.Horizontal)
         self.novelty_slider.setRange(0, SLIDER_PRECISION)
         self.novelty_slider.setSingleStep(1)
         self.novelty_slider.setValue(0.0)
-        self._layout.addWidget(self.novelty_slider)
+        layout.addRow("novelty", self.novelty_slider)
+
+    def _add_min_distance_slider(self, layout):
+        self.min_distance_slider = QtGui.QSlider(QtCore.Qt.Horizontal)
+        self.min_distance_slider.setRange(0, SLIDER_PRECISION)
+        self.min_distance_slider.setSingleStep(1)
+        self.min_distance_slider.setValue(0.0)
+        layout.addRow("min_distance", self.min_distance_slider)
 
     def _create_menu(self):
         menu_bar = QtGui.QMenuBar()
@@ -219,11 +232,15 @@ class Experiment:
     def _novelty(self):
         return float(self.window.novelty_slider.value()) / SLIDER_PRECISION
 
+    def _min_distance(self):
+        return float(self.window.min_distance_slider.value()) / SLIDER_PRECISION
+
     def _generate_path(self, departure):
         self.path_segments = self._navigator.generate_path(
             departure,
             num_segments=10,
-            novelty=self._novelty())
+            novelty=self._novelty(),
+            min_distance=self._min_distance())
         self.path = self._navigator.interpolate_path(
             self.path_segments,
             resolution=100)

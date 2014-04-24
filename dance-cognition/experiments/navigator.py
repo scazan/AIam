@@ -4,6 +4,7 @@ import copy
 from scipy.interpolate import InterpolatedUnivariateSpline
 import envelope as envelope_module
 import random
+import math
 
 class Navigator:
     def __init__(self, map_points):
@@ -36,11 +37,12 @@ class Navigator:
             return True
         else:
             actual_distance = self._distance(self._departure, destination)
-            return actual_distance > .5 # TEMP
+            return actual_distance > self._min_distance
 
-    def generate_path(self, departure, num_segments, novelty):
+    def generate_path(self, departure, num_segments, novelty, min_distance):
         self._departure = departure
         self._num_segments = num_segments
+        self._min_distance = math.sqrt(self._n_dimensions) / 2 * min_distance
         self._destination = self._select_destination(novelty)
         self._segments = [departure]
         for n in range(num_segments-1):
