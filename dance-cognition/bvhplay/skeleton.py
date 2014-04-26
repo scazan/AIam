@@ -20,6 +20,9 @@
 # derived from the BVH keyframes, such as matrices or edges, it's a
 # dictionary and the values run from 1 to N.
 
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../libs")
 
 from math import radians, cos, sin
 from cgkit.bvh import BVHReader
