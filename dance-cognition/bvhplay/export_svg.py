@@ -4,6 +4,7 @@ from skeleton import process_bvhfile
 from camera import Camera
 import math
 from argparse import ArgumentParser
+import os
 
 parser = ArgumentParser()
 parser.add_argument("filename")
@@ -22,17 +23,12 @@ parser.add_argument("--displacement", type=float, default=0)
 parser.add_argument("--min-opacity", type=float, default=0.1)
 parser.add_argument("--constrain-floor", action="store_true")
 parser.add_argument("--auto-crop", action="store_true")
+parser.add_argument("--split", action="store_true")
 args = parser.parse_args()
-
-if args.output:
-    output_path = args.output
-else:
-    output_path = args.filename.replace(".bvh", ".svg")
 
 skeleton = process_bvhfile(args.filename)
 camera = Camera(args.camera_x, args.camera_y, args.camera_z, cfx=20, ppdist=30)
 skelscreenedges = skeleton.make_skelscreenedges()
-output = open(output_path, "w")
 
 def export_frame(t, opacity, x_offset):
     global args, floor_y
@@ -109,25 +105,52 @@ else:
 
 print "exporting %s frames in the range %s-%s" % (num_frames, begin, end)
 
-write_svg('<svg xmlns="http://www.w3.org/2000/svg" version="1.1">')
-write_svg('<rect width="%f" height="%f" fill="white" />' % (
+def write_header():
+    write_svg('<svg xmlns="http://www.w3.org/2000/svg" version="1.1">')
+    write_svg('<rect width="%f" height="%f" fill="white" />' % (
             args.frame_width + args.displacement * num_frames, args.frame_height))
+
+def write_footer():
+    write_svg('</svg>')
 
 if args.constrain_floor:
     floor_y = None
 
 def opacity(n, relative_frame_index):
-    return args.min_opacity + (1 - args.min_opacity) * math.pow(relative_frame_index, 3)
+    if args.split:
+        return 1
+    else:
+        return args.min_opacity + (1 - args.min_opacity) * math.pow(relative_frame_index, 3)
     # if (n-2) % 5 == 0:
     #     return 1
     # else:
     #     return args.min_opacity
+
+if not args.split:
+    if args.output:
+        output_path = args.output
+    else:
+        output_path = args.filename.replace(".bvh", ".svg")
+    output = open(output_path, "w")
+    write_header()
 
 for n in range(num_frames):
     relative_frame_index = float(n) / num_frames
     frame_index = begin + int(relative_frame_index * (end - begin))
     print "adding frame %s" % frame_index
     x_offset = args.displacement * n
+
+    if args.split:
+        output_path = "%s_%03d.svg" % (args.filename.replace(".bvh", ""), n)
+        output = open(output_path, "w")
+        write_header()
+
     export_frame(frame_index, opacity(n, relative_frame_index), x_offset)
 
-write_svg('</svg>')
+    if args.split:
+        write_footer()
+        output.close()
+
+if not args.split:
+    write_footer()
+    output.close()

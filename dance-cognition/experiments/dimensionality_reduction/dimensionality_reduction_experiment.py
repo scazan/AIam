@@ -240,7 +240,7 @@ class DimensionalityReductionExperiment(Experiment):
             self.improviser_params = ImproviserParameters()
             self.window = DimensionalityReductionMainWindow(
                 self, self._scene_class, DimensionalityReductionToolbar, self.args)
-            StillsExporter(self, self.args.export_stills).export("exported_stills.bvh")
+            StillsExporter(self, self.args.export_stills).export()
 
         else:
             self._load_model()
@@ -419,6 +419,7 @@ class StillsExporter:
     def __init__(self, experiment, stills_data_path):
         self.experiment = experiment
         self._reductions = self._load_stills_data(stills_data_path)
+        self._output_path = "%s/exported_stills.bvh" % os.path.dirname(stills_data_path)
 
     def _load_stills_data(self, path):
         reductions = []
@@ -431,11 +432,13 @@ class StillsExporter:
                     reductions.append(reduction)
         return reductions
 
-    def export(self, output_path):
+    def export(self):
+        print "exported stills to %s..." % self._output_path
         bvh_writer = BvhWriter(self.experiment.bvh_reader)
         for reduction in self._reductions:
             output = self.experiment.student.inverse_transform(numpy.array([reduction]))[0]
             hips = self.experiment.window._scene.parameters_to_hips(output)
             frame = self.experiment.window._scene._joint_to_bvh_frame(hips)
             bvh_writer.add_frame(frame)
-        bvh_writer.write(output_path)
+        bvh_writer.write(self._output_path)
+        print "ok"
