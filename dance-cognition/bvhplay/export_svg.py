@@ -21,6 +21,7 @@ parser.add_argument("--num-frames", type=int)
 parser.add_argument("--displacement", type=float, default=0)
 parser.add_argument("--min-opacity", type=float, default=0.1)
 parser.add_argument("--constrain-floor", action="store_true")
+parser.add_argument("--auto-crop", action="store_true")
 args = parser.parse_args()
 
 if args.output:
@@ -50,16 +51,42 @@ def export_frame(t, opacity, x_offset):
             screenedge.sv1.tr[1] += y_offset
             screenedge.sv2.tr[1] += y_offset
 
+    screen_vertices = []
     for screenedge in skelscreenedges:
         screenedge.worldtocam(camera)
-        screenedge.camtoscreen(camera, args.frame_width, args.frame_height)
+        screenedge.camtoscreen(camera, 1., 1.)
+        sv1 = (screenedge.sv1.screenx, screenedge.sv1.screeny)
+        sv2 = (screenedge.sv2.screenx, screenedge.sv2.screeny)
+        screen_vertices.append((sv1, sv2))
+
+    if args.auto_crop:
+        screen_vertices = auto_crop(screen_vertices)
+
+    for sv1, sv2 in screen_vertices:
+        sv1x, sv1y = sv1
+        sv2x, sv2y = sv2
         write_svg('<line x1="%s" y1="%s" x2="%s" y2="%s" style="stroke:black;fill:none;stroke-width:%f;stroke-opacity:%f" />' % (
-            screenedge.sv1.screenx + x_offset,
-            screenedge.sv1.screeny,
-            screenedge.sv2.screenx + x_offset,
-            screenedge.sv2.screeny,
+            sv1x * args.frame_width + x_offset,
+            sv1y * args.frame_height,
+            sv2x * args.frame_width + x_offset,
+            sv2y * args.frame_height,
             args.stroke_width,
             opacity))
+
+def auto_crop(vertices):
+    min_x = min([min(v1[0], v2[0]) for v1, v2 in vertices])
+    max_x = max([max(v1[0], v2[0]) for v1, v2 in vertices])
+    min_y = min([min(v1[1], v2[1]) for v1, v2 in vertices])
+    max_y = max([max(v1[1], v2[1]) for v1, v2 in vertices])
+    range_x = max_x - min_x
+    range_y = max_y - min_y
+    scale = 1. / max(range_x, range_y)
+    translate_x = .5 - range_x * scale / 2
+    translate_y = .5 - range_y * scale / 2
+    return [
+        ((scale * (v1[0] - min_x) + translate_x, scale * (v1[1] - min_y) + translate_y),
+         (scale * (v2[0] - min_x) + translate_x, scale * (v2[1] - min_y) + translate_y))
+        for v1, v2 in vertices]
 
 def write_svg(string):
     global output
