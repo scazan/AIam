@@ -194,6 +194,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--analyze-components", action="store_true")
         parser.add_argument("--analyze-accuracy", action="store_true")
         parser.add_argument("--training-data-stats", action="store_true")
+        parser.add_argument("--export-stills")
 
     def __init__(self, parser):
         self.profiles_dir = "profiles/dimensionality_reduction"
@@ -232,6 +233,14 @@ class DimensionalityReductionExperiment(Experiment):
             self._load_model()
             self._training_data = load_training_data(self._training_data_path)
             self.student.analyze_accuracy(self._training_data)
+
+        elif self.args.export_stills:
+            self._load_model()
+            app = QtGui.QApplication(sys.argv)
+            self.improviser_params = ImproviserParameters()
+            self.window = DimensionalityReductionMainWindow(
+                self, self._scene_class, DimensionalityReductionToolbar, self.args)
+            StillsExporter(self, self.args.export_stills).export("exported_stills.bvh")
 
         else:
             self._load_model()
@@ -405,3 +414,28 @@ class Improviser:
     def current_position(self):
         normalized_position = self._path_follower.current_position()
         return self.experiment.student.unnormalize_reduction(normalized_position)
+
+class StillsExporter:
+    def __init__(self, experiment, stills_data_path):
+        self.experiment = experiment
+        self._reductions = self._load_stills_data(stills_data_path)
+
+    def _load_stills_data(self, path):
+        reductions = []
+        for line in open(path, "r"):
+            if len(line) > 1 and not line.startswith("#"):
+                strings = line.split(" ")
+                if len(strings) > 0:
+                    normalized_reduction = map(float, strings)
+                    reduction = self.experiment.student.unnormalize_reduction(normalized_reduction)
+                    reductions.append(reduction)
+        return reductions
+
+    def export(self, output_path):
+        bvh_writer = BvhWriter(self.experiment.bvh_reader)
+        for reduction in self._reductions:
+            output = self.experiment.student.inverse_transform(numpy.array([reduction]))[0]
+            hips = self.experiment.window._scene.parameters_to_hips(output)
+            frame = self.experiment.window._scene._joint_to_bvh_frame(hips)
+            bvh_writer.add_frame(frame)
+        bvh_writer.write(output_path)
