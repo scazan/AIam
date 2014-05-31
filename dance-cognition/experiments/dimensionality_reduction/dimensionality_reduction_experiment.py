@@ -419,7 +419,7 @@ class StillsExporter:
     def __init__(self, experiment, stills_data_path):
         self.experiment = experiment
         self._reductions = self._load_stills_data(stills_data_path)
-        self._output_path = "%s/exported_stills.bvh" % os.path.dirname(stills_data_path)
+        self._output_path = "%s.bvh" % stills_data_path.replace(".dat", "")
 
     def _load_stills_data(self, path):
         reductions = []
