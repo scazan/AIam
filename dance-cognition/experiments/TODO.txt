@@ -1,5 +1,3 @@
-eliminate "hovering" (moving up and down)
-
 deal with avatar moving out of frame
 
 2d/3d map visualization during improv (possibly with path)

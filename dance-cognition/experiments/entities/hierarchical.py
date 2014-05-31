@@ -90,12 +90,11 @@ class Scene(BaseScene):
 
     def __init__(self, *args, **kwargs):
         BaseScene.__init__(self, *args, **kwargs)
+        self._output_constrainers = []
         if self.experiment.args.friction:
-            self._output_constrainer = FrictionConstrainer(BalanceDetector())
-        elif self.experiment.args.floor:
-            self._output_constrainer = FloorConstrainer()
-        else:
-            self._output_constrainer = None
+            self._output_constrainers.append(FrictionConstrainer(BalanceDetector()))
+        if self.experiment.args.floor:
+            self._output_constrainers.append(FloorConstrainer())
         self._camera_translation = None
         self._camera_movement = None
 
@@ -120,8 +119,8 @@ class Scene(BaseScene):
 
     def _constrained_output_vertices(self, parameters):
         vertices = self._parameters_to_vertices(parameters)
-        if self._output_constrainer:
-            vertices = self._output_constrainer.constrain(vertices)
+        for constrainer in self._output_constrainers:
+            vertices = constrainer.constrain(vertices)
         return vertices
 
     def _parameters_to_vertices(self, parameters):
