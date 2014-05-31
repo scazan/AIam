@@ -180,7 +180,10 @@ class BaseScene(QtOpenGL.QGLWidget):
 
         glRotatef(self._camera_x_orientation, 1.0, 0.0, 0.0)
         glRotatef(self._camera_y_orientation, 0.0, 1.0, 0.0)
-        glTranslatef(*self._camera_position)
+        glTranslatef(*(self.camera_translation() + self._camera_position))
+
+    def camera_translation(self):
+        return numpy.zeros(3)
 
     def sizeHint(self):
         return QtCore.QSize(600, 640)

@@ -98,6 +98,12 @@ class Scene(BaseScene):
         self._camera_translation = None
         self._camera_movement = None
 
+    def camera_translation(self):
+        if self._camera_translation is not None:
+            return self._camera_translation
+        else:
+            return numpy.zeros(3)
+
     def draw_input(self, parameters):
         glColor3f(0, 1, 0)
         vertices = self._parameters_to_vertices(parameters)
@@ -111,7 +117,6 @@ class Scene(BaseScene):
         elif self._camera_movement and self._camera_movement.is_active():
             self._camera_translation = self._camera_movement.translation()
             self._camera_movement.proceed(self.experiment.time_increment)
-        glTranslatef(*self._camera_translation)
         self._draw_vertices(vertices)
 
     def parameters_to_hips(self, parameters):
@@ -199,4 +204,4 @@ class Scene(BaseScene):
     def _output_hip_position(self):
         vertices = self._constrained_output_vertices(self.experiment.output)
         hip_vertex = self.bvh_reader.normalize_vector(vertices[0])
-        return numpy.array([hip_vertex[0], hip_vertex[1], hip_vertex[2]])
+        return numpy.array([hip_vertex[0], 0, hip_vertex[2]])
