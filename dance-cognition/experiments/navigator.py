@@ -2,7 +2,7 @@ import sklearn.neighbors
 import numpy
 import copy
 from scipy.interpolate import InterpolatedUnivariateSpline
-import envelope as envelope_module
+import dynamics as dynamics_module
 import random
 import math
 
@@ -89,15 +89,15 @@ class Navigator:
 
 
 class PathFollower:
-    def __init__(self, path, velocity, envelope):
+    def __init__(self, path, velocity, dynamics):
         self._path = path
         self._desired_average_velocity = velocity
         self._velocity_correction = 1.
-        if envelope.__class__ != envelope_module.constant_envelope():
+        if dynamics.__class__ != dynamics_module.constant_dynamics():
             self._velocity_correction = \
-                self._estimate_duration(envelope_module.constant_envelope()) / \
-                self._estimate_duration(envelope)
-        self._velocity_envelope = envelope
+                self._estimate_duration(dynamics_module.constant_dynamics()) / \
+                self._estimate_duration(dynamics)
+        self._dynamics = dynamics
         self._restart()
 
     def _restart(self):
@@ -105,8 +105,8 @@ class PathFollower:
         self._remaining_path = copy.copy(self._path)
         self._activate_next_path_strip()
 
-    def _estimate_duration(self, velocity_envelope):
-        self._velocity_envelope = velocity_envelope
+    def _estimate_duration(self, dynamics):
+        self._dynamics = dynamics
         self._restart()
         duration = 0.
         while not self.reached_destination():
@@ -149,7 +149,7 @@ class PathFollower:
         return numpy.linalg.norm(self._current_strip_destination - self._current_strip_departure)
 
     def _current_strip_velocity(self):
-        return self._velocity_envelope.envelope((self._relative_cursor())) \
+        return self._dynamics.velocity((self._relative_cursor())) \
             * self._desired_average_velocity \
             / self._velocity_correction
 

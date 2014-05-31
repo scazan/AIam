@@ -9,7 +9,7 @@ from PyQt4 import QtCore, QtGui, QtOpenGL
 import numpy
 from navigator import Navigator, PathFollower
 from storage import load_model
-import envelope
+import dynamics
 from sklearn.datasets import make_classification
 from stopwatch import Stopwatch
 from argparse import ArgumentParser
@@ -245,8 +245,8 @@ class Experiment:
             self.path_segments,
             resolution=100)
         self.path_followers = [
-            PathFollower(self.path, velocity=0.1, envelope=envelope.constant_envelope()),
-            PathFollower(self.path, velocity=0.1, envelope=envelope.sine_envelope()),
+            PathFollower(self.path, velocity=0.1, dynamics=dynamics.constant_dynamics()),
+            PathFollower(self.path, velocity=0.1, dynamics=dynamics.sine_dynamics()),
             ]
 
     def proceed(self, time_increment):

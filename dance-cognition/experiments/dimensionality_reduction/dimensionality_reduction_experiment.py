@@ -5,7 +5,7 @@ import pca
 import random
 from leaky_integrator import LeakyIntegrator
 from navigator import Navigator, PathFollower
-import envelope as envelope_module
+import dynamics as dynamics_module
 
 REDUCTION_PLOT_PATH = "reduction.dat"
 
@@ -366,7 +366,7 @@ class ImproviserParameters(Parameters):
         self.add_parameter("velocity", type=float, default=.5)
         self.add_parameter("min_relative_velocity", type=float, default=.3,
                            choices=ParameterFloatRange(.001, 1.))
-        self.add_parameter("envelope", choices=["constant", "sine", "exponential"], default="sine")
+        self.add_parameter("dynamics", choices=["constant", "sine", "exponential"], default="sine")
 
 class Improviser:
     def __init__(self, experiment, params):
@@ -400,9 +400,9 @@ class Improviser:
             resolution=self.params.resolution)
 
     def _create_path_follower(self, path):
-        envelope_class = getattr(envelope_module, "%s_envelope" % self.params.envelope)
-        envelope = envelope_class(min_relative_velocity=self.params.min_relative_velocity)
-        return PathFollower(path, self.params.velocity, envelope)
+        dynamics_class = getattr(dynamics_module, "%s_dynamics" % self.params.dynamics)
+        dynamics = dynamics_class(min_relative_velocity=self.params.min_relative_velocity)
+        return PathFollower(path, self.params.velocity, dynamics)
 
     def proceed(self, time_increment):
         if self._path_follower is None:

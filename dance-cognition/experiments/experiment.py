@@ -435,9 +435,9 @@ class CameraMovement:
 
     def translation(self):
         return self._source + (self._target - self._source) * \
-            self._envelope(self._t / self._duration)
+            self._velocity(self._t / self._duration)
 
-    def _envelope(self, relative_t):
+    def _velocity(self, relative_t):
         return (math.sin((relative_t / 2 + .75) * math.pi*2) + 1) / 2
 
 
