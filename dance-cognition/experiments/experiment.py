@@ -16,6 +16,12 @@ from stopwatch import Stopwatch
 import imp
 
 SLIDER_PRECISION = 1000
+CAMERA_POSITION = [-8, -0.5, -1.35]
+CAMERA_Y_ORIENTATION = -88
+CAMERA_X_ORIENTATION = 9
+CAMERA_Y_SPEED = .1
+CAMERA_KEY_SPEED = .5
+CAMERA_DRAG_SPEED = .5
 
 class BaseEntity:
     @staticmethod
@@ -54,13 +60,21 @@ class BaseScene(QtOpenGL.QGLWidget):
         self.bvh_reader = experiment.bvh_reader
         self.args = args
         self._exporting_output = False
+        self.floor_enabled = True
+        self._dragging_orientation = False
+        self._dragging_y_position = False
+        self._set_camera_position(CAMERA_POSITION)
+        self._set_camera_orientation(CAMERA_Y_ORIENTATION, CAMERA_X_ORIENTATION)
         QtOpenGL.QGLWidget.__init__(self, parent)
+        self.setMouseTracking(True)
 
     def render(self):
         self.configure_3d_projection(-100, 0)
         glScale(self.args.zoom, self.args.zoom, self.args.zoom)
         self._draw_io(self.experiment.input, self.draw_input, self.args.input_y_offset)
         self._draw_io(self.experiment.output, self.draw_output, self.args.output_y_offset)
+        if self.floor_enabled:
+            self._draw_floor()
         if self._exporting_output:
             self._export_output()
 
@@ -164,12 +178,9 @@ class BaseScene(QtOpenGL.QGLWidget):
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
 
-        CAMERA_POSITION = [-8, -0.5, -1.35]
-        CAMERA_Y_ORIENTATION = -88
-        CAMERA_X_ORIENTATION = 9
-        glRotatef(CAMERA_X_ORIENTATION, 1.0, 0.0, 0.0)
-        glRotatef(CAMERA_Y_ORIENTATION, 0.0, 1.0, 0.0)
-        glTranslatef(*CAMERA_POSITION)
+        glRotatef(self._camera_x_orientation, 1.0, 0.0, 0.0)
+        glRotatef(self._camera_y_orientation, 0.0, 1.0, 0.0)
+        glTranslatef(*self._camera_position)
 
     def sizeHint(self):
         return QtCore.QSize(600, 640)
@@ -177,6 +188,87 @@ class BaseScene(QtOpenGL.QGLWidget):
     def centralize_output(self):
         pass
 
+    def _draw_floor(self):
+        GRID_NUM_CELLS = 30
+        GRID_SIZE = 100
+        y = 0
+        z1 = -GRID_SIZE/2
+        z2 = GRID_SIZE/2
+        x1 = -GRID_SIZE/2
+        x2 = GRID_SIZE/2
+
+        glLineWidth(1.0)
+        glColor4f(0, 0, 0, 0.2)
+
+        for n in range(GRID_NUM_CELLS):
+            glBegin(GL_LINES)
+            x = x1 + float(n) / GRID_NUM_CELLS * GRID_SIZE
+            glVertex3f(x, y, z1)
+            glVertex3f(x, y, z2)
+            glEnd()
+
+        for n in range(GRID_NUM_CELLS):
+            glBegin(GL_LINES)
+            z = z1 + float(n) / GRID_NUM_CELLS * GRID_SIZE
+            glVertex3f(x1, y, z)
+            glVertex3f(x2, y, z)
+            glEnd()
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self._dragging_orientation = True
+        elif event.button() == QtCore.Qt.RightButton:
+            self._dragging_y_position = True
+
+    def mouseReleaseEvent(self, event):
+        self._dragging_orientation = False
+        self._dragging_y_position = False
+        self._drag_x_previous = event.x()
+        self._drag_y_previous = event.y()
+
+    def mouseMoveEvent(self, event):
+        x = event.x()
+        y = event.y()
+        if self._dragging_orientation:
+            self._set_camera_orientation(
+                self._camera_y_orientation + CAMERA_DRAG_SPEED * (x - self._drag_x_previous),
+                self._camera_x_orientation + CAMERA_DRAG_SPEED * (y - self._drag_y_previous))
+        elif self._dragging_y_position:
+            self._camera_position[1] += CAMERA_Y_SPEED * (y - self._drag_y_previous)
+        self._drag_x_previous = x
+        self._drag_y_previous = y
+
+    def print_camera_settings(self):
+        print "%s, %s, %s" % (
+            self._camera_position, self._camera_y_orientation, self._camera_x_orientation)
+
+    def _set_camera_position(self, position):
+        self._camera_position = position
+
+    def _set_camera_orientation(self, y_orientation, x_orientation):
+        self._camera_y_orientation = y_orientation
+        self._camera_x_orientation = x_orientation
+
+    def keyPressEvent(self, event):
+        r = math.radians(self._camera_y_orientation)
+        new_position = self._camera_position
+        key = event.key()
+        if key == QtCore.Qt.Key_A:
+            new_position[0] += CAMERA_KEY_SPEED * math.cos(r)
+            new_position[2] += CAMERA_KEY_SPEED * math.sin(r)
+            self._set_camera_position(new_position)
+        elif key == QtCore.Qt.Key_D:
+            new_position[0] -= CAMERA_KEY_SPEED * math.cos(r)
+            new_position[2] -= CAMERA_KEY_SPEED * math.sin(r)
+            self._set_camera_position(new_position)
+        elif key == QtCore.Qt.Key_W:
+            new_position[0] += CAMERA_KEY_SPEED * math.cos(r + math.pi/2)
+            new_position[2] += CAMERA_KEY_SPEED * math.sin(r + math.pi/2)
+            self._set_camera_position(new_position)
+        elif key == QtCore.Qt.Key_S:
+            new_position[0] -= CAMERA_KEY_SPEED * math.cos(r + math.pi/2)
+            new_position[2] -= CAMERA_KEY_SPEED * math.sin(r + math.pi/2)
+            self._set_camera_position(new_position)
 
 class ExperimentToolbar(QtGui.QWidget):
     def __init__(self, parent, experiment, args):
@@ -280,9 +372,13 @@ class MainWindow(QtGui.QWidget):
         timer.start()
 
     def _create_menu(self):
-        menu_bar = QtGui.QMenuBar()
-        self._layout.setMenuBar(menu_bar)
-        self._menu = menu_bar.addMenu("Main")
+        self._menu_bar = QtGui.QMenuBar()
+        self._layout.setMenuBar(self._menu_bar)
+        self._create_main_menu()
+        self._create_view_menu()
+
+    def _create_main_menu(self):
+        self._main_menu = self._menu_bar.addMenu("Main")
         self._add_toggleable_action(
             "Start", self.experiment.start,
             "Stop", self.experiment.stop,
@@ -292,12 +388,13 @@ class MainWindow(QtGui.QWidget):
             '&Export output', self._scene.start_export_output,
             '&Stop export', self._scene.stop_export_output,
             False, 'Ctrl+E')
+        self._add_show_camera_settings_action()
 
     def _add_centralize_action(self):
         action = QtGui.QAction('&Centralize output', self)
         action.setShortcut('Ctrl+R')
         action.triggered.connect(self._scene.centralize_output)
-        self._menu.addAction(action)
+        self._main_menu.addAction(action)
 
     def _add_toggleable_action(self,
                                enable_title, enable_handler,
@@ -307,13 +404,13 @@ class MainWindow(QtGui.QWidget):
         enable_action.setShortcut(shortcut)
         enable_action.triggered.connect(lambda: self._enable(enable_handler, enable_action, disable_action))
         enable_action.setEnabled(not default)
-        self._menu.addAction(enable_action)
+        self._main_menu.addAction(enable_action)
 
         disable_action = QtGui.QAction(disable_title, self)
         disable_action.setShortcut(shortcut)
         disable_action.triggered.connect(lambda: self._disable(disable_handler, enable_action, disable_action))
         disable_action.setEnabled(default)
-        self._menu.addAction(disable_action)
+        self._main_menu.addAction(disable_action)
 
     def _enable(self, handler, enable_action, disable_action):
         enable_action.setEnabled(False)
@@ -324,6 +421,26 @@ class MainWindow(QtGui.QWidget):
         disable_action.setEnabled(False)
         enable_action.setEnabled(True)
         handler()
+
+    def _add_show_camera_settings_action(self):
+        action = QtGui.QAction('Show camera settings', self)
+        action.triggered.connect(self._scene.print_camera_settings)
+        self._main_menu.addAction(action)
+        
+    def _create_view_menu(self):
+        self._view_menu = self._menu_bar.addMenu("View")
+        self._add_floor_action()
+
+    def _add_floor_action(self):
+        self._floor_action = QtGui.QAction("Floor", self)
+        self._floor_action.setCheckable(True)
+        self._floor_action.setChecked(self._scene.floor_enabled)
+        self._floor_action.setShortcut("f")
+        self._floor_action.toggled.connect(self._toggled_floor)
+        self._view_menu.addAction(self._floor_action)
+
+    def _toggled_floor(self):
+        self._scene.floor_enabled = self._floor_action.isChecked()
 
     def _refresh(self):
         self.now = self.current_time()
@@ -343,6 +460,10 @@ class MainWindow(QtGui.QWidget):
 
     def current_time(self):
         return self.stopwatch.get_elapsed_time()
+
+    def keyPressEvent(self, event):
+        self._scene.keyPressEvent(event)
+        QtGui.QWidget.keyPressEvent(self, event)
 
 
 class Experiment:
