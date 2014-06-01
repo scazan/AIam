@@ -1,4 +1,5 @@
 deal with avatar moving out of frame
+  restore default camera orientation when following
 
 2d/3d map visualization during improv (possibly with path)
 

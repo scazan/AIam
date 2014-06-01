@@ -371,11 +371,24 @@ class MainWindow(QtGui.QWidget):
         self.experiment.time_increment = 0
         self.stopwatch = Stopwatch()
         self._frame_count = 0
+        self._set_up_timed_refresh()
+        self._set_up_timed_output_centralization()
 
+    def _set_up_timed_refresh(self):
         timer = QtCore.QTimer(self)
-        timer.setInterval(1000. / args.frame_rate)
+        timer.setInterval(1000. / self.args.frame_rate)
         QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), self._refresh)
         timer.start()
+
+    def _set_up_timed_output_centralization(self):
+        timer = QtCore.QTimer(self)
+        timer.setInterval(1000. * 5)
+        QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), self._centralize_if_follow)
+        timer.start()
+
+    def _centralize_if_follow(self):
+        if self._follow_action.isChecked():
+            self._scene.centralize_output()
 
     def _create_menu(self):
         self._menu_bar = QtGui.QMenuBar()
@@ -389,18 +402,11 @@ class MainWindow(QtGui.QWidget):
             "Start", self.experiment.start,
             "Stop", self.experiment.stop,
             True, " ")
-        self._add_centralize_action()
         self._add_toggleable_action(
             '&Export output', self._scene.start_export_output,
             '&Stop export', self._scene.stop_export_output,
             False, 'Ctrl+E')
         self._add_show_camera_settings_action()
-
-    def _add_centralize_action(self):
-        action = QtGui.QAction('&Centralize output', self)
-        action.setShortcut('Ctrl+R')
-        action.triggered.connect(self._scene.centralize_output)
-        self._main_menu.addAction(action)
 
     def _add_toggleable_action(self,
                                enable_title, enable_handler,
@@ -435,7 +441,15 @@ class MainWindow(QtGui.QWidget):
         
     def _create_view_menu(self):
         self._view_menu = self._menu_bar.addMenu("View")
+        self._add_follow_action()
         self._add_floor_action()
+
+    def _add_follow_action(self):
+        self._follow_action = QtGui.QAction('&Follow output', self)
+        self._follow_action.setCheckable(True)
+        self._follow_action.setChecked(True)
+        self._follow_action.setShortcut('Ctrl+F')
+        self._view_menu.addAction(self._follow_action)
 
     def _add_floor_action(self):
         self._floor_action = QtGui.QAction("Floor", self)
@@ -550,7 +564,7 @@ class Experiment:
                     self.entity.__class__.__name__)
 
 class CameraMovement:
-    def __init__(self, source, target, duration=0.25):
+    def __init__(self, source, target, duration=2):
         self._source = source
         self._target = target
         self._duration = duration
