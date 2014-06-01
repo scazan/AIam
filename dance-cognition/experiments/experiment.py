@@ -16,9 +16,6 @@ from stopwatch import Stopwatch
 import imp
 
 SLIDER_PRECISION = 1000
-CAMERA_POSITION = [-8, -0.5, -1.35]
-CAMERA_Y_ORIENTATION = -88
-CAMERA_X_ORIENTATION = 9
 CAMERA_Y_SPEED = .1
 CAMERA_KEY_SPEED = .5
 CAMERA_DRAG_SPEED = .5
@@ -60,20 +57,23 @@ class BaseScene(QtOpenGL.QGLWidget):
         self.bvh_reader = experiment.bvh_reader
         self.args = args
         self._exporting_output = False
-        self.floor_enabled = True
+        self.view_floor = args.floor
         self._dragging_orientation = False
         self._dragging_y_position = False
-        self._set_camera_position(CAMERA_POSITION)
-        self._set_camera_orientation(CAMERA_Y_ORIENTATION, CAMERA_X_ORIENTATION)
+        self._set_camera_from_arg(args.camera)
         QtOpenGL.QGLWidget.__init__(self, parent)
         self.setMouseTracking(True)
 
+    def _set_camera_from_arg(self, arg):
+        pos_x, pos_y, pos_z, orient_y, orient_z = map(float, arg.split(","))
+        self._set_camera_position([pos_x, pos_y, pos_z])
+        self._set_camera_orientation(orient_y, orient_z)
+
     def render(self):
         self.configure_3d_projection(-100, 0)
-        glScale(self.args.zoom, self.args.zoom, self.args.zoom)
         self._draw_io(self.experiment.input, self.draw_input, self.args.input_y_offset)
         self._draw_io(self.experiment.output, self.draw_output, self.args.output_y_offset)
-        if self.floor_enabled:
+        if self.view_floor:
             self._draw_floor()
         if self._exporting_output:
             self._export_output()
@@ -242,8 +242,11 @@ class BaseScene(QtOpenGL.QGLWidget):
         self._drag_y_previous = y
 
     def print_camera_settings(self):
-        print "%s, %s, %s" % (
-            self._camera_position, self._camera_y_orientation, self._camera_x_orientation)
+        print "%.3f,%.3f,%.3f,%.3f,%.3f" % (
+            self._camera_position[0],
+            self._camera_position[1],
+            self._camera_position[2],
+            self._camera_y_orientation, self._camera_x_orientation)
 
     def _set_camera_position(self, position):
         self._camera_position = position
@@ -437,13 +440,13 @@ class MainWindow(QtGui.QWidget):
     def _add_floor_action(self):
         self._floor_action = QtGui.QAction("Floor", self)
         self._floor_action.setCheckable(True)
-        self._floor_action.setChecked(self._scene.floor_enabled)
+        self._floor_action.setChecked(self._scene.view_floor)
         self._floor_action.setShortcut("f")
         self._floor_action.toggled.connect(self._toggled_floor)
         self._view_menu.addAction(self._floor_action)
 
     def _toggled_floor(self):
-        self._scene.floor_enabled = self._floor_action.isChecked()
+        self._scene.view_floor = self._floor_action.isChecked()
 
     def _refresh(self):
         self.now = self.current_time()
@@ -482,10 +485,12 @@ class Experiment:
         parser.add_argument("-joint")
         parser.add_argument("-frame-rate", type=float, default=50.0)
         parser.add_argument("-unit-cube", action="store_true")
-        parser.add_argument("-zoom", type=float, default=1.0)
         parser.add_argument("-input-y-offset", type=float, default=.0)
         parser.add_argument("-output-y-offset", type=float, default=.0)
         parser.add_argument("-export-dir", default="export")
+        parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
+                            default="-5.548,-0.300,-2.939,-72.000,5.000")
+        parser.add_argument("--floor", action="store_true")
 
     def __init__(self, parser):
         args, _remaining_args = parser.parse_known_args()

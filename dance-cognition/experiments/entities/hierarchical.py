@@ -86,7 +86,6 @@ class Scene(BaseScene):
     @staticmethod
     def add_parser_arguments(parser):
         parser.add_argument("--friction", action="store_true")
-        parser.add_argument("--floor", action="store_true")
 
     def __init__(self, *args, **kwargs):
         BaseScene.__init__(self, *args, **kwargs)

@@ -15,28 +15,28 @@ python predict.py -p valencia_vertices -train -training-duration 500
 python predict.py -p valencia_vertices
 
 python predict.py -p valencia_hierarchical -train -training-duration 500
-python predict.py -p valencia_hierarchical -zoom 3
+python predict.py -p valencia_hierarchical --camera=-3.020,-0.010,-0.676,-85.500,10.500 -output-y-offset 0.5
 
 
 DIMENSIONALITY REDUCTION WITH PCA: ROTATION AS VECTORS
 
 python dim_reduce.py -p valencia_vectors_7d -train
-python dim_reduce.py -p valencia_vectors_7d -zoom 3
+python dim_reduce.py -p valencia_vectors_7d --camera=-3.020,-0.010,-0.676,-85.500,10.500 -output-y-offset 0.5
 
 
 DIMENSIONALITY REDUCTION WITH PCA: ROTATION AS QUATERNION
 
 python dim_reduce.py -p valencia_quaternion_7d -train
-python dim_reduce.py -p valencia_quaternion_7d -zoom 3
+python dim_reduce.py -p valencia_quaternion_7d --camera=-3.020,-0.010,-0.676,-85.500,10.500 -output-y-offset 0.5
 
 
 DIMENSIONALITY REDUCTION WITH PCA: INCLUDING MOVEMENT ACROSS SPACE
 
 python dim_reduce.py -p valencia_quaternion_translate_7d -train
-python dim_reduce.py -p valencia_quaternion_translate_7d -zoom 1.8
+python dim_reduce.py -p valencia_quaternion_translate_7d
 
 python dim_reduce.py -p HDM_quaternion_translate_7d -train
-python dim_reduce.py -p HDM_quaternion_translate_7d -zoom 1.4
+python dim_reduce.py -p HDM_quaternion_translate_7d
 
 
 QUATERNION EXPERIMENTS
@@ -55,7 +55,7 @@ python dim_reduce.py -p angle_quaternion_valencia_joint -unit-cube
 
 Full body real case with discontinuity problem?
 python dim_reduce.py -p HDM_quaternion_translate_2d -train
-python dim_reduce.py -p HDM_quaternion_translate_2d -zoom 1.4
+python dim_reduce.py -p HDM_quaternion_translate_2d
 
 
 
