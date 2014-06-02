@@ -53,6 +53,7 @@ class BaseScene(QtOpenGL.QGLWidget):
         pass
 
     def __init__(self, parent, experiment, args):
+        self._parent = parent
         self.experiment = experiment
         self.bvh_reader = experiment.bvh_reader
         self.args = args
@@ -67,6 +68,10 @@ class BaseScene(QtOpenGL.QGLWidget):
     def _set_camera_from_arg(self, arg):
         pos_x, pos_y, pos_z, orient_y, orient_z = map(float, arg.split(","))
         self._set_camera_position([pos_x, pos_y, pos_z])
+        self._set_camera_orientation(orient_y, orient_z)
+
+    def set_default_camera_orientation(self):
+        pos_x, pos_y, pos_z, orient_y, orient_z = map(float, self.args.camera.split(","))
         self._set_camera_orientation(orient_y, orient_z)
 
     def render(self):
@@ -218,7 +223,7 @@ class BaseScene(QtOpenGL.QGLWidget):
             glEnd()
 
     def mousePressEvent(self, event):
-        if event.button() == QtCore.Qt.LeftButton:
+        if event.button() == QtCore.Qt.LeftButton and not self._following_output():
             self._dragging_orientation = True
         elif event.button() == QtCore.Qt.RightButton:
             self._dragging_y_position = True
@@ -256,25 +261,29 @@ class BaseScene(QtOpenGL.QGLWidget):
         self._camera_x_orientation = x_orientation
 
     def keyPressEvent(self, event):
-        r = math.radians(self._camera_y_orientation)
-        new_position = self._camera_position
-        key = event.key()
-        if key == QtCore.Qt.Key_A:
-            new_position[0] += CAMERA_KEY_SPEED * math.cos(r)
-            new_position[2] += CAMERA_KEY_SPEED * math.sin(r)
-            self._set_camera_position(new_position)
-        elif key == QtCore.Qt.Key_D:
-            new_position[0] -= CAMERA_KEY_SPEED * math.cos(r)
-            new_position[2] -= CAMERA_KEY_SPEED * math.sin(r)
-            self._set_camera_position(new_position)
-        elif key == QtCore.Qt.Key_W:
-            new_position[0] += CAMERA_KEY_SPEED * math.cos(r + math.pi/2)
-            new_position[2] += CAMERA_KEY_SPEED * math.sin(r + math.pi/2)
-            self._set_camera_position(new_position)
-        elif key == QtCore.Qt.Key_S:
-            new_position[0] -= CAMERA_KEY_SPEED * math.cos(r + math.pi/2)
-            new_position[2] -= CAMERA_KEY_SPEED * math.sin(r + math.pi/2)
-            self._set_camera_position(new_position)
+        if not self._following_output():
+            r = math.radians(self._camera_y_orientation)
+            new_position = self._camera_position
+            key = event.key()
+            if key == QtCore.Qt.Key_A:
+                new_position[0] += CAMERA_KEY_SPEED * math.cos(r)
+                new_position[2] += CAMERA_KEY_SPEED * math.sin(r)
+                self._set_camera_position(new_position)
+            elif key == QtCore.Qt.Key_D:
+                new_position[0] -= CAMERA_KEY_SPEED * math.cos(r)
+                new_position[2] -= CAMERA_KEY_SPEED * math.sin(r)
+                self._set_camera_position(new_position)
+            elif key == QtCore.Qt.Key_W:
+                new_position[0] += CAMERA_KEY_SPEED * math.cos(r + math.pi/2)
+                new_position[2] += CAMERA_KEY_SPEED * math.sin(r + math.pi/2)
+                self._set_camera_position(new_position)
+            elif key == QtCore.Qt.Key_S:
+                new_position[0] -= CAMERA_KEY_SPEED * math.cos(r + math.pi/2)
+                new_position[2] -= CAMERA_KEY_SPEED * math.sin(r + math.pi/2)
+                self._set_camera_position(new_position)
+
+    def _following_output(self):
+        return self._parent.following_output()
 
 class ExperimentToolbar(QtGui.QWidget):
     def __init__(self, parent, experiment, args):
@@ -387,7 +396,7 @@ class MainWindow(QtGui.QWidget):
         timer.start()
 
     def _centralize_if_follow(self):
-        if self._follow_action.isChecked():
+        if self.following_output():
             self._scene.centralize_output()
 
     def _create_menu(self):
@@ -449,7 +458,15 @@ class MainWindow(QtGui.QWidget):
         self._follow_action.setCheckable(True)
         self._follow_action.setChecked(True)
         self._follow_action.setShortcut('Ctrl+F')
+        self._follow_action.toggled.connect(self._toggled_follow)
         self._view_menu.addAction(self._follow_action)
+
+    def _toggled_follow(self):
+        if self.following_output():
+            self._scene.set_default_camera_orientation()
+
+    def following_output(self):
+        return self._follow_action.isChecked()
 
     def _add_floor_action(self):
         self._floor_action = QtGui.QAction("Floor", self)
