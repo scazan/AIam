@@ -520,7 +520,7 @@ class Experiment:
         parser.add_argument("-output-y-offset", type=float, default=.0)
         parser.add_argument("-export-dir", default="export")
         parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
-                            default="-5.548,-0.300,-2.939,-72.000,5.000")
+                            default="-4.191,-1.000,-3.750,-58.000,18.500")
         parser.add_argument("--floor", action="store_true")
 
     def __init__(self, parser):
