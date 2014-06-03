@@ -16,9 +16,11 @@ from stopwatch import Stopwatch
 import imp
 
 SLIDER_PRECISION = 1000
+CIRCLE_PRECISION = 100
 CAMERA_Y_SPEED = .1
 CAMERA_KEY_SPEED = .5
 CAMERA_DRAG_SPEED = .5
+FOCUS_RADIUS = 1.
 
 class BaseEntity:
     @staticmethod
@@ -61,6 +63,7 @@ class BaseScene(QtOpenGL.QGLWidget):
         self.view_floor = args.floor
         self._dragging_orientation = False
         self._dragging_y_position = False
+        self._focus = None
         self._set_camera_from_arg(args.camera)
         QtOpenGL.QGLWidget.__init__(self, parent)
         self.setMouseTracking(True)
@@ -74,12 +77,30 @@ class BaseScene(QtOpenGL.QGLWidget):
         pos_x, pos_y, pos_z, orient_y, orient_z = map(float, self.args.camera.split(","))
         self._set_camera_orientation(orient_y, orient_z)
 
+    def update(self):
+        if self._focus is None:
+            self._set_focus()
+        if self._following_output() and self._output_outside_focus():
+            self.centralize_output()
+            self._set_focus()
+
+    def _set_focus(self):
+        if hasattr(self, "central_output_position"):
+            self._focus = self.central_output_position()
+
+    def _output_outside_focus(self):
+        if self._focus is not None and hasattr(self, "central_output_position"):
+            distance = numpy.linalg.norm(self.central_output_position() - self._focus)
+            return distance > FOCUS_RADIUS
+
     def render(self):
         self.configure_3d_projection(-100, 0)
         self._draw_io(self.experiment.input, self.draw_input, self.args.input_y_offset)
         self._draw_io(self.experiment.output, self.draw_output, self.args.output_y_offset)
         if self.view_floor:
             self._draw_floor()
+        if hasattr(self, "central_output_position") and self._parent.focus_action.isChecked():
+            self._draw_focus()
         if self._exporting_output:
             self._export_output()
 
@@ -221,6 +242,21 @@ class BaseScene(QtOpenGL.QGLWidget):
             glVertex3f(x1, y, z)
             glVertex3f(x2, y, z)
             glEnd()
+
+    def _draw_focus(self):
+        glLineWidth(1.0)
+        glColor4f(0, 0, 0, 0.2)
+        self._draw_circle(self._focus, FOCUS_RADIUS)
+
+    def _draw_circle(self, center, radius):
+        y = center[1]
+        glBegin(GL_LINE_STRIP)
+        for i in range(CIRCLE_PRECISION):
+            angle = math.pi * 2 * float(i) / (CIRCLE_PRECISION-1)
+            x = center[0] + radius * math.cos(angle)
+            z = center[2] + radius * math.sin(angle)
+            glVertex3f(x, y, z)
+        glEnd()
 
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton and not self._following_output():
@@ -381,23 +417,12 @@ class MainWindow(QtGui.QWidget):
         self.stopwatch = Stopwatch()
         self._frame_count = 0
         self._set_up_timed_refresh()
-        self._set_up_timed_output_centralization()
 
     def _set_up_timed_refresh(self):
         timer = QtCore.QTimer(self)
         timer.setInterval(1000. / self.args.frame_rate)
         QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), self._refresh)
         timer.start()
-
-    def _set_up_timed_output_centralization(self):
-        timer = QtCore.QTimer(self)
-        timer.setInterval(1000. * 5)
-        QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), self._centralize_if_follow)
-        timer.start()
-
-    def _centralize_if_follow(self):
-        if self.following_output():
-            self._scene.centralize_output()
 
     def _create_menu(self):
         self._menu_bar = QtGui.QMenuBar()
@@ -451,6 +476,10 @@ class MainWindow(QtGui.QWidget):
     def _create_view_menu(self):
         self._view_menu = self._menu_bar.addMenu("View")
         self._add_follow_action()
+        if hasattr(self._scene, "central_output_position"):
+            self._add_focus_action()
+        else:
+            self.focus_action = None
         self._add_floor_action()
 
     def _add_follow_action(self):
@@ -467,6 +496,12 @@ class MainWindow(QtGui.QWidget):
 
     def following_output(self):
         return self._follow_action.isChecked()
+
+    def _add_focus_action(self):
+        self.focus_action = QtGui.QAction("Assumed focus", self)
+        self.focus_action.setCheckable(True)
+        self.focus_action.setShortcut('Ctrl+G')
+        self._view_menu.addAction(self.focus_action)
 
     def _add_floor_action(self):
         self._floor_action = QtGui.QAction("Floor", self)
@@ -489,6 +524,7 @@ class MainWindow(QtGui.QWidget):
                 self.experiment.proceed()
 
             self.experiment.update()
+            self._scene.update()
             self._scene.updateGL()
             self.toolbar.refresh()
 
@@ -520,7 +556,7 @@ class Experiment:
         parser.add_argument("-output-y-offset", type=float, default=.0)
         parser.add_argument("-export-dir", default="export")
         parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
-                            default="-4.191,-1.000,-3.750,-58.000,18.500")
+                            default="-3.767,-1.400,-3.485,-55.500,18.500")
         parser.add_argument("--floor", action="store_true")
 
     def __init__(self, parser):

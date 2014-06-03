@@ -105,14 +105,14 @@ class Scene(BaseScene):
 
     def draw_input(self, parameters):
         glColor3f(0, 1, 0)
-        vertices = self._parameters_to_vertices(parameters)
+        vertices = self._parameters_to_normalized_vertices(parameters)
         self._draw_vertices(vertices)
 
     def draw_output(self, parameters):
         glColor3f(0, 0, 0)
         vertices = self._constrained_output_vertices(parameters)
         if self._camera_translation is None:
-            self._camera_translation = -self._output_hip_position()
+            self._camera_translation = -self.central_output_position()
         elif self._camera_movement and self._camera_movement.is_active():
             self._camera_translation = self._camera_movement.translation()
             self._camera_movement.proceed(self.experiment.time_increment)
@@ -122,23 +122,23 @@ class Scene(BaseScene):
         return self._parameters_to_joint(parameters)
 
     def _constrained_output_vertices(self, parameters):
-        vertices = self._parameters_to_vertices(parameters)
+        vertices = self._parameters_to_normalized_vertices(parameters)
         for constrainer in self._output_constrainers:
             vertices = constrainer.constrain(vertices)
         return vertices
 
-    def _parameters_to_vertices(self, parameters):
+    def _parameters_to_normalized_vertices(self, parameters):
         hips = self._parameters_to_joint(parameters)
         vertices = hips.get_vertices()
-        return vertices
+        normalized_vertices = [self.bvh_reader.normalize_vector(vertex)
+                               for vertex in vertices]
+        return normalized_vertices
 
     def _draw_vertices(self, vertices):
         edges = self.bvh_reader.vertices_to_edges(vertices)
         glLineWidth(2.0)
         for edge in edges:
-            vector1 = self.bvh_reader.normalize_vector(edge.v1)
-            vector2 = self.bvh_reader.normalize_vector(edge.v2)
-            self._draw_line(vector1, vector2)
+            self._draw_line(edge.v1, edge.v2)
 
     def _parameters_to_joint(self, parameters):
         any_frame = 0
@@ -198,9 +198,9 @@ class Scene(BaseScene):
     def centralize_output(self):
         self._camera_movement = CameraMovement(
             source=self._camera_translation,
-            target=-self._output_hip_position())
+            target=-self.central_output_position())
 
-    def _output_hip_position(self):
+    def central_output_position(self):
         vertices = self._constrained_output_vertices(self.experiment.output)
-        hip_vertex = self.bvh_reader.normalize_vector(vertices[0])
+        hip_vertex = vertices[0]
         return numpy.array([hip_vertex[0], 0, hip_vertex[2]])
