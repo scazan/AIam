@@ -319,7 +319,7 @@ class BaseScene(QtOpenGL.QGLWidget):
                 self._set_camera_position(new_position)
 
     def _following_output(self):
-        return self._parent.following_output()
+        return hasattr(self, "central_output_position") and self._parent.following_output()
 
 class ExperimentToolbar(QtGui.QWidget):
     def __init__(self, parent, experiment, args):
@@ -475,8 +475,8 @@ class MainWindow(QtGui.QWidget):
         
     def _create_view_menu(self):
         self._view_menu = self._menu_bar.addMenu("View")
-        self._add_follow_action()
         if hasattr(self._scene, "central_output_position"):
+            self._add_follow_action()
             self._add_focus_action()
         else:
             self.focus_action = None
