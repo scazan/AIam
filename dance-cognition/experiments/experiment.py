@@ -77,29 +77,45 @@ class BaseScene(QtOpenGL.QGLWidget):
         pos_x, pos_y, pos_z, orient_y, orient_z = map(float, self.args.camera.split(","))
         self._set_camera_orientation(orient_y, orient_z)
 
-    def update(self):
-        if self._focus is None:
-            self._set_focus()
-        if self._following_output() and self._output_outside_focus():
-            self.centralize_output()
-            self._set_focus()
+    def _update(self):
+        if self.experiment.input is None:
+            self._processed_input = None
+        else:
+            self._processed_input = self.process_input(self.experiment.input)
+
+        if self.experiment.output is None:
+            self._processed_output = None
+        else:
+            self._processed_output = self.process_output(self.experiment.output)
+            if self._focus is None:
+                self._set_focus()
+            if self._following_output() and self._output_outside_focus():
+                self.centralize_output()
+                self._set_focus()
+
+    def process_input(self, value):
+        return self.process_io(value)
+
+    def process_output(self, value):
+        return self.process_io(value)
 
     def _set_focus(self):
-        if hasattr(self, "central_output_position"):
-            self._focus = self.central_output_position()
+        self._focus = self.central_output_position(self._processed_output)
 
     def _output_outside_focus(self):
-        if self._focus is not None and hasattr(self, "central_output_position"):
-            distance = numpy.linalg.norm(self.central_output_position() - self._focus)
+        if self._focus is not None:
+            distance = numpy.linalg.norm(
+                self.central_output_position(self._processed_output) - self._focus)
             return distance > FOCUS_RADIUS
 
     def render(self):
+        self._update()
         self.configure_3d_projection(-100, 0)
-        self._draw_io(self.experiment.input, self.draw_input, self.args.input_y_offset)
-        self._draw_io(self.experiment.output, self.draw_output, self.args.output_y_offset)
+        self._draw_io(self._processed_input, self.draw_input, self.args.input_y_offset)
+        self._draw_io(self._processed_output, self.draw_output, self.args.output_y_offset)
         if self.view_floor:
             self._draw_floor()
-        if hasattr(self, "central_output_position") and self._parent.focus_action.isChecked():
+        if self._parent.focus_action.isChecked():
             self._draw_focus()
         if self._exporting_output:
             self._export_output()
@@ -319,7 +335,10 @@ class BaseScene(QtOpenGL.QGLWidget):
                 self._set_camera_position(new_position)
 
     def _following_output(self):
-        return hasattr(self, "central_output_position") and self._parent.following_output()
+        return self._parent.following_output()
+
+    def central_output_position(self, output):
+        return numpy.zeros(3)
 
 class ExperimentToolbar(QtGui.QWidget):
     def __init__(self, parent, experiment, args):
@@ -475,11 +494,8 @@ class MainWindow(QtGui.QWidget):
         
     def _create_view_menu(self):
         self._view_menu = self._menu_bar.addMenu("View")
-        if hasattr(self._scene, "central_output_position"):
-            self._add_follow_action()
-            self._add_focus_action()
-        else:
-            self.focus_action = None
+        self._add_follow_action()
+        self._add_focus_action()
         self._add_floor_action()
 
     def _add_follow_action(self):
@@ -524,7 +540,6 @@ class MainWindow(QtGui.QWidget):
                 self.experiment.proceed()
 
             self.experiment.update()
-            self._scene.update()
             self._scene.updateGL()
             self.toolbar.refresh()
 

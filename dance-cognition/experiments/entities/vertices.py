@@ -9,20 +9,22 @@ class Entity(BaseEntity):
         return normalized_vectors.flatten()
 
 class Scene(BaseScene):
+    def process_io(self, value):
+        normalized_vectors = value.reshape([self.bvh_reader.num_joints, 3])
+        vertices = [self.bvh_reader.skeleton_scale_vector(vector)
+                    for vector in normalized_vectors]
+        return vertices
+
     def draw_input(self, inp):
         glColor3f(0, 1, 0)
-        input_vectors = inp.reshape([self.bvh_reader.num_joints, 3])
-        self._draw_skeleton(input_vectors)
+        self._draw_skeleton(inp)
 
     def draw_output(self, output):
         glColor3f(0.5, 0.5, 1.0)
-        output_vectors = output.reshape([self.bvh_reader.num_joints, 3])
-        self._draw_skeleton(output_vectors)
+        self._draw_skeleton(output)
 
-    def _draw_skeleton(self, normalized_vectors):
+    def _draw_skeleton(self, vertices):
         glLineWidth(2.0)
-        vertices = [self.bvh_reader.skeleton_scale_vector(vector)
-                    for vector in normalized_vectors]
         edges = self.bvh_reader.vertices_to_edges(vertices)
         for edge in edges:
             vector1 = self.bvh_reader.normalize_vector(edge.v1)

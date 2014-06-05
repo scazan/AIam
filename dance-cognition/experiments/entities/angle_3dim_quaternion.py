@@ -22,13 +22,19 @@ class QuaternionEntity(BaseEntity):
             return quaternion
 
 class Scene(BaseScene):
+    def process_input(self, inp):
+        return inp
+
+    def process_output(self, output):
+        return self.experiment.entity.adapt_value_to_model(output)
+
     def draw_input(self, inp):
         glColor3f(0, 1, 0)
         self._draw_3dim_angle(inp)
 
     def draw_output(self, output):
         glColor3f(0.5, 0.5, 1.0)
-        self._draw_3dim_angle(self.experiment.entity.adapt_value_to_model(output))
+        self._draw_3dim_angle(output)
 
     def _draw_3dim_angle(self, quaternion):
         x, y, z = euler_from_quaternion(quaternion, "rxyz")

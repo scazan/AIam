@@ -103,19 +103,24 @@ class Scene(BaseScene):
         else:
             return numpy.zeros(3)
 
-    def draw_input(self, parameters):
+    def process_input(self, parameters):
+        return self._parameters_to_normalized_vertices(parameters)
+
+    def draw_input(self, vertices):
         glColor3f(0, 1, 0)
-        vertices = self._parameters_to_normalized_vertices(parameters)
         self._draw_vertices(vertices)
 
-    def draw_output(self, parameters):
-        glColor3f(0, 0, 0)
+    def process_output(self, parameters):
         vertices = self._constrained_output_vertices(parameters)
         if self._camera_translation is None:
-            self._camera_translation = -self.central_output_position()
+            self._camera_translation = -vertices[0]
         elif self._camera_movement and self._camera_movement.is_active():
             self._camera_translation = self._camera_movement.translation()
             self._camera_movement.proceed(self.experiment.time_increment)
+        return vertices
+
+    def draw_output(self, vertices):
+        glColor3f(0, 0, 0)
         self._draw_vertices(vertices)
 
     def parameters_to_hips(self, parameters):
@@ -200,7 +205,6 @@ class Scene(BaseScene):
             source=self._camera_translation,
             target=-self.central_output_position())
 
-    def central_output_position(self):
-        vertices = self._constrained_output_vertices(self.experiment.output)
-        hip_vertex = vertices[0]
+    def central_output_position(self, output):
+        hip_vertex = output[0]
         return numpy.array([hip_vertex[0], 0, hip_vertex[2]])
