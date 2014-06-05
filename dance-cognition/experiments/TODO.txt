@@ -8,6 +8,8 @@ fullscreen / maximized window
 
 
 
+exception when velocity in GUI is empty (or 0?)
+
 improvisation
   eliminate possible infinite loop when min_distance is high
   eliminate exception caused by path being too short (occurs now and then)
