@@ -15,19 +15,19 @@ python predict.py -p valencia_vertices -train -training-duration 500
 python predict.py -p valencia_vertices
 
 python predict.py -p valencia_hierarchical -train -training-duration 500
-python predict.py -p valencia_hierarchical --camera=-3.020,-0.010,-0.676,-85.500,10.500 -output-y-offset 0.5
+python predict.py -p valencia_hierarchical --camera=-3.020,-0.810,-0.676,-85.500,10.500 -output-y-offset 0.5
 
 
 DIMENSIONALITY REDUCTION WITH PCA: ROTATION AS VECTORS
 
 python dim_reduce.py -p valencia_vectors_7d -train
-python dim_reduce.py -p valencia_vectors_7d --camera=-3.020,-0.010,-0.676,-85.500,10.500 -output-y-offset 0.5
+python dim_reduce.py -p valencia_vectors_7d --camera=-3.020,-0.810,-0.676,-85.500,10.500 -output-y-offset 0.5
 
 
 DIMENSIONALITY REDUCTION WITH PCA: ROTATION AS QUATERNION
 
 python dim_reduce.py -p valencia_quaternion_7d -train
-python dim_reduce.py -p valencia_quaternion_7d --camera=-3.020,-0.010,-0.676,-85.500,10.500 -output-y-offset 0.5
+python dim_reduce.py -p valencia_quaternion_7d --camera=-3.020,-0.810,-0.676,-85.500,10.500 -output-y-offset 0.5
 
 
 DIMENSIONALITY REDUCTION WITH PCA: INCLUDING MOVEMENT ACROSS SPACE
