@@ -102,8 +102,8 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
 
     def _add_reduction_tabs(self):
         self._reduction_tabs = QtGui.QTabWidget()
-        self._add_reduction_sliders_tab()
         self._add_map_tab()
+        self._add_reduction_sliders_tab()
         self._layout.addWidget(self._reduction_tabs)
 
     def _add_reduction_sliders_tab(self):
@@ -181,7 +181,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
             self._sliders.append(slider)
 
     def _add_map(self):
-        self._map_widget = MapWidget(self)
+        self._map_widget = MapWidget(self, [0,2])
         self._map_widget.setFixedSize(370, 370)
 
     def refresh(self):
