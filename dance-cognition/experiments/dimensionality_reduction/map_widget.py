@@ -18,6 +18,7 @@ class MapWidget(QtOpenGL.QGLWidget):
             :,dimensions]
         self._split_into_segments(observations)
         self._reduction = None
+        self._path = None
 
     def _split_into_segments(self, observations):
         self._segments = []
@@ -35,6 +36,9 @@ class MapWidget(QtOpenGL.QGLWidget):
 
     def set_reduction(self, reduction):
         self._reduction = reduction[self._dimensions]
+
+    def set_path(self, path):
+        self._path = path[:,self._dimensions]
 
     def initializeGL(self):
         glClearColor(1.0, 1.0, 1.0, 0.0)
@@ -60,19 +64,23 @@ class MapWidget(QtOpenGL.QGLWidget):
         glOrtho(0.0, self.window_width, self.window_height, 0.0, -1.0, 1.0)
         glMatrixMode(GL_MODELVIEW)
         glTranslatef(self._margin, self._margin, 0)
-        self._render_segments()
+        self._render_observations()
+        if self._path is not None:
+            self._render_path()
         if self._reduction is not None:
             self._render_reduction()
 
-    def _render_segments(self):
+    def _render_observations(self):
         glColor4f(0, 0, 0, .1)
         glLineWidth(1.0)
-
         for segment in self._segments:
-            glBegin(GL_LINE_STRIP)
-            for x,y in segment:
-                glVertex2f(*self._vertex(x, y))
-            glEnd()
+            self._render_segment(segment)
+
+    def _render_segment(self, segment):
+        glBegin(GL_LINE_STRIP)
+        for x,y in segment:
+            glVertex2f(*self._vertex(x, y))
+        glEnd()
 
     def _render_reduction(self):
         glColor3f(0, 0, 0)
@@ -81,5 +89,10 @@ class MapWidget(QtOpenGL.QGLWidget):
         glVertex2f(*self._vertex(*self._reduction))
         glEnd()
 
+    def _render_path(self):
+        glColor4f(0, 0, 0, .3)
+        glLineWidth(2.0)
+        self._render_segment(self._path)
+        
     def _vertex(self, x, y):
         return x*self._width, y*self._height

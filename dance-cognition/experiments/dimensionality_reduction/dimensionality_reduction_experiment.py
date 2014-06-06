@@ -125,9 +125,9 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._reduction_tabs.addTab(self._map_tab, "2D map")
 
     def _add_map_widget(self):
-        self._map_widget = MapWidget(self, self._map_dimensions)
-        self._map_widget.setFixedSize(370, 370)
-        self._map_layout.addWidget(self._map_widget)
+        self.map_widget = MapWidget(self, self._map_dimensions)
+        self.map_widget.setFixedSize(370, 370)
+        self._map_layout.addWidget(self.map_widget)
 
     def _add_map_dimension_checkboxes(self):
         layout = QtGui.QHBoxLayout()
@@ -146,7 +146,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
             lambda n: self._map_dimension_checkboxes[n].checkState() == QtCore.Qt.Checked,
             range(self.experiment.student.n_components))
         if len(checked_dimensions) == 2:
-            self._map_widget.set_dimensions(checked_dimensions)
+            self.map_widget.set_dimensions(checked_dimensions)
 
     def _set_random_reduction(self):
         for n in range(self.experiment.student.n_components):
@@ -183,8 +183,8 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         if self._reduction_tabs.currentWidget() == self._reduction_sliders_tab:
             self._update_reduction_sliders(normalized_reduction)
         elif self._reduction_tabs.currentWidget() == self._map_tab:
-            self._map_widget.set_reduction(normalized_reduction)
-            self._map_widget.updateGL()
+            self.map_widget.set_reduction(normalized_reduction)
+            self.map_widget.updateGL()
 
     def _update_reduction_sliders(self, normalized_reduction):
         for n in range(self.experiment.student.n_components):
@@ -360,6 +360,7 @@ class DimensionalityReductionExperiment(Experiment):
                     self.entity.get_cursor() / self.entity.get_duration() * SLIDER_PRECISION)
         elif self.window.toolbar.tabs.currentWidget() == self.window.toolbar.improvise_tab:
             self._improviser.proceed(self.time_increment)
+            self.window.toolbar.map_widget.set_path(numpy.array(self._improviser.path()))
 
         if self._reduction_plot:
             print >>self._reduction_plot, " ".join([
@@ -424,12 +425,13 @@ class Improviser:
     def __init__(self, experiment, params):
         self.experiment = experiment
         self.params = params
+        self._path = None
         self._path_follower = None
 
     def _select_next_move(self):
         path_segments = self._generate_path()
-        path = self._interpolate_path(path_segments)
-        self._path_follower = self._create_path_follower(path)
+        self._path = self._interpolate_path(path_segments)
+        self._path_follower = self._create_path_follower(self._path)
 
     def _generate_path(self):
         return self.experiment.navigator.generate_path(
@@ -466,6 +468,9 @@ class Improviser:
     def current_position(self):
         normalized_position = self._path_follower.current_position()
         return self.experiment.student.unnormalize_reduction(normalized_position)
+
+    def path(self):
+        return self._path
 
 
 class StillsExporter:
