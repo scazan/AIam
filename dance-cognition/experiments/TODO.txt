@@ -2,6 +2,7 @@
 
 nicer looking limbs?
 
+shadow?
 
 
 exception when velocity in GUI is empty (or 0?)
