@@ -4,8 +4,6 @@ floor mesh?
 
 nicer looking limbs?
 
-fullscreen / maximized window
-
 
 
 exception when velocity in GUI is empty (or 0?)

@@ -506,9 +506,23 @@ class MainWindow(QtGui.QWidget):
         
     def _create_view_menu(self):
         self._view_menu = self._menu_bar.addMenu("View")
+        self._add_fullscreen_action()
         self._add_follow_action()
         self._add_focus_action()
         self._add_floor_action()
+
+    def _add_fullscreen_action(self):
+        self._fullscreen_action = QtGui.QAction('Fullscreen', self)
+        self._fullscreen_action.setCheckable(True)
+        self._fullscreen_action.setShortcut('Ctrl+Return')
+        self._fullscreen_action.toggled.connect(self._toggled_fullscreen)
+        self._view_menu.addAction(self._fullscreen_action)
+
+    def _toggled_fullscreen(self):
+        if self._fullscreen_action.isChecked():
+            self.showFullScreen()
+        else:
+            self.showNormal()
 
     def _add_follow_action(self):
         self._follow_action = QtGui.QAction('&Follow output', self)
