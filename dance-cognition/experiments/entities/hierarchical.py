@@ -200,10 +200,10 @@ class Scene(BaseScene):
         glVertex3f(*v2)
         glEnd()
 
-    def centralize_output(self):
+    def centralize_output(self, processed_output):
         self._camera_movement = CameraMovement(
             source=self._camera_translation,
-            target=-self.central_output_position())
+            target=-self.central_output_position(processed_output))
 
     def central_output_position(self, output):
         hip_vertex = output[0]

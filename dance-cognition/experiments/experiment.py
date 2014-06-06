@@ -90,7 +90,7 @@ class BaseScene(QtOpenGL.QGLWidget):
             if self._focus is None:
                 self._set_focus()
             if self._following_output() and self._output_outside_focus():
-                self.centralize_output()
+                self.centralize_output(self._processed_output)
                 self._set_focus()
 
     def process_input(self, value):
