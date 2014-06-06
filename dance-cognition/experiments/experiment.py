@@ -435,7 +435,7 @@ class MainWindow(QtGui.QWidget):
         self._layout.addWidget(self._scene)
 
         self.toolbar = toolbar_class(self, experiment, args)
-        self.toolbar.setFixedSize(400, 640)
+        self.toolbar.setFixedSize(400, 720)
         self._layout.addWidget(self.toolbar)
         self._layout.setAlignment(self.toolbar, QtCore.Qt.AlignTop)
 

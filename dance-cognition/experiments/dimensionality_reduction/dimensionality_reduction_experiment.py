@@ -23,7 +23,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._layout = QtGui.QVBoxLayout()
         self._add_mode_tabs()
         self._set_exploration_ranges()
-        self._add_reduction_sliders()
+        self._add_reduction_tabs()
         self.setLayout(self._layout)
 
     def _add_mode_tabs(self):
@@ -99,6 +99,24 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self.improvise_tab.setLayout(self._improvise_tab_layout)
         self.tabs.addTab(self.improvise_tab, "Improvise")
 
+    def _add_reduction_tabs(self):
+        self._reduction_tabs = QtGui.QTabWidget()
+        self._add_reduction_sliders_tab()
+        self._add_map_tab()
+        self._layout.addWidget(self._reduction_tabs)
+
+    def _add_reduction_sliders_tab(self):
+        self._reduction_sliders_tab = QtGui.QWidget()
+        self._reduction_sliders_layout = QtGui.QVBoxLayout()
+        self._add_reduction_sliders()
+        self._reduction_sliders_layout.addStretch(1)
+        self._reduction_sliders_tab.setLayout(self._reduction_sliders_layout)
+        self._reduction_tabs.addTab(self._reduction_sliders_tab, "Sliders")
+
+    def _add_map_tab(self):
+        self._add_map()
+        self._reduction_tabs.addTab(self._map_widget, "Map")
+
     def _set_random_reduction(self):
         for n in range(self.experiment.student.n_components):
             self._set_random_reduction_n(
@@ -128,6 +146,16 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
 
     def _set_reduction(self, reduction):
         normalized_reduction = self.experiment.student.normalize_reduction(reduction)
+        self._update_reduction_widget(normalized_reduction)
+
+    def _update_reduction_widget(self, normalized_reduction):
+        if self._reduction_tabs.currentWidget() == self._reduction_sliders_tab:
+            self._update_reduction_sliders(normalized_reduction)
+        elif self._reduction_tabs.currentWidget() == self._map_widget:
+            self._map_widget.set_reduction(normalized_reduction)
+            self._map_widget.updateGL()
+
+    def _update_reduction_sliders(self, normalized_reduction):
         for n in range(self.experiment.student.n_components):
             self._sliders[n].setValue(self._normalized_reduction_value_to_slider_value(
                     n, normalized_reduction[n]))
@@ -142,26 +170,23 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         reduction_range["explored_max"] = .5 + reduction_range["explored_range"]/2
 
     def _add_reduction_sliders(self):
-        group_box = QtGui.QGroupBox("Reduction")
-        layout = QtGui.QVBoxLayout()
         self._sliders = []
         for n in range(self.experiment.student.n_components):
             slider = QtGui.QSlider(QtCore.Qt.Horizontal)
             slider.setRange(0, SLIDER_PRECISION)
             slider.setSingleStep(1)
             slider.setValue(self._normalized_reduction_value_to_slider_value(n, 0.5))
-            layout.addWidget(slider)
+            self._reduction_sliders_layout.addWidget(slider)
             self._sliders.append(slider)
-        layout.addStretch(1)
-        group_box.setLayout(layout)
-        self._layout.addWidget(group_box)
+
+    def _add_map(self):
+        self._map_widget = MapWidget(self)
+        self._map_widget.setFixedSize(370, 370)
 
     def refresh(self):
         if self.tabs.currentWidget() != self.explore_tab:
             normalized_reduction = self.experiment.student.normalize_reduction(self.experiment.reduction)
-            for n in range(self.experiment.student.n_components):
-                self._sliders[n].setValue(
-                    self._normalized_reduction_value_to_slider_value(n, normalized_reduction[n]))
+            self._update_reduction_widget(normalized_reduction)
 
     def _normalized_reduction_value_to_slider_value(self, n, value):
         range_n = self.experiment.student.reduction_range[n]
@@ -414,6 +439,50 @@ class Improviser:
     def current_position(self):
         normalized_position = self._path_follower.current_position()
         return self.experiment.student.unnormalize_reduction(normalized_position)
+
+
+class MapWidget(QtOpenGL.QGLWidget):
+    def __init__(self, parent):
+        self._map_points = parent.experiment.student.normalized_observed_reductions[:,[0,2]]
+        QtOpenGL.QGLWidget.__init__(self, parent)
+
+    def set_reduction(self, reduction):
+        self._reduction = reduction
+
+    def initializeGL(self):
+        glClearColor(1.0, 1.0, 1.0, 0.0)
+        glClearAccum(0.0, 0.0, 0.0, 0.0)
+        glEnable(GL_LINE_SMOOTH)
+
+    def resizeGL(self, window_width, window_height):
+        self.window_width = window_width
+        self.window_height = window_height
+        if window_height == 0:
+            window_height = 1
+        self._margin = 5
+        self._width = window_width - 2*self._margin
+        self._height = window_height - 2*self._margin
+        glViewport(0, 0, window_width, window_height)
+
+    def paintGL(self):
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        glLoadIdentity()
+        glOrtho(0.0, self.window_width, self.window_height, 0.0, -1.0, 1.0)
+        glMatrixMode(GL_MODELVIEW)
+        glTranslatef(self._margin, self._margin, 0)
+        self._render_map()
+
+    def _render_map(self):
+        glColor3f(0, 0, 0)
+        glPointSize(1.0)
+        glBegin(GL_POINTS)
+        for x,y in self._map_points:
+            glVertex2f(*self._vertex(x, y))
+        glEnd()
+
+    def _vertex(self, x, y):
+        return x*self._width, y*self._height
+
 
 class StillsExporter:
     def __init__(self, experiment, stills_data_path):
