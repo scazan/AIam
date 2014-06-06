@@ -99,6 +99,9 @@ class BaseScene(QtOpenGL.QGLWidget):
     def process_output(self, value):
         return self.process_io(value)
 
+    def process_io(self, value):
+        return value
+
     def _set_focus(self):
         self._focus = self.central_output_position(self._processed_output)
 
