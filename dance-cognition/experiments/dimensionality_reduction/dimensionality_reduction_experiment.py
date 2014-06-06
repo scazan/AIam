@@ -112,7 +112,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._add_reduction_sliders()
         self._reduction_sliders_layout.addStretch(1)
         self._reduction_sliders_tab.setLayout(self._reduction_sliders_layout)
-        self._reduction_tabs.addTab(self._reduction_sliders_tab, "Sliders")
+        self._reduction_tabs.addTab(self._reduction_sliders_tab, "All dimensions")
 
     def _add_map_tab(self):
         self._map_dimensions = [0,1]
@@ -122,7 +122,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._add_map_widget()
         self._map_layout.addStretch(1)
         self._map_tab.setLayout(self._map_layout)
-        self._reduction_tabs.addTab(self._map_tab, "Map")
+        self._reduction_tabs.addTab(self._map_tab, "2D map")
 
     def _add_map_widget(self):
         self._map_widget = MapWidget(self, self._map_dimensions)
