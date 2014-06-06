@@ -115,8 +115,38 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._reduction_tabs.addTab(self._reduction_sliders_tab, "Sliders")
 
     def _add_map_tab(self):
-        self._add_map()
-        self._reduction_tabs.addTab(self._map_widget, "Map")
+        self._map_dimensions = [0,1]
+        self._map_tab = QtGui.QWidget()
+        self._map_layout = QtGui.QVBoxLayout()
+        self._add_map_dimension_checkboxes()
+        self._add_map_widget()
+        self._map_layout.addStretch(1)
+        self._map_tab.setLayout(self._map_layout)
+        self._reduction_tabs.addTab(self._map_tab, "Map")
+
+    def _add_map_widget(self):
+        self._map_widget = MapWidget(self, self._map_dimensions)
+        self._map_widget.setFixedSize(370, 370)
+        self._map_layout.addWidget(self._map_widget)
+
+    def _add_map_dimension_checkboxes(self):
+        layout = QtGui.QHBoxLayout()
+        self._map_dimension_checkboxes = []
+        for n in range(self.experiment.student.n_components):
+            checkbox = QtGui.QCheckBox()
+            if n in self._map_dimensions:
+                checkbox.setCheckState(QtCore.Qt.Checked)
+            checkbox.stateChanged.connect(self._map_dimensions_changed)
+            self._map_dimension_checkboxes.append(checkbox)
+            layout.addWidget(checkbox)
+        self._map_layout.addLayout(layout)
+
+    def _map_dimensions_changed(self):
+        checked_dimensions = filter(
+            lambda n: self._map_dimension_checkboxes[n].checkState() == QtCore.Qt.Checked,
+            range(self.experiment.student.n_components))
+        if len(checked_dimensions) == 2:
+            self._map_widget.set_dimensions(checked_dimensions)
 
     def _set_random_reduction(self):
         for n in range(self.experiment.student.n_components):
@@ -152,7 +182,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
     def _update_reduction_widget(self, normalized_reduction):
         if self._reduction_tabs.currentWidget() == self._reduction_sliders_tab:
             self._update_reduction_sliders(normalized_reduction)
-        elif self._reduction_tabs.currentWidget() == self._map_widget:
+        elif self._reduction_tabs.currentWidget() == self._map_tab:
             self._map_widget.set_reduction(normalized_reduction)
             self._map_widget.updateGL()
 
@@ -179,10 +209,6 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
             slider.setValue(self._normalized_reduction_value_to_slider_value(n, 0.5))
             self._reduction_sliders_layout.addWidget(slider)
             self._sliders.append(slider)
-
-    def _add_map(self):
-        self._map_widget = MapWidget(self, [0,2])
-        self._map_widget.setFixedSize(370, 370)
 
     def refresh(self):
         if self.tabs.currentWidget() != self.explore_tab:

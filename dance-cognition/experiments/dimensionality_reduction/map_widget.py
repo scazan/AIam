@@ -8,12 +8,16 @@ SPLIT_SENSITIVITY = .2
 
 class MapWidget(QtOpenGL.QGLWidget):
     def __init__(self, parent, dimensions):
+        self.experiment = parent.experiment
+        self.set_dimensions(dimensions)
+        QtOpenGL.QGLWidget.__init__(self, parent)
+
+    def set_dimensions(self, dimensions):
         self._dimensions = dimensions
-        observations = parent.experiment.student.normalized_observed_reductions[
+        observations = self.experiment.student.normalized_observed_reductions[
             :,dimensions]
         self._split_into_segments(observations)
         self._reduction = None
-        QtOpenGL.QGLWidget.__init__(self, parent)
 
     def _split_into_segments(self, observations):
         self._segments = []
