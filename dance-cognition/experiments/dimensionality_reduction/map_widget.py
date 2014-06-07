@@ -172,8 +172,10 @@ class MapWidget(QtOpenGL.QGLWidget):
         if self._dragging:
             x = event.x()
             y = event.y()
-            self._reduction[0] = float(x - self._margin) / self._width
-            self._reduction[1] = float(y - self._margin) / self._width
+            self._reduction[0] = self._parent.exploration_value_to_normalized_reduction_value(
+                self._dimensions[0], float(x - self._margin) / self._width)
+            self._reduction[1] = self._parent.exploration_value_to_normalized_reduction_value(
+                self._dimensions[1], float(y - self._margin) / self._height)
             self._parent.reduction_changed_interactively()
             self.updateGL()
             
