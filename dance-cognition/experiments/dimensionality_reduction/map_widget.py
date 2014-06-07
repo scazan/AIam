@@ -90,9 +90,13 @@ class MapWidget(QtOpenGL.QGLWidget):
         glEnd()
 
     def _render_path(self):
-        glColor4f(0, 0, 0, .3)
+        glPushAttrib(GL_ENABLE_BIT)
+        glLineStipple(4, 0xAAAA)
+        glEnable(GL_LINE_STIPPLE)
+        glColor4f(0, 0, 0, .6)
         glLineWidth(2.0)
         self._render_segment(self._path)
-        
+        glPopAttrib()
+
     def _vertex(self, x, y):
         return x*self._width, y*self._height

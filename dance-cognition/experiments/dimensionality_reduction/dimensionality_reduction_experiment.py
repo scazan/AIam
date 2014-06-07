@@ -27,19 +27,23 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._add_reduction_tabs()
         self.setLayout(self._layout)
 
-    def _add_mode_tabs(self):
-        self.tabs = QtGui.QTabWidget()
-        self._add_follow_tab()
-        self._add_explore_tab()
-        self._add_improvise_tab()
-        self._layout.addWidget(self.tabs)
-
         if self.args.improvise:
             self.tabs.setCurrentWidget(self.improvise_tab)
         elif self.args.explore:
             self.tabs.setCurrentWidget(self.explore_tab)
         else:
             self.tabs.setCurrentWidget(self.follow_tab)
+
+    def _add_mode_tabs(self):
+        self.tabs = QtGui.QTabWidget()
+        self._add_follow_tab()
+        self._add_explore_tab()
+        self._add_improvise_tab()
+        self.tabs.currentChanged.connect(self._changed_mode_tab)
+        self._layout.addWidget(self.tabs)
+
+    def _changed_mode_tab(self):
+        self._set_reduction_sliders_enabled(self.tabs.currentWidget() == self.explore_tab)
 
     def _add_follow_tab(self):
         self.follow_tab = QtGui.QWidget()
@@ -112,7 +116,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._add_reduction_sliders()
         self._reduction_sliders_layout.addStretch(1)
         self._reduction_sliders_tab.setLayout(self._reduction_sliders_layout)
-        self._reduction_tabs.addTab(self._reduction_sliders_tab, "All dimensions")
+        self._reduction_tabs.addTab(self._reduction_sliders_tab, "Orthogonal control")
 
     def _add_map_tab(self):
         self._map_dimensions = [0,1]
@@ -154,7 +158,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
                 n, self.experiment.student.reduction_range[n])
 
     def _set_random_reduction_n(self, n, reduction_range):
-        self._sliders[n].setValue(self._normalized_reduction_value_to_slider_value(
+        self._reduction_sliders[n].setValue(self._normalized_reduction_value_to_slider_value(
                 n, random.uniform(reduction_range["explored_min"],
                                   reduction_range["explored_max"])))
 
@@ -188,7 +192,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
 
     def _update_reduction_sliders(self, normalized_reduction):
         for n in range(self.experiment.student.n_components):
-            self._sliders[n].setValue(self._normalized_reduction_value_to_slider_value(
+            self._reduction_sliders[n].setValue(self._normalized_reduction_value_to_slider_value(
                     n, normalized_reduction[n]))
 
     def _set_exploration_ranges(self):
@@ -201,14 +205,18 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         reduction_range["explored_max"] = .5 + reduction_range["explored_range"]/2
 
     def _add_reduction_sliders(self):
-        self._sliders = []
+        self._reduction_sliders = []
         for n in range(self.experiment.student.n_components):
             slider = QtGui.QSlider(QtCore.Qt.Horizontal)
             slider.setRange(0, SLIDER_PRECISION)
             slider.setSingleStep(1)
             slider.setValue(self._normalized_reduction_value_to_slider_value(n, 0.5))
             self._reduction_sliders_layout.addWidget(slider)
-            self._sliders.append(slider)
+            self._reduction_sliders.append(slider)
+
+    def _set_reduction_sliders_enabled(self, enabled):
+        for slider in self._reduction_sliders:
+            slider.setEnabled(enabled)
 
     def refresh(self):
         if self.tabs.currentWidget() != self.explore_tab:
@@ -227,7 +235,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
 
     def get_reduction(self):
         normalized_reduction = numpy.array(
-            [self._slider_value_to_normalized_reduction_value(n, self._sliders[n].value())
+            [self._slider_value_to_normalized_reduction_value(n, self._reduction_sliders[n].value())
              for n in range(self.experiment.student.n_components)])
         return self.experiment.student.unnormalize_reduction(normalized_reduction)
 
