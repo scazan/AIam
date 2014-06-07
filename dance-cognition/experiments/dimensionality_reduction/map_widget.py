@@ -144,7 +144,7 @@ class MapWidget(QtOpenGL.QGLWidget):
 
     def _render_reduction(self):
         glColor3f(0, 0, 0)
-        glPointSize(4.0)
+        glPointSize(5.0)
         glBegin(GL_POINTS)
         glVertex2f(*self._vertex(*self._normalized_reduction_to_explored_range(self._reduction)))
         glEnd()
