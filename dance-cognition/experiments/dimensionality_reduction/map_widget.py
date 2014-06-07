@@ -61,6 +61,7 @@ class MapWidget(QtOpenGL.QGLWidget):
     def __init__(self, parent, dimensions):
         self._parent = parent
         self.experiment = parent.experiment
+        self._observations_layer = Layer(self._render_observations)
         self.set_dimensions(dimensions)
         self._dragging = False
         self._enabled = False
@@ -73,6 +74,7 @@ class MapWidget(QtOpenGL.QGLWidget):
         self._split_into_segments(observations)
         self._reduction = None
         self._path = None
+        self._observations_layer.refresh()
 
     def _split_into_segments(self, observations):
         self._segments = []
@@ -122,7 +124,7 @@ class MapWidget(QtOpenGL.QGLWidget):
         glOrtho(0.0, self.window_width, self.window_height, 0.0, -1.0, 1.0)
         glMatrixMode(GL_MODELVIEW)
         glTranslatef(self._margin, self._margin, 0)
-        self._render_observations()
+        self._observations_layer.draw()
         if self._path is not None:
             self._render_path()
         if self._reduction is not None:

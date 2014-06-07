@@ -1,5 +1,3 @@
-use same exploration range in map view as for reduction sliders
-
 nicer looking limbs?
 
 shadow?

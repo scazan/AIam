@@ -720,3 +720,22 @@ class ParameterFloatRange:
         self.min_value = min_value
         self.max_value = max_value
         self.range = max_value - min_value
+
+class Layer:
+    def __init__(self, rendering_function):
+        self._rendering_function = rendering_function
+        self._updated = False
+        self._display_list_id = None
+
+    def draw(self):
+        if not self._updated:
+            if self._display_list_id is None:
+                self._display_list_id = glGenLists(1)
+            glNewList(self._display_list_id, GL_COMPILE)
+            self._rendering_function()
+            glEndList()
+            self._updated = True
+        glCallList(self._display_list_id)
+
+    def refresh(self):
+        self._updated = False
