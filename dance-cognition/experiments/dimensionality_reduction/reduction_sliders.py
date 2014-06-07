@@ -6,20 +6,20 @@ class ReductionSliders(QtGui.QWidget):
         self._parent = parent
         self.experiment = parent.experiment
         self._set_exploration_ranges()
-        self._reduction_sliders_layout = QtGui.QVBoxLayout()
-        self._add_reduction_sliders()
-        self._reduction_sliders_layout.addStretch(1)
-        self.setLayout(self._reduction_sliders_layout)
+        self._layout = QtGui.QVBoxLayout()
+        self._add_sliders()
+        self._layout.addStretch(1)
+        self.setLayout(self._layout)
 
     def slider(self, n):
-        return self._reduction_sliders[n]
+        return self._sliders[n]
 
     def reduction_changed(self, normalized_reduction):
-        self._update_reduction_sliders(normalized_reduction)
+        self._update_sliders(normalized_reduction)
 
-    def _update_reduction_sliders(self, normalized_reduction):
+    def _update_sliders(self, normalized_reduction):
         for n in range(self.experiment.student.n_components):
-            self._reduction_sliders[n].setValue(self._normalized_reduction_value_to_slider_value(
+            self._sliders[n].setValue(self._normalized_reduction_value_to_slider_value(
                     n, normalized_reduction[n]))
 
     def _set_exploration_ranges(self):
@@ -31,8 +31,8 @@ class ReductionSliders(QtGui.QWidget):
         reduction_range["explored_min"] = .5 - reduction_range["explored_range"]/2
         reduction_range["explored_max"] = .5 + reduction_range["explored_range"]/2
 
-    def _add_reduction_sliders(self):
-        self._reduction_sliders = []
+    def _add_sliders(self):
+        self._sliders = []
         for n in range(self.experiment.student.n_components):
             slider = QtGui.QSlider(QtCore.Qt.Horizontal)
             slider.setRange(0, SLIDER_PRECISION)
@@ -40,11 +40,11 @@ class ReductionSliders(QtGui.QWidget):
             slider.setValue(self._normalized_reduction_value_to_slider_value(n, 0.5))
             slider.sliderReleased.connect(
                 lambda: self._parent.reduction_changed_interactively(self))
-            self._reduction_sliders_layout.addWidget(slider)
-            self._reduction_sliders.append(slider)
+            self._layout.addWidget(slider)
+            self._sliders.append(slider)
 
     def set_enabled(self, enabled):
-        for slider in self._reduction_sliders:
+        for slider in self._sliders:
             slider.setEnabled(enabled)
             
     def _normalized_reduction_value_to_slider_value(self, n, value):
@@ -59,6 +59,6 @@ class ReductionSliders(QtGui.QWidget):
 
     def get_reduction(self):
         normalized_reduction = numpy.array(
-            [self._slider_value_to_normalized_reduction_value(n, self._reduction_sliders[n].value())
+            [self._slider_value_to_normalized_reduction_value(n, self._sliders[n].value())
              for n in range(self.experiment.student.n_components)])
         return self.experiment.student.unnormalize_reduction(normalized_reduction)
