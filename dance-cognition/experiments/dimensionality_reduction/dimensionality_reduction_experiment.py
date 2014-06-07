@@ -6,7 +6,8 @@ import random
 from leaky_integrator import LeakyIntegrator
 from navigator import Navigator, PathFollower
 import dynamics as dynamics_module
-from map_widget import MapWidget
+from map_widget import MapTab
+from reduction_sliders import ReductionSliders
 
 REDUCTION_PLOT_PATH = "reduction.dat"
 
@@ -23,7 +24,6 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         ExperimentToolbar.__init__(self, *args)
         self._layout = QtGui.QVBoxLayout()
         self._add_mode_tabs()
-        self._set_exploration_ranges()
         self._add_reduction_tabs()
         self.setLayout(self._layout)
 
@@ -43,7 +43,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._layout.addWidget(self.tabs)
 
     def _changed_mode_tab(self):
-        self._set_reduction_sliders_enabled(self.tabs.currentWidget() == self.explore_tab)
+        self.reduction_sliders_tab.set_enabled(self.tabs.currentWidget() == self.explore_tab)
 
     def _add_follow_tab(self):
         self.follow_tab = QtGui.QWidget()
@@ -111,46 +111,13 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._layout.addWidget(self._reduction_tabs)
 
     def _add_reduction_sliders_tab(self):
-        self._reduction_sliders_tab = QtGui.QWidget()
-        self._reduction_sliders_layout = QtGui.QVBoxLayout()
-        self._add_reduction_sliders()
-        self._reduction_sliders_layout.addStretch(1)
-        self._reduction_sliders_tab.setLayout(self._reduction_sliders_layout)
-        self._reduction_tabs.addTab(self._reduction_sliders_tab, "Orthogonal control")
+        self.reduction_sliders_tab = ReductionSliders(self)
+        self._reduction_tabs.addTab(self.reduction_sliders_tab, "Orthogonal control")
 
     def _add_map_tab(self):
         self._map_dimensions = [0,1]
-        self._map_tab = QtGui.QWidget()
-        self._map_layout = QtGui.QVBoxLayout()
-        self._add_map_dimension_checkboxes()
-        self._add_map_widget()
-        self._map_layout.addStretch(1)
-        self._map_tab.setLayout(self._map_layout)
-        self._reduction_tabs.addTab(self._map_tab, "2D map")
-
-    def _add_map_widget(self):
-        self.map_widget = MapWidget(self, self._map_dimensions)
-        self.map_widget.setFixedSize(370, 370)
-        self._map_layout.addWidget(self.map_widget)
-
-    def _add_map_dimension_checkboxes(self):
-        layout = QtGui.QHBoxLayout()
-        self._map_dimension_checkboxes = []
-        for n in range(self.experiment.student.n_components):
-            checkbox = QtGui.QCheckBox()
-            if n in self._map_dimensions:
-                checkbox.setCheckState(QtCore.Qt.Checked)
-            checkbox.stateChanged.connect(self._map_dimensions_changed)
-            self._map_dimension_checkboxes.append(checkbox)
-            layout.addWidget(checkbox)
-        self._map_layout.addLayout(layout)
-
-    def _map_dimensions_changed(self):
-        checked_dimensions = filter(
-            lambda n: self._map_dimension_checkboxes[n].checkState() == QtCore.Qt.Checked,
-            range(self.experiment.student.n_components))
-        if len(checked_dimensions) == 2:
-            self.map_widget.set_dimensions(checked_dimensions)
+        self.map_tab = MapTab(self, self._map_dimensions)
+        self._reduction_tabs.addTab(self.map_tab, "2D map")
 
     def _set_random_reduction(self):
         for n in range(self.experiment.student.n_components):
@@ -158,7 +125,8 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
                 n, self.experiment.student.reduction_range[n])
 
     def _set_random_reduction_n(self, n, reduction_range):
-        self._reduction_sliders[n].setValue(self._normalized_reduction_value_to_slider_value(
+        self.reduction_sliders_tab.slider(n).setValue(
+            self._normalized_reduction_value_to_slider_value(
                 n, random.uniform(reduction_range["explored_min"],
                                   reduction_range["explored_max"])))
 
@@ -181,63 +149,22 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
 
     def _set_reduction(self, reduction):
         normalized_reduction = self.experiment.student.normalize_reduction(reduction)
-        self._update_reduction_widget(normalized_reduction)
+        self._update_current_reduction_widget(normalized_reduction)
 
-    def _update_reduction_widget(self, normalized_reduction):
-        if self._reduction_tabs.currentWidget() == self._reduction_sliders_tab:
-            self._update_reduction_sliders(normalized_reduction)
-        elif self._reduction_tabs.currentWidget() == self._map_tab:
-            self.map_widget.set_reduction(normalized_reduction)
-            self.map_widget.updateGL()
-
-    def _update_reduction_sliders(self, normalized_reduction):
-        for n in range(self.experiment.student.n_components):
-            self._reduction_sliders[n].setValue(self._normalized_reduction_value_to_slider_value(
-                    n, normalized_reduction[n]))
-
-    def _set_exploration_ranges(self):
-        for n in range(self.experiment.student.n_components):
-            self._set_exploration_range(self.experiment.student.reduction_range[n])
-
-    def _set_exploration_range(self, reduction_range):
-        reduction_range["explored_range"] = (1.0 + self.args.explore_beyond_observations)
-        reduction_range["explored_min"] = .5 - reduction_range["explored_range"]/2
-        reduction_range["explored_max"] = .5 + reduction_range["explored_range"]/2
-
-    def _add_reduction_sliders(self):
-        self._reduction_sliders = []
-        for n in range(self.experiment.student.n_components):
-            slider = QtGui.QSlider(QtCore.Qt.Horizontal)
-            slider.setRange(0, SLIDER_PRECISION)
-            slider.setSingleStep(1)
-            slider.setValue(self._normalized_reduction_value_to_slider_value(n, 0.5))
-            self._reduction_sliders_layout.addWidget(slider)
-            self._reduction_sliders.append(slider)
-
-    def _set_reduction_sliders_enabled(self, enabled):
-        for slider in self._reduction_sliders:
-            slider.setEnabled(enabled)
+    def _update_current_reduction_widget(self, normalized_reduction):
+        self._reduction_tabs.currentWidget().reduction_changed(normalized_reduction)
 
     def refresh(self):
         if self.tabs.currentWidget() != self.explore_tab:
             normalized_reduction = self.experiment.student.normalize_reduction(self.experiment.reduction)
-            self._update_reduction_widget(normalized_reduction)
+            self._update_current_reduction_widget(normalized_reduction)
 
-    def _normalized_reduction_value_to_slider_value(self, n, value):
-        range_n = self.experiment.student.reduction_range[n]
-        return int((value - range_n["explored_min"]) / \
-            range_n["explored_range"] * SLIDER_PRECISION)
-
-    def _slider_value_to_normalized_reduction_value(self, n, value):
-        range_n = self.experiment.student.reduction_range[n]
-        return float(value) / SLIDER_PRECISION * range_n["explored_range"] + \
-            range_n["explored_min"]
-
-    def get_reduction(self):
-        normalized_reduction = numpy.array(
-            [self._slider_value_to_normalized_reduction_value(n, self._reduction_sliders[n].value())
-             for n in range(self.experiment.student.n_components)])
-        return self.experiment.student.unnormalize_reduction(normalized_reduction)
+    def reduction_changed_interactively(self, source_tab):
+        normalized_reduction = self.experiment.student.normalize_reduction(self.experiment.reduction)
+        for n in range(self._reduction_tabs.count()):
+            tab = self._reduction_tabs.widget(n)
+            if tab != source_tab:
+                tab.reduction_changed(normalized_reduction)
 
 class DimensionalityReductionExperiment(Experiment):
     @staticmethod
@@ -351,7 +278,7 @@ class DimensionalityReductionExperiment(Experiment):
 
     def update(self):
         if self.window.toolbar.tabs.currentWidget() == self.window.toolbar.explore_tab:
-            self.reduction = self.window.toolbar.get_reduction()
+            self.reduction = self.window.toolbar.reduction_sliders_tab.get_reduction()
         elif self.window.toolbar.tabs.currentWidget() == self.window.toolbar.follow_tab:
             self._follow()
         elif self.window.toolbar.tabs.currentWidget() == self.window.toolbar.improvise_tab:
@@ -368,7 +295,7 @@ class DimensionalityReductionExperiment(Experiment):
                     self.entity.get_cursor() / self.entity.get_duration() * SLIDER_PRECISION)
         elif self.window.toolbar.tabs.currentWidget() == self.window.toolbar.improvise_tab:
             self._improviser.proceed(self.time_increment)
-            self.window.toolbar.map_widget.set_path(numpy.array(self._improviser.path()))
+            self.window.toolbar.map_tab.set_path(numpy.array(self._improviser.path()))
 
         if self._reduction_plot:
             print >>self._reduction_plot, " ".join([

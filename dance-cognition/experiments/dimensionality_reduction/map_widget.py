@@ -1,10 +1,52 @@
-from OpenGL.GL import *
-from OpenGL.GLUT import *
-from OpenGL.GLU import *
-from PyQt4 import QtCore, QtGui, QtOpenGL
-import numpy
+from experiment import *
 
 SPLIT_SENSITIVITY = .2
+
+class MapTab(QtGui.QWidget):
+    def __init__(self, parent, map_dimensions):
+        QtGui.QWidget.__init__(self)
+        self._map_dimensions = map_dimensions
+        self._parent = parent
+        self.experiment = parent.experiment
+        self._map_layout = QtGui.QVBoxLayout()
+        self._add_map_dimension_checkboxes()
+        self._add_map_widget()
+        self._map_layout.addStretch(1)
+        self.setLayout(self._map_layout)
+
+    def set_path(self, path):
+        self._map_widget.set_path(path)
+
+    def set_reduction(self, reduction):
+        self._map_widget.set_reduction(reduction)
+
+    def reduction_changed(self, reduction):
+        self._map_widget.set_reduction(reduction)
+        self._map_widget.updateGL()
+
+    def _add_map_widget(self):
+        self._map_widget = MapWidget(self._parent, self._map_dimensions)
+        self._map_widget.setFixedSize(370, 370)
+        self._map_layout.addWidget(self._map_widget)
+
+    def _add_map_dimension_checkboxes(self):
+        layout = QtGui.QHBoxLayout()
+        self._map_dimension_checkboxes = []
+        for n in range(self.experiment.student.n_components):
+            checkbox = QtGui.QCheckBox()
+            if n in self._map_dimensions:
+                checkbox.setCheckState(QtCore.Qt.Checked)
+            checkbox.stateChanged.connect(self._map_dimensions_changed)
+            self._map_dimension_checkboxes.append(checkbox)
+            layout.addWidget(checkbox)
+        self._map_layout.addLayout(layout)
+
+    def _map_dimensions_changed(self):
+        checked_dimensions = filter(
+            lambda n: self._map_dimension_checkboxes[n].checkState() == QtCore.Qt.Checked,
+            range(self.experiment.student.n_components))
+        if len(checked_dimensions) == 2:
+            self._map_widget.set_dimensions(checked_dimensions)
 
 class MapWidget(QtOpenGL.QGLWidget):
     def __init__(self, parent, dimensions):
