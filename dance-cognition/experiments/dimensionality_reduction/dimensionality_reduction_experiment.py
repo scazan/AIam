@@ -6,6 +6,7 @@ import random
 from leaky_integrator import LeakyIntegrator
 from navigator import Navigator, PathFollower
 import dynamics as dynamics_module
+from reduction_tab import ReductionTab
 from map_widget import MapTab
 from reduction_sliders import ReductionSliders
 
@@ -108,6 +109,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self.tabs.addTab(self.improvise_tab, "Improvise")
 
     def _add_reduction_tabs(self):
+        self._set_exploration_ranges()
         self._reduction_tabs = QtGui.QTabWidget()
         self._add_map_tab()
         self._add_reduction_sliders_tab()
@@ -172,6 +174,16 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
     def get_reduction(self):
         return self.experiment.student.unnormalize_reduction(
             self._reduction_tabs.currentWidget().get_normalized_reduction())
+        
+    def _set_exploration_ranges(self):
+        for n in range(self.experiment.student.n_components):
+            self._set_exploration_range(self.experiment.student.reduction_range[n])
+
+    def _set_exploration_range(self, reduction_range):
+        reduction_range["explored_range"] = (1.0 + self.experiment.args.explore_beyond_observations)
+        reduction_range["explored_min"] = .5 - reduction_range["explored_range"]/2
+        reduction_range["explored_max"] = .5 + reduction_range["explored_range"]/2
+
 
 class DimensionalityReductionExperiment(Experiment):
     @staticmethod

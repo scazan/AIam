@@ -1,13 +1,12 @@
-from experiment import *
+from dimensionality_reduction_experiment import *
 
 SPLIT_SENSITIVITY = .2
 
-class MapTab(QtGui.QWidget):
+class MapTab(ReductionTab, QtGui.QWidget):
     def __init__(self, parent, dimensions):
+        ReductionTab.__init__(self, parent)
         QtGui.QWidget.__init__(self)
         self._dimensions = dimensions
-        self._parent = parent
-        self.experiment = parent.experiment
         self._map_layout = QtGui.QVBoxLayout()
         self._add_map_dimension_checkboxes()
         self._add_map_widget()
@@ -112,7 +111,7 @@ class MapWidget(QtOpenGL.QGLWidget):
         self.window_height = window_height
         if window_height == 0:
             window_height = 1
-        self._margin = 5
+        self._margin = 0
         self._width = window_width - 2*self._margin
         self._height = window_height - 2*self._margin
         glViewport(0, 0, window_width, window_height)
@@ -137,15 +136,15 @@ class MapWidget(QtOpenGL.QGLWidget):
 
     def _render_segment(self, segment):
         glBegin(GL_LINE_STRIP)
-        for x,y in segment:
-            glVertex2f(*self._vertex(x, y))
+        for vertex in segment:
+            glVertex2f(*self._vertex(*self._normalized_reduction_to_explored_range(vertex)))
         glEnd()
 
     def _render_reduction(self):
         glColor3f(0, 0, 0)
         glPointSize(4.0)
         glBegin(GL_POINTS)
-        glVertex2f(*self._vertex(*self._reduction))
+        glVertex2f(*self._vertex(*self._normalized_reduction_to_explored_range(self._reduction)))
         glEnd()
 
     def _render_path(self):
@@ -181,3 +180,12 @@ class MapWidget(QtOpenGL.QGLWidget):
         reduction[self._dimensions[0]] = self._reduction[0]
         reduction[self._dimensions[1]] = self._reduction[1]
         return reduction
+
+    def _normalized_reduction_to_explored_range(self, reduction):
+        return numpy.array([
+                self._normalized_reduction_value_to_explored_range(n, reduction[n])
+                for n in range(2)])
+
+    def _normalized_reduction_value_to_explored_range(self, n, value):
+        return self._parent.normalized_reduction_value_to_exploration_value(
+            self._dimensions[n], value)

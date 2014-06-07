@@ -1,11 +1,9 @@
-from experiment import *
+from dimensionality_reduction_experiment import *
 
-class ReductionSliders(QtGui.QWidget):
+class ReductionSliders(ReductionTab, QtGui.QWidget):
     def __init__(self, parent):
+        ReductionTab.__init__(self, parent)
         QtGui.QWidget.__init__(self)
-        self._parent = parent
-        self.experiment = parent.experiment
-        self._set_exploration_ranges()
         self._layout = QtGui.QVBoxLayout()
         self._add_sliders()
         self._layout.addStretch(1)
@@ -21,15 +19,6 @@ class ReductionSliders(QtGui.QWidget):
         for n in range(self.experiment.student.n_components):
             self._sliders[n].setValue(self._normalized_reduction_value_to_slider_value(
                     n, normalized_reduction[n]))
-
-    def _set_exploration_ranges(self):
-        for n in range(self.experiment.student.n_components):
-            self._set_exploration_range(self.experiment.student.reduction_range[n])
-
-    def _set_exploration_range(self, reduction_range):
-        reduction_range["explored_range"] = (1.0 + self.experiment.args.explore_beyond_observations)
-        reduction_range["explored_min"] = .5 - reduction_range["explored_range"]/2
-        reduction_range["explored_max"] = .5 + reduction_range["explored_range"]/2
 
     def _add_sliders(self):
         self._sliders = []
@@ -48,14 +37,12 @@ class ReductionSliders(QtGui.QWidget):
             slider.setEnabled(enabled)
             
     def _normalized_reduction_value_to_slider_value(self, n, value):
-        range_n = self.experiment.student.reduction_range[n]
-        return int((value - range_n["explored_min"]) / \
-            range_n["explored_range"] * SLIDER_PRECISION)
+        return int(
+            self.normalized_reduction_value_to_exploration_value(n, value) * SLIDER_PRECISION)
 
     def _slider_value_to_normalized_reduction_value(self, n, value):
-        range_n = self.experiment.student.reduction_range[n]
-        return float(value) / SLIDER_PRECISION * range_n["explored_range"] + \
-            range_n["explored_min"]
+        return self.exploration_value_to_normalized_reduction_value(
+            n, float(value) / SLIDER_PRECISION)
 
     def get_normalized_reduction(self):
         normalized_reduction = numpy.array(
