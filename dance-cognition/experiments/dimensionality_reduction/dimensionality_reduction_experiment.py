@@ -43,7 +43,10 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._layout.addWidget(self.tabs)
 
     def _changed_mode_tab(self):
-        self.reduction_sliders_tab.set_enabled(self.tabs.currentWidget() == self.explore_tab)
+        exploring = (self.tabs.currentWidget() == self.explore_tab)
+        for n in range(self._reduction_tabs.count()):
+            tab = self._reduction_tabs.widget(n)
+            tab.set_enabled(exploring)
 
     def _add_follow_tab(self):
         self.follow_tab = QtGui.QWidget()
@@ -166,6 +169,10 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
             if tab != source_tab:
                 tab.reduction_changed(normalized_reduction)
 
+    def get_reduction(self):
+        return self.experiment.student.unnormalize_reduction(
+            self._reduction_tabs.currentWidget().get_normalized_reduction())
+
 class DimensionalityReductionExperiment(Experiment):
     @staticmethod
     def add_parser_arguments(parser):
@@ -278,7 +285,7 @@ class DimensionalityReductionExperiment(Experiment):
 
     def update(self):
         if self.window.toolbar.tabs.currentWidget() == self.window.toolbar.explore_tab:
-            self.reduction = self.window.toolbar.reduction_sliders_tab.get_reduction()
+            self.reduction = self.window.toolbar.get_reduction()
         elif self.window.toolbar.tabs.currentWidget() == self.window.toolbar.follow_tab:
             self._follow()
         elif self.window.toolbar.tabs.currentWidget() == self.window.toolbar.improvise_tab:

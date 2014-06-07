@@ -57,8 +57,8 @@ class ReductionSliders(QtGui.QWidget):
         return float(value) / SLIDER_PRECISION * range_n["explored_range"] + \
             range_n["explored_min"]
 
-    def get_reduction(self):
+    def get_normalized_reduction(self):
         normalized_reduction = numpy.array(
             [self._slider_value_to_normalized_reduction_value(n, self._sliders[n].value())
              for n in range(self.experiment.student.n_components)])
-        return self.experiment.student.unnormalize_reduction(normalized_reduction)
+        return normalized_reduction

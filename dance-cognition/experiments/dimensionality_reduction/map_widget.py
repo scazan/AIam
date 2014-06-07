@@ -3,9 +3,9 @@ from experiment import *
 SPLIT_SENSITIVITY = .2
 
 class MapTab(QtGui.QWidget):
-    def __init__(self, parent, map_dimensions):
+    def __init__(self, parent, dimensions):
         QtGui.QWidget.__init__(self)
-        self._map_dimensions = map_dimensions
+        self._dimensions = dimensions
         self._parent = parent
         self.experiment = parent.experiment
         self._map_layout = QtGui.QVBoxLayout()
@@ -17,15 +17,19 @@ class MapTab(QtGui.QWidget):
     def set_path(self, path):
         self._map_widget.set_path(path)
 
-    def set_reduction(self, reduction):
-        self._map_widget.set_reduction(reduction)
+    def get_normalized_reduction(self):
+        return self._map_widget.get_reduction()
 
     def reduction_changed(self, reduction):
+        self._reduction = reduction
         self._map_widget.set_reduction(reduction)
         self._map_widget.updateGL()
 
+    def set_enabled(self, enabled):
+        self._map_widget.set_enabled(enabled)
+
     def _add_map_widget(self):
-        self._map_widget = MapWidget(self._parent, self._map_dimensions)
+        self._map_widget = MapWidget(self, self._dimensions)
         self._map_widget.setFixedSize(370, 370)
         self._map_layout.addWidget(self._map_widget)
 
@@ -34,24 +38,33 @@ class MapTab(QtGui.QWidget):
         self._map_dimension_checkboxes = []
         for n in range(self.experiment.student.n_components):
             checkbox = QtGui.QCheckBox()
-            if n in self._map_dimensions:
+            if n in self._dimensions:
                 checkbox.setCheckState(QtCore.Qt.Checked)
-            checkbox.stateChanged.connect(self._map_dimensions_changed)
+            checkbox.stateChanged.connect(self._dimensions_changed)
             self._map_dimension_checkboxes.append(checkbox)
             layout.addWidget(checkbox)
         self._map_layout.addLayout(layout)
 
-    def _map_dimensions_changed(self):
+    def _dimensions_changed(self):
         checked_dimensions = filter(
             lambda n: self._map_dimension_checkboxes[n].checkState() == QtCore.Qt.Checked,
             range(self.experiment.student.n_components))
         if len(checked_dimensions) == 2:
             self._map_widget.set_dimensions(checked_dimensions)
+            self._map_widget.set_reduction(self._reduction)
+            self._map_widget.updateGL()
+
+    def reduction_changed_interactively(self):
+        self._reduction = self._map_widget.get_reduction()
+        self._parent.reduction_changed_interactively(self)
 
 class MapWidget(QtOpenGL.QGLWidget):
     def __init__(self, parent, dimensions):
+        self._parent = parent
         self.experiment = parent.experiment
         self.set_dimensions(dimensions)
+        self._dragging = False
+        self._enabled = False
         QtOpenGL.QGLWidget.__init__(self, parent)
 
     def set_dimensions(self, dimensions):
@@ -76,11 +89,15 @@ class MapWidget(QtOpenGL.QGLWidget):
         if len(segment) > 0:
             self._segments.append(segment)
 
-    def set_reduction(self, reduction):
-        self._reduction = reduction[self._dimensions]
+    def set_reduction(self, reduction_all_dimensions):
+        self._reduction_all_dimensions = reduction_all_dimensions
+        self._reduction = reduction_all_dimensions[self._dimensions]
 
     def set_path(self, path):
         self._path = path[:,self._dimensions]
+
+    def set_enabled(self, enabled):
+        self._enabled = enabled
 
     def initializeGL(self):
         glClearColor(1.0, 1.0, 1.0, 0.0)
@@ -142,3 +159,25 @@ class MapWidget(QtOpenGL.QGLWidget):
 
     def _vertex(self, x, y):
         return x*self._width, y*self._height
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton and self._enabled:
+            self._dragging = True
+
+    def mouseReleaseEvent(self, event):
+        self._dragging = False
+
+    def mouseMoveEvent(self, event):
+        if self._dragging:
+            x = event.x()
+            y = event.y()
+            self._reduction[0] = float(x - self._margin) / self._width
+            self._reduction[1] = float(y - self._margin) / self._width
+            self._parent.reduction_changed_interactively()
+            self.updateGL()
+            
+    def get_reduction(self):
+        reduction = self._reduction_all_dimensions
+        reduction[self._dimensions[0]] = self._reduction[0]
+        reduction[self._dimensions[1]] = self._reduction[1]
+        return reduction
