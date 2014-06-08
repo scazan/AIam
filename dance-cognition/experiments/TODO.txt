@@ -1,3 +1,5 @@
+support for hiding toolbar
+
 nicer looking limbs?
 
 shadow?
