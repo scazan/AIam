@@ -15,6 +15,8 @@ from bvh_writer import BvhWriter
 from stopwatch import Stopwatch
 import imp
 
+TOOLBAR_WIDTH = 400
+TOOLBAR_HEIGHT = 720
 SLIDER_PRECISION = 1000
 CIRCLE_PRECISION = 100
 CAMERA_Y_SPEED = .1
@@ -435,7 +437,7 @@ class MainWindow(QtGui.QWidget):
         self._layout.addWidget(self._scene)
 
         self.toolbar = toolbar_class(self, experiment, args)
-        self.toolbar.setFixedSize(400, 720)
+        self.toolbar.setFixedSize(TOOLBAR_WIDTH, TOOLBAR_HEIGHT)
         self._layout.addWidget(self.toolbar)
         self._layout.setAlignment(self.toolbar, QtCore.Qt.AlignTop)
 
@@ -506,10 +508,25 @@ class MainWindow(QtGui.QWidget):
         
     def _create_view_menu(self):
         self._view_menu = self._menu_bar.addMenu("View")
+        self._add_toolbar_action()
         self._add_fullscreen_action()
         self._add_follow_action()
         self._add_focus_action()
         self._add_floor_action()
+
+    def _add_toolbar_action(self):
+        self._toolbar_action = QtGui.QAction('Toolbar', self)
+        self._toolbar_action.setCheckable(True)
+        self._toolbar_action.setChecked(True)
+        self._toolbar_action.setShortcut('Ctrl+T')
+        self._toolbar_action.toggled.connect(self._toggled_toolbar)
+        self._view_menu.addAction(self._toolbar_action)
+
+    def _toggled_toolbar(self):
+        if self._toolbar_action.isChecked():
+            self.toolbar.setFixedSize(TOOLBAR_WIDTH, TOOLBAR_HEIGHT)
+        else:
+            self.toolbar.setFixedSize(0, TOOLBAR_HEIGHT)
 
     def _add_fullscreen_action(self):
         self._fullscreen_action = QtGui.QAction('Fullscreen', self)
