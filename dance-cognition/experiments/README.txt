@@ -2,6 +2,11 @@ REQUIREMENTS
 
 sudo apt-get install python-opengl python-qt4-gl python-numpy python-scikit-learn
 
+INSTALLATION ON OSX
+
+# use macports
+sudo port install py27-pyqt4 py27-numpy py27-scikit-learn py27-opengl
+# use /opt/local/bin/python2.7 instead of python when running
 
 PREDICTION WITH BACKPROP NET
 
