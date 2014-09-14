@@ -8,13 +8,13 @@ class Entity(BaseEntity):
              for vertex in vertices])
         return normalized_vectors.flatten()
 
-class Scene(BaseScene):
     def process_io(self, value):
         normalized_vectors = value.reshape([self.bvh_reader.num_joints, 3])
         vertices = [self.bvh_reader.skeleton_scale_vector(vector)
                     for vector in normalized_vectors]
         return vertices
 
+class Scene(BaseScene):
     def draw_input(self, inp):
         glColor3f(0, 1, 0)
         self._draw_skeleton(inp)

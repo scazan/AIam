@@ -42,6 +42,26 @@ class BaseEntity:
     def proceed(self, time_increment):
         self._t += time_increment
 
+    def process_input(self, value):
+        return self.process_io(value)
+
+    def process_output(self, value):
+        return self.process_io(value)
+
+    def process_io(self, value):
+        return value
+
+    def update(self):
+        if self.experiment.input is None:
+            self.processed_input = None
+        else:
+            self.processed_input = self.process_input(self.experiment.input)
+
+        if self.experiment.output is None:
+            self.processed_output = None
+        else:
+            self.processed_output = self.process_output(self.experiment.output)
+
     def get_cursor(self):
         if hasattr(self, "get_duration"):
             return self._t % self.get_duration()
@@ -79,45 +99,28 @@ class BaseScene(QtOpenGL.QGLWidget):
         pos_x, pos_y, pos_z, orient_y, orient_z = map(float, self.args.camera.split(","))
         self._set_camera_orientation(orient_y, orient_z)
 
-    def _update(self):
-        if self.experiment.input is None:
-            self._processed_input = None
-        else:
-            self._processed_input = self.process_input(self.experiment.input)
-
-        if self.experiment.output is None:
-            self._processed_output = None
-        else:
-            self._processed_output = self.process_output(self.experiment.output)
-            if self._focus is None:
-                self._set_focus()
-            if self._following_output() and self._output_outside_focus():
-                self.centralize_output(self._processed_output)
-                self._set_focus()
-
-    def process_input(self, value):
-        return self.process_io(value)
-
-    def process_output(self, value):
-        return self.process_io(value)
-
-    def process_io(self, value):
-        return value
-
     def _set_focus(self):
-        self._focus = self.central_output_position(self._processed_output)
+        self._focus = self.central_output_position(self.experiment.entity.processed_output)
 
     def _output_outside_focus(self):
         if self._focus is not None:
             distance = numpy.linalg.norm(
-                self.central_output_position(self._processed_output) - self._focus)
+                self.central_output_position(self.experiment.entity.processed_output) - self._focus)
             return distance > FOCUS_RADIUS
+
+    def _update(self):
+        if self.experiment.output is not None:
+            if self._focus is None:
+                self._set_focus()
+            if self._following_output() and self._output_outside_focus():
+                self.centralize_output(self.experiment.entity.processed_output)
+                self._set_focus()
 
     def render(self):
         self._update()
         self.configure_3d_projection(-100, 0)
-        self._draw_io(self._processed_input, self.draw_input, self.args.input_y_offset)
-        self._draw_io(self._processed_output, self.draw_output, self.args.output_y_offset)
+        self._draw_io(self.experiment.entity.processed_input, self.draw_input, self.args.input_y_offset)
+        self._draw_io(self.experiment.entity.processed_output, self.draw_output, self.args.output_y_offset)
         if self.view_floor:
             self._draw_floor()
         if self._parent.focus_action.isChecked():
@@ -197,6 +200,7 @@ class BaseScene(QtOpenGL.QGLWidget):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glLoadIdentity()
         glTranslatef(self.margin, self.margin, 0)
+        self.experiment.entity.update()
         self.render()
 
     def _draw_unit_cube(self):

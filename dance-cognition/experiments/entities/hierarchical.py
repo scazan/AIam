@@ -19,12 +19,18 @@ class Entity(BaseEntity):
                             choices=["vectors", "quaternion"])
         parser.add_argument("--translate", action="store_true")
         parser.add_argument("--translation-weight", type=float, default=1.)
+        parser.add_argument("--friction", action="store_true")
 
     def __init__(self, *args, **kwargs):
         BaseEntity.__init__(self, *args, **kwargs)
         self.rotation_parametrization = rotation_parametrizations[
             self.args.rotation_parametrization]
         self._create_parameter_info_table()
+        self._output_constrainers = []
+        if self.experiment.args.friction:
+            self._output_constrainers.append(FrictionConstrainer(BalanceDetector()))
+        if self.experiment.args.floor:
+            self._output_constrainers.append(FloorConstrainer())
 
     def _create_parameter_info_table(self):
         self._parameter_info = []
@@ -82,49 +88,11 @@ class Entity(BaseEntity):
             joint.rotation)
         parameters.extend(rotation_parameters)
 
-class Scene(BaseScene):
-    @staticmethod
-    def add_parser_arguments(parser):
-        parser.add_argument("--friction", action="store_true")
-
-    def __init__(self, *args, **kwargs):
-        BaseScene.__init__(self, *args, **kwargs)
-        self._output_constrainers = []
-        if self.experiment.args.friction:
-            self._output_constrainers.append(FrictionConstrainer(BalanceDetector()))
-        if self.experiment.args.floor:
-            self._output_constrainers.append(FloorConstrainer())
-        self._camera_translation = None
-        self._camera_movement = None
-
-    def camera_translation(self):
-        if self._camera_translation is not None:
-            return self._camera_translation
-        else:
-            return numpy.zeros(3)
-
     def process_input(self, parameters):
         return self._parameters_to_normalized_vertices(parameters)
 
-    def draw_input(self, vertices):
-        glColor3f(0, 1, 0)
-        self._draw_vertices(vertices)
-
     def process_output(self, parameters):
-        vertices = self._constrained_output_vertices(parameters)
-        if self._camera_translation is None:
-            self._camera_translation = -vertices[0]
-        elif self._camera_movement and self._camera_movement.is_active():
-            self._camera_translation = self._camera_movement.translation()
-            self._camera_movement.proceed(self.experiment.time_increment)
-        return vertices
-
-    def draw_output(self, vertices):
-        glColor3f(0, 0, 0)
-        self._draw_vertices(vertices)
-
-    def parameters_to_hips(self, parameters):
-        return self._parameters_to_joint(parameters)
+        return self._constrained_output_vertices(parameters)
 
     def _constrained_output_vertices(self, parameters):
         vertices = self._parameters_to_normalized_vertices(parameters)
@@ -138,12 +106,6 @@ class Scene(BaseScene):
         normalized_vertices = [self.bvh_reader.normalize_vector(vertex)
                                for vertex in vertices]
         return normalized_vertices
-
-    def _draw_vertices(self, vertices):
-        edges = self.bvh_reader.vertices_to_edges(vertices)
-        glLineWidth(2.0)
-        for edge in edges:
-            self._draw_line(edge.v1, edge.v2)
 
     def _parameters_to_joint(self, parameters):
         any_frame = 0
@@ -193,6 +155,43 @@ class Scene(BaseScene):
             parameter_index = self._parameters_to_joint_recurse(parameters, child, parameter_index)
 
         return parameter_index
+
+class Scene(BaseScene):
+    def __init__(self, *args, **kwargs):
+        BaseScene.__init__(self, *args, **kwargs)
+        self._camera_translation = None
+        self._camera_movement = None
+
+    def camera_translation(self):
+        if self._camera_translation is not None:
+            return self._camera_translation
+        else:
+            return numpy.zeros(3)
+
+    def _update_camera_translation(self, vertices):
+        if self._camera_translation is None:
+            self._camera_translation = -vertices[0]
+        elif self._camera_movement and self._camera_movement.is_active():
+            self._camera_translation = self._camera_movement.translation()
+            self._camera_movement.proceed(self.experiment.time_increment)
+
+    def draw_input(self, vertices):
+        glColor3f(0, 1, 0)
+        self._draw_vertices(vertices)
+
+    def draw_output(self, vertices):
+        self._update_camera_translation(vertices)
+        glColor3f(0, 0, 0)
+        self._draw_vertices(vertices)
+
+    def parameters_to_hips(self, parameters):
+        return self._parameters_to_joint(parameters)
+
+    def _draw_vertices(self, vertices):
+        edges = self.bvh_reader.vertices_to_edges(vertices)
+        glLineWidth(2.0)
+        for edge in edges:
+            self._draw_line(edge.v1, edge.v2)
 
     def _draw_line(self, v1, v2):
         glBegin(GL_LINES)
