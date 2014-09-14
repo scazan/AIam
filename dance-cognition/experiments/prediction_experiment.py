@@ -36,11 +36,14 @@ class PredictionExperiment(Experiment):
                 LearningPlotter(student, teacher, self.args.plot_duration).plot(self.args.plot)
 
             else:
-                app = QtGui.QApplication(sys.argv)
-                self.window = MainWindow(
-                    self, self._scene_class, ExperimentToolbar, self.args)
-                self.window.show()
-                app.exec_()
+                self.run_backend_and_or_ui()
+
+    def run_ui(self):
+        app = QtGui.QApplication(sys.argv)
+        self.window = MainWindow(
+            self, self._scene_class, ExperimentToolbar, self.args)
+        self.window.show()
+        app.exec_()
 
     def proceed(self):
         if self.teacher.collected_enough_training_data():

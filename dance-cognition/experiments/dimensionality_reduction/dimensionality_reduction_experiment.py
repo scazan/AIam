@@ -255,12 +255,15 @@ class DimensionalityReductionExperiment(Experiment):
             self.improviser_params = ImproviserParameters()
             self._improviser = Improviser(self, self.improviser_params)
 
-            app = QtGui.QApplication(sys.argv)
-            app.setStyleSheet(open("stylesheet.qss").read())
-            self.window = DimensionalityReductionMainWindow(
-                self, self._scene_class, DimensionalityReductionToolbar, self.args)
-            self.window.show()
-            app.exec_()
+        self.run_backend_and_or_ui()
+
+    def run_ui(self):
+        app = QtGui.QApplication(sys.argv)
+        app.setStyleSheet(open("stylesheet.qss").read())
+        self.window = DimensionalityReductionMainWindow(
+            self, self._scene_class, DimensionalityReductionToolbar, self.args)
+        self.window.show()
+        app.exec_()
 
     def _load_model(self):
         self.student, entity_model = load_model(self._model_path)
