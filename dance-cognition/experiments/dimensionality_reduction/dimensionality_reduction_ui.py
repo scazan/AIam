@@ -8,13 +8,15 @@ import modes
 class DimensionalityReductionMainWindow(MainWindow):
     def __init__(self, *args, **kwargs):
         MainWindow.__init__(self, *args, **kwargs)
-        self.add_event_handler(
-            Event.IMPROVISER_PATH,
-            lambda event: self.toolbar.map_tab.set_path(numpy.array(event.content)))
+        self.add_event_handler(Event.IMPROVISER_PATH, self._set_improviser_path)
         self._add_toggleable_action(
             '&Plot reduction', self._start_plot_reduction,
             '&Stop plot', self._stop_plot_reduction,
             False, 'F1')
+
+    def _set_improviser_path(self, event):
+        if self.toolbar.map_tab:
+            self.toolbar.map_tab.set_path(numpy.array(event.content))
 
 class DimensionalityReductionToolbar(ExperimentToolbar):
     def __init__(self, *args):
@@ -115,7 +117,10 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
     def _add_reduction_tabs(self):
         self._set_exploration_ranges()
         self._reduction_tabs = QtGui.QTabWidget()
-        self._add_map_tab()
+        if self.parent().student.n_components >= 2:
+            self._add_map_tab()
+        else:
+            self.map_tab = None
         self._add_reduction_sliders_tab()
         self._layout.addWidget(self._reduction_tabs)
 
