@@ -5,10 +5,12 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/..")
 from argparse import ArgumentParser
 from storage import *
 from bvh_reader import bvh_reader as bvh_reader_module
-from bvh_writer import BvhWriter
 import imp
-from ui.ui import *
+from server import WebsocketServer, ClientHandler
+from stopwatch import Stopwatch
 import threading
+from event import Event
+from event_listener import EventListener
 
 class BaseEntity:
     @staticmethod
@@ -57,8 +59,7 @@ class BaseEntity:
     def set_cursor(self, t):
         self._t = t
 
-
-class Experiment:
+class Experiment(EventListener):
     @staticmethod
     def add_parser_arguments(parser):
         parser.add_argument("-profile", "-p")
@@ -77,8 +78,14 @@ class Experiment:
         parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
                             default="-3.767,-1.400,-3.485,-55.500,18.500")
         parser.add_argument("--floor", action="store_true")
+        parser.add_argument("--backend-only", action="store_true")
+        parser.add_argument("--ui-only", action="store_true")
+        parser.add_argument("--backend-host", default="localhost")
 
     def __init__(self, parser):
+        EventListener.__init__(self)
+        self._add_event_handlers()
+
         args, _remaining_args = parser.parse_known_args()
         if args.profile:
             profile_path = "%s/%s.profile" % (self.profiles_dir, args.profile)
@@ -104,7 +111,6 @@ class Experiment:
         if args.bvh:
             self.bvh_reader = bvh_reader_module.BvhReader(args.bvh)
             self.bvh_reader.read()
-            self.bvh_writer = BvhWriter(self.bvh_reader)
         else:
             self.bvh_reader = None
         self.input = None
@@ -112,14 +118,34 @@ class Experiment:
         self.entity = entity_class(self)
         self._scene_class = entity_module.Scene
         self._running = True
+        self.stopwatch = Stopwatch()
+        self._frame_count = 0
+        self.ui_handlers = set()
+
+    def _add_event_handlers(self):
+        self.add_event_handler(Event.START, self._start)
+        self.add_event_handler(Event.STOP, self._stop)
+        self.add_event_handler(
+            Event.SET_CURSOR,
+            lambda event: self.entity.set_cursor(event.content))
 
     def run_backend_and_or_ui(self):
-        self.run_ui()
+        run_backend = not self.args.ui_only
+        run_ui = not self.args.backend_only
+        if run_backend:
+            self._setup_websocket_server()
+            if run_ui:
+                self._start_websocket_server_in_new_thread()
+                self.run_ui()
+            else:
+                self._start_websocket_server()
+        elif run_ui:
+            self.run_ui()
 
-    def start(self):
+    def _start(self):
         self._running = True
 
-    def stop(self):
+    def _stop(self):
         self._running = False
 
     def is_running(self):
@@ -127,6 +153,30 @@ class Experiment:
 
     def update(self):
         pass
+
+    def _update_and_refresh_uis(self):
+        self.now = self.current_time()
+        if self._frame_count == 0:
+            self.stopwatch.start()
+        else:
+            if self.is_running():
+                self.time_increment = self.now - self.previous_frame_time
+                self.proceed()
+
+            self.entity.update()
+            self.update()
+            self.send_event_to_ui(Event(Event.REDUCTION, self.reduction))
+            self.send_event_to_ui(Event(Event.OUTPUT, self.entity.processed_output))
+
+        self.previous_frame_time = self.now
+        self._frame_count += 1
+
+    def send_event_to_ui(self, event):
+        for ui_handler in self.ui_handlers:
+            ui_handler.send_event(event)
+
+    def current_time(self):
+        return self.stopwatch.get_elapsed_time()
 
     def _training_duration(self):
         if self.args.training_duration:
@@ -138,4 +188,32 @@ class Experiment:
                 "training duration specified in neither arguments nor the %s class" % \
                     self.entity.__class__.__name__)
 
+    def _setup_websocket_server(self):
+        self._server = WebsocketServer(UiHandler, {"experiment": self})
+        self._set_up_timed_refresh()
 
+    def _set_up_timed_refresh(self):
+        self._server.add_periodic_callback(
+            self._update_and_refresh_uis, 1000. / self.args.frame_rate)
+
+    def _start_websocket_server(self):
+        self._server.start()
+
+    def _start_websocket_server_in_new_thread(self):
+        server_thread = threading.Thread(target=self._start_websocket_server)
+        server_thread.daemon = True
+        server_thread.start()
+
+class UiHandler(ClientHandler):
+    def __init__(self, *args, **kwargs):
+        print "UI connected"
+        self._experiment = kwargs.pop("experiment")
+        self._experiment.ui_handlers.add(self)
+        super(UiHandler, self).__init__(*args, **kwargs)
+
+    def on_close(self):
+        print "UI disconnected"
+        self._experiment.ui_handlers.remove(self)
+
+    def received_event(self, event):
+        self._experiment.handle_event(event)

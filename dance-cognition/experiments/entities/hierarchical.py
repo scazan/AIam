@@ -156,6 +156,7 @@ class Entity(BaseEntity):
 
         return parameter_index
 
+from ui.ui import *
 class Scene(BaseScene):
     def __init__(self, *args, **kwargs):
         BaseScene.__init__(self, *args, **kwargs)

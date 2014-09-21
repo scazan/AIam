@@ -1,4 +1,4 @@
-from dimensionality_reduction_experiment import *
+from dimensionality_reduction_ui import *
 
 SPLIT_SENSITIVITY = .2
 
@@ -6,6 +6,7 @@ class MapTab(ReductionTab, QtGui.QWidget):
     def __init__(self, parent, dimensions):
         ReductionTab.__init__(self, parent)
         QtGui.QWidget.__init__(self)
+        self.student = parent.parent().student
         self._dimensions = dimensions
         self._map_layout = QtGui.QVBoxLayout()
         self._add_map_dimension_checkboxes()
@@ -35,7 +36,7 @@ class MapTab(ReductionTab, QtGui.QWidget):
     def _add_map_dimension_checkboxes(self):
         layout = QtGui.QHBoxLayout()
         self._map_dimension_checkboxes = []
-        for n in range(self.experiment.student.n_components):
+        for n in range(self.student.n_components):
             checkbox = QtGui.QCheckBox()
             if n in self._dimensions:
                 checkbox.setCheckState(QtCore.Qt.Checked)
@@ -47,7 +48,7 @@ class MapTab(ReductionTab, QtGui.QWidget):
     def _dimensions_changed(self):
         checked_dimensions = filter(
             lambda n: self._map_dimension_checkboxes[n].checkState() == QtCore.Qt.Checked,
-            range(self.experiment.student.n_components))
+            range(self.student.n_components))
         if len(checked_dimensions) == 2:
             self._map_widget.set_dimensions(checked_dimensions)
             self._map_widget.set_reduction(self._reduction)
@@ -59,17 +60,17 @@ class MapTab(ReductionTab, QtGui.QWidget):
 
 class MapWidget(QtOpenGL.QGLWidget):
     def __init__(self, parent, dimensions):
+        QtOpenGL.QGLWidget.__init__(self, parent)
         self._parent = parent
-        self.experiment = parent.experiment
+        self._student = parent.student
         self._observations_layer = Layer(self._render_observations)
         self.set_dimensions(dimensions)
         self._dragging = False
         self._enabled = False
-        QtOpenGL.QGLWidget.__init__(self, parent)
 
     def set_dimensions(self, dimensions):
         self._dimensions = dimensions
-        observations = self.experiment.student.normalized_observed_reductions[
+        observations = self._student.normalized_observed_reductions[
             :,dimensions]
         self._split_into_segments(observations)
         self._reduction = None

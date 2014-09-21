@@ -1,4 +1,4 @@
-from dimensionality_reduction_experiment import *
+from dimensionality_reduction_ui import *
 
 class ReductionSliders(ReductionTab, QtGui.QWidget):
     def __init__(self, parent):
@@ -16,13 +16,13 @@ class ReductionSliders(ReductionTab, QtGui.QWidget):
         self._update_sliders(normalized_reduction)
 
     def _update_sliders(self, normalized_reduction):
-        for n in range(self.experiment.student.n_components):
+        for n in range(self.student.n_components):
             self._sliders[n].setValue(self._normalized_reduction_value_to_slider_value(
                     n, normalized_reduction[n]))
 
     def _add_sliders(self):
         self._sliders = []
-        for n in range(self.experiment.student.n_components):
+        for n in range(self.student.n_components):
             slider = QtGui.QSlider(QtCore.Qt.Horizontal)
             slider.setRange(0, SLIDER_PRECISION)
             slider.setSingleStep(1)
@@ -47,5 +47,5 @@ class ReductionSliders(ReductionTab, QtGui.QWidget):
     def get_normalized_reduction(self):
         normalized_reduction = numpy.array(
             [self._slider_value_to_normalized_reduction_value(n, self._sliders[n].value())
-             for n in range(self.experiment.student.n_components)])
+             for n in range(self.student.n_components)])
         return normalized_reduction

@@ -1,3 +1,9 @@
+separate backend and UI
+  separate UI things from entities (class Scene)
+    test all entities
+  test start/stop plot reduction
+  test export stills
+
 nicer looking limbs?
 
 shadow?

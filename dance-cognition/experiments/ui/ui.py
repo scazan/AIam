@@ -3,9 +3,12 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from PyQt4 import QtCore, QtGui, QtOpenGL
 import math
-from stopwatch import Stopwatch
 import numpy
 from parameters import *
+from client import WebsocketClient
+from event import Event
+from event_listener import EventListener
+from bvh_writer import BvhWriter
 
 TOOLBAR_WIDTH = 400
 TOOLBAR_HEIGHT = 720
@@ -15,16 +18,16 @@ CAMERA_Y_SPEED = .1
 CAMERA_KEY_SPEED = .5
 CAMERA_DRAG_SPEED = .5
 FOCUS_RADIUS = 1.
+REDUCTION_PLOT_PATH = "reduction.dat"
 
 class BaseScene(QtOpenGL.QGLWidget):
     @staticmethod
     def add_parser_arguments(parser):
         pass
 
-    def __init__(self, parent, experiment, args):
+    def __init__(self, parent, bvh_reader, args):
         self._parent = parent
-        self.experiment = experiment
-        self.bvh_reader = experiment.bvh_reader
+        self.bvh_reader = bvh_reader
         self.args = args
         self._exporting_output = False
         self.view_floor = args.floor
@@ -32,6 +35,10 @@ class BaseScene(QtOpenGL.QGLWidget):
         self._dragging_y_position = False
         self._focus = None
         self._set_camera_from_arg(args.camera)
+        if args.bvh:
+            self.bvh_writer = BvhWriter(self.bvh_reader)
+        self.processed_input = None
+        self.processed_output = None
         QtOpenGL.QGLWidget.__init__(self, parent)
         self.setMouseTracking(True)
 
@@ -45,27 +52,26 @@ class BaseScene(QtOpenGL.QGLWidget):
         self._set_camera_orientation(orient_y, orient_z)
 
     def _set_focus(self):
-        self._focus = self.central_output_position(self.experiment.entity.processed_output)
+        self._focus = self.central_output_position(self.processed_output)
 
     def _output_outside_focus(self):
         if self._focus is not None:
             distance = numpy.linalg.norm(
-                self.central_output_position(self.experiment.entity.processed_output) - self._focus)
+                self.central_output_position(self.processed_output) - self._focus)
             return distance > FOCUS_RADIUS
 
-    def _update(self):
-        if self.experiment.output is not None:
-            if self._focus is None:
-                self._set_focus()
-            if self._following_output() and self._output_outside_focus():
-                self.centralize_output(self.experiment.entity.processed_output)
-                self._set_focus()
+    def received_output(self, processed_output):
+        self.processed_output = processed_output
+        if self._focus is None:
+            self._set_focus()
+        if self._following_output() and self._output_outside_focus():
+            self.centralize_output(self.processed_output)
+            self._set_focus()
 
     def render(self):
-        self._update()
         self.configure_3d_projection(-100, 0)
-        self._draw_io(self.experiment.entity.processed_input, self.draw_input, self.args.input_y_offset)
-        self._draw_io(self.experiment.entity.processed_output, self.draw_output, self.args.output_y_offset)
+        self._draw_io(self.processed_input, self.draw_input, self.args.input_y_offset)
+        self._draw_io(self.processed_output, self.draw_output, self.args.output_y_offset)
         if self.view_floor:
             self._draw_floor()
         if self._parent.focus_action.isChecked():
@@ -87,26 +93,26 @@ class BaseScene(QtOpenGL.QGLWidget):
         self._exporting_output = True
 
     def stop_export_output(self):
-        if not os.path.exists(self.experiment.args.export_dir):
-            os.mkdir(self.experiment.args.export_dir)
+        if not os.path.exists(self.args.export_dir):
+            os.mkdir(self.args.export_dir)
         export_path = self._get_export_path()
         print "saving export to %s" % export_path
-        self.experiment.bvh_writer.write(export_path)
+        self.bvh_writer.write(export_path)
         self._exporting_output = False
 
     def _get_export_path(self):
         i = 1
         while True:
-            path = "%s/export%03d.bvh" % (self.experiment.args.export_dir, i)
+            path = "%s/export%03d.bvh" % (self.args.export_dir, i)
             if not os.path.exists(path):
                 return path
             i += 1
 
     def _export_output(self):
-        if self.experiment.output is not None:
-            hips = self.parameters_to_hips(self.experiment.output)
+        if self.output is not None:
+            hips = self.parameters_to_hips(self.output)
             frame = self._joint_to_bvh_frame(hips)
-            self.experiment.bvh_writer.add_frame(frame)
+            self.bvh_writer.add_frame(frame)
 
     def _joint_to_bvh_frame(self, joint):
         result = []
@@ -145,7 +151,6 @@ class BaseScene(QtOpenGL.QGLWidget):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glLoadIdentity()
         glTranslatef(self.margin, self.margin, 0)
-        self.experiment.entity.update()
         self.render()
 
     def _draw_unit_cube(self):
@@ -295,8 +300,7 @@ class BaseScene(QtOpenGL.QGLWidget):
         return numpy.zeros(3)
 
 class ExperimentToolbar(QtGui.QWidget):
-    def __init__(self, parent, experiment, args):
-        self.experiment = experiment
+    def __init__(self, parent, args):
         self.args = args
         QtOpenGL.QGLWidget.__init__(self, parent)
 
@@ -357,54 +361,69 @@ class ExperimentToolbar(QtGui.QWidget):
         
     def _slider_value_changed(self, parameter, slider_value):
         value = self._slider_value_to_parameter_value(parameter, slider_value)
-        parameter.setValue(value)
+        parameter.set_value(value)
 
     def _edited_text_parameter(self, parameter, string):
         if string == "":
             return
         if parameter.type == int:
-            parameter.setValue(int(string))
+            parameter.set_value(int(string))
         elif parameter.type == float:
-            parameter.setValue(float(string))
+            parameter.set_value(float(string))
 
     def _edited_choice_parameter(self, parameter, index):
-        parameter.setValue(parameter.choices[index])
+        parameter.set_value(parameter.choices[index])
 
-class MainWindow(QtGui.QWidget):
-    def __init__(self, experiment, scene_widget_class, toolbar_class, args):
-        self.experiment = experiment
+class MainWindow(QtGui.QWidget, EventListener):
+    def __init__(self, entity, student, bvh_reader, scene_widget_class, toolbar_class, args):
+        self.entity = entity
+        self.student = student
         self.args = args
+        self._connect_to_server()
+
+        EventListener.__init__(self)
+        self.add_event_handler(Event.REDUCTION, self._handle_reduction)
+        self.add_event_handler(Event.OUTPUT, self._handle_output)
+        self._reduction_plot = None
+
         QtGui.QWidget.__init__(self)
         self._layout = QtGui.QHBoxLayout()
         size_policy = QtGui.QSizePolicy(
             QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
         size_policy.setHorizontalStretch(2)
 
-        self._scene = scene_widget_class(self, experiment, args)
+        self._scene = scene_widget_class(self, bvh_reader, args)
         self._scene.setSizePolicy(size_policy)
         self._create_menu()
         self._layout.addWidget(self._scene)
 
-        self.toolbar = toolbar_class(self, experiment, args)
+        self.toolbar = toolbar_class(self, args)
         self.toolbar.setFixedSize(TOOLBAR_WIDTH, TOOLBAR_HEIGHT)
         self._layout.addWidget(self.toolbar)
         self._layout.setAlignment(self.toolbar, QtCore.Qt.AlignTop)
-
         self.setLayout(self._layout)
 
-        self.experiment.time_increment = 0
-        self.stopwatch = Stopwatch()
-        self._frame_count = 0
-        self._set_up_timed_refresh()
+    def _connect_to_server(self):
+        self.client = Client(self.args, self)
+        self.client.connect()
+
+    def _handle_reduction(self, event):
+        self.reduction = event.content
+        if self._reduction_plot:
+            print >>self._reduction_plot, " ".join([
+                    str(v) for v in self.student.normalize_reduction(self.reduction)])
+
+    def _start_plot_reduction(self):
+        self._reduction_plot = open(REDUCTION_PLOT_PATH, "w")
+        print "plotting reduction"
+
+    def _stop_plot_reduction(self):
+        self._reduction_plot.close()
+        self._reduction_plot = None
+        print "saved reduction data to %s" % REDUCTION_PLOT_PATH
 
     def sizeHint(self):
         return QtCore.QSize(1000, 640)
-
-    def _set_up_timed_refresh(self):
-        timer = QtCore.QTimer(self)
-        timer.setInterval(1000. / self.args.frame_rate)
-        QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), self._refresh)
-        timer.start()
 
     def _create_menu(self):
         self._menu_bar = QtGui.QMenuBar()
@@ -415,8 +434,8 @@ class MainWindow(QtGui.QWidget):
     def _create_main_menu(self):
         self._main_menu = self._menu_bar.addMenu("Main")
         self._add_toggleable_action(
-            "Start", self.experiment.start,
-            "Stop", self.experiment.stop,
+            "Start", lambda: self.client.send_event(Event(Event.START)),
+            "Stop", lambda: self.client.send_event(Event(Event.STOP)),
             True, " ")
         self._add_toggleable_action(
             '&Export output', self._scene.start_export_output,
@@ -523,27 +542,19 @@ class MainWindow(QtGui.QWidget):
         self._scene.view_floor = self._floor_action.isChecked()
 
     def _refresh(self):
-        self.now = self.current_time()
-        if self._frame_count == 0:
-            self.stopwatch.start()
-        else:
-            if self.experiment.is_running():
-                self.experiment.time_increment = self.now - self.previous_frame_time
-                self.experiment.proceed()
-
-            self.experiment.update()
-            self._scene.updateGL()
-            self.toolbar.refresh()
-
-        self.previous_frame_time = self.now
-        self._frame_count += 1
-
-    def current_time(self):
-        return self.stopwatch.get_elapsed_time()
+        self._scene.updateGL()
+        self.toolbar.refresh()
 
     def keyPressEvent(self, event):
         self._scene.keyPressEvent(event)
         QtGui.QWidget.keyPressEvent(self, event)
+
+    def customEvent(self, custom_qt_event):
+        custom_qt_event.callback()
+
+    def _handle_output(self, event):
+        self._scene.received_output(event.content)
+        self._refresh()
 
 class CameraMovement:
     def __init__(self, source, target, duration=2):
@@ -583,3 +594,19 @@ class Layer:
 
     def refresh(self):
         self._updated = False
+
+class CustomQtEvent(QtCore.QEvent):
+    EVENT_TYPE = QtCore.QEvent.Type(QtCore.QEvent.registerEventType())
+
+    def __init__(self, callback):
+        QtCore.QEvent.__init__(self, CustomQtEvent.EVENT_TYPE)
+        self.callback = callback
+
+class Client(WebsocketClient):
+    def __init__(self, args, window):
+        self._window = window
+        WebsocketClient.__init__(self, args.backend_host)
+
+    def received_event(self, event):
+        callback = lambda: self._window.handle_event(event)
+        QtGui.QApplication.postEvent(self._window, CustomQtEvent(callback))
