@@ -1,11 +1,11 @@
 BACKEND REQUIREMENTS
 
 sudo apt-get install python-numpy python-scikit-learn python-tornado
-pip install ws4py
 
 UI REQUIREMENTS
 
 sudo apt-get install python-opengl python-qt4-gl
+pip install ws4py
 
 INSTALLATION ON OSX
 
