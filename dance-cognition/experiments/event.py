@@ -6,6 +6,7 @@ class Event:
     PARAMETER = "PARAMETER"
     SET_CURSOR = "SET_CURSOR"
     IMPROVISER_PATH = "IMPROVISER_PATH"
+    MODE = "MODE"
 
     def __init__(self, type_, content=None):
         self.type = type_

@@ -24,6 +24,13 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._add_reduction_tabs()
         self.setLayout(self._layout)
 
+        if self.args.mode == modes.IMPROVISE:
+            self.tabs.setCurrentWidget(self.improvise_tab)
+        elif self.args.mode == modes.EXPLORE:
+            self.tabs.setCurrentWidget(self.explore_tab)
+        else:
+            self.tabs.setCurrentWidget(self.follow_tab)
+
     def _add_mode_tabs(self):
         self.tabs = QtGui.QTabWidget()
         self._add_follow_tab()
