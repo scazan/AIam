@@ -141,6 +141,7 @@ class DimensionalityReductionExperiment(Experiment):
         elif self._mode == modes.IMPROVISE:
             self.reduction = self._improviser.current_position()
         self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
+        self.send_event_to_ui(Event(Event.REDUCTION, self.reduction))
 
     def proceed(self):
         if self._mode == modes.FOLLOW:

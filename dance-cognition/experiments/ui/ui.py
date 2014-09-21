@@ -383,6 +383,7 @@ class MainWindow(QtGui.QWidget, EventListener):
 
         EventListener.__init__(self)
         self.add_event_handler(Event.REDUCTION, self._handle_reduction)
+        self.add_event_handler(Event.INPUT, self._handle_input)
         self.add_event_handler(Event.OUTPUT, self._handle_output)
         self._reduction_plot = None
 
@@ -551,6 +552,9 @@ class MainWindow(QtGui.QWidget, EventListener):
 
     def customEvent(self, custom_qt_event):
         custom_qt_event.callback()
+
+    def _handle_input(self, event):
+        self._scene.processed_input = event.content
 
     def _handle_output(self, event):
         self._scene.received_output(event.content)

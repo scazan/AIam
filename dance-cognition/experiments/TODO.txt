@@ -1,8 +1,11 @@
 separate backend and UI
-  separate UI things from entities (class Scene)
-    test all entities
-  test start/stop plot reduction
-  test export stills
+  follow
+  explore
+  follow output
+  export stills
+  running with UI and backend in same process
+  running backend without python-opengl and python-qt4-gl
+  start/stop plot reduction
 
 nicer looking limbs?
 

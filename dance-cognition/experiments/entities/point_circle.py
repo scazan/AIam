@@ -1,4 +1,5 @@
-from entities.point import *
+from experiment import *
+import math
 
 class Entity(BaseEntity):
     def get_value(self):

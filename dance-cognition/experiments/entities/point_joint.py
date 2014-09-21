@@ -1,4 +1,4 @@
-from entities.point import *
+from experiment import *
 
 class Entity(BaseEntity):
     def get_value(self):

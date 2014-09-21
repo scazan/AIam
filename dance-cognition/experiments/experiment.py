@@ -101,7 +101,9 @@ class Experiment(EventListener):
         else:
             entity_class = BaseEntity
         entity_class.add_parser_arguments(parser)
-        entity_module.Scene.add_parser_arguments(parser)
+        if not args.backend_only:
+            self._entity_scene_module = imp.load_source("entity", "entities/%s_scene.py" % args.entity)
+            self._entity_scene_module.Scene.add_parser_arguments(parser)
 
         args = parser.parse_args()
         if args.profile:
@@ -116,7 +118,6 @@ class Experiment(EventListener):
         self.input = None
         self.output = None
         self.entity = entity_class(self)
-        self._scene_class = entity_module.Scene
         self._running = True
         self.stopwatch = Stopwatch()
         self._frame_count = 0
@@ -132,6 +133,10 @@ class Experiment(EventListener):
     def run_backend_and_or_ui(self):
         run_backend = not self.args.ui_only
         run_ui = not self.args.backend_only
+
+        if run_ui:
+            self._scene_class = self._entity_scene_module.Scene
+
         if run_backend:
             self._setup_websocket_server()
             if run_ui:
@@ -165,7 +170,9 @@ class Experiment(EventListener):
 
             self.entity.update()
             self.update()
-            self.send_event_to_ui(Event(Event.REDUCTION, self.reduction))
+
+            if self.entity.processed_input is not None:
+                self.send_event_to_ui(Event(Event.INPUT, self.entity.processed_input))
             self.send_event_to_ui(Event(Event.OUTPUT, self.entity.processed_output))
 
         self.previous_frame_time = self.now

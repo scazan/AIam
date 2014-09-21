@@ -1,4 +1,4 @@
-from experiment import *
+from ui.ui import *
 
 class Scene(BaseScene):
     def draw_input(self, inp):

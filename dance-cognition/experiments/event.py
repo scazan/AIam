@@ -1,6 +1,7 @@
 class Event:
     START = "START"
     STOP = "STOP"
+    INPUT = "INPUT"
     OUTPUT = "OUTPUT"
     REDUCTION = "REDUCTION"
     PARAMETER = "PARAMETER"

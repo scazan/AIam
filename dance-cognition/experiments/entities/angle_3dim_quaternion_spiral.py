@@ -1,4 +1,5 @@
 from entities.angle_3dim_quaternion import *
+import math
 
 class Entity(QuaternionEntity):
     def get_value(self):
