@@ -8,6 +8,8 @@ class Event:
     SET_CURSOR = "SET_CURSOR"
     IMPROVISER_PATH = "IMPROVISER_PATH"
     MODE = "MODE"
+    CURSOR = "CURSOR"
+    VELOCITY = "VELOCITY"
 
     def __init__(self, type_, content=None):
         self.type = type_

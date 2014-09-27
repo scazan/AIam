@@ -1,7 +1,5 @@
 separate backend and UI
-  follow
   explore
-  follow output
   export stills
   running with UI and backend in same process
   running backend without python-opengl and python-qt4-gl

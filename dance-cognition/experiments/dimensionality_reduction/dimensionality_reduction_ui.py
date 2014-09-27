@@ -9,6 +9,8 @@ class DimensionalityReductionMainWindow(MainWindow):
     def __init__(self, *args, **kwargs):
         MainWindow.__init__(self, *args, **kwargs)
         self.add_event_handler(Event.IMPROVISER_PATH, self._set_improviser_path)
+        self.add_event_handler(Event.VELOCITY, self._set_velocity)
+        self.add_event_handler(Event.CURSOR, self._set_cursor)
         self._add_toggleable_action(
             '&Plot reduction', self._start_plot_reduction,
             '&Stop plot', self._stop_plot_reduction,
@@ -17,6 +19,13 @@ class DimensionalityReductionMainWindow(MainWindow):
     def _set_improviser_path(self, event):
         if self.toolbar.map_tab:
             self.toolbar.map_tab.set_path(numpy.array(event.content))
+
+    def _set_velocity(self, event):
+        self.toolbar.velocity_label.setText("%.3f" % event.content)
+
+    def _set_cursor(self, event):
+        if hasattr(self.toolbar, "cursor_slider"):
+            self.toolbar.cursor_slider.setValue(event.content * SLIDER_PRECISION)
 
 class DimensionalityReductionToolbar(ExperimentToolbar):
     def __init__(self, *args):
@@ -64,13 +73,13 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self.cursor_slider.setRange(0, SLIDER_PRECISION)
         self.cursor_slider.setSingleStep(1)
         self.cursor_slider.setValue(0.0)
-        self.cursor_slider.valueChanged.connect(self._cursor_changed)
+        self.cursor_slider.sliderMoved.connect(self._cursor_changed)
         self._follow_tab_layout.addWidget(self.cursor_slider)
 
     def _cursor_changed(self, value):
-        self.parent().client.send_event(
-            Event.SET_CURSOR,
-            float(value) / SLIDER_PRECISION * self.entity.get_duration())
+        self.parent().client.send_event(Event(
+                Event.SET_CURSOR,
+                float(value) / SLIDER_PRECISION * self.parent().entity.get_duration()))
 
     def _add_velocity_view(self):
         layout = QtGui.QHBoxLayout()

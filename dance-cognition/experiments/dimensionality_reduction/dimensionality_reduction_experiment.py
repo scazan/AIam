@@ -134,9 +134,7 @@ class DimensionalityReductionExperiment(Experiment):
                 stats[3])
 
     def update(self):
-        if self._mode == modes.EXPLORE:
-            self.reduction = self.window.toolbar.get_reduction()
-        elif self._mode == modes.FOLLOW:
+        if self._mode == modes.FOLLOW:
             self._follow()
         elif self._mode == modes.IMPROVISE:
             self.reduction = self._improviser.current_position()
@@ -147,10 +145,10 @@ class DimensionalityReductionExperiment(Experiment):
         if self._mode == modes.FOLLOW:
             self.entity.proceed(self.time_increment)
             if hasattr(self, "_velocity"):
-                self.window.toolbar.velocity_label.setText("%.3f" % self._velocity)
-            if hasattr(self.window.toolbar, "cursor_slider"):
-                self.window.toolbar.cursor_slider.setValue(
-                    self.entity.get_cursor() / self.entity.get_duration() * SLIDER_PRECISION)
+                self.send_event_to_ui(Event(Event.VELOCITY, self._velocity))
+            self.send_event_to_ui(Event(
+                    Event.CURSOR,
+                    self.entity.get_cursor() / self.entity.get_duration()))
         elif self._mode == modes.IMPROVISE:
             self._improviser.proceed(self.time_increment)
             self.send_event_to_ui(Event(Event.IMPROVISER_PATH, self._improviser.path()))
