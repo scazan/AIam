@@ -81,6 +81,7 @@ class Experiment(EventListener):
         parser.add_argument("--backend-only", action="store_true")
         parser.add_argument("--ui-only", action="store_true")
         parser.add_argument("--backend-host", default="localhost")
+        parser.add_argument("--show-fps", action="store_true")
 
     def __init__(self, parser):
         EventListener.__init__(self)
