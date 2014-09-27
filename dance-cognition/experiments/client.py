@@ -13,7 +13,7 @@ class WebsocketClient(ws4py.client.threadedclient.WebSocketClient):
         print "connected to server"
 
     def closed(self, code, reason=None):
-        print "Closed down", code, reason
+        print "connection to server was closed (code=%r reason=%r)" % (code, reason)
 
     @contextlib.contextmanager
     def _print_exception(self):
@@ -25,7 +25,6 @@ class WebsocketClient(ws4py.client.threadedclient.WebSocketClient):
     def received_message(self, message):
         with StackContext(self._print_exception):
             event = cPickle.loads(str(message))
-            # print "got from server: %s" % event
             self.received_event(event)
 
     def received_event(self, event):
