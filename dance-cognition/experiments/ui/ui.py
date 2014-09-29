@@ -407,7 +407,7 @@ class MainWindow(QtGui.QWidget, EventListener):
         self.setLayout(self._layout)
 
         self._frame_count = 0
-        self._time_increment = 0
+        self.time_increment = 0
         self._stopwatch = Stopwatch()
         if self.args.show_fps:
             self._fps_history = collections.deque(maxlen=10)
@@ -554,9 +554,9 @@ class MainWindow(QtGui.QWidget, EventListener):
     def _refresh(self):
         self._now = self._stopwatch.get_elapsed_time()
         if self._frame_count == 0:
-            self._time_increment = 0
+            self.time_increment = 0
         else:
-            self._time_increment = self._now - self._previous_frame_time
+            self.time_increment = self._now - self._previous_frame_time
         if self._frame_count == 0:
             self._stopwatch.start()
         if self.args.show_fps and self._frame_count > 0:
@@ -570,7 +570,7 @@ class MainWindow(QtGui.QWidget, EventListener):
         self._frame_count += 1
 
     def _update_fps_history(self):
-        fps = 1.0 / self._time_increment
+        fps = 1.0 / self.time_increment
         self._fps_history.append(fps)
 
     def _show_fps_if_timely(self):

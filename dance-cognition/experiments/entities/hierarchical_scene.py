@@ -17,7 +17,7 @@ class Scene(BaseScene):
             self._camera_translation = -vertices[0]
         elif self._camera_movement and self._camera_movement.is_active():
             self._camera_translation = self._camera_movement.translation()
-            self._camera_movement.proceed(self.experiment.time_increment)
+            self._camera_movement.proceed(self.parent().time_increment)
 
     def draw_input(self, vertices):
         glColor3f(0, 1, 0)
