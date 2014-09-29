@@ -1,3 +1,5 @@
+from event import Event
+
 class Parameter:
     def __init__(self, parameters, name, type=str, default=None, choices=None):
         self._parameters = parameters
@@ -43,13 +45,13 @@ class Parameters:
 
     def notify_changed(self, parameter):
         for notifier in self._notifiers:
-            notifier.send_event(
-                Event.PARAMETER,
-                [{"name": parameter.name,
-                  "value": parameter.value}])
+            notifier.send_event(Event(
+                    Event.PARAMETER,
+                    {"name": parameter.name,
+                     "value": parameter.value()}))
 
     def handle_event(self, event):
-        self[event.content["name"]] = event.content["value"]
+        self._parameters_by_name[event.content["name"]].set_value(event.content["value"])
 
 class ParameterFloatRange:
     def __init__(self, min_value, max_value):
