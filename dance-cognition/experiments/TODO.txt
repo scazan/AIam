@@ -1,7 +1,7 @@
 separate backend and UI
+  faster rendering performance when running with UI and backend in same process, by sharing events instead of pickling/sending/receiving
   explore
   export stills
-  running with UI and backend in same process
   running backend without python-opengl and python-qt4-gl
   start/stop plot reduction
 
