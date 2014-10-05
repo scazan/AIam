@@ -59,6 +59,7 @@ class Parameters:
             self.notify_changed(parameter)
 
     def handle_event(self, event):
+        print event
         self._parameters_by_name[event.content["name"]].set_value(event.content["value"], notify=False)
 
 class ParameterFloatRange:
