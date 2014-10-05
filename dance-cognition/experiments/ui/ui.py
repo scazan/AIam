@@ -9,7 +9,7 @@ from event import Event
 from event_listener import EventListener
 from bvh_writer import BvhWriter
 from stopwatch import Stopwatch
-import collections
+from fps_meter import FpsMeter
 
 TOOLBAR_WIDTH = 400
 TOOLBAR_HEIGHT = 720
@@ -405,12 +405,11 @@ class MainWindow(QtGui.QWidget, EventListener):
         self._layout.setAlignment(self.toolbar, QtCore.Qt.AlignTop)
         self.setLayout(self._layout)
 
-        self._frame_count = 0
         self.time_increment = 0
         self._stopwatch = Stopwatch()
+        self._frame_count = 0
         if self.args.show_fps:
-            self._fps_history = collections.deque(maxlen=10)
-            self._previous_shown_fps_time = None
+            self._fps_meter = FpsMeter()
 
         if client:
             client.received_event = self._received_event
@@ -556,35 +555,17 @@ class MainWindow(QtGui.QWidget, EventListener):
     def _refresh(self):
         self._now = self._stopwatch.get_elapsed_time()
         if self._frame_count == 0:
-            self.time_increment = 0
+            self._stopwatch.start()
         else:
             self.time_increment = self._now - self._previous_frame_time
-        if self._frame_count == 0:
-            self._stopwatch.start()
-        if self.args.show_fps and self._frame_count > 0:
-            self._update_fps_history()
-            self._show_fps_if_timely()
+            if self.args.show_fps:
+                self._fps_meter.update()
 
-        self._scene.updateGL()
-        self.toolbar.refresh()
+            self._scene.updateGL()
+            self.toolbar.refresh()
 
         self._previous_frame_time = self._now
         self._frame_count += 1
-
-    def _update_fps_history(self):
-        fps = 1.0 / self.time_increment
-        self._fps_history.append(fps)
-
-    def _show_fps_if_timely(self):
-        if self._previous_shown_fps_time:
-            if (self._now - self._previous_shown_fps_time) > 1.0:
-                self._calculate_and_show_fps()
-        else:
-            self._calculate_and_show_fps()
-
-    def _calculate_and_show_fps(self):
-        print sum(self._fps_history) / len(self._fps_history)
-        self._previous_shown_fps_time = self._now
 
     def keyPressEvent(self, event):
         self._scene.keyPressEvent(event)
