@@ -1,10 +1,10 @@
 separate backend and UI
-  optimization: don't send events to non-subscribing clients
   UI shows outdated parameter values on startup (should reflect values in backend)
   explore
   export stills
   running backend without python-opengl and python-qt4-gl
   start/stop plot reduction
+  optimization: don't send events to non-subscribing clients (e.g. don't send input or output to HTML5 UI)
 
 nicer looking limbs?
 
