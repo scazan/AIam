@@ -310,7 +310,7 @@ class ExperimentToolbar(QtGui.QWidget):
         pass
 
     def add_parameter_fields(self, parameters, parent):
-        ParametersForm(parameters, parent)
+        return ParametersForm(parameters, parent)
 
 class MainWindow(QtGui.QWidget, EventListener):
     def __init__(self, client, entity, student, bvh_reader, scene_widget_class, toolbar_class, args):

@@ -6,31 +6,39 @@ SLIDER_PRECISION = 1000
 class ParametersForm:
     def __init__(self, parameters, parent):
         layout = QtGui.QFormLayout()
+        self._fields_by_name = {}
         for parameter in parameters:
             field = self._create_parameter_field(parameter)
             layout.addRow(QtGui.QLabel(parameter.name), field)
+            self._fields_by_name[parameter.name] = field
         parent.addLayout(layout)
 
     def _create_parameter_field(self, parameter):
         if parameter.choices is not None:
             if parameter.choices.__class__ is ParameterFloatRange:
-                return Slider(parameter)
+                field = Slider(parameter)
             else:
-                return ListChoice(parameter)
+                field = ListChoice(parameter)
         elif parameter.type == str:
-            return LineEdit(parameter)
+            field = LineEdit(parameter)
         elif parameter.type in [int, float]:
-            return LineEdit(parameter)
+            field = LineEdit(parameter)
         else:
             raise Exception("don't know how to create field for %s" % parameter)
+        field.update()
+        return field
+
+    def update_field(self, name):
+        field = self._fields_by_name[name]
+        field.update()
 
 class Slider(QtGui.QSlider):
     def __init__(self, parameter):
+        self._parameter = parameter
         QtGui.QSlider.__init__(self, QtCore.Qt.Horizontal)
         self.setRange(0, SLIDER_PRECISION)
         self.setSingleStep(1)
-        self.setValue(self._parameter_value_to_slider_value(parameter))
-        self.valueChanged.connect(lambda value: self._slider_value_changed(parameter, value))
+        self.sliderMoved.connect(lambda value: self._slider_value_changed(parameter, value))
 
     def _parameter_value_to_slider_value(self, parameter):
         return int((parameter.value() - parameter.choices.min_value) / \
@@ -44,26 +52,33 @@ class Slider(QtGui.QSlider):
         value = self._slider_value_to_parameter_value(parameter, slider_value)
         parameter.set_value(value)
 
+    def update(self):
+        self.setValue(self._parameter_value_to_slider_value(self._parameter))
+
 class ListChoice(QtGui.QComboBox):
     def __init__(self, parameter):
+        self._parameter = parameter
         QtGui.QComboBox.__init__(self)
-        index = 0
-        default_index = 0
         for value in parameter.choices:
             self.addItem(value)
-            if parameter.default == value:
-                default_index = index
-            index += 1
-            self.setCurrentIndex(default_index)
-        self.currentIndexChanged.connect(
+        self.activated.connect(
             lambda value: self._edited_choice_parameter(parameter, value))
 
     def _edited_choice_parameter(self, parameter, index):
         parameter.set_value(parameter.choices[index])
 
+    def update(self):
+        index = 0
+        for value in self._parameter.choices:
+            if self._parameter.value() == value:
+                self.setCurrentIndex(index)
+                return
+            index += 1
+
 class LineEdit(QtGui.QLineEdit):
     def __init__(self, parameter):
-        QtGui.QLineEdit.__init__(self, str(parameter.default))
+        self._parameter = parameter
+        QtGui.QLineEdit.__init__(self)
         self.textEdited.connect(lambda value: self._edited_text_parameter(parameter, value))
 
     def _edited_text_parameter(self, parameter, string):
@@ -73,3 +88,6 @@ class LineEdit(QtGui.QLineEdit):
             parameter.set_value(int(string))
         elif parameter.type == float:
             parameter.set_value(float(string))
+
+    def update(self):
+        self.setText(str(self._parameter.value()))

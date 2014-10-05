@@ -1,5 +1,4 @@
 separate backend and UI
-  UI shows outdated parameter values on startup (should reflect values in backend)
   explore
   export stills
   running backend without python-opengl and python-qt4-gl
