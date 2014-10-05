@@ -86,17 +86,18 @@ class DimensionalityReductionExperiment(Experiment):
                 self._improviser = Improviser(self, self._improviser_params)
             self.run_backend_and_or_ui()
 
-    def run_ui(self):
+    def run_ui(self, client):
         from PyQt4 import QtGui
         app = QtGui.QApplication(sys.argv)
         app.setStyleSheet(open("stylesheet.qss").read())
-        window = self._create_ui_window()
+        window = self._create_ui_window(client)
         window.show()
         app.exec_()
 
-    def _create_ui_window(self):
-        from dimensionality_reduction_ui import DimensionalityReductionMainWindow, DimensionalityReductionToolbar
-        return DimensionalityReductionMainWindow(
+    def _create_ui_window(self, client=None):
+        from dimensionality_reduction_ui import DimensionalityReductionMainWindow, \
+            DimensionalityReductionToolbar
+        return DimensionalityReductionMainWindow(client, 
             self.entity, self.student, self.bvh_reader, self._scene_class,
             DimensionalityReductionToolbar, self.args)
 

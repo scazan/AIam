@@ -1,5 +1,5 @@
 import ws4py.client.threadedclient
-from server import WEBSOCKET_PORT, WEBSOCKET_APPLICATION
+from websocket_server import WEBSOCKET_PORT, WEBSOCKET_APPLICATION
 import cPickle
 import contextlib
 from tornado.stack_context import StackContext

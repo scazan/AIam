@@ -5,7 +5,6 @@ from PyQt4 import QtCore, QtGui, QtOpenGL
 import math
 import numpy
 from parameters import *
-from client import WebsocketClient
 from event import Event
 from event_listener import EventListener
 from bvh_writer import BvhWriter
@@ -377,11 +376,11 @@ class ExperimentToolbar(QtGui.QWidget):
         parameter.set_value(parameter.choices[index])
 
 class MainWindow(QtGui.QWidget, EventListener):
-    def __init__(self, entity, student, bvh_reader, scene_widget_class, toolbar_class, args):
+    def __init__(self, client, entity, student, bvh_reader, scene_widget_class, toolbar_class, args):
+        self.client = client
         self.entity = entity
         self.student = student
         self.args = args
-        self._connect_to_server()
 
         EventListener.__init__(self)
         self.add_event_handler(Event.REDUCTION, self._handle_reduction)
@@ -413,9 +412,12 @@ class MainWindow(QtGui.QWidget, EventListener):
             self._fps_history = collections.deque(maxlen=10)
             self._previous_shown_fps_time = None
 
-    def _connect_to_server(self):
-        self.client = Client(self.args, self)
-        self.client.connect()
+        if client:
+            client.received_event = self._received_event
+
+    def _received_event(self, event):
+        callback = lambda: self.handle_event(event)
+        QtGui.QApplication.postEvent(self, CustomQtEvent(callback))
 
     def _handle_reduction(self, event):
         self.reduction = event.content
@@ -643,12 +645,3 @@ class CustomQtEvent(QtCore.QEvent):
     def __init__(self, callback):
         QtCore.QEvent.__init__(self, CustomQtEvent.EVENT_TYPE)
         self.callback = callback
-
-class Client(WebsocketClient):
-    def __init__(self, args, window):
-        self._window = window
-        WebsocketClient.__init__(self, args.backend_host)
-
-    def received_event(self, event):
-        callback = lambda: self._window.handle_event(event)
-        QtGui.QApplication.postEvent(self._window, CustomQtEvent(callback))

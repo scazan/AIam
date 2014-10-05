@@ -6,11 +6,15 @@ from argparse import ArgumentParser
 from storage import *
 from bvh_reader import bvh_reader as bvh_reader_module
 import imp
-from server import WebsocketServer, ClientHandler
 from stopwatch import Stopwatch
 import threading
 from event import Event
 from event_listener import EventListener
+
+from connectivity.websocket_server import WebsocketServer, ClientHandler
+from connectivity.websocket_client import WebsocketClient
+from connectivity.single_process_server import SingleProcessServer
+from connectivity.single_process_client import SingleProcessClient
 
 class BaseEntity:
     @staticmethod
@@ -138,15 +142,21 @@ class Experiment(EventListener):
         if run_ui:
             self._scene_class = self._entity_scene_module.Scene
 
-        if run_backend:
-            self._setup_websocket_server()
-            if run_ui:
-                self._start_websocket_server_in_new_thread()
-                self.run_ui()
-            else:
-                self._start_websocket_server()
+        if run_backend and run_ui:
+            self._create_single_process_server()
+            self._set_up_timed_refresh()
+            self._start_server_in_new_thread()
+            client = SingleProcessClient()
+            client.connect(self._server)
+            self.run_ui(client)
+        elif run_backend:
+            self._create_websocket_server()
+            self._set_up_timed_refresh()
+            self._start_server()
         elif run_ui:
-            self.run_ui()
+            client = WebsocketClient(self.args.backend_host)
+            client.connect()
+            self.run_ui(client)
 
     def _start(self):
         self._running = True
@@ -196,28 +206,42 @@ class Experiment(EventListener):
                 "training duration specified in neither arguments nor the %s class" % \
                     self.entity.__class__.__name__)
 
-    def _setup_websocket_server(self):
-        self._server = WebsocketServer(UiHandler, {"experiment": self})
-        self._set_up_timed_refresh()
+    def _create_single_process_server(self):
+        self._server = SingleProcessServer(SingleProcessUiHandler, experiment=self)
+
+    def _create_websocket_server(self):
+        self._server = WebsocketServer(WebsocketUiHandler, {"experiment": self})
 
     def _set_up_timed_refresh(self):
         self._server.add_periodic_callback(
             self._update_and_refresh_uis, 1000. / self.args.frame_rate)
 
-    def _start_websocket_server(self):
+    def _start_server(self):
         self._server.start()
 
-    def _start_websocket_server_in_new_thread(self):
-        server_thread = threading.Thread(target=self._start_websocket_server)
+    def _start_server_in_new_thread(self):
+        server_thread = threading.Thread(target=self._start_server)
         server_thread.daemon = True
         server_thread.start()
 
-class UiHandler(ClientHandler):
+class SingleProcessUiHandler:
+    def __init__(self, client, experiment):
+        self._client = client
+        self._experiment = experiment
+        self._experiment.ui_handlers.add(self)
+
+    def send_event(self, event):
+        self._client.received_event(event)
+
+    def received_event(self, event):
+        self._experiment.handle_event(event)
+
+class WebsocketUiHandler(ClientHandler):
     def __init__(self, *args, **kwargs):
         print "UI connected"
         self._experiment = kwargs.pop("experiment")
         self._experiment.ui_handlers.add(self)
-        super(UiHandler, self).__init__(*args, **kwargs)
+        super(WebsocketUiHandler, self).__init__(*args, **kwargs)
 
     def on_close(self):
         print "UI disconnected"

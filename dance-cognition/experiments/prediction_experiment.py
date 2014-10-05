@@ -38,11 +38,11 @@ class PredictionExperiment(Experiment):
             else:
                 self.run_backend_and_or_ui()
 
-    def run_ui(self):
+    def run_ui(self, client):
         from ui.ui import MainWindow, ExperimentToolbar
         from PyQt4 import QtGui
         app = QtGui.QApplication(sys.argv)
-        window = MainWindow(
+        window = MainWindow(client,
             self.entity, self.student, self.bvh_reader, self._scene_class, ExperimentToolbar, self.args)
         window.show()
         app.exec_()
