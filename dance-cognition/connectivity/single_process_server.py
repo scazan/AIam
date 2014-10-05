@@ -15,7 +15,7 @@ class SingleProcessServer:
             self._scheduler.run()
 
     def add_periodic_callback(self, action, delay_msecs):
-        delay = delay_msecs / 1000
+        delay = float(delay_msecs) / 1000
         callback = PeriodicCallback(self._scheduler, action, delay)
         callback.schedule()
 
