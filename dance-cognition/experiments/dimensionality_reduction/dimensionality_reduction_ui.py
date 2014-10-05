@@ -8,6 +8,7 @@ import modes
 class DimensionalityReductionMainWindow(MainWindow):
     def __init__(self, *args, **kwargs):
         MainWindow.__init__(self, *args, **kwargs)
+        self.add_event_handler(Event.MODE, self._set_mode)
         self.add_event_handler(Event.IMPROVISER_PATH, self._set_improviser_path)
         self.add_event_handler(Event.VELOCITY, self._set_velocity)
         self.add_event_handler(Event.CURSOR, self._set_cursor)
@@ -15,6 +16,9 @@ class DimensionalityReductionMainWindow(MainWindow):
             '&Plot reduction', self._start_plot_reduction,
             '&Stop plot', self._stop_plot_reduction,
             False, 'F1')
+
+    def _set_mode(self, event):
+        self.toolbar.set_mode(event.content)
 
     def _set_improviser_path(self, event):
         if self.toolbar.map_tab:
@@ -34,13 +38,17 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._add_mode_tabs()
         self._add_reduction_tabs()
         self.setLayout(self._layout)
+        self.set_mode(self.args.mode)
 
-        if self.args.mode == modes.IMPROVISE:
+    def set_mode(self, mode):
+        if mode == modes.IMPROVISE:
             self.tabs.setCurrentWidget(self.improvise_tab)
-        elif self.args.mode == modes.EXPLORE:
+        elif mode == modes.EXPLORE:
             self.tabs.setCurrentWidget(self.explore_tab)
-        else:
+        elif mode == modes.FOLLOW:
             self.tabs.setCurrentWidget(self.follow_tab)
+        else:
+            raise Exception("unknown mode %r" % mode)
 
     def _add_mode_tabs(self):
         self.tabs = QtGui.QTabWidget()
@@ -118,6 +126,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self.improvise_tab = ModeTab(modes.IMPROVISE)
         self._improvise_tab_layout = QtGui.QVBoxLayout()
         self._improviser_params = ImproviserParameters()
+        self.parent().add_event_handler(Event.PARAMETER, self._improviser_params.handle_event)
         self._improviser_params.add_notifier(self.parent().client)
         self.add_parameter_fields(self._improviser_params, self._improvise_tab_layout)
         self.improvise_tab.setLayout(self._improvise_tab_layout)

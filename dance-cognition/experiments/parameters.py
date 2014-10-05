@@ -12,9 +12,10 @@ class Parameter:
     def value(self):
         return self._value
 
-    def set_value(self, value):
+    def set_value(self, value, notify=True):
         self._value = value
-        self._parameters.notify_changed(self)
+        if notify:
+            self._parameters.notify_changed(self)
 
     def __repr__(self):
         return "Parameter(name=%s, type=%s, default=%s, choices=%s)" % (
@@ -28,6 +29,9 @@ class Parameters:
 
     def add_notifier(self, notifier):
         self._notifiers.add(notifier)
+
+    def remove_notifier(self, notifier):
+        self._notifiers.remove(notifier)
 
     def add_parameter(self, *args, **kwargs):
         parameter = Parameter(self, *args, **kwargs)
@@ -50,8 +54,12 @@ class Parameters:
                     {"name": parameter.name,
                      "value": parameter.value()}))
 
+    def notify_changed_all(self):
+        for parameter in self._parameters:
+            self.notify_changed(parameter)
+
     def handle_event(self, event):
-        self._parameters_by_name[event.content["name"]].set_value(event.content["value"])
+        self._parameters_by_name[event.content["name"]].set_value(event.content["value"], notify=False)
 
 class ParameterFloatRange:
     def __init__(self, min_value, max_value):

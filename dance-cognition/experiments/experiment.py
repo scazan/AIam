@@ -126,7 +126,13 @@ class Experiment(EventListener):
         self._running = True
         self.stopwatch = Stopwatch()
         self._frame_count = 0
-        self.ui_handlers = set()
+        self._ui_handlers = set()
+
+    def ui_connected(self, handler):
+        self._ui_handlers.add(handler)
+
+    def ui_disconnected(self, handler):
+        self._ui_handlers.remove(handler)
 
     def _add_event_handlers(self):
         self.add_event_handler(Event.START, self._start)
@@ -146,8 +152,7 @@ class Experiment(EventListener):
             self._create_single_process_server()
             self._set_up_timed_refresh()
             self._start_server_in_new_thread()
-            client = SingleProcessClient()
-            client.connect(self._server)
+            client = SingleProcessClient(self._server)
             self.run_ui(client)
         elif run_backend:
             self._create_websocket_server()
@@ -155,7 +160,6 @@ class Experiment(EventListener):
             self._start_server()
         elif run_ui:
             client = WebsocketClient(self.args.backend_host)
-            client.connect()
             self.run_ui(client)
 
     def _start(self):
@@ -190,7 +194,7 @@ class Experiment(EventListener):
         self._frame_count += 1
 
     def send_event_to_ui(self, event):
-        for ui_handler in self.ui_handlers:
+        for ui_handler in self._ui_handlers:
             ui_handler.send_event(event)
 
     def current_time(self):
@@ -228,7 +232,7 @@ class SingleProcessUiHandler:
     def __init__(self, client, experiment):
         self._client = client
         self._experiment = experiment
-        self._experiment.ui_handlers.add(self)
+        self._experiment.ui_connected(self)
 
     def send_event(self, event):
         self._client.received_event(event)
@@ -240,12 +244,14 @@ class WebsocketUiHandler(ClientHandler):
     def __init__(self, *args, **kwargs):
         print "UI connected"
         self._experiment = kwargs.pop("experiment")
-        self._experiment.ui_handlers.add(self)
         super(WebsocketUiHandler, self).__init__(*args, **kwargs)
+
+    def open(self):
+        self._experiment.ui_connected(self)
 
     def on_close(self):
         print "UI disconnected"
-        self._experiment.ui_handlers.remove(self)
+        self._experiment.ui_disconnected(self)
 
     def received_event(self, event):
         self._experiment.handle_event(event)

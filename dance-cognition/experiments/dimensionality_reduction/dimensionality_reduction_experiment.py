@@ -37,6 +37,16 @@ class DimensionalityReductionExperiment(Experiment):
         self._velocity_integrator = LeakyIntegrator()
         self._mode = self.args.mode
 
+    def ui_connected(self, handler):
+        Experiment.ui_connected(self, handler)
+        handler.send_event(Event(Event.MODE, self._mode))
+        self._improviser_params.add_notifier(handler)
+        self._improviser_params.notify_changed_all()
+
+    def ui_disconnected(self, handler):
+        Experiment.ui_disconnected(self, handler)
+        self._improviser_params.remove_notifier(handler)
+
     def _handle_mode_event(self, event):
         self._mode = event.content
 

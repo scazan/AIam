@@ -1,10 +1,9 @@
 class SingleProcessClient:
-    def connect(self, server):
+    def __init__(self, server):
         self._server = server
-        self._remote_handler = server.accept_connection(self)
 
-    def received_event(self, event):
-        pass
+    def connect(self):
+        self._remote_handler = self._server.accept_connection(self)
 
     def send_event(self, event):
         self._remote_handler.received_event(event)
