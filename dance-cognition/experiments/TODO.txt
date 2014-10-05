@@ -1,4 +1,5 @@
 separate backend and UI
+  optimization: don't send events to non-subscribing clients
   UI shows outdated parameter values on startup (should reflect values in backend)
   explore
   export stills
