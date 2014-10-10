@@ -201,8 +201,9 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
             self._update_current_reduction_widget(normalized_reduction)
 
     def reduction_changed_interactively(self, source_tab):
-        normalized_reduction = self.parent().student.normalize_reduction(
-            self.parent().reduction)
+        normalized_reduction = source_tab.get_normalized_reduction()
+        reduction = self.parent().student.unnormalize_reduction(normalized_reduction)
+        self.parent().client.send_event(Event(Event.REDUCTION, reduction))
         for n in range(self._reduction_tabs.count()):
             tab = self._reduction_tabs.widget(n)
             if tab != source_tab:

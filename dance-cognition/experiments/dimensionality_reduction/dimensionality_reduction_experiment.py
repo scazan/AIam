@@ -33,6 +33,7 @@ class DimensionalityReductionExperiment(Experiment):
         self.profiles_dir = "profiles/dimensionality_reduction"
         Experiment.__init__(self, parser)
         self.add_event_handler(Event.MODE, self._handle_mode_event)
+        self.add_event_handler(Event.REDUCTION, self._set_reduction)
         self.reduction = None
         self._velocity_integrator = LeakyIntegrator()
         self._mode = self.args.mode
@@ -50,6 +51,9 @@ class DimensionalityReductionExperiment(Experiment):
 
     def _handle_mode_event(self, event):
         self._mode = event.content
+
+    def _set_reduction(self, event):
+        self.reduction = event.content
 
     def run(self):
         teacher = Teacher(self.entity, self.args.training_data_frame_rate)
