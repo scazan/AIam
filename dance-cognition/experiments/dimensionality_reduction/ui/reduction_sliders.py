@@ -27,7 +27,7 @@ class ReductionSliders(ReductionTab, QtGui.QWidget):
             slider.setRange(0, SLIDER_PRECISION)
             slider.setSingleStep(1)
             slider.setValue(self._normalized_reduction_value_to_slider_value(n, 0.5))
-            slider.sliderReleased.connect(
+            slider.sliderMoved.connect(
                 lambda: self._parent.reduction_changed_interactively(self))
             self._layout.addWidget(slider)
             self._sliders.append(slider)
