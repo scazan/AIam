@@ -157,6 +157,7 @@ class Experiment(EventListener):
         elif run_backend:
             self._create_websocket_server()
             self._set_up_timed_refresh()
+            print "websocket server ready"
             self._start_server()
         elif run_ui:
             client = WebsocketClient(self.args.backend_host)
