@@ -1,5 +1,4 @@
 separate backend and UI
-  running backend without python-opengl and python-qt4-gl
   HTML5 UI prototype
   optimization: don't send events to non-subscribing clients (e.g. don't send input or output to HTML5 UI)
   export stills
