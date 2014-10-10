@@ -1,9 +1,9 @@
-from dimensionality_reduction_experiment import *
+from ..dimensionality_reduction_experiment import *
 from ui.ui import *
 from reduction_tab import ReductionTab
 from map_widget import MapTab
 from reduction_sliders import ReductionSliders
-import modes
+from .. import modes
 
 class DimensionalityReductionMainWindow(MainWindow):
     def __init__(self, *args, **kwargs):

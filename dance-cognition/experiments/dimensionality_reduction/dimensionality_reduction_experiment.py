@@ -105,7 +105,7 @@ class DimensionalityReductionExperiment(Experiment):
         app.exec_()
 
     def _create_ui_window(self, client=None):
-        from dimensionality_reduction_ui import DimensionalityReductionMainWindow, \
+        from ui.dimensionality_reduction_ui import DimensionalityReductionMainWindow, \
             DimensionalityReductionToolbar
         return DimensionalityReductionMainWindow(client, 
             self.entity, self.student, self.bvh_reader, self._scene_class,
