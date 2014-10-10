@@ -17,3 +17,9 @@ class Event:
 
     def __str__(self):
         return "Event(%r, %r)" % (self.type, self.content)
+
+    def __eq__(self, other):
+        return self.type == other.type and self.content == other.content
+
+    def __ne__(self, other):
+        return not (self == other)
