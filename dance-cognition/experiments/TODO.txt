@@ -1,5 +1,4 @@
 separate backend and UI
-  explore
   export stills
   running backend without python-opengl and python-qt4-gl
   HTML5 UI prototype
