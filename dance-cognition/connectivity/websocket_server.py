@@ -2,18 +2,18 @@ import tornado.web
 import tornado.ioloop
 import tornado.websocket
 from tornado.httpserver import HTTPServer
-import cPickle
+from event_packing import EventPacker
 
 WEBSOCKET_APPLICATION = "/aiam"
 WEBSOCKET_PORT = 15001
 
 class ClientHandler(tornado.websocket.WebSocketHandler):
     def on_message(self, message):
-        event = cPickle.loads(str(message))
+        event = EventPacker.unpack(str(message))
         self.received_event(event)
         
     def send_event(self, event):
-        self.write_message(cPickle.dumps(event))
+        self.write_message(EventPacker.pack(event))
 
 class WebsocketServer(tornado.web.Application):
     def __init__(self, client_handler=ClientHandler, settings={}):

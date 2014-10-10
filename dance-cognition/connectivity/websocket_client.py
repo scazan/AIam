@@ -1,6 +1,6 @@
 import ws4py.client.threadedclient
 from websocket_server import WEBSOCKET_PORT, WEBSOCKET_APPLICATION
-import cPickle
+from event_packing import EventPacker
 import contextlib
 from tornado.stack_context import StackContext
 
@@ -24,11 +24,11 @@ class WebsocketClient(ws4py.client.threadedclient.WebSocketClient):
 
     def received_message(self, message):
         with StackContext(self._print_exception):
-            event = cPickle.loads(str(message))
+            event = EventPacker.unpack(str(message))
             self.received_event(event)
 
     def received_event(self, event):
         pass
 
     def send_event(self, event):
-        self.send(cPickle.dumps(event))
+        self.send(EventPacker.pack(event))
