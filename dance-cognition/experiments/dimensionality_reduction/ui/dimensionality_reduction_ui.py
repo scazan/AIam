@@ -31,6 +31,9 @@ class DimensionalityReductionMainWindow(MainWindow):
         if hasattr(self.toolbar, "cursor_slider"):
             self.toolbar.cursor_slider.setValue(event.content * SLIDER_PRECISION)
 
+    def on_received_reduction_from_backend(self):
+        self.toolbar.on_received_reduction_from_backend(self.reduction)
+
 class DimensionalityReductionToolbar(ExperimentToolbar):
     def __init__(self, *args):
         ExperimentToolbar.__init__(self, *args)
@@ -217,6 +220,9 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         reduction_range["explored_range"] = (1.0 + self.parent().args.explore_beyond_observations)
         reduction_range["explored_min"] = .5 - reduction_range["explored_range"]/2
         reduction_range["explored_max"] = .5 + reduction_range["explored_range"]/2
+
+    def on_received_reduction_from_backend(self, reduction):
+        self._set_reduction(reduction)
 
 class ModeTab(QtGui.QWidget):
     def __init__(self, mode_id):

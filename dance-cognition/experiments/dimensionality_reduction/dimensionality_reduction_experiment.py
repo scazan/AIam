@@ -40,6 +40,7 @@ class DimensionalityReductionExperiment(Experiment):
     def ui_connected(self, handler):
         Experiment.ui_connected(self, handler)
         handler.send_event(Event(Event.MODE, self._mode))
+        handler.send_event(Event(Event.REDUCTION, self.reduction))
         self._improviser_params.add_notifier(handler)
         self._improviser_params.notify_changed_all()
 
@@ -147,10 +148,11 @@ class DimensionalityReductionExperiment(Experiment):
     def update(self):
         if self._mode == modes.FOLLOW:
             self._follow()
+            self.send_event_to_ui(Event(Event.REDUCTION, self.reduction))
         elif self._mode == modes.IMPROVISE:
             self.reduction = self._improviser.current_position()
+            self.send_event_to_ui(Event(Event.REDUCTION, self.reduction))
         self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
-        self.send_event_to_ui(Event(Event.REDUCTION, self.reduction))
 
     def proceed(self):
         if self._mode == modes.FOLLOW:

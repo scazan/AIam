@@ -361,6 +361,10 @@ class MainWindow(QtGui.QWidget, EventListener):
         if self._reduction_plot:
             print >>self._reduction_plot, " ".join([
                     str(v) for v in self.student.normalize_reduction(self.reduction)])
+        self.on_received_reduction_from_backend()
+
+    def on_received_reduction_from_backend(self):
+        pass
 
     def _start_plot_reduction(self):
         self._reduction_plot = open(REDUCTION_PLOT_PATH, "w")
