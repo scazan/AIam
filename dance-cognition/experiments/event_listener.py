@@ -8,6 +8,7 @@ class EventListener:
     def handle_event(self, event):
         try:
             handler = self._handlers[event.type]
-            handler(event)
         except KeyError:
-            raise Exception("unknown event type %s" % event.type)
+            raise Exception("Unknown event type %r. Handlers added for %r." % (
+                    event.type, self._handlers.keys()))
+        handler(event)
