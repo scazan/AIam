@@ -18,7 +18,10 @@ class EventPacker:
         if isinstance(obj, list):
             return [cls._serialize(val) for val in obj]
         if isinstance(obj, dict):
-            return {"py/dict": [[k, cls._serialize(v)] for k, v in obj.iteritems()]}
+            return {"py/dict": dict(
+                    (k, cls._serialize(v))
+                    for k, v in obj.iteritems()
+                    )}
         if isinstance(obj, numpy.ndarray):
             return {
                 "py/numpy.ndarray": {

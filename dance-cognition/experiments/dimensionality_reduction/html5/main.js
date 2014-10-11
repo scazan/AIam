@@ -5,7 +5,15 @@ function connectToBackend() {
     var port = getQueryStringParameter("port", "15001");
     var backendURL = "ws://" + host + ":" + port + "/aiam";
 
-    client = new WebsocketClient(backendURL);
+    client = new WebsocketClient(backendURL, handleEvent);
+}
+
+function handleEvent(event) {
+    if(event && event.type == "PARAMETER") {
+	if(event.content.name == "novelty") {
+	    $("#slider").slider("value", event.content.value);
+	}
+    }
 }
 
 function getQueryStringParameter(name, defaultValue) {
