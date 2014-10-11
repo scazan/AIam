@@ -10,8 +10,9 @@ function connectToBackend() {
 
 function handleEvent(event) {
     if(event && event.type == "PARAMETER") {
-	if(event.content.name == "novelty") {
-	    $("#slider").slider("value", event.content.value);
+	var slider = $("#slider_" + event.content.name);
+	if(slider) {
+	    slider.slider("value", event.content.value);
 	}
     }
 }
@@ -23,20 +24,24 @@ function getQueryStringParameter(name, defaultValue) {
     return results == null ? defaultValue : decodeURIComponent(results[1].replace(/\+/g, " "));
 }
 
-$(function() {
-    $("#slider").slider({
+function setUpSlider(name) {
+    $("#slider_" + name).slider({
 	min: 0,
 	max: 1,
 	step: 0.001,
 	slide: function(event, ui) {
             if (event.originalEvent) {
 		client.sendEvent(new Event("PARAMETER", {
-		    "name": "novelty",
+		    "name": name,
 		    "value": ui.value
 		}));
             }
 	}
     });
-});
+}
 
-connectToBackend();
+$(function() {
+    setUpSlider("novelty");
+    setUpSlider("min_distance");
+    connectToBackend();
+});
