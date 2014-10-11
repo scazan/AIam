@@ -14,6 +14,7 @@ class Event:
     def __init__(self, type_, content=None):
         self.type = type_
         self.content = content
+        self.source = None
 
     def __str__(self):
         return "Event(%r, %r)" % (self.type, self.content)

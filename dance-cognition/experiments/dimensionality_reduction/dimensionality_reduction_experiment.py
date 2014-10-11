@@ -97,7 +97,7 @@ class DimensionalityReductionExperiment(Experiment):
                 self._training_data = load_training_data(self._training_data_path)
                 self.navigator = Navigator(map_points=self.student.normalized_observed_reductions)
                 self._improviser_params = ImproviserParameters()
-                self.add_event_handler(Event.PARAMETER, self._improviser_params.handle_event)
+                self.add_event_handler(Event.PARAMETER, self._handle_parameter_event)
                 self._improviser = Improviser(self, self._improviser_params)
             self.run_backend_and_or_ui()
 
@@ -198,6 +198,13 @@ class DimensionalityReductionExperiment(Experiment):
             print >>f, self._velocity
             t += self.time_increment
         f.close()
+
+    def _handle_parameter_event(self, event):
+        self._improviser_params.handle_event(event)
+        self._broadcast_event_to_other_uis(event)
+
+    def _broadcast_event_to_other_uis(self, event):
+        self.send_event_to_ui(event)
 
 class ImproviserParameters(Parameters):
     def __init__(self):

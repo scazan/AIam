@@ -10,7 +10,7 @@ WEBSOCKET_PORT = 15001
 class ClientHandler(tornado.websocket.WebSocketHandler):
     def on_message(self, message):
         event = EventPacker.unpack(str(message))
-        self.received_event(event)
+        self.received_event(event, self)
         
     def send_event(self, event):
         self.write_message(EventPacker.pack(event))

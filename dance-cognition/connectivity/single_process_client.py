@@ -6,4 +6,4 @@ class SingleProcessClient:
         self._remote_handler = self._server.accept_connection(self)
 
     def send_event(self, event):
-        self._remote_handler.received_event(event)
+        self._remote_handler.received_event(event, self)

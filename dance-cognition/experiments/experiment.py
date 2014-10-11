@@ -196,7 +196,8 @@ class Experiment(EventListener):
 
     def send_event_to_ui(self, event):
         for ui_handler in self._ui_handlers:
-            ui_handler.send_event(event)
+            if event.source is None or event.source != ui_handler:
+                ui_handler.send_event(event)
 
     def current_time(self):
         return self.stopwatch.get_elapsed_time()
@@ -238,7 +239,8 @@ class SingleProcessUiHandler:
     def send_event(self, event):
         self._client.received_event(event)
 
-    def received_event(self, event):
+    def received_event(self, event, source):
+        event.source = source
         self._experiment.handle_event(event)
 
 class WebsocketUiHandler(ClientHandler):
@@ -254,5 +256,6 @@ class WebsocketUiHandler(ClientHandler):
         print "UI disconnected"
         self._experiment.ui_disconnected(self)
 
-    def received_event(self, event):
+    def received_event(self, event, source):
+        event.source = source
         self._experiment.handle_event(event)
