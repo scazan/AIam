@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+  <script type="text/javascript" src="event.js"></script>
+  <script type="text/javascript" src="websocket_client.js"></script>
+  <link rel="stylesheet" href="http://code.jquery.com/ui/1.11.1/themes/smoothness/jquery-ui.css">
+  <script src="http://code.jquery.com/jquery-1.10.2.js"></script>
+  <script src="http://code.jquery.com/ui/1.11.1/jquery-ui.js"></script>
+
+  <script>
+    $(function() {
+    $( "#slider" ).slider();
+    });
+
+    connectToBackend();
+  </script>
+</head>
+
+<body>
+
+Novelty:<br>
+<div id="slider"></div>
+
+</body>
