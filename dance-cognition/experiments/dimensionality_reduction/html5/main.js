@@ -24,10 +24,10 @@ function getQueryStringParameter(name, defaultValue) {
     return results == null ? defaultValue : decodeURIComponent(results[1].replace(/\+/g, " "));
 }
 
-function setUpSlider(name) {
+function setUpSlider(name, min, max) {
     $("#slider_" + name).slider({
-	min: 0,
-	max: 1,
+	min: min,
+	max: max,
 	step: 0.001,
 	slide: function(event, ui) {
             if (event.originalEvent) {
@@ -41,7 +41,8 @@ function setUpSlider(name) {
 }
 
 $(function() {
-    setUpSlider("novelty");
-    setUpSlider("min_distance");
+    setUpSlider("novelty", 0, 1);
+    setUpSlider("min_distance", 0, 1);
+    setUpSlider("velocity", 0.1, 3);
     connectToBackend();
 });
