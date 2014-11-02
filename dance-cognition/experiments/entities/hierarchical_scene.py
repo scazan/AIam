@@ -28,9 +28,6 @@ class Scene(BaseScene):
         glColor3f(0, 0, 0)
         self._draw_vertices(vertices)
 
-    def parameters_to_hips(self, parameters):
-        return self._parameters_to_joint(parameters)
-
     def _draw_vertices(self, vertices):
         edges = self.bvh_reader.vertices_to_edges(vertices)
         glLineWidth(2.0)

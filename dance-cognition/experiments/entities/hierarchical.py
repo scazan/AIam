@@ -155,3 +155,6 @@ class Entity(BaseEntity):
             parameter_index = self._parameters_to_joint_recurse(parameters, child, parameter_index)
 
         return parameter_index
+
+    def parameters_to_hips(self, parameters):
+        return self._parameters_to_joint(parameters)

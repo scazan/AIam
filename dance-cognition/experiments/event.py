@@ -10,6 +10,8 @@ class Event:
     MODE = "MODE"
     CURSOR = "CURSOR"
     VELOCITY = "VELOCITY"
+    START_EXPORT_OUTPUT = "START_EXPORT_OUTPUT"
+    STOP_EXPORT_OUTPUT = "STOP_EXPORT_OUTPUT"
 
     def __init__(self, type_, content=None):
         self.type = type_

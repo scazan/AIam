@@ -10,6 +10,7 @@ from stopwatch import Stopwatch
 import threading
 from event import Event
 from event_listener import EventListener
+from bvh_writer import BvhWriter
 
 from connectivity.websocket_server import WebsocketServer, ClientHandler
 from connectivity.websocket_client import WebsocketClient
@@ -118,6 +119,7 @@ class Experiment(EventListener):
         if args.bvh:
             self.bvh_reader = bvh_reader_module.BvhReader(args.bvh)
             self.bvh_reader.read()
+            self.bvh_writer = BvhWriter(self.bvh_reader)
         else:
             self.bvh_reader = None
         self.input = None
@@ -127,6 +129,7 @@ class Experiment(EventListener):
         self.stopwatch = Stopwatch()
         self._frame_count = 0
         self._ui_handlers = set()
+        self._exporting_output = False
 
     def ui_connected(self, handler):
         self._ui_handlers.add(handler)
@@ -137,6 +140,8 @@ class Experiment(EventListener):
     def _add_event_handlers(self):
         self.add_event_handler(Event.START, self._start)
         self.add_event_handler(Event.STOP, self._stop)
+        self.add_event_handler(Event.START_EXPORT_OUTPUT, self._start_export_output)
+        self.add_event_handler(Event.STOP_EXPORT_OUTPUT, self._stop_export_output)
         self.add_event_handler(
             Event.SET_CURSOR,
             lambda event: self.entity.set_cursor(event.content))
@@ -193,6 +198,8 @@ class Experiment(EventListener):
 
         self.previous_frame_time = self.now
         self._frame_count += 1
+        if self._exporting_output:
+            self._export_output()
 
     def send_event_to_ui(self, event):
         for ui_handler in self._ui_handlers:
@@ -229,6 +236,43 @@ class Experiment(EventListener):
         server_thread = threading.Thread(target=self._start_server)
         server_thread.daemon = True
         server_thread.start()
+
+    def _start_export_output(self, event):
+        print "exporting output"
+        self._exporting_output = True
+
+    def _stop_export_output(self, event):
+        if not os.path.exists(self.args.export_dir):
+            os.mkdir(self.args.export_dir)
+        export_path = self._get_export_path()
+        print "saving export to %s" % export_path
+        self.bvh_writer.write(export_path)
+        self._exporting_output = False
+
+    def _get_export_path(self):
+        i = 1
+        while True:
+            path = "%s/export%03d.bvh" % (self.args.export_dir, i)
+            if not os.path.exists(path):
+                return path
+            i += 1
+
+    def _export_output(self):
+        if self.output is not None:
+            hips = self.entity.parameters_to_hips(self.output)
+            frame = self._joint_to_bvh_frame(hips)
+            self.bvh_writer.add_frame(frame)
+
+    def _joint_to_bvh_frame(self, joint):
+        result = []
+        for channel in joint.channels:
+            result.append(self._bvh_channel_data(joint, channel))
+        for child in joint.children:
+            result += self._joint_to_bvh_frame(child)
+        return result
+
+    def _bvh_channel_data(self, joint, channel):
+        return getattr(joint, channel)()
 
 class SingleProcessUiHandler:
     def __init__(self, client, experiment):

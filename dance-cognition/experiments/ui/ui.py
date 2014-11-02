@@ -7,7 +7,6 @@ import numpy
 from parameters import *
 from event import Event
 from event_listener import EventListener
-from bvh_writer import BvhWriter
 from stopwatch import Stopwatch
 from fps_meter import FpsMeter
 from parameters_form import ParametersForm
@@ -31,14 +30,11 @@ class BaseScene(QtOpenGL.QGLWidget):
         self._parent = parent
         self.bvh_reader = bvh_reader
         self.args = args
-        self._exporting_output = False
         self.view_floor = args.floor
         self._dragging_orientation = False
         self._dragging_y_position = False
         self._focus = None
         self._set_camera_from_arg(args.camera)
-        if args.bvh:
-            self.bvh_writer = BvhWriter(self.bvh_reader)
         self.processed_input = None
         self.processed_output = None
         QtOpenGL.QGLWidget.__init__(self, parent)
@@ -78,8 +74,6 @@ class BaseScene(QtOpenGL.QGLWidget):
             self._draw_floor()
         if self._parent.focus_action.isChecked():
             self._draw_focus()
-        if self._exporting_output:
-            self._export_output()
 
     def _draw_io(self, value, rendering_method, y_offset):
         glPushMatrix()
@@ -89,43 +83,6 @@ class BaseScene(QtOpenGL.QGLWidget):
         if value is not None:
             rendering_method(value)
         glPopMatrix()
-
-    def start_export_output(self):
-        print "exporting output"
-        self._exporting_output = True
-
-    def stop_export_output(self):
-        if not os.path.exists(self.args.export_dir):
-            os.mkdir(self.args.export_dir)
-        export_path = self._get_export_path()
-        print "saving export to %s" % export_path
-        self.bvh_writer.write(export_path)
-        self._exporting_output = False
-
-    def _get_export_path(self):
-        i = 1
-        while True:
-            path = "%s/export%03d.bvh" % (self.args.export_dir, i)
-            if not os.path.exists(path):
-                return path
-            i += 1
-
-    def _export_output(self):
-        if self.output is not None:
-            hips = self.parameters_to_hips(self.output)
-            frame = self._joint_to_bvh_frame(hips)
-            self.bvh_writer.add_frame(frame)
-
-    def _joint_to_bvh_frame(self, joint):
-        result = []
-        for channel in joint.channels:
-            result.append(self._bvh_channel_data(joint, channel))
-        for child in joint.children:
-            result += self._joint_to_bvh_frame(child)
-        return result
-
-    def _bvh_channel_data(self, joint, channel):
-        return getattr(joint, channel)()
 
     def initializeGL(self):
         glClearColor(1.0, 1.0, 1.0, 0.0)
@@ -391,8 +348,8 @@ class MainWindow(QtGui.QWidget, EventListener):
             "Stop", lambda: self.client.send_event(Event(Event.STOP)),
             True, " ")
         self._add_toggleable_action(
-            '&Export output', self._scene.start_export_output,
-            '&Stop export', self._scene.stop_export_output,
+            '&Export output', lambda: self.client.send_event(Event(Event.START_EXPORT_OUTPUT)),
+            '&Stop export', lambda: self.client.send_event(Event(Event.STOP_EXPORT_OUTPUT)),
             False, 'Ctrl+E')
         self._add_show_camera_settings_action()
 
