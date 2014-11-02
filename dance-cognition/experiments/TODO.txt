@@ -4,7 +4,8 @@ separate backend and UI
   occasional crash on startup when running --ui-only: AttributeError: 'NoneType' object has no attribute 'text_message'
     seems to appear only with ai_am client & server, not when either client or server is bare (tornado/ws4py)!
   optimization: don't send events to non-subscribing clients (e.g. don't send input or output to HTML5 UI)
-  export stills
+  export BVH in UI
+  --export-stills
   start/stop plot reduction
 
 improvise can hang if min_distance is high
