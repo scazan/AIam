@@ -8,7 +8,9 @@ separate backend and UI
   start/stop plot reduction
   AttributeError: SingleProcessClient instance has no attribute '_remote_handler'
     when running in single process with --mode=X
-   
+  TypeError: 'NoneType' object has no attribute '__getitem__'
+    when running in single process with -frame-rate=1
+
 improvise can hang if min_distance is high
 
 improvisation
