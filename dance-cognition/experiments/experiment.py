@@ -87,6 +87,8 @@ class Experiment(EventListener):
         parser.add_argument("--ui-only", action="store_true")
         parser.add_argument("--backend-host", default="localhost")
         parser.add_argument("--show-fps", action="store_true")
+        parser.add_argument("--output-receiver-host")
+        parser.add_argument("--output-receiver-port", type=int)
 
     def __init__(self, parser):
         EventListener.__init__(self)
@@ -114,6 +116,13 @@ class Experiment(EventListener):
         args = parser.parse_args()
         if args.profile:
             args = parser.parse_args(profile_args_strings, namespace=args)
+
+        if args.output_receiver_host:
+            from simple_osc_sender import OscSender
+            self._output_sender = OscSender(
+                port=args.output_receiver_port, host=args.output_receiver_host)
+        else:
+            self._output_sender = None
 
         self.args = args
         if args.bvh:
@@ -198,8 +207,11 @@ class Experiment(EventListener):
 
         self.previous_frame_time = self.now
         self._frame_count += 1
+
         if self._exporting_output:
             self._export_output()
+        if self._output_sender:
+            self._send_output()
 
     def send_event_to_ui(self, event):
         for ui_handler in self._ui_handlers:
@@ -263,6 +275,11 @@ class Experiment(EventListener):
             frame = self._joint_to_bvh_frame(hips)
             self.bvh_writer.add_frame(frame)
 
+    def _send_output(self):
+        if self.output is not None:
+            hips = self.entity.parameters_to_hips(self.output)
+            self._send_output_joint_recurse(hips)
+
     def _joint_to_bvh_frame(self, joint):
         result = []
         for channel in joint.channels:
@@ -273,6 +290,24 @@ class Experiment(EventListener):
 
     def _bvh_channel_data(self, joint, channel):
         return getattr(joint, channel)()
+
+    def _send_output_joint_recurse(self, joint):
+        if not joint.hasparent and self.args.translate:
+            self._send_output_joint_translation(joint)
+        if joint.rotation:
+            self._send_output_joint_orientation(joint)
+        for child in joint.children:
+            self._send_output_joint_recurse(child)
+
+    def _send_output_joint_translation(self, joint):
+        self._output_sender.send(
+            "/translation", self._frame_count, joint.index,
+            joint.worldpos[0], joint.worldpos[1], joint.worldpos[2])
+
+    def _send_output_joint_orientation(self, joint):
+        self._output_sender.send(
+            "/orientation", self._frame_count, joint.index,
+            *joint.angles)
 
 class SingleProcessUiHandler:
     def __init__(self, client, experiment):
