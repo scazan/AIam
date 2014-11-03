@@ -1,5 +1,4 @@
 separate backend and UI
-  allow backend to run without UI (e.g. with --osc-receiver)
   HTML5 UI prototype
     offline access to jquery
   occasional crash on startup when running --ui-only: AttributeError: 'NoneType' object has no attribute 'text_message'
