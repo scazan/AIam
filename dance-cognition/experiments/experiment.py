@@ -50,11 +50,6 @@ class BaseEntity:
         else:
             self.processed_input = self.process_input(self.experiment.input)
 
-        if self.experiment.output is None:
-            self.processed_output = None
-        else:
-            self.processed_output = self.process_output(self.experiment.output)
-
     def get_cursor(self):
         if hasattr(self, "get_duration"):
             return self._t % self.get_duration()
@@ -203,7 +198,10 @@ class Experiment(EventListener):
 
             if self.entity.processed_input is not None:
                 self.send_event_to_ui(Event(Event.INPUT, self.entity.processed_input))
-            self.send_event_to_ui(Event(Event.OUTPUT, self.entity.processed_output))
+
+            if self.output is not None and len(self._ui_handlers) > 0:
+                processed_output = self.entity.process_output(self.output)
+                self.send_event_to_ui(Event(Event.OUTPUT, processed_output))
 
         self.previous_frame_time = self.now
         self._frame_count += 1
