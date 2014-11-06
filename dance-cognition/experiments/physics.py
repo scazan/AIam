@@ -37,5 +37,6 @@ class FloorConstrainer:
 
     def constrain(self, vertices):
         bottom_y = min([vertex[1] for vertex in vertices])
-        offset = numpy.array([0, self._floor_y - bottom_y, 0])
+        offset = numpy.zeros(len(vertices[0]))
+        offset[1] = self._floor_y - bottom_y
         return [vertex + offset for vertex in vertices]

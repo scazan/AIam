@@ -26,11 +26,16 @@ class Entity(BaseEntity):
         self.rotation_parametrization = rotation_parametrizations[
             self.args.rotation_parametrization]
         self._create_parameter_info_table()
-        self._output_constrainers = []
+        self._normalized_constrainers = self._create_constrainers()
+        self._unnormalized_constrainers = self._create_constrainers()
+
+    def _create_constrainers(self):
+        result = []
         if self.experiment.args.friction:
-            self._output_constrainers.append(FrictionConstrainer(BalanceDetector()))
+            result.append(FrictionConstrainer(BalanceDetector()))
         if self.experiment.args.floor:
-            self._output_constrainers.append(FloorConstrainer())
+            result.append(FloorConstrainer())
+        return result
 
     def _create_parameter_info_table(self):
         self._parameter_info = []
@@ -96,7 +101,7 @@ class Entity(BaseEntity):
 
     def _constrained_output_vertices(self, parameters):
         vertices = self._parameters_to_normalized_vertices(parameters)
-        for constrainer in self._output_constrainers:
+        for constrainer in self._normalized_constrainers:
             vertices = constrainer.constrain(vertices)
         return vertices
 
@@ -159,10 +164,6 @@ class Entity(BaseEntity):
     def parameters_to_processed_bvh_root(self, parameters):
         hips = self._parameters_to_joint(parameters)
         vertices = hips.get_vertices()
-        normalized_vertices = [self.bvh_reader.normalize_vector(vertex)
-                               for vertex in vertices]
-        for constrainer in self._output_constrainers:
-            normalized_vertices = constrainer.constrain(normalized_vertices)
-        constrained_vertices = [self.bvh_reader.skeleton_scale_vector(vertex)
-                                for vertex in normalized_vertices]
-        return hips.recreate_with_vertices(constrained_vertices)
+        for constrainer in self._unnormalized_constrainers:
+            vertices = constrainer.constrain(vertices)
+        return hips.recreate_with_vertices(vertices)

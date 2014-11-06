@@ -11,7 +11,6 @@ separate backend and UI
 
 optimize OSC output and exported BVH
   only process hip vertex?
-  don't normalize / unnormalize?
 
 improvise can hang if min_distance is high
 
