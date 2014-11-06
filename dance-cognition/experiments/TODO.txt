@@ -3,7 +3,9 @@ separate backend and UI
     offline access to jquery
   occasional crash on startup when running --ui-only: AttributeError: 'NoneType' object has no attribute 'text_message'
     seems to appear only with ai_am client & server, not when either client or server is bare (tornado/ws4py)!
-  optimization: don't send events to non-subscribing clients (e.g. don't send input or output to HTML5 UI)
+  optimization: don't send events to non-subscribing clients
+    don't send input or output to HTML5 UI
+    don't even process output if noone subscribes to OUTPUT
   --export-stills
   start/stop plot reduction
   TypeError: 'NoneType' object has no attribute '__getitem__'
