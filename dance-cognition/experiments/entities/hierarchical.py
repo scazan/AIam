@@ -156,5 +156,13 @@ class Entity(BaseEntity):
 
         return parameter_index
 
-    def parameters_to_hips(self, parameters):
-        return self._parameters_to_joint(parameters)
+    def parameters_to_processed_bvh_root(self, parameters):
+        hips = self._parameters_to_joint(parameters)
+        vertices = hips.get_vertices()
+        normalized_vertices = [self.bvh_reader.normalize_vector(vertex)
+                               for vertex in vertices]
+        for constrainer in self._output_constrainers:
+            normalized_vertices = constrainer.constrain(normalized_vertices)
+        constrained_vertices = [self.bvh_reader.skeleton_scale_vector(vertex)
+                                for vertex in normalized_vertices]
+        return hips.recreate_with_vertices(constrained_vertices)

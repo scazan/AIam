@@ -9,8 +9,9 @@ separate backend and UI
   TypeError: 'NoneType' object has no attribute '__getitem__'
     when running in single process with -frame-rate=1
 
-eliminate "floating" in OSC output and exported BVH by using processed output
-  note: hierarchical is only entity where output significantly differs from "processed output". it contains vertices rather than parameters. suggestion: let entity.parameters_to_hips do processing.
+optimize OSC output and exported BVH
+  only process hip vertex?
+  don't normalize / unnormalize?
 
 improvise can hang if min_distance is high
 

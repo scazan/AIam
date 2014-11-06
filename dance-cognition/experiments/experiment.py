@@ -271,14 +271,14 @@ class Experiment(EventListener):
 
     def _export_output(self):
         if self.output is not None:
-            hips = self.entity.parameters_to_hips(self.output)
-            frame = self._joint_to_bvh_frame(hips)
+            root = self.entity.parameters_to_processed_bvh_root(self.output)
+            frame = self._joint_to_bvh_frame(root)
             self.bvh_writer.add_frame(frame)
 
     def _send_output(self):
         if self.output is not None:
-            hips = self.entity.parameters_to_hips(self.output)
-            self._send_output_joint_recurse(hips)
+            root = self.entity.parameters_to_processed_bvh_root(self.output)
+            self._send_output_joint_recurse(root)
 
     def _joint_to_bvh_frame(self, joint):
         result = []

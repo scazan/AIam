@@ -11,6 +11,7 @@ from numpy import array, dot
 import numpy
 import os
 import cPickle
+import copy
 from transformations import euler_matrix
 
 CHANNEL_TO_AXIS = {
@@ -65,6 +66,13 @@ class joint:
 
         for child in self.children:
             child.populate_edges_from_vertices_recurse(vertices, edgelist)
+
+    def recreate_with_vertices(self, vertices):
+        result = copy.copy(self)
+        result.worldpos = vertices[self.index]
+        result.children = [child.recreate_with_vertices(vertices)
+                           for child in self.children]
+        return result
 
     def Xposition(self):
         return self.worldpos[0]
@@ -244,9 +252,9 @@ class BvhReader(cgkit.bvh.BVHReader):
 
     def skeleton_scale_vector(self, v):
         return array([
-            v[0] * self._scale_info.scale_factor + self._scale_info.min_x,
-            v[1] * self._scale_info.scale_factor + self._scale_info.min_y,
-            v[2] * self._scale_info.scale_factor + self._scale_info.min_z])
+            (v[0] + 1) / 2 * self._scale_info.scale_factor + self._scale_info.min_x,
+            (v[1] + 1) / 2 * self._scale_info.scale_factor + self._scale_info.min_y,
+            (v[2] + 1) / 2 * self._scale_info.scale_factor + self._scale_info.min_z])
 
     def onHierarchy(self, root):
         self.root = root
