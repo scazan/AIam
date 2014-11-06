@@ -6,8 +6,6 @@ separate backend and UI
   optimization: don't send events to non-subscribing clients (e.g. don't send input or output to HTML5 UI)
   --export-stills
   start/stop plot reduction
-  AttributeError: SingleProcessClient instance has no attribute '_remote_handler'
-    when running in single process with --mode=X
   TypeError: 'NoneType' object has no attribute '__getitem__'
     when running in single process with -frame-rate=1
 

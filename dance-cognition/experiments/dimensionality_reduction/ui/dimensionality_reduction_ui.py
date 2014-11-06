@@ -44,30 +44,29 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self.set_mode(self.args.mode)
 
     def set_mode(self, mode):
-        if mode == modes.IMPROVISE:
-            self.tabs.setCurrentWidget(self.improvise_tab)
-        elif mode == modes.EXPLORE:
-            self.tabs.setCurrentWidget(self.explore_tab)
-        elif mode == modes.FOLLOW:
-            self.tabs.setCurrentWidget(self.follow_tab)
-        else:
-            raise Exception("unknown mode %r" % mode)
+        mode_tab = self._mode_tabs[mode]
+        self._changing_mode_non_interactively = True
+        self.tabs.setCurrentWidget(mode_tab)
+        self._changing_mode_non_interactively = False
 
     def _add_mode_tabs(self):
         self.tabs = QtGui.QTabWidget()
+        self._mode_tabs = {}
         self._add_follow_tab()
         self._add_explore_tab()
         self._add_improvise_tab()
         self.tabs.currentChanged.connect(self._changed_mode_tab)
         self._layout.addWidget(self.tabs)
+        self._changing_mode_non_interactively = False
 
     def _changed_mode_tab(self):
         exploring = (self.tabs.currentWidget() == self.explore_tab)
         for n in range(self._reduction_tabs.count()):
             tab = self._reduction_tabs.widget(n)
             tab.set_enabled(exploring)
-        self.parent().client.send_event(
-            Event(Event.MODE, self.tabs.currentWidget()._mode_id))
+        if not self._changing_mode_non_interactively:
+            self.parent().client.send_event(
+                Event(Event.MODE, self.tabs.currentWidget()._mode_id))
 
     def _add_follow_tab(self):
         self.follow_tab = ModeTab(modes.FOLLOW)
@@ -78,6 +77,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._follow_tab_layout.addStretch(1)
         self.follow_tab.setLayout(self._follow_tab_layout)
         self.tabs.addTab(self.follow_tab, "Follow")
+        self._mode_tabs[modes.FOLLOW] = self.follow_tab
 
     def _add_cursor_slider(self):
         self.cursor_slider = QtGui.QSlider(QtCore.Qt.Horizontal)
@@ -107,6 +107,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._explore_tab_layout.addStretch(1)
         self.explore_tab.setLayout(self._explore_tab_layout)
         self.tabs.addTab(self.explore_tab, "Explore")
+        self._mode_tabs[modes.EXPLORE] = self.explore_tab
 
     def _add_random_button(self):
         button = QtGui.QPushButton("Random", self)
@@ -135,6 +136,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
             self._improviser_params, self._improvise_tab_layout)
         self.improvise_tab.setLayout(self._improvise_tab_layout)
         self.tabs.addTab(self.improvise_tab, "Improvise")
+        self._mode_tabs[modes.IMPROVISE] = self.improvise_tab
 
     def _received_parameter(self, event):
         self._improviser_params.handle_event(event)
