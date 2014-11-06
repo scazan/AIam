@@ -14,6 +14,8 @@ import cPickle
 import copy
 from transformations import euler_matrix
 
+ASSUME_NO_TRANSLATIONAL_OFFSETS_IN_NON_ROOT = True
+
 CHANNEL_TO_AXIS = {
     "Xrotation": "x",
     "Yrotation": "y",
@@ -70,8 +72,9 @@ class joint:
     def recreate_with_vertices(self, vertices):
         result = copy.copy(self)
         result.worldpos = vertices[self.index]
-        result.children = [child.recreate_with_vertices(vertices)
-                           for child in self.children]
+        if not ASSUME_NO_TRANSLATIONAL_OFFSETS_IN_NON_ROOT:
+            result.children = [child.recreate_with_vertices(vertices)
+                               for child in self.children]
         return result
 
     def Xposition(self):

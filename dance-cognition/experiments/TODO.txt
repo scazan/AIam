@@ -9,9 +9,6 @@ separate backend and UI
   TypeError: 'NoneType' object has no attribute '__getitem__'
     when running in single process with -frame-rate=1
 
-optimize OSC output and exported BVH
-  only process hip vertex?
-
 improvise can hang if min_distance is high
 
 improvisation
