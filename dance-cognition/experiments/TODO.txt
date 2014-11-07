@@ -1,3 +1,11 @@
+eliminate possible infinite loop when min_distance is high
+eliminate exception caused by path being too short (occurs now and then)
+  error: (m>k) failed for hidden m: fpcurf0:m=2
+  can be reproduced by setting a low value for num_segments (and high velocity?)
+  see http://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.interpolate.InterpolatedUnivariateSpline.html "The number of data points must be larger than the spline degree k."
+
+more instant effect of changing velocity
+
 separate backend and UI
   HTML5 UI prototype
     offline access to jquery
@@ -11,12 +19,7 @@ separate backend and UI
   TypeError: 'NoneType' object has no attribute '__getitem__'
     when running in single process with -frame-rate=1
 
-improvise can hang if min_distance is high
-
-improvisation
-  eliminate possible infinite loop when min_distance is high
-  eliminate exception caused by path being too short (occurs now and then)
-  parametrize 0.3 in navigator.py
+parametrize 0.3 in navigator.py
 
 singular matrix exception:
   rm scenes/valencia_all.bvh.quaternion.10fps.data && python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh -training-data-frame-rate 10 -train -n 7 --translate --translation-weight 10
