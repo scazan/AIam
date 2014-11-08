@@ -1,4 +1,6 @@
 eliminate possible infinite loop when min_distance is high
+  min. distance => preferred distance
+
 eliminate exception caused by path being too short (occurs now and then)
   error: (m>k) failed for hidden m: fpcurf0:m=2
   can be reproduced by setting a low value for num_segments (and high velocity?)
@@ -20,6 +22,8 @@ separate backend and UI
     when running in single process with -frame-rate=1
 
 parametrize 0.3 in navigator.py
+
+remove joints with static orientation from training / dim.reduction?
 
 singular matrix exception:
   rm scenes/valencia_all.bvh.quaternion.10fps.data && python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh -training-data-frame-rate 10 -train -n 7 --translate --translation-weight 10
