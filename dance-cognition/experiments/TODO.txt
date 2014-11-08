@@ -1,11 +1,3 @@
-eliminate possible infinite loop when min_distance is high
-  min. distance => preferred distance
-
-eliminate exception caused by path being too short (occurs now and then)
-  error: (m>k) failed for hidden m: fpcurf0:m=2
-  can be reproduced by setting a low value for num_segments (and high velocity?)
-  see http://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.interpolate.InterpolatedUnivariateSpline.html "The number of data points must be larger than the spline degree k."
-
 more instant effect of changing velocity
 
 separate backend and UI

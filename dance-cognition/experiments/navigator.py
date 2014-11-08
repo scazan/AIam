@@ -6,6 +6,8 @@ import dynamics as dynamics_module
 import random
 import math
 
+NUM_DESTINATION_CANDIDATES = 50
+
 class Navigator:
     def __init__(self, map_points):
         self.map_points = map_points
@@ -16,14 +18,27 @@ class Navigator:
         self._departure = None
 
     def _select_destination(self, novelty=.0):
-        while True:
-            destination = self._generate_destination(novelty)
-            if self._destination_acceptable(destination):
-                return destination
+        if self._departure is None:
+            return self._generate_destination(novelty)
+        else:
+            return self._select_best_destination(novelty)
+
+    def _select_best_destination(self, novelty):
+        destination_candidates = [
+            self._generate_destination(novelty)
+            for n in range(NUM_DESTINATION_CANDIDATES)]
+        best_destination = min(
+            destination_candidates,
+            key=lambda destination: self._difference_from_preferred_distance(destination))
+        return best_destination
 
     def _generate_destination(self, novelty):
         known_destination = random.choice(self.map_points)
         return known_destination + self._random_vector_of_magnitude(novelty)
+
+    def _difference_from_preferred_distance(self, destination):
+        distance = self._distance(self._departure, destination)
+        return abs(distance - self._preferred_distance)
 
     def _random_vector_of_magnitude(self, magnitude):
         v = self._random_vector()
@@ -32,17 +47,10 @@ class Navigator:
     def _random_vector(self):
         return numpy.array([random.uniform(-1, 1) for n in range(self._n_dimensions)])
 
-    def _destination_acceptable(self, destination):
-        if self._departure is None:
-            return True
-        else:
-            actual_distance = self._distance(self._departure, destination)
-            return actual_distance > self._min_distance
-
-    def generate_path(self, departure, num_segments, novelty, min_distance):
+    def generate_path(self, departure, num_segments, novelty, preferred_distance):
         self._departure = departure
         self._num_segments = num_segments
-        self._min_distance = math.sqrt(self._n_dimensions) / 2 * min_distance
+        self._preferred_distance = math.sqrt(self._n_dimensions) / 2 * preferred_distance
         self._destination = self._select_destination(novelty)
         self._segments = [departure]
         for n in range(num_segments-1):
@@ -59,7 +67,8 @@ class Navigator:
     def _spline_interpolation_1d(self, points, resolution):
         x = numpy.arange(0., 1., 1./len(points))
         x_new = numpy.arange(0., 1., 1./resolution)
-        curve = InterpolatedUnivariateSpline(x, points)
+        k = min(3, len(points)-1)
+        curve = InterpolatedUnivariateSpline(x, points, k=k)
         return curve(x_new)
 
     def _clamp_path(self, unclamped_interpolated_path, uninterpolated_path):
