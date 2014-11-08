@@ -42,7 +42,7 @@ function setUpSlider(name, min, max) {
 
 $(function() {
     setUpSlider("novelty", 0, 1);
-    setUpSlider("preferred_distance", 0, 1);
+    setUpSlider("preferred_distance", 0, 2);
     setUpSlider("velocity", 0.1, 3);
     connectToBackend();
 });
