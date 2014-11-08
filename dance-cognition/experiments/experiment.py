@@ -270,7 +270,7 @@ class Experiment(EventListener):
     def _export_output(self):
         if self.output is not None:
             root = self.entity.parameters_to_processed_bvh_root(self.output)
-            frame = self._joint_to_bvh_frame(root)
+            frame = self.joint_to_bvh_frame(root)
             self.bvh_writer.add_frame(frame)
 
     def _send_output(self):
@@ -278,12 +278,12 @@ class Experiment(EventListener):
             root = self.entity.parameters_to_processed_bvh_root(self.output)
             self._send_output_joint_recurse(root)
 
-    def _joint_to_bvh_frame(self, joint):
+    def joint_to_bvh_frame(self, joint):
         result = []
         for channel in joint.channels:
             result.append(self._bvh_channel_data(joint, channel))
         for child in joint.children:
-            result += self._joint_to_bvh_frame(child)
+            result += self.joint_to_bvh_frame(child)
         return result
 
     def _bvh_channel_data(self, joint, channel):

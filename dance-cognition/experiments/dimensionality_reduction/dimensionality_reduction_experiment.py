@@ -89,7 +89,6 @@ class DimensionalityReductionExperiment(Experiment):
 
         elif self.args.export_stills:
             self._load_model()
-            self._create_ui_window()
             StillsExporter(self, self.args.export_stills).export()
 
         else:
@@ -110,7 +109,7 @@ class DimensionalityReductionExperiment(Experiment):
         window.show()
         app.exec_()
 
-    def _create_ui_window(self, client=None):
+    def _create_ui_window(self, client):
         from ui.dimensionality_reduction_ui import DimensionalityReductionMainWindow, \
             DimensionalityReductionToolbar
         return DimensionalityReductionMainWindow(client, 
@@ -296,8 +295,8 @@ class StillsExporter:
         bvh_writer = BvhWriter(self.experiment.bvh_reader)
         for reduction in self._reductions:
             output = self.experiment.student.inverse_transform(numpy.array([reduction]))[0]
-            root = self.experiment.window._scene.parameters_to_processed_bvh_root(output)
-            frame = self.experiment.window._scene._joint_to_bvh_frame(root)
+            root = self.experiment.entity.parameters_to_processed_bvh_root(output)
+            frame = self.experiment.joint_to_bvh_frame(root)
             bvh_writer.add_frame(frame)
         bvh_writer.write(self._output_path)
         print "ok"
