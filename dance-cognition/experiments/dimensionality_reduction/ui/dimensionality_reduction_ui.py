@@ -5,9 +5,12 @@ from map_widget import MapTab
 from reduction_sliders import ReductionSliders
 from .. import modes
 
+REDUCTION_PLOT_PATH = "reduction.dat"
+
 class DimensionalityReductionMainWindow(MainWindow):
     def __init__(self, *args, **kwargs):
         MainWindow.__init__(self, *args, **kwargs)
+        self.add_event_handler(Event.REDUCTION, self._handle_reduction)
         self.add_event_handler(Event.MODE, self._set_mode)
         self.add_event_handler(Event.IMPROVISER_PATH, self._set_improviser_path)
         self.add_event_handler(Event.VELOCITY, self._set_velocity)
@@ -16,6 +19,23 @@ class DimensionalityReductionMainWindow(MainWindow):
             '&Plot reduction', self._start_plot_reduction,
             '&Stop plot', self._stop_plot_reduction,
             False, 'F1')
+        self._reduction_plot = None
+
+    def _handle_reduction(self, event):
+        self.reduction = event.content
+        if self._reduction_plot:
+            print >>self._reduction_plot, " ".join([
+                    str(v) for v in self.student.normalize_reduction(self.reduction)])
+        self.toolbar.on_received_reduction_from_backend(self.reduction)
+
+    def _start_plot_reduction(self):
+        self._reduction_plot = open(REDUCTION_PLOT_PATH, "w")
+        print "plotting reduction"
+
+    def _stop_plot_reduction(self):
+        self._reduction_plot.close()
+        self._reduction_plot = None
+        print "saved reduction data to %s" % REDUCTION_PLOT_PATH
 
     def _set_mode(self, event):
         self.toolbar.set_mode(event.content)
@@ -30,9 +50,6 @@ class DimensionalityReductionMainWindow(MainWindow):
     def _set_cursor(self, event):
         if hasattr(self.toolbar, "cursor_slider"):
             self.toolbar.cursor_slider.setValue(event.content * SLIDER_PRECISION)
-
-    def on_received_reduction_from_backend(self):
-        self.toolbar.on_received_reduction_from_backend(self.reduction)
 
 class DimensionalityReductionToolbar(ExperimentToolbar):
     def __init__(self, *args):

@@ -19,7 +19,6 @@ CAMERA_Y_SPEED = .1
 CAMERA_KEY_SPEED = .5
 CAMERA_DRAG_SPEED = .5
 FOCUS_RADIUS = 1.
-REDUCTION_PLOT_PATH = "reduction.dat"
 
 class BaseScene(QtOpenGL.QGLWidget):
     @staticmethod
@@ -277,10 +276,8 @@ class MainWindow(QtGui.QWidget, EventListener):
         self.args = args
 
         EventListener.__init__(self)
-        self.add_event_handler(Event.REDUCTION, self._handle_reduction)
         self.add_event_handler(Event.INPUT, self._handle_input)
         self.add_event_handler(Event.OUTPUT, self._handle_output)
-        self._reduction_plot = None
 
         QtGui.QWidget.__init__(self)
         self._layout = QtGui.QHBoxLayout()
@@ -312,25 +309,6 @@ class MainWindow(QtGui.QWidget, EventListener):
     def _received_event(self, event):
         callback = lambda: self.handle_event(event)
         QtGui.QApplication.postEvent(self, CustomQtEvent(callback))
-
-    def _handle_reduction(self, event):
-        self.reduction = event.content
-        if self._reduction_plot:
-            print >>self._reduction_plot, " ".join([
-                    str(v) for v in self.student.normalize_reduction(self.reduction)])
-        self.on_received_reduction_from_backend()
-
-    def on_received_reduction_from_backend(self):
-        pass
-
-    def _start_plot_reduction(self):
-        self._reduction_plot = open(REDUCTION_PLOT_PATH, "w")
-        print "plotting reduction"
-
-    def _stop_plot_reduction(self):
-        self._reduction_plot.close()
-        self._reduction_plot = None
-        print "saved reduction data to %s" % REDUCTION_PLOT_PATH
 
     def sizeHint(self):
         return QtCore.QSize(1000, 640)
