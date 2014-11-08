@@ -41,7 +41,8 @@ class DimensionalityReductionExperiment(Experiment):
     def ui_connected(self, handler):
         Experiment.ui_connected(self, handler)
         handler.send_event(Event(Event.MODE, self._mode))
-        handler.send_event(Event(Event.REDUCTION, self.reduction))
+        if self.reduction is not None:
+            handler.send_event(Event(Event.REDUCTION, self.reduction))
         self._improviser_params.add_notifier(handler)
         self._improviser_params.notify_changed_all()
 

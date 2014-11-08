@@ -10,8 +10,6 @@ separate backend and UI
     don't even process output if noone subscribes to OUTPUT
   --export-stills
   start/stop plot reduction
-  TypeError: 'NoneType' object has no attribute '__getitem__'
-    when running in single process with -frame-rate=1
 
 parametrize 0.3 in navigator.py
 
