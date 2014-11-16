@@ -139,7 +139,8 @@ class Experiment(EventListener):
         self._ui_handlers.add(handler)
 
     def ui_disconnected(self, handler):
-        self._ui_handlers.remove(handler)
+        if handler in self._ui_handlers:
+            self._ui_handlers.remove(handler)
 
     def _add_event_handlers(self):
         self.add_event_handler(Event.START, self._start)
@@ -326,7 +327,8 @@ class WebsocketUiHandler(ClientHandler):
         self._experiment = kwargs.pop("experiment")
         super(WebsocketUiHandler, self).__init__(*args, **kwargs)
 
-    def open(self):
+    def registered(self):
+        print "UI registered"
         self._experiment.ui_connected(self)
 
     def on_close(self):

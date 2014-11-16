@@ -31,10 +31,10 @@ function setUpSlider(name, min, max) {
 	step: 0.001,
 	slide: function(event, ui) {
             if (event.originalEvent) {
-		client.sendEvent(new Event("PARAMETER", {
+		client.sendEvent(new Event("PARAMETER", new PyDict({
 		    "name": name,
 		    "value": ui.value
-		}));
+		})));
             }
 	}
     });

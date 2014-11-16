@@ -2,6 +2,7 @@ import tornado.web
 import tornado.ioloop
 import tornado.websocket
 from tornado.httpserver import HTTPServer
+from event import Event
 from event_packing import EventPacker
 
 WEBSOCKET_APPLICATION = "/aiam"
@@ -10,10 +11,21 @@ WEBSOCKET_PORT = 15001
 class ClientHandler(tornado.websocket.WebSocketHandler):
     def on_message(self, message):
         event = EventPacker.unpack(str(message))
-        self.received_event(event, self)
+        self._handle_event(event)
+
+    def _handle_event(self, event):
+        if event.type == Event.SUBSCRIBE:
+            self._subscribed_events = event.content
+            self.registered()
+        else:
+            self.received_event(event, self)
         
     def send_event(self, event):
-        self.write_message(EventPacker.pack(event))
+        if event.type in self._subscribed_events:
+            self.write_message(EventPacker.pack(event))
+
+    def registered(self):
+        pass
 
 class WebsocketServer(tornado.web.Application):
     def __init__(self, client_handler=ClientHandler, settings={}):

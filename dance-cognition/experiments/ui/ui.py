@@ -302,10 +302,10 @@ class MainWindow(QtGui.QWidget, EventListener):
         if self.args.show_fps:
             self._fps_meter = FpsMeter()
 
-        client.received_event = self._received_event
+        client.set_event_listener(self)
         client.connect()
 
-    def _received_event(self, event):
+    def received_event(self, event):
         callback = lambda: self.handle_event(event)
         QtGui.QApplication.postEvent(self, CustomQtEvent(callback))
 

@@ -12,3 +12,6 @@ class EventListener:
             raise Exception("Unknown event type %r. Handlers added for %r." % (
                     event.type, self._handlers.keys()))
         handler(event)
+
+    def get_handled_events(self):
+        return self._handlers.keys()

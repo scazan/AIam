@@ -1,4 +1,5 @@
 class Event:
+    SUBSCRIBE = "SUBSCRIBE"
     START = "START"
     STOP = "STOP"
     INPUT = "INPUT"
