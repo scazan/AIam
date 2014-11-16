@@ -7,3 +7,9 @@ class SingleProcessClient:
 
     def send_event(self, event):
         self._remote_handler.received_event(event, self)
+
+    def set_event_listener(self, event_listener):
+        self._event_listener = event_listener
+
+    def received_event(self, event):
+        self._event_listener.received_event(event)
