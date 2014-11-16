@@ -19,6 +19,9 @@ class SingleProcessServer:
         callback = PeriodicCallback(self._scheduler, action, delay)
         callback.schedule()
 
+    def client_subscribes_to(self, event_type):
+        return True
+
 class PeriodicCallback:
     def __init__(self, scheduler, action, delay):
         self.scheduler = scheduler

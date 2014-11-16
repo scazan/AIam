@@ -9,19 +9,28 @@ WEBSOCKET_APPLICATION = "/aiam"
 WEBSOCKET_PORT = 15001
 
 class ClientHandler(tornado.websocket.WebSocketHandler):
+    def __init__(self, server, request, **kwargs):
+        super(ClientHandler, self).__init__(server, request, **kwargs)
+        self.subscribed_events = []
+        self._server = server
+        server.client_handlers.add(self)
+
+    def on_close(self):
+        self._server.client_handlers.remove(self)
+        
     def on_message(self, message):
         event = EventPacker.unpack(str(message))
         self._handle_event(event)
 
     def _handle_event(self, event):
         if event.type == Event.SUBSCRIBE:
-            self._subscribed_events = event.content
+            self.subscribed_events = event.content
             self.registered()
         else:
             self.received_event(event, self)
         
     def send_event(self, event):
-        if event.type in self._subscribed_events:
+        if event.type in self.subscribed_events:
             self.write_message(EventPacker.pack(event))
 
     def registered(self):
@@ -35,6 +44,7 @@ class WebsocketServer(tornado.web.Application):
             debug=True)
         self._loop = tornado.ioloop.IOLoop.instance()
         self._listen(WEBSOCKET_PORT)
+        self.client_handlers = set()
 
     def _listen(self, port, address="", **kwargs):
         self._server = HTTPServer(self, **kwargs)
@@ -50,3 +60,8 @@ class WebsocketServer(tornado.web.Application):
     def add_periodic_callback(self, callback, callback_time):
         periodic_callback = tornado.ioloop.PeriodicCallback(callback, callback_time, self._loop)
         periodic_callback.start()
+
+    def client_subscribes_to(self, event_type):
+        for handler in self.client_handlers:
+            if event_type in handler.subscribed_events:
+                return True

@@ -200,7 +200,7 @@ class Experiment(EventListener):
             if self.entity.processed_input is not None:
                 self.send_event_to_ui(Event(Event.INPUT, self.entity.processed_input))
 
-            if self.output is not None and len(self._ui_handlers) > 0:
+            if self.output is not None and self._server.client_subscribes_to(Event.OUTPUT):
                 processed_output = self.entity.process_output(self.output)
                 self.send_event_to_ui(Event(Event.OUTPUT, processed_output))
 
@@ -333,6 +333,7 @@ class WebsocketUiHandler(ClientHandler):
 
     def on_close(self):
         print "UI disconnected"
+        super(WebsocketUiHandler, self).on_close()
         self._experiment.ui_disconnected(self)
 
     def received_event(self, event, source):
