@@ -13,6 +13,9 @@ INSTALLATION ON OSX
 sudo port install py27-pyqt4 py27-numpy py27-scikit-learn py27-opengl
 # use /opt/local/bin/python2.7 instead of python when running
 
+sudo port install py27-tornado py27-pip
+sudo pip-2.7 install ws4py
+
 PREDICTION WITH BACKPROP NET
 
 python predict.py -p point_circle -train -training-duration 100
