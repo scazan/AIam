@@ -3,6 +3,10 @@
 <head>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
   <link rel="stylesheet" href="http://code.jquery.com/ui/1.11.1/themes/smoothness/jquery-ui.css">
+  <link rel="stylesheet" href="fontkit/font.css">
+
+  <link rel="stylesheet" href="reset.css">
+  <link rel="stylesheet" href="ui.css">
   <script src="http://code.jquery.com/jquery-1.10.2.js"></script>
   <script src="http://code.jquery.com/ui/1.11.1/jquery-ui.js"></script>
   <script type="text/javascript" src="event.js"></script>
@@ -12,14 +16,29 @@
 </head>
 
 <body>
+	<div id ="screen">
+		<div class="slider_container">
+			<div class="slider_left">imitative</div>
+			<div class="slidebar">
+				<div id="slider_novelty"></div>
+			</div>
+			<div class="slider_right">original</div>
+		</div>
+		<div class="slider_container">
+			<div class="slider_left">rigid</div>
+			<div class="slidebar">
+				<div id="slider_min_distance"></div>
+			</div>	
+			<div class="slider_right">flexible</div>
+		</div>
+			
+		<div class="slider_container">	
+			<div class="slider_left">slow</div>
+			<div class="slidebar">
+				<div id="slider_velocity"></div>
+			</div>
+			<div class="slider_right">fast</div>
+		</div>	
 
-Novelty:<br>
-<div id="slider_novelty"></div>
-
-Stretch:<br>
-<div id="slider_preferred_distance"></div>
-
-Speed:<br>
-<div id="slider_velocity"></div>
-
+	</div>
 </body>

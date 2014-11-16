@@ -3,14 +3,9 @@ function packEvent(event) {
 }
 
 function serialize(event) {
-    if(event.content instanceof PyDict)
-	content = {"py/dict": event.content.dict};
-    else
-	content = event.content;
-
     return {"py/Event": {
 	"type": event.type,
-	"content": content
+	"content": {"py/dict": event.content}
     }};
 }
 
