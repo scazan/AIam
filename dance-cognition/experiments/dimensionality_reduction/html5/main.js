@@ -32,6 +32,7 @@ function setUpSlider(name, min, max, value) {
     value: value,
     orientation: "horizontal",
     animate: true,
+    range:"min",
 	slide: function(event, ui) {
             if (event.originalEvent) {
 		client.sendEvent(new Event("PARAMETER", {
