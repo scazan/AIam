@@ -83,7 +83,8 @@ class Experiment(EventListener):
         parser.add_argument("--backend-host", default="localhost")
         parser.add_argument("--show-fps", action="store_true")
         parser.add_argument("--output-receiver-host")
-        parser.add_argument("--output-receiver-port", type=int)
+        parser.add_argument("--output-receiver-port", type=int, default=10000)
+        parser.add_argument("--output-receiver-type", choices=["bvh", "world"], default="bvh")
 
     def __init__(self, parser):
         EventListener.__init__(self)
@@ -200,9 +201,11 @@ class Experiment(EventListener):
             if self.entity.processed_input is not None:
                 self.send_event_to_ui(Event(Event.INPUT, self.entity.processed_input))
 
-            if self.output is not None and self._server.client_subscribes_to(Event.OUTPUT):
-                processed_output = self.entity.process_output(self.output)
-                self.send_event_to_ui(Event(Event.OUTPUT, processed_output))
+            if self.output is not None:
+                if (self._server.client_subscribes_to(Event.OUTPUT) or
+                    self._output_sender and self.args.output_receiver_type == "world"):
+                    self.processed_output = self.entity.process_output(self.output)
+                    self.send_event_to_ui(Event(Event.OUTPUT, self.processed_output))
 
         self.previous_frame_time = self.now
         self._frame_count += 1
@@ -277,7 +280,10 @@ class Experiment(EventListener):
     def _send_output(self):
         if self.output is not None:
             root = self.entity.parameters_to_processed_bvh_root(self.output)
-            self._send_output_joint_recurse(root)
+            if self.args.output_receiver_type == "bvh":
+                self._send_output_bvh_recurse(root)
+            elif self.args.output_receiver_type == "world":
+                self._send_output_world()
 
     def joint_to_bvh_frame(self, joint):
         result = []
@@ -290,13 +296,13 @@ class Experiment(EventListener):
     def _bvh_channel_data(self, joint, channel):
         return getattr(joint, channel)()
 
-    def _send_output_joint_recurse(self, joint):
+    def _send_output_bvh_recurse(self, joint):
         if not joint.hasparent and self.args.translate:
             self._send_output_joint_translation(joint)
         if joint.rotation:
             self._send_output_joint_orientation(joint)
         for child in joint.children:
-            self._send_output_joint_recurse(child)
+            self._send_output_bvh_recurse(child)
 
     def _send_output_joint_translation(self, joint):
         self._output_sender.send(
@@ -307,6 +313,12 @@ class Experiment(EventListener):
         self._output_sender.send(
             "/orientation", self._frame_count, joint.index,
             *joint.angles)
+
+    def _send_output_world(self):
+        for index, worldpos in enumerate(self.processed_output):
+            self._output_sender.send(
+                "/world", self._frame_count, index,
+                worldpos[0], worldpos[1], worldpos[2])
 
 class SingleProcessUiHandler:
     def __init__(self, client, experiment):
