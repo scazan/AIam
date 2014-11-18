@@ -1,11 +1,12 @@
 BACKEND REQUIREMENTS
 
-sudo apt-get install python-numpy python-scikit-learn python-tornado
+sudo apt-get install python-numpy python-scikit-learn
+sudo pip install tornado==2.4.1
 
 UI REQUIREMENTS
 
 sudo apt-get install python-opengl python-qt4-gl
-pip install ws4py
+sudo pip install ws4py==0.3.2
 
 INSTALLATION ON OSX
 
