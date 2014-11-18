@@ -292,7 +292,9 @@ class StillsExporter:
 
     def export(self):
         print "exported stills to %s..." % self._output_path
-        bvh_writer = BvhWriter(self.experiment.bvh_reader)
+        bvh_writer = BvhWriter(
+            self.experiment.bvh_reader.get_hips(0),
+            self.experiment.bvh_reader.dt)
         for reduction in self._reductions:
             output = self.experiment.student.inverse_transform(numpy.array([reduction]))[0]
             root = self.experiment.entity.parameters_to_processed_bvh_root(output)
