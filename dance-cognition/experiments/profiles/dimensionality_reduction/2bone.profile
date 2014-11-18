@@ -1,0 +1,1 @@
+-entity hierarchical --pca-type=KernelPCA -r quaternion -bvh scenes/2bone.bvh -training-data-frame-rate 10 -n 2 --translate --translation-weight 5
