@@ -101,6 +101,10 @@ class DimensionalityReductionExperiment(Experiment):
                 self._improviser = Improviser(self, self._improviser_params)
             self.run_backend_and_or_ui()
 
+    def add_ui_parser_arguments(self, parser):
+        from ui.dimensionality_reduction_ui import DimensionalityReductionMainWindow
+        DimensionalityReductionMainWindow.add_parser_arguments(parser)
+
     def run_ui(self, client):
         from PyQt4 import QtGui
         app = QtGui.QApplication(sys.argv)

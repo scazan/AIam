@@ -6,8 +6,14 @@ from reduction_sliders import ReductionSliders
 from .. import modes
 
 REDUCTION_PLOT_PATH = "reduction.dat"
+HTML5_TOOLBAR_HEIGHT = 150
 
 class DimensionalityReductionMainWindow(MainWindow):
+    @staticmethod
+    def add_parser_arguments(parser):
+        MainWindow.add_parser_arguments(parser)
+        parser.add_argument("--html5-toolbar", action="store_true")
+
     def __init__(self, *args, **kwargs):
         MainWindow.__init__(self, *args, **kwargs)
         self.add_event_handler(Event.REDUCTION, self._handle_reduction)
@@ -20,6 +26,18 @@ class DimensionalityReductionMainWindow(MainWindow):
             '&Stop plot', self._stop_plot_reduction,
             False, 'F1')
         self._reduction_plot = None
+        if self.args.html5_toolbar:
+            self._add_html5_toolbar()
+
+    def _add_html5_toolbar(self):
+        from PyQt4.QtCore import QUrl
+        from PyQt4.QtWebKit import QWebView
+        view = QWebView()
+        view.load(QUrl("dimensionality_reduction/html5/index.html"))
+        view.show()
+        view.setFixedSize(self.args.preferred_width, HTML5_TOOLBAR_HEIGHT)
+        self.setFixedSize(self.args.preferred_width, self.args.preferred_height)
+        self.outer_vertical_layout.addWidget(view)
 
     def _handle_reduction(self, event):
         self.reduction = event.content

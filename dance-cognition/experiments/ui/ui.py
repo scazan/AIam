@@ -143,9 +143,6 @@ class BaseScene(QtOpenGL.QGLWidget):
     def camera_translation(self):
         return numpy.zeros(3)
 
-    def sizeHint(self):
-        return QtCore.QSize(600, 640)
-
     def centralize_output(self):
         pass
 
@@ -285,7 +282,8 @@ class MainWindow(QtGui.QWidget, EventListener):
         self.add_event_handler(Event.OUTPUT, self._handle_output)
 
         QtGui.QWidget.__init__(self)
-        self._layout = QtGui.QHBoxLayout()
+        self.outer_vertical_layout = QtGui.QVBoxLayout()
+        inner_horizontal_layout = QtGui.QHBoxLayout()
         size_policy = QtGui.QSizePolicy(
             QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
         size_policy.setHorizontalStretch(2)
@@ -293,17 +291,18 @@ class MainWindow(QtGui.QWidget, EventListener):
         self._scene = scene_widget_class(self, bvh_reader, args)
         self._scene.setSizePolicy(size_policy)
         self._create_menu()
-        self._layout.addWidget(self._scene)
+        inner_horizontal_layout.addWidget(self._scene)
 
         self.toolbar = toolbar_class(self, args)
         if self.args.no_toolbar:
             self._hide_toolbar()
         else:
             self._show_toolbar()
-        self._layout.addWidget(self.toolbar)
+        inner_horizontal_layout.addWidget(self.toolbar)
 
-        self._layout.setAlignment(self.toolbar, QtCore.Qt.AlignTop)
-        self.setLayout(self._layout)
+        inner_horizontal_layout.setAlignment(self.toolbar, QtCore.Qt.AlignTop)
+        self.outer_vertical_layout.addLayout(inner_horizontal_layout)
+        self.setLayout(self.outer_vertical_layout)
 
         self.time_increment = 0
         self._stopwatch = Stopwatch()
@@ -323,7 +322,7 @@ class MainWindow(QtGui.QWidget, EventListener):
 
     def _create_menu(self):
         self._menu_bar = QtGui.QMenuBar()
-        self._layout.setMenuBar(self._menu_bar)
+        self.outer_vertical_layout.setMenuBar(self._menu_bar)
         self._create_main_menu()
         self._create_view_menu()
 
