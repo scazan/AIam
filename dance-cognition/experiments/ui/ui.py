@@ -272,6 +272,7 @@ class MainWindow(QtGui.QWidget, EventListener):
     def add_parser_arguments(parser):
         parser.add_argument("--width", dest="preferred_width", type=int, default=1000)
         parser.add_argument("--height", dest="preferred_height", type=int, default=720)
+        parser.add_argument("--no-toolbar", action="store_true")
 
     def __init__(self, client, entity, student, bvh_reader, scene_widget_class, toolbar_class, args):
         self.client = client
@@ -295,8 +296,12 @@ class MainWindow(QtGui.QWidget, EventListener):
         self._layout.addWidget(self._scene)
 
         self.toolbar = toolbar_class(self, args)
-        self.toolbar.setFixedSize(TOOLBAR_WIDTH, self.args.preferred_height)
+        if self.args.no_toolbar:
+            self._hide_toolbar()
+        else:
+            self._show_toolbar()
         self._layout.addWidget(self.toolbar)
+
         self._layout.setAlignment(self.toolbar, QtCore.Qt.AlignTop)
         self.setLayout(self._layout)
 
@@ -376,16 +381,22 @@ class MainWindow(QtGui.QWidget, EventListener):
     def _add_toolbar_action(self):
         self._toolbar_action = QtGui.QAction('Toolbar', self)
         self._toolbar_action.setCheckable(True)
-        self._toolbar_action.setChecked(True)
+        self._toolbar_action.setChecked(not self.args.no_toolbar)
         self._toolbar_action.setShortcut('Ctrl+T')
         self._toolbar_action.toggled.connect(self._toggled_toolbar)
         self._view_menu.addAction(self._toolbar_action)
 
     def _toggled_toolbar(self):
         if self._toolbar_action.isChecked():
-            self.toolbar.setFixedSize(TOOLBAR_WIDTH, self.args.preferred_height)
+            self._show_toolbar()
         else:
-            self.toolbar.setFixedSize(0, self.args.preferred_height)
+            self._hide_toolbar()
+
+    def _show_toolbar(self):
+        self.toolbar.setFixedSize(TOOLBAR_WIDTH, self.args.preferred_height)
+
+    def _hide_toolbar(self):
+        self.toolbar.setFixedSize(0, self.args.preferred_height)
 
     def _add_fullscreen_action(self):
         self._fullscreen_action = QtGui.QAction('Fullscreen', self)
