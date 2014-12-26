@@ -12,7 +12,6 @@ from fps_meter import FpsMeter
 from parameters_form import ParametersForm
 
 TOOLBAR_WIDTH = 400
-TOOLBAR_HEIGHT = 720
 SLIDER_PRECISION = 1000
 CIRCLE_PRECISION = 100
 CAMERA_Y_SPEED = .1
@@ -269,6 +268,11 @@ class ExperimentToolbar(QtGui.QWidget):
         return ParametersForm(parameters, parent)
 
 class MainWindow(QtGui.QWidget, EventListener):
+    @staticmethod
+    def add_parser_arguments(parser):
+        parser.add_argument("--width", dest="preferred_width", type=int, default=1000)
+        parser.add_argument("--height", dest="preferred_height", type=int, default=720)
+
     def __init__(self, client, entity, student, bvh_reader, scene_widget_class, toolbar_class, args):
         self.client = client
         self.entity = entity
@@ -291,7 +295,7 @@ class MainWindow(QtGui.QWidget, EventListener):
         self._layout.addWidget(self._scene)
 
         self.toolbar = toolbar_class(self, args)
-        self.toolbar.setFixedSize(TOOLBAR_WIDTH, TOOLBAR_HEIGHT)
+        self.toolbar.setFixedSize(TOOLBAR_WIDTH, self.args.preferred_height)
         self._layout.addWidget(self.toolbar)
         self._layout.setAlignment(self.toolbar, QtCore.Qt.AlignTop)
         self.setLayout(self._layout)
@@ -310,7 +314,7 @@ class MainWindow(QtGui.QWidget, EventListener):
         QtGui.QApplication.postEvent(self, CustomQtEvent(callback))
 
     def sizeHint(self):
-        return QtCore.QSize(1000, 640)
+        return QtCore.QSize(self.args.preferred_width, self.args.preferred_height)
 
     def _create_menu(self):
         self._menu_bar = QtGui.QMenuBar()
@@ -379,9 +383,9 @@ class MainWindow(QtGui.QWidget, EventListener):
 
     def _toggled_toolbar(self):
         if self._toolbar_action.isChecked():
-            self.toolbar.setFixedSize(TOOLBAR_WIDTH, TOOLBAR_HEIGHT)
+            self.toolbar.setFixedSize(TOOLBAR_WIDTH, self.args.preferred_height)
         else:
-            self.toolbar.setFixedSize(0, TOOLBAR_HEIGHT)
+            self.toolbar.setFixedSize(0, self.args.preferred_height)
 
     def _add_fullscreen_action(self):
         self._fullscreen_action = QtGui.QAction('Fullscreen', self)

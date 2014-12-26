@@ -108,6 +108,7 @@ class Experiment(EventListener):
         if not args.backend_only:
             self._entity_scene_module = imp.load_source("entity", "entities/%s_scene.py" % args.entity)
             self._entity_scene_module.Scene.add_parser_arguments(parser)
+            self.add_ui_parser_arguments(parser)
 
         args = parser.parse_args()
         if args.profile:
@@ -151,6 +152,10 @@ class Experiment(EventListener):
         self.add_event_handler(
             Event.SET_CURSOR,
             lambda event: self.entity.set_cursor(event.content))
+
+    def add_ui_parser_arguments(self, parser):
+        from ui.ui import MainWindow
+        MainWindow.add_parser_arguments(parser)
 
     def run_backend_and_or_ui(self):
         run_backend = not self.args.ui_only
