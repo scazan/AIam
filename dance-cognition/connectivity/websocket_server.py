@@ -36,6 +36,12 @@ class ClientHandler(tornado.websocket.WebSocketHandler):
     def registered(self):
         pass
 
+    def check_origin(self, origin):
+        return True
+
+    def allow_draft76(self):
+        return True
+
 class WebsocketServer(tornado.web.Application):
     def __init__(self, client_handler=ClientHandler, settings={}):
         tornado.web.Application.__init__(

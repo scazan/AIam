@@ -44,7 +44,13 @@ function setUpSlider(name, min, max, value) {
     });
 }
 
+function applyStylesheet() {
+    var stylesheet = getQueryStringParameter("stylesheet", "ui")
+    $('head').append('<link rel="stylesheet" href="' + stylesheet + '.css" type="text/css" />');
+}
+
 $(function() {
+    applyStylesheet();
     setUpSlider("novelty", 0, 1, .5);
     setUpSlider("preferred_distance", 0, 2, 1);
     setUpSlider("velocity", 0.1, 3, 1.55);

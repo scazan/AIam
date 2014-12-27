@@ -31,13 +31,14 @@ class DimensionalityReductionMainWindow(MainWindow):
 
     def _add_html5_toolbar(self):
         from PyQt4.QtCore import QUrl
-        from PyQt4.QtWebKit import QWebView
+        from PyQt4.QtWebKit import QWebView, QWebSettings
         view = QWebView()
-        view.load(QUrl("dimensionality_reduction/html5/index.html"))
+        view.load(QUrl("dimensionality_reduction/html5/index.html?stylesheet=ui_480p"))
         view.show()
         view.setFixedSize(self.args.preferred_width, HTML5_TOOLBAR_HEIGHT)
         self.setFixedSize(self.args.preferred_width, self.args.preferred_height)
         self.outer_vertical_layout.addWidget(view)
+        view.page().settings().setAttribute(QWebSettings.DeveloperExtrasEnabled, True)
 
     def _handle_reduction(self, event):
         self.reduction = event.content

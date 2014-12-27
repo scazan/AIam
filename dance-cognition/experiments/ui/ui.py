@@ -283,9 +283,15 @@ class MainWindow(QtGui.QWidget, EventListener):
 
         QtGui.QWidget.__init__(self)
         self.outer_vertical_layout = QtGui.QVBoxLayout()
+        self.outer_vertical_layout.setSpacing(0)
+        self.outer_vertical_layout.setMargin(0)
+        self.outer_vertical_layout.setContentsMargins(0, 0, 0, 0)
+
         inner_horizontal_layout = QtGui.QHBoxLayout()
+
         size_policy = QtGui.QSizePolicy(
             QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
+        size_policy.setVerticalStretch(2)
         size_policy.setHorizontalStretch(2)
 
         self._scene = scene_widget_class(self, bvh_reader, args)
@@ -311,7 +317,6 @@ class MainWindow(QtGui.QWidget, EventListener):
             self._fps_meter = FpsMeter()
 
         client.set_event_listener(self)
-        client.connect()
 
     def received_event(self, event):
         callback = lambda: self.handle_event(event)

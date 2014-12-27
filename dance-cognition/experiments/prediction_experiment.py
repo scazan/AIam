@@ -44,6 +44,7 @@ class PredictionExperiment(Experiment):
         app = QtGui.QApplication(sys.argv)
         window = MainWindow(client,
             self.entity, self.student, self.bvh_reader, self._scene_class, ExperimentToolbar, self.args)
+        client.connect()
         window.show()
         app.exec_()
 

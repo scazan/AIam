@@ -110,6 +110,7 @@ class DimensionalityReductionExperiment(Experiment):
         app = QtGui.QApplication(sys.argv)
         app.setStyleSheet(open("stylesheet.qss").read())
         window = self._create_ui_window(client)
+        client.connect()
         window.show()
         app.exec_()
 

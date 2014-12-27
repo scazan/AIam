@@ -81,6 +81,8 @@ class Experiment(EventListener):
         parser.add_argument("--backend-only", action="store_true")
         parser.add_argument("--ui-only", action="store_true")
         parser.add_argument("--backend-host", default="localhost")
+        parser.add_argument("--websockets", action="store_true",
+                            help="Force websockets support (enabled automatically by --backend-only)")
         parser.add_argument("--show-fps", action="store_true")
         parser.add_argument("--output-receiver-host")
         parser.add_argument("--output-receiver-port", type=int, default=10000)
@@ -165,15 +167,21 @@ class Experiment(EventListener):
             self._scene_class = self._entity_scene_module.Scene
 
         if run_backend and run_ui:
-            self._create_single_process_server()
-            self._set_up_timed_refresh()
-            self._start_server_in_new_thread()
-            client = SingleProcessClient(self._server)
-            self.run_ui(client)
+            if self.args.websockets:
+                self._create_websocket_server()
+                self._set_up_timed_refresh()
+                self._start_server_in_new_thread()
+                client = WebsocketClient(self.args.backend_host)
+                self.run_ui(client)
+            else:
+                self._create_single_process_server()
+                self._set_up_timed_refresh()
+                self._start_server_in_new_thread()
+                client = SingleProcessClient(self._server)
+                self.run_ui(client)
         elif run_backend:
             self._create_websocket_server()
             self._set_up_timed_refresh()
-            print "websocket server ready"
             self._start_server()
         elif run_ui:
             client = WebsocketClient(self.args.backend_host)
@@ -243,6 +251,7 @@ class Experiment(EventListener):
 
     def _create_websocket_server(self):
         self._server = WebsocketServer(WebsocketUiHandler, {"experiment": self})
+        print "websocket server ready"
 
     def _set_up_timed_refresh(self):
         self._server.add_periodic_callback(
