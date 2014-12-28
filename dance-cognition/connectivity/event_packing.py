@@ -38,12 +38,22 @@ class EventPacker:
     def _restore(cls, obj):
         if not isinstance(obj, dict):
             return obj
-        if "py/dict" in obj:
+
+        try:
             return dict(obj["py/dict"])
-        if "py/numpy.ndarray" in obj:
+        except KeyError:
+            pass
+
+        try:
             data = obj["py/numpy.ndarray"]
             return numpy.array(data["values"], dtype=data["dtype"])
-        if "py/Event" in obj:
+        except KeyError:
+            pass
+
+        try:
             data = obj["py/Event"]
             return Event(data["type"], cls._restore(data["content"]))
+        except KeyError:
+            pass
+
         return obj
