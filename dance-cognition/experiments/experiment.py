@@ -187,10 +187,10 @@ class Experiment(EventListener):
             client = WebsocketClient(self.args.backend_host)
             self.run_ui(client)
 
-    def _start(self):
+    def _start(self, event):
         self._running = True
 
-    def _stop(self):
+    def _stop(self, event):
         self._running = False
 
     def is_running(self):
