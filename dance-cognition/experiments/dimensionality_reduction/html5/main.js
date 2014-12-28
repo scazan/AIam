@@ -53,6 +53,6 @@ $(function() {
     applyStylesheet();
     setUpSlider("novelty", 0, 1, .5);
     setUpSlider("preferred_distance", 0, 2, 1);
-    setUpSlider("velocity", 0.1, 3, 1.55);
+    setUpSlider("velocity", 0.1, 0.9, 0.5);
     connectToBackend();
 });
