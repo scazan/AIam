@@ -173,7 +173,8 @@ class DimensionalityReductionExperiment(Experiment):
                     self.entity.get_cursor() / self.entity.get_duration()))
         elif self._mode == modes.IMPROVISE:
             self._improviser.proceed(self.time_increment)
-            self.send_event_to_ui(Event(Event.IMPROVISER_PATH, self._improviser.path()))
+            if self._improviser.path_changed():
+                self.send_event_to_ui(Event(Event.IMPROVISER_PATH, self._improviser.path()))
 
     def _follow(self):
         self.input = self.get_adapted_stimulus_value()
@@ -237,6 +238,7 @@ class Improviser:
         path_segments = self._generate_path()
         self._path = self._interpolate_path(path_segments)
         self._path_follower = self._create_path_follower(self._path)
+        self._path_changed = True
 
     def _generate_path(self):
         return self.experiment.navigator.generate_path(
@@ -264,6 +266,7 @@ class Improviser:
         return PathFollower(path, self.params.velocity, dynamics)
 
     def proceed(self, time_increment):
+        self._path_changed = False
         if self._path_follower is None:
             self._select_next_move()
         if self._path_follower.reached_destination():
@@ -277,6 +280,8 @@ class Improviser:
     def path(self):
         return self._path
 
+    def path_changed(self):
+        return self._path_changed
 
 class StillsExporter:
     def __init__(self, experiment, stills_data_path):
