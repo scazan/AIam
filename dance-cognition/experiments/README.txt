@@ -50,6 +50,9 @@ DIMENSIONALITY REDUCTION WITH PCA: INCLUDING MOVEMENT ACROSS SPACE
 python dim_reduce.py -p valencia_quaternion_translate_7d -train
 python dim_reduce.py -p valencia_quaternion_translate_7d
 
+Youtube export with UI:
+python dim_reduce.py -p valencia_quaternion_translate_7d --mode=improvise --width=854 --height=480 --no-toolbar --html5-toolbar --websockets --camera=-2.256,-0.800,-2.096,-66.000,19.500
+
 python dim_reduce.py -p HDM_quaternion_translate_7d -train
 python dim_reduce.py -p HDM_quaternion_translate_7d
 
