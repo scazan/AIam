@@ -168,21 +168,18 @@ class Experiment(EventListener):
 
         if run_backend and run_ui:
             if self.args.websockets:
-                self._create_websocket_server()
-                self._set_up_timed_refresh()
-                self._start_server_in_new_thread()
-                client = WebsocketClient(self.args.backend_host)
-                self.run_ui(client)
-            else:
-                self._create_single_process_server()
-                self._set_up_timed_refresh()
-                self._start_server_in_new_thread()
-                client = SingleProcessClient(self._server)
-                self.run_ui(client)
-        elif run_backend:
-            self._create_websocket_server()
+                websocket_server = self._create_websocket_server()
+                self._start_in_new_thread(websocket_server)
+
+            self._server = self._create_single_process_server()
             self._set_up_timed_refresh()
-            self._start_server()
+            self._start_in_new_thread(self._server)
+            client = SingleProcessClient(self._server)
+            self.run_ui(client)
+        elif run_backend:
+            self._server = self._create_websocket_server()
+            self._set_up_timed_refresh()
+            self._server.start()
         elif run_ui:
             client = WebsocketClient(self.args.backend_host)
             self.run_ui(client)
@@ -247,21 +244,19 @@ class Experiment(EventListener):
                     self.entity.__class__.__name__)
 
     def _create_single_process_server(self):
-        self._server = SingleProcessServer(SingleProcessUiHandler, experiment=self)
+        return SingleProcessServer(SingleProcessUiHandler, experiment=self)
 
     def _create_websocket_server(self):
-        self._server = WebsocketServer(WebsocketUiHandler, {"experiment": self})
+        server = WebsocketServer(WebsocketUiHandler, {"experiment": self})
         print "websocket server ready"
+        return server
 
     def _set_up_timed_refresh(self):
         self._server.add_periodic_callback(
             self._update_and_refresh_uis, 1000. / self.args.frame_rate)
 
-    def _start_server(self):
-        self._server.start()
-
-    def _start_server_in_new_thread(self):
-        server_thread = threading.Thread(target=self._start_server)
+    def _start_in_new_thread(self, server):
+        server_thread = threading.Thread(target=server.start)
         server_thread.daemon = True
         server_thread.start()
 
