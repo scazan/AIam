@@ -48,7 +48,7 @@ class Entity(BaseEntity):
                 [{"category": "translate", "component": "X"},
                  {"category": "translate", "component": "Y"},
                  {"category": "translate", "component": "Z"}])
-        if joint.rotation:
+        if joint.rotation and not joint.static_rotation:
             for n in range(self.rotation_parametrization.num_parameters):
                 self._parameter_info.append({"category": joint.name, "component": str(n)})
         for child in joint.children:
@@ -77,7 +77,7 @@ class Entity(BaseEntity):
     def _add_joint_parameters_recurse(self, joint, parameters):
         if not joint.hasparent and self.args.translate:
             self._add_joint_translation_parameters(joint, parameters)
-        if joint.rotation:
+        if joint.rotation and not joint.static_rotation:
             self._add_joint_rotation_parameters(joint, parameters)
         for child in joint.children:
             self._add_joint_parameters_recurse(child, parameters)
@@ -135,14 +135,17 @@ class Entity(BaseEntity):
             trtr = localtoworld
 
         if joint.rotation:
-            rotation_parameters = parameters[
-                parameter_index:parameter_index+
-                self.experiment.entity.rotation_parametrization.num_parameters]
-            parameter_index += self.experiment.entity.rotation_parametrization.num_parameters
-            radians = self.experiment.entity.rotation_parametrization.parameters_to_rotation(
-                rotation_parameters, joint.rotation.axes)
-            joint.angles = [math.degrees(r) for r in radians] # possible optimization: only do this when exporting
-            rotation_matrix = euler_matrix(*radians, axes=joint.rotation.axes)
+            if joint.static_rotation:
+                rotation_matrix = self._static_rotation_matrix(joint)
+            else:
+                rotation_parameters = parameters[
+                    parameter_index:parameter_index+
+                    self.experiment.entity.rotation_parametrization.num_parameters]
+                parameter_index += self.experiment.entity.rotation_parametrization.num_parameters
+                radians = self.experiment.entity.rotation_parametrization.parameters_to_rotation(
+                    rotation_parameters, joint.rotation.axes)
+                joint.angles = [math.degrees(r) for r in radians] # possible optimization: only do this when exporting
+                rotation_matrix = euler_matrix(*radians, axes=joint.rotation.axes)
 
             trtr = dot(localtoworld, rotation_matrix)
         else:
@@ -160,6 +163,11 @@ class Entity(BaseEntity):
             parameter_index = self._parameters_to_joint_recurse(parameters, child, parameter_index)
 
         return parameter_index
+
+    def _static_rotation_matrix(self, joint):
+        if not hasattr(joint, "static_rotation_matrix"):
+            joint.static_rotation_matrix = euler_matrix(*joint.angles, axes=joint.axes)
+        return joint.static_rotation_matrix
 
     def parameters_to_processed_bvh_root(self, parameters):
         hips = self._parameters_to_joint(parameters)

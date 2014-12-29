@@ -13,6 +13,7 @@ import os
 import cPickle
 import copy
 from transformations import euler_matrix
+from collections import defaultdict
 
 ASSUME_NO_TRANSLATIONAL_OFFSETS_IN_NON_ROOT = True
 
@@ -36,6 +37,7 @@ class joint:
             [0.,0.,0.,0.],
             [0.,0.,0.,0.],
             [0.,0.,0.,0.] ])
+        self.static_rotation = False
 
     def addchild(self, childjoint):
         self.children.append(childjoint)
@@ -145,9 +147,9 @@ class skeleton:
                                            channel in ["Xrotation", "Yrotation", "Zrotation"],
                                        joint.channels)
             joint.angles = [radians(keyframe_dict[channel]) for channel in rotation_channels]
-            axes = "r" + "".join([CHANNEL_TO_AXIS[channel] for channel in rotation_channels])
-            joint.rotation = Euler(joint.angles, axes)
-            rotation_matrix = euler_matrix(*joint.angles, axes=axes)
+            joint.axes = "r" + "".join([CHANNEL_TO_AXIS[channel] for channel in rotation_channels])
+            joint.rotation = Euler(joint.angles, joint.axes)
+            rotation_matrix = euler_matrix(*joint.angles, axes=joint.axes)
         else:
             rotate = False
             joint.rotation = None
@@ -189,8 +191,10 @@ class BvhReader(cgkit.bvh.BVHReader):
             self._load_from_cache()
         else:
             self._read()
-            self._probe_range()
+            self._probe_static_rotations()
+            self._probe_vertex_range()
             self._save_to_cache()
+        self._set_static_rotations()
 
     def _cache_exists(self):
         return os.path.exists(self._cache_filename())
@@ -201,6 +205,7 @@ class BvhReader(cgkit.bvh.BVHReader):
         f = open(cache_filename)
         self._scale_info = ScaleInfo()
         self._scale_info.__dict__ = cPickle.load(f)
+        self._unique_rotations = cPickle.load(f)
         f.close()
         print "ok"
 
@@ -209,6 +214,7 @@ class BvhReader(cgkit.bvh.BVHReader):
         print "saving BVH cache to %s ..." % cache_filename
         f = open(cache_filename, "w")
         cPickle.dump(self._scale_info.__dict__, f)
+        cPickle.dump(self._unique_rotations, f)
         f.close()
         print "ok"
 
@@ -218,6 +224,7 @@ class BvhReader(cgkit.bvh.BVHReader):
     def _read(self):
         cgkit.bvh.BVHReader.read(self)
         self._joint_index = 0
+        self._joints = {}
         hips = self._process_node(self.root)
         self.skeleton = skeleton(
           hips, keyframes = self.keyframes,
@@ -289,6 +296,8 @@ class BvhReader(cgkit.bvh.BVHReader):
         for child in node.children:
             b2 = self._process_node(child, name)
             b1.addchild(b2)
+
+        self._joints[name] = b1
         return b1
 
     def print_pose(self, vertices):
@@ -306,7 +315,7 @@ class BvhReader(cgkit.bvh.BVHReader):
         for child in joint.children:
             self._print_joint_recurse(vertices, child)
 
-    def _probe_range(self):
+    def _probe_vertex_range(self):
         print "probing BVH vertex range..."
         self._scale_info = ScaleInfo()
         for n in range(self.num_frames):
@@ -331,3 +340,29 @@ class BvhReader(cgkit.bvh.BVHReader):
             self._scale_info.max_x = max(self._scale_info.max_x, x)
             self._scale_info.max_y = max(self._scale_info.max_y, y)
             self._scale_info.max_z = max(self._scale_info.max_z, z)
+
+    def _probe_static_rotations(self):
+        print "probing static rotations..."
+        self._unique_rotations = defaultdict(set)
+        for n in range(self.num_frames):
+            hips = self.skeleton.get_hips(n)
+            self._process_static_rotations_recurse(hips)
+        print "ok"
+
+    def _process_static_rotations_recurse(self, joint):
+        if joint.rotation:
+            self._update_rotations(joint)
+        for child in joint.children:
+            self._process_static_rotations_recurse(child)
+
+    def _update_rotations(self, joint):
+        previous_unique_rotations = self._unique_rotations[joint.name]
+        if len(previous_unique_rotations) < 2:
+            self._unique_rotations[joint.name].add(tuple(joint.angles))
+
+    def _set_static_rotations(self):
+        self.skeleton.get_hips(0)
+        for name, joints in self._unique_rotations.iteritems():
+            if len(joints) == 1:
+                joint = self._joints[name]
+                joint.static_rotation = True

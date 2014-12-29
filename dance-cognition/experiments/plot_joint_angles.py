@@ -17,6 +17,7 @@ class JointAnglePlotter:
         parser.add_argument("output")
         parser.add_argument("-radius", type=int, default=100)
         parser.add_argument("-spacing", type=int, default=10)
+        parser.add_argument("--count-unique-angles", action="store_true")
 
     def __init__(self, args):
         self.args = args
@@ -35,6 +36,9 @@ class JointAnglePlotter:
                 "cy": self.args.spacing + self.args.radius}
             n += 1
 
+        if self.args.count_unique_angles:
+            self.unique_angles = {}
+
     def _create_outputs(self):
         hips = self.bvh_reader.skeleton.get_hips(0)
         self.outputs = []
@@ -44,6 +48,8 @@ class JointAnglePlotter:
             image_buffer = numpy.empty(self.width * self.height * 3)
             image_buffer.fill(255)
             output["image_buffer"] = image_buffer
+            if self.args.count_unique_angles:
+                output["unique_angles"] = set()
 
     def _identify_joints_with_rotation(self, joint):
         if joint.rotation:
@@ -57,6 +63,9 @@ class JointAnglePlotter:
             hips = self.bvh_reader.skeleton.get_hips(n)
             self._process_joint_recurse(hips)
         self._save_images()
+
+        if self.args.count_unique_angles:
+            self._print_unique_angles_results()
 
     def _save_images(self):
         n = 0
@@ -82,6 +91,9 @@ class JointAnglePlotter:
         for axis, angle in zip(joint.rotation.axes[1:], joint.rotation.angles):
             self._plot_angle(image_buffer, axis, angle)
 
+        if self.args.count_unique_angles:
+            self.outputs[joint.index_with_rotation]["unique_angles"].add(tuple(joint.rotation.angles))
+
     def _plot_angle(self, image_buffer, axis, angle):
         dimension_plot = self.dimension_plots[axis]
         x = int(dimension_plot["cx"] + self.args.radius * math.cos(angle))
@@ -90,6 +102,10 @@ class JointAnglePlotter:
         image_buffer[p] = 0
         image_buffer[p+1] = 0
         image_buffer[p+2] = 0
+
+    def _print_unique_angles_results(self):
+        for output in self.outputs:
+            print "%s %s" % (len(output["unique_angles"]), output["joint"].name)
 
 parser = ArgumentParser()
 JointAnglePlotter.add_parser_arguments(parser)
