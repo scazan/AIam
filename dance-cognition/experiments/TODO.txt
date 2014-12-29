@@ -1,8 +1,4 @@
-more instant effect of changing velocity
-
 separate backend and UI
-  HTML5 UI prototype
-    offline access to jquery
   occasional crash on startup when running --ui-only: AttributeError: 'NoneType' object has no attribute 'text_message'
     seems to appear only with ai_am client & server, not when either client or server is bare (tornado/ws4py)!
 
