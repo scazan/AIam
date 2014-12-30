@@ -307,7 +307,7 @@ class Experiment(EventListener):
         return getattr(joint, channel)()
 
     def _send_output_bvh_recurse(self, joint):
-        if not joint.hasparent and self.args.translate:
+        if not joint.has_parent and self.args.translate:
             self._send_output_joint_translation(joint)
         if joint.rotation:
             self._send_output_joint_orientation(joint)

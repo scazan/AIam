@@ -29,8 +29,8 @@ class Joint:
         self.index = index
         self.children = []
         self.channels = []
-        self.hasparent = 0
-        self.parent = 0
+        self.has_parent = False
+        self.parent = None
         self.translation = array([0.,0.,0.])
         self.translation_matrix = array([
             [0.,0.,0.,0.],
@@ -42,7 +42,7 @@ class Joint:
 
     def addchild(self, childjoint):
         self.children.append(childjoint)
-        childjoint.hasparent = 1
+        childjoint.has_parent = True
         childjoint.parent = self
 
     def get_vertex(self):
@@ -63,7 +63,7 @@ class Joint:
             child.add_vertices_recurse(vertices)
 
     def populate_edges_from_vertices_recurse(self, vertices, edgelist):
-        if self.hasparent:
+        if self.has_parent:
             new_edge = edge(
               vertices[self.parent.index],
               vertices[self.index])
@@ -162,7 +162,7 @@ class Skeleton:
             rotate = False
             joint.has_rotation = False
 
-        if joint.hasparent:
+        if joint.has_parent:
             parent_trtr = joint.parent.trtr
             localtoworld = dot(parent_trtr, joint.translation_matrix)
         else:
@@ -315,7 +315,7 @@ class BvhReader(cgkit.bvh.BVHReader):
         print
 
     def _print_joint_recurse(self, vertices, joint):
-        if joint.hasparent:
+        if joint.has_parent:
             print "%-3d -> %-3d: %f" % (
                 joint.parent.index, joint.index,
                 numpy.linalg.norm(

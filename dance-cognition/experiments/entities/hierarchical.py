@@ -43,7 +43,7 @@ class Entity(BaseEntity):
         self._extend_parameter_info_table_recurse(root_joint)
 
     def _extend_parameter_info_table_recurse(self, joint):
-        if not joint.hasparent and self.args.translate:
+        if not joint.has_parent and self.args.translate:
             self._parameter_info.extend(
                 [{"category": "translate", "component": "X"},
                  {"category": "translate", "component": "Y"},
@@ -75,7 +75,7 @@ class Entity(BaseEntity):
         return parameters
 
     def _add_joint_parameters_recurse(self, joint, parameters):
-        if not joint.hasparent and self.args.translate:
+        if not joint.has_parent and self.args.translate:
             self._add_joint_translation_parameters(joint, parameters)
         if joint.has_rotation and not joint.has_static_rotation:
             self._add_joint_rotation_parameters(joint, parameters)
@@ -117,7 +117,7 @@ class Entity(BaseEntity):
         self._parameters_to_joint_recurse(parameters, self.skeleton.get_root_joint())
 
     def _parameters_to_joint_recurse(self, parameters, joint, parameter_index=0):
-        if joint.hasparent:
+        if joint.has_parent:
             parent_trtr = joint.parent.trtr
             localtoworld = dot(parent_trtr, joint.translation_matrix)
         else:
