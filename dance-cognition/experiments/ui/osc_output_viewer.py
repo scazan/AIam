@@ -17,7 +17,7 @@ FRAME_RATE = 50
 class MainWindow(QtOpenGL.QGLWidget):
     def __init__(self, bvh_reader, args):
         self.bvh_reader = bvh_reader
-        self._root = bvh_reader.get_root_joint(0)
+        self._root_joint = bvh_reader.get_hierarchy()
         self.args = args
         self.margin = 0
         self._set_camera_from_arg(args.camera)
@@ -46,7 +46,6 @@ class MainWindow(QtOpenGL.QGLWidget):
                 self._frame_count = frame_count
 
         self._next_world_positions[joint_index] = (x, y, z)
-      
 
     def _set_camera_from_arg(self, arg):
         pos_x, pos_y, pos_z, orient_y, orient_z = map(float, arg.split(","))
@@ -124,7 +123,7 @@ class MainWindow(QtOpenGL.QGLWidget):
     def _render_skeleton(self):
         glColor3f(0, 0, 0)
         glLineWidth(2.0)
-        self._render_joint(self._root)
+        self._render_joint(self._root_joint)
 
     def _render_joint(self, joint):
         for child in joint.children:

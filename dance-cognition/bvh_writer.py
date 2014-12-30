@@ -1,6 +1,6 @@
 class BvhWriter:
-    def __init__(self, root, frame_time):
-        self._root = root
+    def __init__(self, skeleton, frame_time):
+        self._root_joint = skeleton.get_root_joint()
         self._frame_time = frame_time
         self._frames = []
 
@@ -20,7 +20,7 @@ class BvhWriter:
     def _write_header(self):
         self._write("HIERARCHY\n")
         self._indent = 0
-        self._write_joint_header(self._root, is_root=True)
+        self._write_joint_header(self._root_joint, is_root=True)
         self._write("\n")
     
     def _write_joint_header(self, joint, is_root=False):

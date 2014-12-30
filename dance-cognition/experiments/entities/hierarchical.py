@@ -39,7 +39,7 @@ class Entity(BaseEntity):
 
     def _create_parameter_info_table(self):
         self._parameter_info = []
-        root_joint = self.bvh_reader.get_root_joint(0)
+        root_joint = self.bvh_reader.get_hierarchy().get_root_joint()
         self._extend_parameter_info_table_recurse(root_joint)
 
     def _extend_parameter_info_table_recurse(self, joint):
@@ -48,7 +48,7 @@ class Entity(BaseEntity):
                 [{"category": "translate", "component": "X"},
                  {"category": "translate", "component": "Y"},
                  {"category": "translate", "component": "Z"}])
-        if joint.rotation and not joint.static_rotation:
+        if joint.has_rotation and not joint.has_static_rotation:
             for n in range(self.rotation_parametrization.num_parameters):
                 self._parameter_info.append({"category": joint.name, "component": str(n)})
         for child in joint.children:
@@ -58,13 +58,13 @@ class Entity(BaseEntity):
         return self._parameter_info[index]
 
     def get_value(self):
-        root_joint = self.bvh_reader.get_root_joint(self._t * self.args.bvh_speed)
-        return self._joint_to_parameters(root_joint)
+        self.bvh_reader.set_skeleton_pose_from_frame(self.skeleton, self._t * self.args.bvh_speed)
+        return self._joint_to_parameters(self.skeleton.get_root_joint())
 
     def get_random_value(self):
-        root_joint = self.bvh_reader.get_root_joint(
+        self.bvh_reader.set_skeleton_pose_from_frame(self.skeleton,
             random.uniform(0, self.bvh_reader.get_duration()))
-        return self._joint_to_parameters(root_joint)
+        return self._joint_to_parameters(self.skeleton.get_root_joint())
 
     def get_duration(self):
         return self.bvh_reader.get_duration() / self.args.bvh_speed
@@ -77,7 +77,7 @@ class Entity(BaseEntity):
     def _add_joint_parameters_recurse(self, joint, parameters):
         if not joint.hasparent and self.args.translate:
             self._add_joint_translation_parameters(joint, parameters)
-        if joint.rotation and not joint.static_rotation:
+        if joint.has_rotation and not joint.has_static_rotation:
             self._add_joint_rotation_parameters(joint, parameters)
         for child in joint.children:
             self._add_joint_parameters_recurse(child, parameters)
@@ -106,17 +106,15 @@ class Entity(BaseEntity):
         return vertices
 
     def _parameters_to_normalized_vertices(self, parameters):
-        root_joint = self._parameters_to_joint(parameters)
+        self._set_skeleton_pose_from_parameters(parameters)
+        root_joint = self.skeleton.get_root_joint()
         vertices = root_joint.get_vertices()
         normalized_vertices = [self.bvh_reader.normalize_vector(vertex)
                                for vertex in vertices]
         return normalized_vertices
 
-    def _parameters_to_joint(self, parameters):
-        any_frame = 0
-        root_joint = self.bvh_reader.get_root_joint(any_frame)
-        self._parameters_to_joint_recurse(parameters, root_joint)
-        return root_joint
+    def _set_skeleton_pose_from_parameters(self, parameters):
+        self._parameters_to_joint_recurse(parameters, self.skeleton.get_root_joint())
 
     def _parameters_to_joint_recurse(self, parameters, joint, parameter_index=0):
         if joint.hasparent:
@@ -134,8 +132,8 @@ class Entity(BaseEntity):
                 localtoworld = joint.translation_matrix
             trtr = localtoworld
 
-        if joint.rotation:
-            if joint.static_rotation:
+        if joint.has_rotation:
+            if joint.has_static_rotation:
                 rotation_matrix = self._static_rotation_matrix(joint)
             else:
                 rotation_parameters = parameters[
@@ -170,7 +168,8 @@ class Entity(BaseEntity):
         return joint.static_rotation_matrix
 
     def parameters_to_processed_bvh_root(self, parameters):
-        root_joint = self._parameters_to_joint(parameters)
+        self._set_skeleton_pose_from_parameters(parameters)
+        root_joint = self.skeleton.get_root_joint()
         vertices = root_joint.get_vertices()
         for constrainer in self._unnormalized_constrainers:
             vertices = constrainer.constrain(vertices)

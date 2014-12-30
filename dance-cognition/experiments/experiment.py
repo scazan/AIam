@@ -28,6 +28,7 @@ class BaseEntity:
         self.bvh_reader = experiment.bvh_reader
         self.args = experiment.args
         self.model = None
+        self.skeleton = self.bvh_reader.create_skeleton()
 
     def adapt_value_to_model(self, value):
         return value
@@ -127,7 +128,7 @@ class Experiment(EventListener):
         if args.bvh:
             self.bvh_reader = bvh_reader_module.BvhReader(args.bvh)
             self.bvh_reader.read()
-            self.bvh_writer = BvhWriter(self.bvh_reader.get_root_joint(0), self.bvh_reader.dt)
+            self.bvh_writer = BvhWriter(self.bvh_reader.get_hierarchy(), self.bvh_reader.dt)
         else:
             self.bvh_reader = None
         self.input = None

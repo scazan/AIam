@@ -37,7 +37,8 @@ class joint:
             [0.,0.,0.,0.],
             [0.,0.,0.,0.],
             [0.,0.,0.,0.] ])
-        self.static_rotation = False
+        self.has_rotation = False
+        self.has_static_rotation = False
 
     def addchild(self, childjoint):
         self.children.append(childjoint)
@@ -104,14 +105,20 @@ class skeleton:
         self.keyframes = keyframes
         self.num_frames = num_frames
         self.dt = dt
+        self._get_rotation_info_by_processing_first_frame()
 
-    def get_root_joint(self, t=None):
+    def _get_rotation_info_by_processing_first_frame(self):
+        self._process_bvhkeyframe(self.keyframes[0], self.root_joint)
+
+    def set_pose_from_frame(self, t=None):
         self._process_bvhkeyframe(self.keyframes[t], self.root_joint)
         return self.root_joint
 
-    def get_joint(self, name, t):
-        root_joint = self.get_root_joint(t)
-        return self._find_joint_recurse(root_joint, name)
+    def get_root_joint(self):
+        return self.root_joint
+
+    def get_joint(self, name):
+        return self._find_joint_recurse(self.root_joint, name)
 
     def _find_joint_recurse(self, joint, searched_name):
         if joint.name == searched_name:
@@ -149,10 +156,11 @@ class skeleton:
             joint.angles = [radians(keyframe_dict[channel]) for channel in rotation_channels]
             joint.axes = "r" + "".join([CHANNEL_TO_AXIS[channel] for channel in rotation_channels])
             joint.rotation = Euler(joint.angles, joint.axes)
+            joint.has_rotation = True
             rotation_matrix = euler_matrix(*joint.angles, axes=joint.axes)
         else:
             rotate = False
-            joint.rotation = None
+            joint.has_rotation = False
 
         if joint.hasparent:
             parent_trtr = joint.parent.trtr
@@ -225,22 +233,24 @@ class BvhReader(cgkit.bvh.BVHReader):
         cgkit.bvh.BVHReader.read(self)
         self._joint_index = 0
         self._joints = {}
-        root_joint = self._process_node(self.root)
-        self.skeleton = skeleton(
-          root_joint, keyframes = self.keyframes,
-          num_frames=self.num_frames, dt=self.dt)
+        self._root_joint = self._process_node(self._root_nood)
+        self.skeleton = self.create_skeleton()
         self.num_joints = self._joint_index
+
+    def create_skeleton(self):
+        return skeleton(
+          self._root_joint, keyframes = self.keyframes,
+          num_frames=self.num_frames, dt=self.dt)
 
     def get_duration(self):
         return self.skeleton.num_frames * self.skeleton.dt
 
-    def get_root_joint(self, t):
+    def set_skeleton_pose_from_frame(self, skeleton, t):
         frame_index = self._frame_index(t)
-        return self.skeleton.get_root_joint(frame_index)
+        return self.skeleton.set_pose_from_frame(frame_index)
 
-    def get_joint(self, joint_name, t):
-        frame_index = self._frame_index(t)
-        return self.skeleton.get_joint(joint_name, frame_index)
+    def get_hierarchy(self):
+        return self.skeleton
 
     def _frame_index(self, t):
         return int(t / self.skeleton.dt) % self.skeleton.num_frames
@@ -266,8 +276,8 @@ class BvhReader(cgkit.bvh.BVHReader):
             (v[1] + 1) / 2 * self._scale_info.scale_factor + self._scale_info.min_y,
             (v[2] + 1) / 2 * self._scale_info.scale_factor + self._scale_info.min_z])
 
-    def onHierarchy(self, root):
-        self.root = root
+    def onHierarchy(self, root_nood):
+        self._root_nood = root_nood
         self.keyframes = []
 
     def onMotion(self, num_frames, dt):
@@ -345,12 +355,13 @@ class BvhReader(cgkit.bvh.BVHReader):
         print "probing static rotations..."
         self._unique_rotations = defaultdict(set)
         for n in range(self.num_frames):
-            root_joint = self.skeleton.get_root_joint(n)
+            self.skeleton.set_pose_from_frame(n)
+            root_joint = self.skeleton.get_root_joint()
             self._process_static_rotations_recurse(root_joint)
         print "ok"
 
     def _process_static_rotations_recurse(self, joint):
-        if joint.rotation:
+        if joint.has_rotation:
             self._update_rotations(joint)
         for child in joint.children:
             self._process_static_rotations_recurse(child)
@@ -361,8 +372,7 @@ class BvhReader(cgkit.bvh.BVHReader):
             self._unique_rotations[joint.name].add(tuple(joint.angles))
 
     def _set_static_rotations(self):
-        self.skeleton.get_root_joint(0)
         for name, joints in self._unique_rotations.iteritems():
             if len(joints) == 1:
                 joint = self._joints[name]
-                joint.static_rotation = True
+                joint.has_static_rotation = True
