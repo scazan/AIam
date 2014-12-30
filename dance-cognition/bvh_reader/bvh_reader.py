@@ -23,7 +23,7 @@ CHANNEL_TO_AXIS = {
     "Zrotation": "z",
 }
 
-class joint:
+class Joint:
     def __init__(self, name, index):
         self.name = name
         self.index = index
@@ -99,7 +99,7 @@ class joint:
         return self.angles[2]
 
 
-class skeleton:
+class Skeleton:
     def __init__(self, root_joint, keyframes, num_frames=0, dt=.033333333):
         self.root_joint = root_joint
         self.keyframes = keyframes
@@ -238,7 +238,7 @@ class BvhReader(cgkit.bvh.BVHReader):
         self.num_joints = self._joint_index
 
     def create_skeleton(self):
-        return skeleton(
+        return Skeleton(
           self._root_joint, keyframes = self.keyframes,
           num_frames=self.num_frames, dt=self.dt)
 
@@ -291,7 +291,7 @@ class BvhReader(cgkit.bvh.BVHReader):
         name = node.name
         if (name == "End Site") or (name == "end site"):
             name = parentname + "End"
-        b1 = joint(name, self._joint_index)
+        b1 = Joint(name, self._joint_index)
         self._joint_index += 1
         b1.channels = node.channels
         b1.translation[0] = node.offset[0]

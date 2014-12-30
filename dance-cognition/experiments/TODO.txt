@@ -1,6 +1,7 @@
 refactor bvh_reader.py:
   remove need for _get_rotation_info_by_processing_first_frame()
   joint.recreate_with_vertices => skeleton.create_joints_from_vertices
+  remove hierarchical info from the joint class?
 
 parametrize 0.3 in navigator.py
 
