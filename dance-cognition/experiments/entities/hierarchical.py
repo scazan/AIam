@@ -39,8 +39,8 @@ class Entity(BaseEntity):
 
     def _create_parameter_info_table(self):
         self._parameter_info = []
-        hips = self.bvh_reader.get_hips(0)
-        self._extend_parameter_info_table_recurse(hips)
+        root_joint = self.bvh_reader.get_root_joint(0)
+        self._extend_parameter_info_table_recurse(root_joint)
 
     def _extend_parameter_info_table_recurse(self, joint):
         if not joint.hasparent and self.args.translate:
@@ -58,20 +58,20 @@ class Entity(BaseEntity):
         return self._parameter_info[index]
 
     def get_value(self):
-        hips = self.bvh_reader.get_hips(self._t * self.args.bvh_speed)
-        return self._joint_to_parameters(hips)
+        root_joint = self.bvh_reader.get_root_joint(self._t * self.args.bvh_speed)
+        return self._joint_to_parameters(root_joint)
 
     def get_random_value(self):
-        hips = self.bvh_reader.get_hips(
+        root_joint = self.bvh_reader.get_root_joint(
             random.uniform(0, self.bvh_reader.get_duration()))
-        return self._joint_to_parameters(hips)
+        return self._joint_to_parameters(root_joint)
 
     def get_duration(self):
         return self.bvh_reader.get_duration() / self.args.bvh_speed
 
-    def _joint_to_parameters(self, hips):
+    def _joint_to_parameters(self, root_joint):
         parameters = []
-        self._add_joint_parameters_recurse(hips, parameters)
+        self._add_joint_parameters_recurse(root_joint, parameters)
         return parameters
 
     def _add_joint_parameters_recurse(self, joint, parameters):
@@ -106,17 +106,17 @@ class Entity(BaseEntity):
         return vertices
 
     def _parameters_to_normalized_vertices(self, parameters):
-        hips = self._parameters_to_joint(parameters)
-        vertices = hips.get_vertices()
+        root_joint = self._parameters_to_joint(parameters)
+        vertices = root_joint.get_vertices()
         normalized_vertices = [self.bvh_reader.normalize_vector(vertex)
                                for vertex in vertices]
         return normalized_vertices
 
     def _parameters_to_joint(self, parameters):
         any_frame = 0
-        hips = self.bvh_reader.get_hips(any_frame)
-        self._parameters_to_joint_recurse(parameters, hips)
-        return hips
+        root_joint = self.bvh_reader.get_root_joint(any_frame)
+        self._parameters_to_joint_recurse(parameters, root_joint)
+        return root_joint
 
     def _parameters_to_joint_recurse(self, parameters, joint, parameter_index=0):
         if joint.hasparent:
@@ -170,8 +170,8 @@ class Entity(BaseEntity):
         return joint.static_rotation_matrix
 
     def parameters_to_processed_bvh_root(self, parameters):
-        hips = self._parameters_to_joint(parameters)
-        vertices = hips.get_vertices()
+        root_joint = self._parameters_to_joint(parameters)
+        vertices = root_joint.get_vertices()
         for constrainer in self._unnormalized_constrainers:
             vertices = constrainer.constrain(vertices)
-        return hips.recreate_with_vertices(vertices)
+        return root_joint.recreate_with_vertices(vertices)

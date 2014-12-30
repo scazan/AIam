@@ -28,8 +28,8 @@ class QuaternionAnalyzer:
         self._hemisphere_counts = defaultdict(
             lambda: {"+": 0, "-": 0})
         for n in range(self.bvh_reader.skeleton.num_frames):
-            hips = self.bvh_reader.skeleton.get_hips(n)
-            self._process_joint_recurse(hips)
+            root_joint = self.bvh_reader.skeleton.get_root_joint(n)
+            self._process_joint_recurse(root_joint)
 
     def _identify_hemisphere_profiles(self):
         self._hemisphere_profiles = {}

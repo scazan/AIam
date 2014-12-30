@@ -40,9 +40,9 @@ class JointAnglePlotter:
             self.unique_angles = {}
 
     def _create_outputs(self):
-        hips = self.bvh_reader.skeleton.get_hips(0)
+        root_joint = self.bvh_reader.skeleton.get_root_joint(0)
         self.outputs = []
-        self._identify_joints_with_rotation(hips)
+        self._identify_joints_with_rotation(root_joint)
 
         for output in self.outputs:
             image_buffer = numpy.empty(self.width * self.height * 3)
@@ -60,8 +60,8 @@ class JointAnglePlotter:
 
     def plot(self):
         for n in range(self.bvh_reader.skeleton.num_frames):
-            hips = self.bvh_reader.skeleton.get_hips(n)
-            self._process_joint_recurse(hips)
+            root_joint = self.bvh_reader.skeleton.get_root_joint(n)
+            self._process_joint_recurse(root_joint)
         self._save_images()
 
         if self.args.count_unique_angles:

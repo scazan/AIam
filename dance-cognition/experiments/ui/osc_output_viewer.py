@@ -17,7 +17,7 @@ FRAME_RATE = 50
 class MainWindow(QtOpenGL.QGLWidget):
     def __init__(self, bvh_reader, args):
         self.bvh_reader = bvh_reader
-        self._root = bvh_reader.get_hips(0)
+        self._root = bvh_reader.get_root_joint(0)
         self.args = args
         self.margin = 0
         self._set_camera_from_arg(args.camera)

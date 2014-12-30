@@ -46,5 +46,5 @@ class Scene(BaseScene):
             target=-self.central_output_position(processed_output))
 
     def central_output_position(self, output):
-        hip_vertex = output[0]
-        return numpy.array([hip_vertex[0], 0, hip_vertex[2]])
+        root_vertex = output[0]
+        return numpy.array([root_vertex[0], 0, root_vertex[2]])

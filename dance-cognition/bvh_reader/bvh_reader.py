@@ -99,19 +99,19 @@ class joint:
 
 
 class skeleton:
-    def __init__(self, hips, keyframes, num_frames=0, dt=.033333333):
-        self.hips = hips
+    def __init__(self, root_joint, keyframes, num_frames=0, dt=.033333333):
+        self.root_joint = root_joint
         self.keyframes = keyframes
         self.num_frames = num_frames
         self.dt = dt
 
-    def get_hips(self, t=None):
-        self._process_bvhkeyframe(self.keyframes[t], self.hips)
-        return self.hips
+    def get_root_joint(self, t=None):
+        self._process_bvhkeyframe(self.keyframes[t], self.root_joint)
+        return self.root_joint
 
     def get_joint(self, name, t):
-        hips = self.get_hips(t)
-        return self._find_joint_recurse(hips, name)
+        root_joint = self.get_root_joint(t)
+        return self._find_joint_recurse(root_joint, name)
 
     def _find_joint_recurse(self, joint, searched_name):
         if joint.name == searched_name:
@@ -123,11 +123,11 @@ class skeleton:
                     return potential_find
 
     def get_vertices(self, t):
-        self._process_bvhkeyframe(self.keyframes[t], self.hips)
-        return self.hips.get_vertices()
+        self._process_bvhkeyframe(self.keyframes[t], self.root_joint)
+        return self.root_joint.get_vertices()
 
     def populate_edges_from_vertices(self, vertices, edges):
-        self.hips.populate_edges_from_vertices_recurse(vertices, edges)
+        self.root_joint.populate_edges_from_vertices_recurse(vertices, edges)
 
     def _process_bvhkeyframe(self, keyframe, joint, frame_data_index=0):
         keyframe_dict = dict()
@@ -225,18 +225,18 @@ class BvhReader(cgkit.bvh.BVHReader):
         cgkit.bvh.BVHReader.read(self)
         self._joint_index = 0
         self._joints = {}
-        hips = self._process_node(self.root)
+        root_joint = self._process_node(self.root)
         self.skeleton = skeleton(
-          hips, keyframes = self.keyframes,
+          root_joint, keyframes = self.keyframes,
           num_frames=self.num_frames, dt=self.dt)
         self.num_joints = self._joint_index
 
     def get_duration(self):
         return self.skeleton.num_frames * self.skeleton.dt
 
-    def get_hips(self, t):
+    def get_root_joint(self, t):
         frame_index = self._frame_index(t)
-        return self.skeleton.get_hips(frame_index)
+        return self.skeleton.get_root_joint(frame_index)
 
     def get_joint(self, joint_name, t):
         frame_index = self._frame_index(t)
@@ -277,7 +277,7 @@ class BvhReader(cgkit.bvh.BVHReader):
     def onFrame(self, values):
         self.keyframes.append(values)
 
-    def _process_node(self, node, parentname='hips'):
+    def _process_node(self, node, parentname='root'):
         name = node.name
         if (name == "End Site") or (name == "end site"):
             name = parentname + "End"
@@ -301,7 +301,7 @@ class BvhReader(cgkit.bvh.BVHReader):
         return b1
 
     def print_pose(self, vertices):
-        self._print_joint_recurse(vertices, self.skeleton.hips)
+        self._print_joint_recurse(vertices, self.skeleton.root_joint)
         print
 
     def _print_joint_recurse(self, vertices, joint):
@@ -345,8 +345,8 @@ class BvhReader(cgkit.bvh.BVHReader):
         print "probing static rotations..."
         self._unique_rotations = defaultdict(set)
         for n in range(self.num_frames):
-            hips = self.skeleton.get_hips(n)
-            self._process_static_rotations_recurse(hips)
+            root_joint = self.skeleton.get_root_joint(n)
+            self._process_static_rotations_recurse(root_joint)
         print "ok"
 
     def _process_static_rotations_recurse(self, joint):
@@ -361,7 +361,7 @@ class BvhReader(cgkit.bvh.BVHReader):
             self._unique_rotations[joint.name].add(tuple(joint.angles))
 
     def _set_static_rotations(self):
-        self.skeleton.get_hips(0)
+        self.skeleton.get_root_joint(0)
         for name, joints in self._unique_rotations.iteritems():
             if len(joints) == 1:
                 joint = self._joints[name]
