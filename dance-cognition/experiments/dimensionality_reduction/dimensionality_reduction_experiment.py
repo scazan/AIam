@@ -98,7 +98,10 @@ class DimensionalityReductionExperiment(Experiment):
                 self.navigator = Navigator(map_points=self.student.normalized_observed_reductions)
                 self._improviser_params = ImproviserParameters()
                 self.add_event_handler(Event.PARAMETER, self._handle_parameter_event)
-                self._improviser = Improviser(self, self._improviser_params)
+                self._improviser = Improviser(
+                    self, self._improviser_params,
+                    on_changed_path=lambda: \
+                        self.send_event_to_ui(Event(Event.IMPROVISER_PATH, self._improviser.path())))
             self.run_backend_and_or_ui()
 
     def add_ui_parser_arguments(self, parser):
@@ -173,8 +176,6 @@ class DimensionalityReductionExperiment(Experiment):
                     self.entity.get_cursor() / self.entity.get_duration()))
         elif self._mode == modes.IMPROVISE:
             self._improviser.proceed(self.time_increment)
-            if self._improviser.path_changed():
-                self.send_event_to_ui(Event(Event.IMPROVISER_PATH, self._improviser.path()))
 
     def _follow(self):
         self.input = self.get_adapted_stimulus_value()
@@ -228,17 +229,18 @@ class ImproviserParameters(Parameters):
         self.add_parameter("dynamics", choices=["constant", "sine", "exponential"], default="sine")
 
 class Improviser:
-    def __init__(self, experiment, params):
+    def __init__(self, experiment, params, on_changed_path):
         self.experiment = experiment
         self.params = params
         self._path = None
         self._path_follower = None
+        self._on_changed_path = on_changed_path
 
     def _select_next_move(self):
         path_segments = self._generate_path()
         self._path = self._interpolate_path(path_segments)
         self._path_follower = self._create_path_follower(self._path)
-        self._path_changed = True
+        self._on_changed_path()
 
     def _generate_path(self):
         return self.experiment.navigator.generate_path(
@@ -266,7 +268,6 @@ class Improviser:
         return PathFollower(path, self.params.velocity, dynamics)
 
     def proceed(self, time_increment):
-        self._path_changed = False
         if self._path_follower is None:
             self._select_next_move()
         if self._path_follower.reached_destination():
@@ -279,9 +280,6 @@ class Improviser:
 
     def path(self):
         return self._path
-
-    def path_changed(self):
-        return self._path_changed
 
 class StillsExporter:
     def __init__(self, experiment, stills_data_path):
