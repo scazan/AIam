@@ -28,7 +28,7 @@ class BaseEntity:
         self.bvh_reader = experiment.bvh_reader
         self.args = experiment.args
         self.model = None
-        self.pose = self.bvh_reader.get_hierarchy().create_pose()
+        self.pose = experiment.pose
 
     def adapt_value_to_model(self, value):
         return value
@@ -129,8 +129,10 @@ class Experiment(EventListener):
             self.bvh_reader = bvh_reader_module.BvhReader(args.bvh)
             self.bvh_reader.read()
             self.bvh_writer = BvhWriter(self.bvh_reader.get_hierarchy(), self.bvh_reader.dt)
+            self.pose = self.bvh_reader.get_hierarchy().create_pose()
         else:
             self.bvh_reader = None
+            self.pose = None
         self.input = None
         self.output = None
         self.entity = entity_class(self)
@@ -283,45 +285,48 @@ class Experiment(EventListener):
 
     def _export_output(self):
         if self.output is not None:
-            root = self.entity.parameters_to_processed_bvh_root(self.output)
-            frame = self.joint_to_bvh_frame(root)
+            self.entity.parameters_to_processed_bvh_root(self.output, self.pose)
+            frame = self.pose_to_bvh_frame(self.pose)
             self.bvh_writer.add_frame(frame)
 
     def _send_output(self):
         if self.output is not None:
-            root = self.entity.parameters_to_processed_bvh_root(self.output)
+            self.entity.parameters_to_processed_bvh_root(self.output, self.pose)
             if self.args.output_receiver_type == "bvh":
-                self._send_output_bvh_recurse(root)
+                self._send_output_bvh_recurse(self.pose.get_root_joint())
             elif self.args.output_receiver_type == "world":
                 self._send_output_world()
 
-    def joint_to_bvh_frame(self, joint):
+    def pose_to_bvh_frame(self, pose):
+        return self._joint_to_bvh_frame(pose.get_root_joint())
+
+    def _joint_to_bvh_frame(self, joint):
         result = []
-        for channel in joint.channels:
+        for channel in joint.definition.channels:
             result.append(self._bvh_channel_data(joint, channel))
         for child in joint.children:
-            result += self.joint_to_bvh_frame(child)
+            result += self._joint_to_bvh_frame(child)
         return result
 
     def _bvh_channel_data(self, joint, channel):
         return getattr(joint, channel)()
 
     def _send_output_bvh_recurse(self, joint):
-        if not joint.has_parent and self.args.translate:
+        if not joint.definition.has_parent and self.args.translate:
             self._send_output_joint_translation(joint)
-        if joint.rotation:
+        if joint.definition.has_rotation:
             self._send_output_joint_orientation(joint)
         for child in joint.children:
             self._send_output_bvh_recurse(child)
 
     def _send_output_joint_translation(self, joint):
         self._output_sender.send(
-            "/translation", self._frame_count, joint.index,
+            "/translation", self._frame_count, joint.definition.index,
             joint.worldpos[0], joint.worldpos[1], joint.worldpos[2])
 
     def _send_output_joint_orientation(self, joint):
         self._output_sender.send(
-            "/orientation", self._frame_count, joint.index,
+            "/orientation", self._frame_count, joint.definition.index,
             *joint.angles)
 
     def _send_output_world(self):

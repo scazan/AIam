@@ -17,7 +17,7 @@ FRAME_RATE = 50
 class MainWindow(QtOpenGL.QGLWidget):
     def __init__(self, bvh_reader, args):
         self.bvh_reader = bvh_reader
-        self._root_joint = bvh_reader.get_hierarchy()
+        self._hierarchy = bvh_reader.get_hierarchy()
         self.args = args
         self.margin = 0
         self._set_camera_from_arg(args.camera)
@@ -123,17 +123,17 @@ class MainWindow(QtOpenGL.QGLWidget):
     def _render_skeleton(self):
         glColor3f(0, 0, 0)
         glLineWidth(2.0)
-        self._render_joint(self._root_joint)
+        self._render_joint(self._hierarchy.get_root_joint_definition())
 
-    def _render_joint(self, joint):
-        for child in joint.children:
-            self._render_edge(joint, child)
-            self._render_joint(child)
+    def _render_joint(self, joint_definition):
+        for child_definition in joint_definition.child_definitions:
+            self._render_edge(joint_definition, child_definition)
+            self._render_joint(child_definition)
 
-    def _render_edge(self, joint1, joint2):
+    def _render_edge(self, joint_definition1, joint_definition2):
         glBegin(GL_LINES)
-        self._vertex(self._world_positions[joint1.index])
-        self._vertex(self._world_positions[joint2.index])
+        self._vertex(self._world_positions[joint_definition1.index])
+        self._vertex(self._world_positions[joint_definition2.index])
         glEnd()
 
     def _vertex(self, worldpos):

@@ -11,7 +11,6 @@ from numpy import array, dot
 import numpy
 import os
 import cPickle
-import copy
 from transformations import euler_matrix
 from collections import defaultdict
 
@@ -88,14 +87,6 @@ class Joint:
         for child in self.children:
             child._add_vertices_recurse(vertices)
 
-    def recreate_with_vertices(self, vertices):
-        result = copy.copy(self)
-        result.worldpos = vertices[self.index]
-        if not ASSUME_NO_TRANSLATIONAL_OFFSETS_IN_NON_ROOT:
-            result.children = [child.recreate_with_vertices(vertices)
-                               for child in self.children]
-        return result
-
     def Xposition(self):
         return self.worldpos[0]
 
@@ -113,6 +104,12 @@ class Joint:
 
     def Zrotation(self):
         return self.angles[2]
+
+    def set_vertices(self, vertices):
+        self.worldpos = vertices[self.definition.index]
+        if not ASSUME_NO_TRANSLATIONAL_OFFSETS_IN_NON_ROOT:
+            for child in self.children:
+                child.set_vertices(vertices)
 
 class Hierarchy:
     def __init__(self, root_node):
@@ -156,6 +153,9 @@ class Hierarchy:
 
     def create_pose(self):
         return Pose(self)
+
+    def set_pose_vertices(self, pose, vertices):
+        pose.get_root_joint().set_vertices(vertices)
 
     def set_pose_from_frame(self, pose, keyframe):
         self._process_bvhkeyframe(keyframe, pose.get_root_joint())

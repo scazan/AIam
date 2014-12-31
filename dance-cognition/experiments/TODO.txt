@@ -1,6 +1,3 @@
-refactor bvh_reader.py:
-  joint.recreate_with_vertices => ?
-
 refactor hierarchical.py:_parameters_to_joint_recurse
 
 parametrize 0.3 in navigator.py

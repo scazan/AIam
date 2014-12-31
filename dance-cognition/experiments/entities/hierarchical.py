@@ -167,10 +167,10 @@ class Entity(BaseEntity):
             joint.definition.static_rotation_matrix = euler_matrix(*joint.angles, axes=joint.definition.axes)
         return joint.definition.static_rotation_matrix
 
-    def parameters_to_processed_bvh_root(self, parameters):
+    def parameters_to_processed_bvh_root(self, parameters, output_pose):
         self._set_pose_from_parameters(parameters)
-        root_joint = self.skeleton.get_root_joint()
+        root_joint = self.pose.get_root_joint()
         vertices = root_joint.get_vertices()
         for constrainer in self._unnormalized_constrainers:
             vertices = constrainer.constrain(vertices)
-        return root_joint.recreate_with_vertices(vertices)
+        self.bvh_reader.get_hierarchy().set_pose_vertices(output_pose, vertices)

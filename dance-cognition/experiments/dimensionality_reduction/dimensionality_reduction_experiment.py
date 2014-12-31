@@ -305,8 +305,8 @@ class StillsExporter:
             self.experiment.bvh_reader.dt)
         for reduction in self._reductions:
             output = self.experiment.student.inverse_transform(numpy.array([reduction]))[0]
-            root = self.experiment.entity.parameters_to_processed_bvh_root(output)
-            frame = self.experiment.joint_to_bvh_frame(root)
+            self.experiment.entity.parameters_to_processed_bvh_root(output, self.pose)
+            frame = self.experiment.pose_to_bvh_frame(self.pose)
             bvh_writer.add_frame(frame)
         bvh_writer.write(self._output_path)
         print "ok"

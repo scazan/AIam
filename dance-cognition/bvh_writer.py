@@ -23,15 +23,15 @@ class BvhWriter:
         self._write_joint_header(self._root_joint_definition, is_root=True)
         self._write("\n")
     
-    def _write_joint_header(self, joint, is_root=False):
+    def _write_joint_header(self, joint_definition, is_root=False):
         self._write_indent()
         if is_root:
-            self._write("ROOT %s" % joint.name)
+            self._write("ROOT %s" % joint_definition.name)
         else:
-            if len(joint.channels) == 0:
+            if len(joint_definition.channels) == 0:
                 self._write("End Site")
             else:
-                self._write("JOINT %s" % joint.name)
+                self._write("JOINT %s" % joint_definition.name)
         self._write("\n")
         self._write_indent()
         self._write("{\n")
@@ -39,14 +39,18 @@ class BvhWriter:
 
         self._write_indent()
         self._write("OFFSET\t%.4f\t%.4f\t%.4f\n" % (
-                joint.translation[0], joint.translation[1], joint.translation[2]))
+                joint_definition.translation[0],
+                joint_definition.translation[1],
+                joint_definition.translation[2]))
 
-        if len(joint.channels) > 0:
+        if len(joint_definition.channels) > 0:
             self._write_indent()
-            self._write("CHANNELS %d %s\n" % (len(joint.channels), " ".join(joint.channels)))
+            self._write("CHANNELS %d %s\n" % (
+                    len(joint_definition.channels),
+                    " ".join(joint_definition.channels)))
 
-        for child in joint.children:
-            self._write_joint_header(child)
+        for child_definition in joint_definition.child_definitions:
+            self._write_joint_header(child_definition)
 
         self._indent -= 1
         self._write_indent()
