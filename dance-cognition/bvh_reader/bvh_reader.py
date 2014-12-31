@@ -115,14 +115,11 @@ class Joint:
         return self.angles[2]
 
 class Hierarchy:
-    def __init__(self, root_node, keyframes, num_frames=0, dt=.033333333):
+    def __init__(self, root_node):
         self._joint_index = 0
         self._joint_definitions = {}
         self._root_joint_definition = self._process_node(root_node)
         self.num_joints = self._joint_index
-        self.keyframes = keyframes
-        self.num_frames = num_frames
-        self.dt = dt
 
     def _process_node(self, node, parentname='root'):
         name = node.name
@@ -160,8 +157,8 @@ class Hierarchy:
     def create_pose(self):
         return Pose(self)
 
-    def set_pose_from_frame(self, pose, t=None):
-        self._process_bvhkeyframe(self.keyframes[t], pose.get_root_joint())
+    def set_pose_from_frame(self, pose, keyframe):
+        self._process_bvhkeyframe(keyframe, pose.get_root_joint())
 
     def get_root_joint_definition(self):
         return self._root_joint_definition
@@ -231,10 +228,6 @@ class Pose:
     def get_vertices(self):
         return self._root_joint.get_vertices()
 
-    def get_edges(self):
-        vertices = self.get_vertices()
-        return self._hierarchy.vertices_to_edges(vertices)
-
 class ScaleInfo:
     min_x = None
 
@@ -277,17 +270,15 @@ class BvhReader(cgkit.bvh.BVHReader):
 
     def _read(self):
         cgkit.bvh.BVHReader.read(self)
-        self.hierarchy = Hierarchy(
-          self._root_nood, keyframes = self.keyframes,
-          num_frames=self.num_frames, dt=self.dt)
+        self.hierarchy = Hierarchy(self._root_nood)
         self.num_joints = self.hierarchy.num_joints
 
     def get_duration(self):
-        return self.hierarchy.num_frames * self.hierarchy.dt
+        return self.num_frames * self.dt
 
-    def set_pose_from_frame(self, pose, t):
+    def set_pose_from_time(self, pose, t):
         frame_index = self._frame_index(t)
-        return self.hierarchy.set_pose_from_frame(pose, frame_index)
+        return self.hierarchy.set_pose_from_frame(pose, self.keyframes[frame_index])
 
     def get_hierarchy(self):
         return self.hierarchy
@@ -296,7 +287,7 @@ class BvhReader(cgkit.bvh.BVHReader):
         return self.hierarchy.create_pose()
 
     def _frame_index(self, t):
-        return int(t / self.hierarchy.dt) % self.hierarchy.num_frames
+        return int(t / self.dt) % self.num_frames
 
     def vertices_to_edges(self, vertices):
         edges = []
@@ -332,7 +323,7 @@ class BvhReader(cgkit.bvh.BVHReader):
         self._scale_info = ScaleInfo()
         pose = self.hierarchy.create_pose()
         for n in range(self.num_frames):
-            self.set_pose_from_frame(pose, n)
+            self.hierarchy.set_pose_from_frame(pose, self.keyframes[n])
             vertices = pose.get_vertices()
             for vertex in vertices:
                 self._update_range_with_vector(*vertex[0:3])
@@ -360,7 +351,7 @@ class BvhReader(cgkit.bvh.BVHReader):
         self._unique_rotations = defaultdict(set)
         pose = self.hierarchy.create_pose()
         for n in range(self.num_frames):
-            self.hierarchy.set_pose_from_frame(pose, n)
+            self.hierarchy.set_pose_from_frame(pose, self.keyframes[n])
             root_joint = pose.get_root_joint()
             self._process_static_rotations_recurse(root_joint)
         print "ok"

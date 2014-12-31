@@ -1,6 +1,5 @@
 refactor bvh_reader.py:
   joint.recreate_with_vertices => ?
-  remove motion data (keyframes, num_frames, dt) from the Hierarchy class
 
 refactor hierarchical.py:_parameters_to_joint_recurse
 

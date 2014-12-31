@@ -3,7 +3,7 @@ import numpy
 
 class Entity(BaseEntity):
     def get_value(self):
-        self.bvh_reader.set_pose_from_frame(self.pose, self._t * self.args.bvh_speed)
+        self.bvh_reader.set_pose_from_time(self.pose, self._t * self.args.bvh_speed)
         vertices = self.pose.get_vertices()
         normalized_vectors = numpy.array(
             [self.bvh_reader.normalize_vector(vertex)

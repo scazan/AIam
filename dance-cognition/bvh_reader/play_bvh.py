@@ -47,8 +47,9 @@ class BvhViewer(window.Window):
             return
         glLineWidth(2.0)
         glColor3f(0,0,0)
-        self.reader.set_pose_from_frame(self._pose, t)
-        edges = self._pose.get_edges()
+        self.reader.set_pose_from_time(self._pose, t)
+        vertices = self._pose.get_vertices()
+        edges = self.reader.vertices_to_edges(vertices)
         for edge in edges:
             self._draw_line(self._zoom_vertex(edge.v1),
                             self._zoom_vertex(edge.v2))
