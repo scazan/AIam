@@ -327,21 +327,6 @@ class BvhReader(cgkit.bvh.BVHReader):
     def onFrame(self, values):
         self.keyframes.append(values)
 
-    def print_pose(self, vertices):
-        self._print_joint_recurse(vertices, self.hierarchy.root_joint)
-        print
-
-    def _print_joint_recurse(self, vertices, joint):
-        if joint.definition.has_parent:
-            print "%-3d -> %-3d: %f" % (
-                joint.definition.parent.index, joint.definition.index,
-                numpy.linalg.norm(
-                    self.vertices[joint.definition.parent.index] -
-                    self.vertices[joint.definition.index]))
-
-        for child in joint.children:
-            self._print_joint_recurse(vertices, child)
-
     def _probe_vertex_range(self):
         print "probing BVH vertex range..."
         self._scale_info = ScaleInfo()
