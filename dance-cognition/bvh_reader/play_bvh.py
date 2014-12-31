@@ -18,6 +18,7 @@ class BvhViewer(window.Window):
         global bvh_reader
         window.Window.__init__(self, *args)
         self.reader = bvh_reader
+        self._pose = bvh_reader.create_pose()
         self.t = 0.0
 
     def InitGL(self):
@@ -46,8 +47,8 @@ class BvhViewer(window.Window):
             return
         glLineWidth(2.0)
         glColor3f(0,0,0)
-        vertices = self.reader.get_skeleton_vertices(t)
-        edges = self.reader.vertices_to_edges(vertices)
+        self.reader.set_pose_from_frame(self._pose, t)
+        edges = self._pose.get_edges()
         for edge in edges:
             self._draw_line(self._zoom_vertex(edge.v1),
                             self._zoom_vertex(edge.v2))

@@ -23,27 +23,53 @@ CHANNEL_TO_AXIS = {
     "Zrotation": "z",
 }
 
-class Joint:
+class JointDefinition:
     def __init__(self, name, index):
         self.name = name
         self.index = index
-        self.children = []
+        self.child_definitions = []
         self.channels = []
-        self.has_parent = False
-        self.parent = None
         self.translation = array([0.,0.,0.])
         self.translation_matrix = array([
             [0.,0.,0.,0.],
             [0.,0.,0.,0.],
             [0.,0.,0.,0.],
             [0.,0.,0.,0.] ])
+        self.has_parent = False
+        self.parent = None
         self.has_rotation = False
         self.has_static_rotation = False
 
-    def addchild(self, childjoint):
-        self.children.append(childjoint)
-        childjoint.has_parent = True
-        childjoint.parent = self
+    def add_child_definition(self, child_definition):
+        self.child_definitions.append(child_definition)
+        child_definition.has_parent = True
+        child_definition.parent = self
+
+    def create_joint(self, parent=None):
+        joint = Joint(self, parent)
+        for child_definition in self.child_definitions:
+            child = child_definition.create_joint(parent=joint)
+            joint.add_child(child)
+        return joint
+
+    def populate_edges_from_vertices_recurse(self, vertices, edgelist):
+        if self.has_parent:
+            new_edge = edge(
+              vertices[self.parent.index],
+              vertices[self.index])
+            edgelist.append(new_edge)
+
+        for child_definition in self.child_definitions:
+            child_definition.populate_edges_from_vertices_recurse(vertices, edgelist)
+
+class Joint:
+    def __init__(self, definition, parent=None):
+        self.definition = definition
+        self.parent = parent
+        self.children = []
+
+    def add_child(self, child):
+        self.children.append(child)
 
     def get_vertex(self):
         return array([
@@ -54,23 +80,13 @@ class Joint:
 
     def get_vertices(self):
         result = []
-        self.add_vertices_recurse(result)
+        self._add_vertices_recurse(result)
         return result
 
-    def add_vertices_recurse(self, vertices):
+    def _add_vertices_recurse(self, vertices):
         vertices.append(self.get_vertex())
         for child in self.children:
-            child.add_vertices_recurse(vertices)
-
-    def populate_edges_from_vertices_recurse(self, vertices, edgelist):
-        if self.has_parent:
-            new_edge = edge(
-              vertices[self.parent.index],
-              vertices[self.index])
-            edgelist.append(new_edge)
-
-        for child in self.children:
-            child.populate_edges_from_vertices_recurse(vertices, edgelist)
+            child._add_vertices_recurse(vertices)
 
     def recreate_with_vertices(self, vertices):
         result = copy.copy(self)
@@ -98,47 +114,68 @@ class Joint:
     def Zrotation(self):
         return self.angles[2]
 
-
-class Skeleton:
-    def __init__(self, root_joint, keyframes, num_frames=0, dt=.033333333):
-        self.root_joint = root_joint
+class Hierarchy:
+    def __init__(self, root_node, keyframes, num_frames=0, dt=.033333333):
+        self._joint_index = 0
+        self._joint_definitions = {}
+        self._root_joint_definition = self._process_node(root_node)
+        self.num_joints = self._joint_index
         self.keyframes = keyframes
         self.num_frames = num_frames
         self.dt = dt
-        self._get_rotation_info_by_processing_first_frame()
 
-    def _get_rotation_info_by_processing_first_frame(self):
-        self._process_bvhkeyframe(self.keyframes[0], self.root_joint)
+    def _process_node(self, node, parentname='root'):
+        name = node.name
+        if (name == "End Site") or (name == "end site"):
+            name = parentname + "End"
+        joint_definition = JointDefinition(name, self._joint_index)
+        self._joint_index += 1
+        joint_definition.channels = node.channels
+        joint_definition.translation[0] = node.offset[0]
+        joint_definition.translation[1] = node.offset[1]
+        joint_definition.translation[2] = node.offset[2]
 
-    def set_pose_from_frame(self, t=None):
-        self._process_bvhkeyframe(self.keyframes[t], self.root_joint)
-        return self.root_joint
+        joint_definition.translation_matrix = make_translation_matrix(
+            joint_definition.translation[0],
+            joint_definition.translation[1],
+            joint_definition.translation[2])
 
-    def get_root_joint(self):
-        return self.root_joint
-
-    def get_joint(self, name):
-        return self._find_joint_recurse(self.root_joint, name)
-
-    def _find_joint_recurse(self, joint, searched_name):
-        if joint.name == searched_name:
-            return joint
+        if "Xrotation" in node.channels:
+            joint_definition.rotation_channels = filter(
+                lambda channel: channel in ["Xrotation", "Yrotation", "Zrotation"],
+                node.channels)
+            joint_definition.axes = "r" + "".join([
+                    CHANNEL_TO_AXIS[channel] for channel in joint_definition.rotation_channels])
+            joint_definition.has_rotation = True
         else:
-            for child in joint.children:
-                potential_find = self._find_joint_recurse(child, searched_name)
-                if potential_find:
-                    return potential_find
+            joint_definition.has_rotation = False
+
+        for child_node in node.children:
+            child_definition = self._process_node(child_node, name)
+            joint_definition.add_child_definition(child_definition)
+
+        self._joint_definitions[name] = joint_definition
+        return joint_definition
+
+    def create_pose(self):
+        return Pose(self)
+
+    def set_pose_from_frame(self, pose, t=None):
+        self._process_bvhkeyframe(self.keyframes[t], pose.get_root_joint())
+
+    def get_root_joint_definition(self):
+        return self._root_joint_definition
+
+    def get_joint_definition(self, name):
+        return self._joint_definitions[name]
 
     def get_vertices(self, t):
         self._process_bvhkeyframe(self.keyframes[t], self.root_joint)
         return self.root_joint.get_vertices()
 
-    def populate_edges_from_vertices(self, vertices, edges):
-        self.root_joint.populate_edges_from_vertices_recurse(vertices, edges)
-
     def _process_bvhkeyframe(self, keyframe, joint, frame_data_index=0):
         keyframe_dict = dict()
-        for channel in joint.channels:
+        for channel in joint.definition.channels:
             keyframe_dict[channel] = keyframe[frame_data_index]
             frame_data_index += 1
 
@@ -150,23 +187,18 @@ class Skeleton:
 
         if "Xrotation" in keyframe_dict:
             rotate = True
-            rotation_channels = filter(lambda channel:
-                                           channel in ["Xrotation", "Yrotation", "Zrotation"],
-                                       joint.channels)
-            joint.angles = [radians(keyframe_dict[channel]) for channel in rotation_channels]
-            joint.axes = "r" + "".join([CHANNEL_TO_AXIS[channel] for channel in rotation_channels])
-            joint.rotation = Euler(joint.angles, joint.axes)
-            joint.has_rotation = True
-            rotation_matrix = euler_matrix(*joint.angles, axes=joint.axes)
+            joint.angles = [radians(keyframe_dict[channel])
+                            for channel in joint.definition.rotation_channels]
+            joint.rotation = Euler(joint.angles, joint.definition.axes)
+            rotation_matrix = euler_matrix(*joint.angles, axes=joint.definition.axes)
         else:
             rotate = False
-            joint.has_rotation = False
 
-        if joint.has_parent:
+        if joint.definition.has_parent:
             parent_trtr = joint.parent.trtr
-            localtoworld = dot(parent_trtr, joint.translation_matrix)
+            localtoworld = dot(parent_trtr, joint.definition.translation_matrix)
         else:
-            localtoworld = dot(joint.translation_matrix, translation_matrix)
+            localtoworld = dot(joint.definition.translation_matrix, translation_matrix)
 
         if rotate:
             trtr = dot(localtoworld, rotation_matrix)
@@ -188,6 +220,20 @@ class Skeleton:
 
         return frame_data_index
 
+class Pose:
+    def __init__(self, hierarchy):
+        self._hierarchy = hierarchy
+        self._root_joint = hierarchy.get_root_joint_definition().create_joint()
+
+    def get_root_joint(self):
+        return self._root_joint
+
+    def get_vertices(self):
+        return self._root_joint.get_vertices()
+
+    def get_edges(self):
+        vertices = self.get_vertices()
+        return self._hierarchy.vertices_to_edges(vertices)
 
 class ScaleInfo:
     min_x = None
@@ -231,37 +277,31 @@ class BvhReader(cgkit.bvh.BVHReader):
 
     def _read(self):
         cgkit.bvh.BVHReader.read(self)
-        self._joint_index = 0
-        self._joints = {}
-        self._root_joint = self._process_node(self._root_nood)
-        self.skeleton = self.create_skeleton()
-        self.num_joints = self._joint_index
-
-    def create_skeleton(self):
-        return Skeleton(
-          self._root_joint, keyframes = self.keyframes,
+        self.hierarchy = Hierarchy(
+          self._root_nood, keyframes = self.keyframes,
           num_frames=self.num_frames, dt=self.dt)
+        self.num_joints = self.hierarchy.num_joints
 
     def get_duration(self):
-        return self.skeleton.num_frames * self.skeleton.dt
+        return self.hierarchy.num_frames * self.hierarchy.dt
 
-    def set_skeleton_pose_from_frame(self, skeleton, t):
+    def set_pose_from_frame(self, pose, t):
         frame_index = self._frame_index(t)
-        return self.skeleton.set_pose_from_frame(frame_index)
+        return self.hierarchy.set_pose_from_frame(pose, frame_index)
 
     def get_hierarchy(self):
-        return self.skeleton
+        return self.hierarchy
+
+    def create_pose(self):
+        return self.hierarchy.create_pose()
 
     def _frame_index(self, t):
-        return int(t / self.skeleton.dt) % self.skeleton.num_frames
-
-    def get_skeleton_vertices(self, t):
-        frame_index = self._frame_index(t)
-        return self.skeleton.get_vertices(frame_index)
+        return int(t / self.hierarchy.dt) % self.hierarchy.num_frames
 
     def vertices_to_edges(self, vertices):
         edges = []
-        self.skeleton.populate_edges_from_vertices(vertices, edges)
+        self.hierarchy.get_root_joint_definition().populate_edges_from_vertices_recurse(
+            vertices, edges)
         return edges
 
     def normalize_vector(self, v):
@@ -287,40 +327,17 @@ class BvhReader(cgkit.bvh.BVHReader):
     def onFrame(self, values):
         self.keyframes.append(values)
 
-    def _process_node(self, node, parentname='root'):
-        name = node.name
-        if (name == "End Site") or (name == "end site"):
-            name = parentname + "End"
-        b1 = Joint(name, self._joint_index)
-        self._joint_index += 1
-        b1.channels = node.channels
-        b1.translation[0] = node.offset[0]
-        b1.translation[1] = node.offset[1]
-        b1.translation[2] = node.offset[2]
-
-        b1.translation_matrix = make_translation_matrix(
-            b1.translation[0],
-            b1.translation[1],
-            b1.translation[2])
-
-        for child in node.children:
-            b2 = self._process_node(child, name)
-            b1.addchild(b2)
-
-        self._joints[name] = b1
-        return b1
-
     def print_pose(self, vertices):
-        self._print_joint_recurse(vertices, self.skeleton.root_joint)
+        self._print_joint_recurse(vertices, self.hierarchy.root_joint)
         print
 
     def _print_joint_recurse(self, vertices, joint):
-        if joint.has_parent:
+        if joint.definition.has_parent:
             print "%-3d -> %-3d: %f" % (
-                joint.parent.index, joint.index,
+                joint.definition.parent.index, joint.definition.index,
                 numpy.linalg.norm(
-                    self.vertices[joint.parent.index] -
-                    self.vertices[joint.index]))
+                    self.vertices[joint.definition.parent.index] -
+                    self.vertices[joint.definition.index]))
 
         for child in joint.children:
             self._print_joint_recurse(vertices, child)
@@ -328,8 +345,10 @@ class BvhReader(cgkit.bvh.BVHReader):
     def _probe_vertex_range(self):
         print "probing BVH vertex range..."
         self._scale_info = ScaleInfo()
+        pose = self.hierarchy.create_pose()
         for n in range(self.num_frames):
-            vertices = self.skeleton.get_vertices(n)
+            self.set_pose_from_frame(pose, n)
+            vertices = pose.get_vertices()
             for vertex in vertices:
                 self._update_range_with_vector(*vertex[0:3])
         self._scale_info.scale_factor = max([
@@ -354,25 +373,26 @@ class BvhReader(cgkit.bvh.BVHReader):
     def _probe_static_rotations(self):
         print "probing static rotations..."
         self._unique_rotations = defaultdict(set)
+        pose = self.hierarchy.create_pose()
         for n in range(self.num_frames):
-            self.skeleton.set_pose_from_frame(n)
-            root_joint = self.skeleton.get_root_joint()
+            self.hierarchy.set_pose_from_frame(pose, n)
+            root_joint = pose.get_root_joint()
             self._process_static_rotations_recurse(root_joint)
         print "ok"
 
     def _process_static_rotations_recurse(self, joint):
-        if joint.has_rotation:
+        if joint.definition.has_rotation:
             self._update_rotations(joint)
         for child in joint.children:
             self._process_static_rotations_recurse(child)
 
     def _update_rotations(self, joint):
-        previous_unique_rotations = self._unique_rotations[joint.name]
+        previous_unique_rotations = self._unique_rotations[joint.definition.name]
         if len(previous_unique_rotations) < 2:
-            self._unique_rotations[joint.name].add(tuple(joint.angles))
+            self._unique_rotations[joint.definition.name].add(tuple(joint.angles))
 
     def _set_static_rotations(self):
         for name, joints in self._unique_rotations.iteritems():
             if len(joints) == 1:
-                joint = self._joints[name]
-                joint.has_static_rotation = True
+                joint_definition = self.hierarchy.get_joint_definition(name)
+                joint_definition.has_static_rotation = True

@@ -1,8 +1,9 @@
 refactor bvh_reader.py:
-  remove need for _get_rotation_info_by_processing_first_frame()
-  joint.recreate_with_vertices => skeleton.create_joints_from_vertices
-  remove hierarchical info from the Joint class?
-  remove motion data (keyframes, num_frames, dt) from the Skeleton class
+  joint.recreate_with_vertices => ?
+  remove motion data (keyframes, num_frames, dt) from the Hierarchy class
+  remove print_pose
+
+refactor hierarchical.py:_parameters_to_joint_recurse
 
 parametrize 0.3 in navigator.py
 

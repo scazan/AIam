@@ -39,32 +39,32 @@ class Entity(BaseEntity):
 
     def _create_parameter_info_table(self):
         self._parameter_info = []
-        root_joint = self.bvh_reader.get_hierarchy().get_root_joint()
-        self._extend_parameter_info_table_recurse(root_joint)
+        root_joint_definition = self.bvh_reader.get_hierarchy().get_root_joint_definition()
+        self._extend_parameter_info_table_recurse(root_joint_definition)
 
-    def _extend_parameter_info_table_recurse(self, joint):
-        if not joint.has_parent and self.args.translate:
+    def _extend_parameter_info_table_recurse(self, joint_definition):
+        if not joint_definition.has_parent and self.args.translate:
             self._parameter_info.extend(
                 [{"category": "translate", "component": "X"},
                  {"category": "translate", "component": "Y"},
                  {"category": "translate", "component": "Z"}])
-        if joint.has_rotation and not joint.has_static_rotation:
+        if joint_definition.has_rotation and not joint_definition.has_static_rotation:
             for n in range(self.rotation_parametrization.num_parameters):
-                self._parameter_info.append({"category": joint.name, "component": str(n)})
-        for child in joint.children:
-            self._extend_parameter_info_table_recurse(child)
+                self._parameter_info.append({"category": joint_definition.name, "component": str(n)})
+        for child_definition in joint_definition.child_definitions:
+            self._extend_parameter_info_table_recurse(child_definition)
 
     def parameter_info(self, index):
         return self._parameter_info[index]
 
     def get_value(self):
-        self.bvh_reader.set_skeleton_pose_from_frame(self.skeleton, self._t * self.args.bvh_speed)
-        return self._joint_to_parameters(self.skeleton.get_root_joint())
+        self.bvh_reader.set_pose_from_frame(self.pose, self._t * self.args.bvh_speed)
+        return self._joint_to_parameters(self.pose.get_root_joint())
 
     def get_random_value(self):
-        self.bvh_reader.set_skeleton_pose_from_frame(self.skeleton,
+        self.bvh_reader.set_pose_from_frame(self.pose,
             random.uniform(0, self.bvh_reader.get_duration()))
-        return self._joint_to_parameters(self.skeleton.get_root_joint())
+        return self._joint_to_parameters(self.pose.get_root_joint())
 
     def get_duration(self):
         return self.bvh_reader.get_duration() / self.args.bvh_speed
@@ -75,9 +75,9 @@ class Entity(BaseEntity):
         return parameters
 
     def _add_joint_parameters_recurse(self, joint, parameters):
-        if not joint.has_parent and self.args.translate:
+        if not joint.definition.has_parent and self.args.translate:
             self._add_joint_translation_parameters(joint, parameters)
-        if joint.has_rotation and not joint.has_static_rotation:
+        if joint.definition.has_rotation and not joint.definition.has_static_rotation:
             self._add_joint_rotation_parameters(joint, parameters)
         for child in joint.children:
             self._add_joint_parameters_recurse(child, parameters)
@@ -106,20 +106,20 @@ class Entity(BaseEntity):
         return vertices
 
     def _parameters_to_normalized_vertices(self, parameters):
-        self._set_skeleton_pose_from_parameters(parameters)
-        root_joint = self.skeleton.get_root_joint()
+        self._set_pose_from_parameters(parameters)
+        root_joint = self.pose.get_root_joint()
         vertices = root_joint.get_vertices()
         normalized_vertices = [self.bvh_reader.normalize_vector(vertex)
                                for vertex in vertices]
         return normalized_vertices
 
-    def _set_skeleton_pose_from_parameters(self, parameters):
-        self._parameters_to_joint_recurse(parameters, self.skeleton.get_root_joint())
+    def _set_pose_from_parameters(self, parameters):
+        self._parameters_to_joint_recurse(parameters, self.pose.get_root_joint())
 
     def _parameters_to_joint_recurse(self, parameters, joint, parameter_index=0):
-        if joint.has_parent:
+        if joint.definition.has_parent:
             parent_trtr = joint.parent.trtr
-            localtoworld = dot(parent_trtr, joint.translation_matrix)
+            localtoworld = dot(parent_trtr, joint.definition.translation_matrix)
         else:
             if self.args.translate:
                 weighted_vector = parameters[parameter_index:parameter_index+3]
@@ -127,13 +127,13 @@ class Entity(BaseEntity):
                 normalized_vector = numpy.array(weighted_vector) / self.args.translation_weight
                 scaled_vector = self.bvh_reader.skeleton_scale_vector(normalized_vector)
                 translation_matrix = make_translation_matrix(*scaled_vector)
-                localtoworld = dot(joint.translation_matrix, translation_matrix)
+                localtoworld = dot(joint.definition.translation_matrix, translation_matrix)
             else:
-                localtoworld = joint.translation_matrix
+                localtoworld = joint.definition.translation_matrix
             trtr = localtoworld
 
-        if joint.has_rotation:
-            if joint.has_static_rotation:
+        if joint.definition.has_rotation:
+            if joint.definition.has_static_rotation:
                 rotation_matrix = self._static_rotation_matrix(joint)
             else:
                 rotation_parameters = parameters[
@@ -141,9 +141,9 @@ class Entity(BaseEntity):
                     self.experiment.entity.rotation_parametrization.num_parameters]
                 parameter_index += self.experiment.entity.rotation_parametrization.num_parameters
                 radians = self.experiment.entity.rotation_parametrization.parameters_to_rotation(
-                    rotation_parameters, joint.rotation.axes)
+                    rotation_parameters, joint.definition.axes)
                 joint.angles = [math.degrees(r) for r in radians] # possible optimization: only do this when exporting
-                rotation_matrix = euler_matrix(*radians, axes=joint.rotation.axes)
+                rotation_matrix = euler_matrix(*radians, axes=joint.definition.axes)
 
             trtr = dot(localtoworld, rotation_matrix)
         else:
@@ -164,11 +164,11 @@ class Entity(BaseEntity):
 
     def _static_rotation_matrix(self, joint):
         if not hasattr(joint, "static_rotation_matrix"):
-            joint.static_rotation_matrix = euler_matrix(*joint.angles, axes=joint.axes)
-        return joint.static_rotation_matrix
+            joint.definition.static_rotation_matrix = euler_matrix(*joint.angles, axes=joint.definition.axes)
+        return joint.definition.static_rotation_matrix
 
     def parameters_to_processed_bvh_root(self, parameters):
-        self._set_skeleton_pose_from_parameters(parameters)
+        self._set_pose_from_parameters(parameters)
         root_joint = self.skeleton.get_root_joint()
         vertices = root_joint.get_vertices()
         for constrainer in self._unnormalized_constrainers:

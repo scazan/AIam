@@ -28,7 +28,7 @@ class BaseEntity:
         self.bvh_reader = experiment.bvh_reader
         self.args = experiment.args
         self.model = None
-        self.skeleton = self.bvh_reader.create_skeleton()
+        self.pose = self.bvh_reader.get_hierarchy().create_pose()
 
     def adapt_value_to_model(self, value):
         return value
