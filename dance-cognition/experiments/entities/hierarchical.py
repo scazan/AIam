@@ -7,6 +7,8 @@ from transformations import euler_matrix
 import random
 from physics import *
 
+ASSUME_NO_TRANSLATIONAL_OFFSETS_IN_NON_ROOT = True
+
 rotation_parametrizations = {
     "vectors": EulerTo3Vectors,
     "quaternion": EulerToQuaternion,
@@ -173,4 +175,5 @@ class Entity(BaseEntity):
         vertices = root_joint.get_vertices()
         for constrainer in self._unnormalized_constrainers:
             vertices = constrainer.constrain(vertices)
-        self.bvh_reader.get_hierarchy().set_pose_vertices(output_pose, vertices)
+        self.bvh_reader.get_hierarchy().set_pose_vertices(
+            output_pose, vertices, not ASSUME_NO_TRANSLATIONAL_OFFSETS_IN_NON_ROOT)

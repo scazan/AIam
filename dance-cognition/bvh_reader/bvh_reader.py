@@ -14,8 +14,6 @@ import cPickle
 from transformations import euler_matrix
 from collections import defaultdict
 
-ASSUME_NO_TRANSLATIONAL_OFFSETS_IN_NON_ROOT = True
-
 CHANNEL_TO_AXIS = {
     "Xrotation": "x",
     "Yrotation": "y",
@@ -105,9 +103,9 @@ class Joint:
     def Zrotation(self):
         return self.angles[2]
 
-    def set_vertices(self, vertices):
+    def set_vertices(self, vertices, recurse=True):
         self.worldpos = vertices[self.definition.index]
-        if not ASSUME_NO_TRANSLATIONAL_OFFSETS_IN_NON_ROOT:
+        if recurse:
             for child in self.children:
                 child.set_vertices(vertices)
 
@@ -154,8 +152,8 @@ class Hierarchy:
     def create_pose(self):
         return Pose(self)
 
-    def set_pose_vertices(self, pose, vertices):
-        pose.get_root_joint().set_vertices(vertices)
+    def set_pose_vertices(self, pose, vertices, recurse=True):
+        pose.get_root_joint().set_vertices(vertices, recurse)
 
     def set_pose_from_frame(self, pose, keyframe):
         self._process_bvhkeyframe(keyframe, pose.get_root_joint())

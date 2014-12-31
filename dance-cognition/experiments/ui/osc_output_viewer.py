@@ -18,6 +18,7 @@ class MainWindow(QtOpenGL.QGLWidget):
     def __init__(self, bvh_reader, args):
         self.bvh_reader = bvh_reader
         self._hierarchy = bvh_reader.get_hierarchy()
+        self._pose = bvh_reader.create_pose()
         self.args = args
         self.margin = 0
         self._set_camera_from_arg(args.camera)
@@ -118,22 +119,23 @@ class MainWindow(QtOpenGL.QGLWidget):
     def render(self):
         self.configure_3d_projection(-100, 0)
         if self._world_positions is not None:
-            self._render_skeleton()
+            self._hierarchy.set_pose_vertices(self._pose, self._world_positions)
+            self._render_pose()
         
-    def _render_skeleton(self):
+    def _render_pose(self):
         glColor3f(0, 0, 0)
         glLineWidth(2.0)
-        self._render_joint(self._hierarchy.get_root_joint_definition())
+        self._render_joint(self._pose.get_root_joint())
 
-    def _render_joint(self, joint_definition):
-        for child_definition in joint_definition.child_definitions:
-            self._render_edge(joint_definition, child_definition)
-            self._render_joint(child_definition)
+    def _render_joint(self, joint):
+        for child in joint.children:
+            self._render_edge(joint, child)
+            self._render_joint(child)
 
-    def _render_edge(self, joint_definition1, joint_definition2):
+    def _render_edge(self, joint1, joint2):
         glBegin(GL_LINES)
-        self._vertex(self._world_positions[joint_definition1.index])
-        self._vertex(self._world_positions[joint_definition2.index])
+        self._vertex(joint1.worldpos)
+        self._vertex(joint2.worldpos)
         glEnd()
 
     def _vertex(self, worldpos):
