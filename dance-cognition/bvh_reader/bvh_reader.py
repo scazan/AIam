@@ -164,10 +164,6 @@ class Hierarchy:
     def get_joint_definition(self, name):
         return self._joint_definitions[name]
 
-    def get_vertices(self, t):
-        self._process_bvh_frame(self.frames[t], self.root_joint)
-        return self.root_joint.get_vertices()
-
     def _process_bvh_frame(self, frame, joint, frame_data_index=0):
         frame_dict = dict()
         for channel in joint.definition.channels:
