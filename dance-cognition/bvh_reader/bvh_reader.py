@@ -13,6 +13,7 @@ import os
 import cPickle
 from transformations import euler_matrix
 from collections import defaultdict
+import math
 
 CHANNEL_TO_AXIS = {
     "Xrotation": "x",
@@ -95,13 +96,13 @@ class Joint:
         return self.worldpos[2]
 
     def Xrotation(self):
-        return self.angles[0]
+        return math.degrees(self.angles[0])
 
     def Yrotation(self):
-        return self.angles[1]
+        return math.degrees(self.angles[1])
 
     def Zrotation(self):
-        return self.angles[2]
+        return math.degrees(self.angles[2])
 
     def set_vertices(self, vertices, recurse=True):
         self.worldpos = vertices[self.definition.index]
@@ -156,7 +157,8 @@ class Hierarchy:
         pose.get_root_joint().set_vertices(vertices, recurse)
 
     def set_pose_from_frame(self, pose, frame):
-        self._process_bvh_frame(frame, pose.get_root_joint())
+        self._set_joint_from_bvh_recurse(frame, pose.get_root_joint())
+        self.update_pose_world_positions(pose)
 
     def get_root_joint_definition(self):
         return self._root_joint_definition
@@ -164,34 +166,45 @@ class Hierarchy:
     def get_joint_definition(self, name):
         return self._joint_definitions[name]
 
-    def _process_bvh_frame(self, frame, joint, frame_data_index=0):
+    def _set_joint_from_bvh_recurse(self, frame, joint, frame_data_index=0):
         frame_dict = dict()
         for channel in joint.definition.channels:
             frame_dict[channel] = frame[frame_data_index]
             frame_data_index += 1
 
         if "Xposition" in frame_dict:
-            translation_matrix = make_translation_matrix(
+            joint.translation_matrix = make_translation_matrix(
                 frame_dict["Xposition"],
                 frame_dict["Yposition"],
                 frame_dict["Zposition"])
 
-        if "Xrotation" in frame_dict:
-            rotate = True
+        if joint.definition.has_rotation:
             joint.angles = [radians(frame_dict[channel])
                             for channel in joint.definition.rotation_channels]
             joint.rotation = Euler(joint.angles, joint.definition.axes)
-            rotation_matrix = euler_matrix(*joint.angles, axes=joint.definition.axes)
-        else:
-            rotate = False
 
+        for child in joint.children:
+            frame_data_index = self._set_joint_from_bvh_recurse(frame, child, frame_data_index)
+            if(frame_data_index == 0):
+                raise Exception("fatal error")
+
+        return frame_data_index
+
+    def update_pose_world_positions(self, pose):
+        self._update_world_position_recurse(pose.get_root_joint())
+
+    def _update_world_position_recurse(self, joint):
         if joint.definition.has_parent:
             parent_trtr = joint.parent.trtr
             localtoworld = dot(parent_trtr, joint.definition.translation_matrix)
         else:
-            localtoworld = dot(joint.definition.translation_matrix, translation_matrix)
+            localtoworld = dot(joint.definition.translation_matrix, joint.translation_matrix)
 
-        if rotate:
+        if joint.definition.has_rotation:
+            if joint.definition.has_static_rotation:
+                rotation_matrix = self._static_rotation_matrix(joint)
+            else:
+                rotation_matrix = euler_matrix(*joint.angles, axes=joint.definition.axes)
             trtr = dot(localtoworld, rotation_matrix)
         else:
             trtr = localtoworld
@@ -205,11 +218,12 @@ class Hierarchy:
         joint.worldpos = worldpos
 
         for child in joint.children:
-            frame_data_index = self._process_bvh_frame(frame, child, frame_data_index)
-            if(frame_data_index == 0):
-                raise Exception("fatal error")
+            self._update_world_position_recurse(child)
 
-        return frame_data_index
+    def _static_rotation_matrix(self, joint):
+        if not hasattr(joint, "static_rotation_matrix"):
+            joint.definition.static_rotation_matrix = euler_matrix(*joint.angles, axes=joint.definition.axes)
+        return joint.definition.static_rotation_matrix
 
 class Pose:
     def __init__(self, hierarchy):

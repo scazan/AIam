@@ -1,5 +1,4 @@
 from experiment import *
-import math
 from angle_parameters import EulerTo3Vectors, EulerToQuaternion
 from bvh_reader.geo import *
 from numpy import array, dot
@@ -117,57 +116,29 @@ class Entity(BaseEntity):
 
     def _set_pose_from_parameters(self, parameters):
         self._parameters_to_joint_recurse(parameters, self.pose.get_root_joint())
+        self.bvh_reader.get_hierarchy().update_pose_world_positions(self.pose)
 
     def _parameters_to_joint_recurse(self, parameters, joint, parameter_index=0):
-        if joint.definition.has_parent:
-            parent_trtr = joint.parent.trtr
-            localtoworld = dot(parent_trtr, joint.definition.translation_matrix)
-        else:
-            if self.args.translate:
-                weighted_vector = parameters[parameter_index:parameter_index+3]
-                parameter_index += 3
-                normalized_vector = numpy.array(weighted_vector) / self.args.translation_weight
-                scaled_vector = self.bvh_reader.skeleton_scale_vector(normalized_vector)
-                translation_matrix = make_translation_matrix(*scaled_vector)
-                localtoworld = dot(joint.definition.translation_matrix, translation_matrix)
-            else:
-                localtoworld = joint.definition.translation_matrix
-            trtr = localtoworld
+        if not joint.definition.has_parent and self.args.translate:
+            weighted_vector = parameters[parameter_index:parameter_index+3]
+            parameter_index += 3
+            normalized_vector = numpy.array(weighted_vector) / self.args.translation_weight
+            translation = self.bvh_reader.skeleton_scale_vector(normalized_vector)
+            joint.translation_matrix = make_translation_matrix(*translation)
 
-        if joint.definition.has_rotation:
-            if joint.definition.has_static_rotation:
-                rotation_matrix = self._static_rotation_matrix(joint)
-            else:
-                rotation_parameters = parameters[
-                    parameter_index:parameter_index+
-                    self.experiment.entity.rotation_parametrization.num_parameters]
-                parameter_index += self.experiment.entity.rotation_parametrization.num_parameters
-                radians = self.experiment.entity.rotation_parametrization.parameters_to_rotation(
-                    rotation_parameters, joint.definition.axes)
-                joint.angles = [math.degrees(r) for r in radians] # possible optimization: only do this when exporting
-                rotation_matrix = euler_matrix(*radians, axes=joint.definition.axes)
-
-            trtr = dot(localtoworld, rotation_matrix)
-        else:
-            trtr = localtoworld
-        joint.trtr = trtr
-
-        worldpos = array([
-                  localtoworld[0,3],
-                  localtoworld[1,3],
-                  localtoworld[2,3],
-                  localtoworld[3,3] ])
-        joint.worldpos = worldpos
+        if joint.definition.has_rotation and not joint.definition.has_static_rotation:
+            rotation_parameters = parameters[
+                parameter_index:parameter_index+
+                self.experiment.entity.rotation_parametrization.num_parameters]
+            parameter_index += self.experiment.entity.rotation_parametrization.num_parameters
+            radians = self.experiment.entity.rotation_parametrization.parameters_to_rotation(
+                rotation_parameters, joint.definition.axes)
+            joint.angles = radians
 
         for child in joint.children:
             parameter_index = self._parameters_to_joint_recurse(parameters, child, parameter_index)
 
         return parameter_index
-
-    def _static_rotation_matrix(self, joint):
-        if not hasattr(joint, "static_rotation_matrix"):
-            joint.definition.static_rotation_matrix = euler_matrix(*joint.angles, axes=joint.definition.axes)
-        return joint.definition.static_rotation_matrix
 
     def parameters_to_processed_bvh_root(self, parameters, output_pose):
         self._set_pose_from_parameters(parameters)
