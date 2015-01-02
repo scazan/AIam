@@ -155,8 +155,8 @@ class Hierarchy:
     def set_pose_vertices(self, pose, vertices, recurse=True):
         pose.get_root_joint().set_vertices(vertices, recurse)
 
-    def set_pose_from_frame(self, pose, keyframe):
-        self._process_bvhkeyframe(keyframe, pose.get_root_joint())
+    def set_pose_from_frame(self, pose, frame):
+        self._process_bvh_frame(frame, pose.get_root_joint())
 
     def get_root_joint_definition(self):
         return self._root_joint_definition
@@ -165,24 +165,24 @@ class Hierarchy:
         return self._joint_definitions[name]
 
     def get_vertices(self, t):
-        self._process_bvhkeyframe(self.keyframes[t], self.root_joint)
+        self._process_bvh_frame(self.frames[t], self.root_joint)
         return self.root_joint.get_vertices()
 
-    def _process_bvhkeyframe(self, keyframe, joint, frame_data_index=0):
-        keyframe_dict = dict()
+    def _process_bvh_frame(self, frame, joint, frame_data_index=0):
+        frame_dict = dict()
         for channel in joint.definition.channels:
-            keyframe_dict[channel] = keyframe[frame_data_index]
+            frame_dict[channel] = frame[frame_data_index]
             frame_data_index += 1
 
-        if "Xposition" in keyframe_dict:
+        if "Xposition" in frame_dict:
             translation_matrix = make_translation_matrix(
-                keyframe_dict["Xposition"],
-                keyframe_dict["Yposition"],
-                keyframe_dict["Zposition"])
+                frame_dict["Xposition"],
+                frame_dict["Yposition"],
+                frame_dict["Zposition"])
 
-        if "Xrotation" in keyframe_dict:
+        if "Xrotation" in frame_dict:
             rotate = True
-            joint.angles = [radians(keyframe_dict[channel])
+            joint.angles = [radians(frame_dict[channel])
                             for channel in joint.definition.rotation_channels]
             joint.rotation = Euler(joint.angles, joint.definition.axes)
             rotation_matrix = euler_matrix(*joint.angles, axes=joint.definition.axes)
@@ -209,7 +209,7 @@ class Hierarchy:
         joint.worldpos = worldpos
 
         for child in joint.children:
-            frame_data_index = self._process_bvhkeyframe(keyframe, child, frame_data_index)
+            frame_data_index = self._process_bvh_frame(frame, child, frame_data_index)
             if(frame_data_index == 0):
                 raise Exception("fatal error")
 
@@ -276,7 +276,7 @@ class BvhReader(cgkit.bvh.BVHReader):
 
     def set_pose_from_time(self, pose, t):
         frame_index = self._frame_index(t)
-        return self.hierarchy.set_pose_from_frame(pose, self.keyframes[frame_index])
+        return self.hierarchy.set_pose_from_frame(pose, self.frames[frame_index])
 
     def get_hierarchy(self):
         return self.hierarchy
@@ -307,21 +307,21 @@ class BvhReader(cgkit.bvh.BVHReader):
 
     def onHierarchy(self, root_nood):
         self._root_nood = root_nood
-        self.keyframes = []
+        self.frames = []
 
     def onMotion(self, num_frames, dt):
         self.num_frames = num_frames
         self.dt = dt
 
     def onFrame(self, values):
-        self.keyframes.append(values)
+        self.frames.append(values)
 
     def _probe_vertex_range(self):
         print "probing BVH vertex range..."
         self._scale_info = ScaleInfo()
         pose = self.hierarchy.create_pose()
         for n in range(self.num_frames):
-            self.hierarchy.set_pose_from_frame(pose, self.keyframes[n])
+            self.hierarchy.set_pose_from_frame(pose, self.frames[n])
             vertices = pose.get_vertices()
             for vertex in vertices:
                 self._update_range_with_vector(*vertex[0:3])
@@ -349,7 +349,7 @@ class BvhReader(cgkit.bvh.BVHReader):
         self._unique_rotations = defaultdict(set)
         pose = self.hierarchy.create_pose()
         for n in range(self.num_frames):
-            self.hierarchy.set_pose_from_frame(pose, self.keyframes[n])
+            self.hierarchy.set_pose_from_frame(pose, self.frames[n])
             root_joint = pose.get_root_joint()
             self._process_static_rotations_recurse(root_joint)
         print "ok"
