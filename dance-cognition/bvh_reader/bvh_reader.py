@@ -125,6 +125,7 @@ class Hierarchy:
         self._joint_index += 1
         joint_definition.channels = node.channels
 
+        joint_definition.offset = node.offset
         joint_definition.translation_matrix = make_translation_matrix(
             node.offset[0],
             node.offset[1],

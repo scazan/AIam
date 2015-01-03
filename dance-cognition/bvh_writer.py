@@ -39,9 +39,9 @@ class BvhWriter:
 
         self._write_indent()
         self._write("OFFSET\t%.4f\t%.4f\t%.4f\n" % (
-                joint_definition.translation[0],
-                joint_definition.translation[1],
-                joint_definition.translation[2]))
+                joint_definition.offset[0],
+                joint_definition.offset[1],
+                joint_definition.offset[2]))
 
         if len(joint_definition.channels) > 0:
             self._write_indent()
