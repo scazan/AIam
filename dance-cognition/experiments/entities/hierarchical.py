@@ -119,23 +119,31 @@ class Entity(BaseEntity):
 
     def _parameters_to_joint_recurse(self, parameters, joint, parameter_index=0):
         if not joint.definition.has_parent and self.args.translate:
-            weighted_vector = parameters[parameter_index:parameter_index+3]
-            parameter_index += 3
-            normalized_vector = numpy.array(weighted_vector) / self.args.translation_weight
-            joint.translation = self.bvh_reader.skeleton_scale_vector(normalized_vector)
+            parameter_index = self._parameters_to_joint_translation(parameters, joint, parameter_index)
 
         if joint.definition.has_rotation and not joint.definition.has_static_rotation:
-            rotation_parameters = parameters[
-                parameter_index:parameter_index+
-                self.experiment.entity.rotation_parametrization.num_parameters]
-            parameter_index += self.experiment.entity.rotation_parametrization.num_parameters
-            radians = self.experiment.entity.rotation_parametrization.parameters_to_rotation(
-                rotation_parameters, joint.definition.axes)
-            joint.angles = radians
+            parameter_index = self._parameters_to_joint_rotation(parameters, joint, parameter_index)
 
         for child in joint.children:
             parameter_index = self._parameters_to_joint_recurse(parameters, child, parameter_index)
 
+        return parameter_index
+
+    def _parameters_to_joint_translation(self, parameters, joint, parameter_index):
+        weighted_vector = parameters[parameter_index:parameter_index+3]
+        parameter_index += 3
+        normalized_vector = numpy.array(weighted_vector) / self.args.translation_weight
+        joint.translation = self.bvh_reader.skeleton_scale_vector(normalized_vector)
+        return parameter_index
+
+    def _parameters_to_joint_rotation(self, parameters, joint, parameter_index):
+        rotation_parameters = parameters[
+            parameter_index:parameter_index+
+            self.experiment.entity.rotation_parametrization.num_parameters]
+        parameter_index += self.experiment.entity.rotation_parametrization.num_parameters
+        radians = self.experiment.entity.rotation_parametrization.parameters_to_rotation(
+            rotation_parameters, joint.definition.axes)
+        joint.angles = radians
         return parameter_index
 
     def parameters_to_processed_pose(self, parameters, output_pose):
