@@ -27,7 +27,6 @@ class JointDefinition:
         self.index = index
         self.child_definitions = []
         self.channels = []
-        self.translation = array([0.,0.,0.])
         self.translation_matrix = array([
             [0.,0.,0.,0.],
             [0.,0.,0.,0.],
@@ -64,6 +63,7 @@ class Joint:
     def __init__(self, definition, parent=None):
         self.definition = definition
         self.parent = parent
+        self.translation = array([0.,0.,0.])
         self.children = []
 
     def add_child(self, child):
@@ -124,14 +124,11 @@ class Hierarchy:
         joint_definition = JointDefinition(name, self._joint_index)
         self._joint_index += 1
         joint_definition.channels = node.channels
-        joint_definition.translation[0] = node.offset[0]
-        joint_definition.translation[1] = node.offset[1]
-        joint_definition.translation[2] = node.offset[2]
 
         joint_definition.translation_matrix = make_translation_matrix(
-            joint_definition.translation[0],
-            joint_definition.translation[1],
-            joint_definition.translation[2])
+            node.offset[0],
+            node.offset[1],
+            node.offset[2])
 
         if "Xrotation" in node.channels:
             joint_definition.rotation_channels = filter(
@@ -173,10 +170,10 @@ class Hierarchy:
             frame_data_index += 1
 
         if "Xposition" in frame_dict:
-            joint.translation_matrix = make_translation_matrix(
-                frame_dict["Xposition"],
-                frame_dict["Yposition"],
-                frame_dict["Zposition"])
+            joint.translation = array([
+                    frame_dict["Xposition"],
+                    frame_dict["Yposition"],
+                    frame_dict["Zposition"]])
 
         if joint.definition.has_rotation:
             joint.angles = [radians(frame_dict[channel])
@@ -198,7 +195,8 @@ class Hierarchy:
             parent_trtr = joint.parent.trtr
             localtoworld = dot(parent_trtr, joint.definition.translation_matrix)
         else:
-            localtoworld = dot(joint.definition.translation_matrix, joint.translation_matrix)
+            translation_matrix = make_translation_matrix(*joint.translation)
+            localtoworld = dot(joint.definition.translation_matrix, translation_matrix)
 
         if joint.definition.has_rotation:
             if joint.definition.has_static_rotation:

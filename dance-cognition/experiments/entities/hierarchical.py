@@ -1,6 +1,5 @@
 from experiment import *
 from angle_parameters import EulerTo3Vectors, EulerToQuaternion
-from bvh_reader.geo import *
 from numpy import array, dot
 from transformations import euler_matrix
 import random
@@ -123,8 +122,7 @@ class Entity(BaseEntity):
             weighted_vector = parameters[parameter_index:parameter_index+3]
             parameter_index += 3
             normalized_vector = numpy.array(weighted_vector) / self.args.translation_weight
-            translation = self.bvh_reader.skeleton_scale_vector(normalized_vector)
-            joint.translation_matrix = make_translation_matrix(*translation)
+            joint.translation = self.bvh_reader.skeleton_scale_vector(normalized_vector)
 
         if joint.definition.has_rotation and not joint.definition.has_static_rotation:
             rotation_parameters = parameters[

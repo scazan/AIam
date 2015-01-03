@@ -1,5 +1,4 @@
-refactor hierarchical.py:_parameters_to_joint_recurse
-  move make_translation_matrix to pose processing in bvh_reader.py
+rename parameters_to_processed_bvh_root
 
 parametrize 0.3 in navigator.py
 
