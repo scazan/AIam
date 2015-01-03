@@ -285,13 +285,13 @@ class Experiment(EventListener):
 
     def _export_output(self):
         if self.output is not None:
-            self.entity.parameters_to_processed_bvh_root(self.output, self.pose)
+            self.entity.parameters_to_processed_pose(self.output, self.pose)
             frame = self.pose_to_bvh_frame(self.pose)
             self.bvh_writer.add_frame(frame)
 
     def _send_output(self):
         if self.output is not None:
-            self.entity.parameters_to_processed_bvh_root(self.output, self.pose)
+            self.entity.parameters_to_processed_pose(self.output, self.pose)
             if self.args.output_receiver_type == "bvh":
                 self._send_output_bvh_recurse(self.pose.get_root_joint())
             elif self.args.output_receiver_type == "world":

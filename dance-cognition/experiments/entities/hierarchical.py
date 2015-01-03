@@ -138,7 +138,7 @@ class Entity(BaseEntity):
 
         return parameter_index
 
-    def parameters_to_processed_bvh_root(self, parameters, output_pose):
+    def parameters_to_processed_pose(self, parameters, output_pose):
         self._set_pose_from_parameters(parameters)
         root_joint = self.pose.get_root_joint()
         vertices = root_joint.get_vertices()

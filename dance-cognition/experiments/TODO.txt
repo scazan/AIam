@@ -1,5 +1,3 @@
-rename parameters_to_processed_bvh_root
-
 parametrize 0.3 in navigator.py
 
 singular matrix exception:
