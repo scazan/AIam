@@ -82,6 +82,10 @@ Artificial case with discontinuity problem:
 python dim_reduce.py -p expmap_spiral -train
 python dim_reduce.py -p expmap_spiral -unit-cube
 
+Real case with discontinuity problem:
+python dim_reduce.py -p expmap_HDM_joint -train
+python dim_reduce.py -p expmap_HDM_joint -unit-cube -bvh-speed 5
+
 
 NAVIGATOR EXPERIMENTS
 
