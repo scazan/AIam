@@ -39,22 +39,22 @@ python dim_reduce.py -p valencia_vectors_7d -train
 python dim_reduce.py -p valencia_vectors_7d --camera=-3.020,-0.810,-0.676,-85.500,10.500 -output-y-offset 0.5
 
 
-DIMENSIONALITY REDUCTION WITH PCA: ROTATION AS QUATERNION
-
-python dim_reduce.py -p valencia_quaternion_7d -train
-python dim_reduce.py -p valencia_quaternion_7d --camera=-3.020,-0.810,-0.676,-85.500,10.500 -output-y-offset 0.5
-
-
-DIMENSIONALITY REDUCTION WITH PCA: INCLUDING MOVEMENT ACROSS SPACE
+DIMENSIONALITY REDUCTION WITH PCA: ROTATION AS QUATERNION + MOVEMENT ACROSS SPACE
 
 python dim_reduce.py -p valencia_quaternion_translate_7d -train
 python dim_reduce.py -p valencia_quaternion_translate_7d
 
-Youtube export with UI:
-python dim_reduce.py -p valencia_quaternion_translate_7d --mode=improvise --width=854 --height=480 --no-toolbar --html5-toolbar --websockets --camera=-2.256,-0.800,-2.096,-66.000,19.500
-
 python dim_reduce.py -p HDM_quaternion_translate_7d -train
 python dim_reduce.py -p HDM_quaternion_translate_7d
+
+
+DIMENSIONALITY REDUCTION WITH PCA: ROTATION AS QUATERNION + FRICTION
+
+python dim_reduce.py -p valencia_quaternion_7d_friction -train
+python dim_reduce.py -p valencia_quaternion_7d_friction
+
+Youtube export with UI:
+python dim_reduce.py -p valencia_quaternion_7d_friction --mode=improvise --width=854 --height=480 --no-toolbar --html5-toolbar --websockets --camera=-2.256,-0.800,-2.096,-66.000,19.500
 
 
 QUATERNION EXPERIMENTS
