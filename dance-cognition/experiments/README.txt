@@ -65,11 +65,11 @@ python dim_reduce.py -p angle_quaternion_spiral -unit-cube
 
 Real case with discontinuity problem:
 python dim_reduce.py -p angle_quaternion_HDM_joint -train
-python dim_reduce.py -p angle_quaternion_HDM_joint -unit-cube -bvh-speed 5
+python dim_reduce.py -p angle_quaternion_HDM_joint -output-y-offset -1.5 -input-y-offset 0.7 -bvh-speed 5
 
 Real case without discontinuity problem (one out of countless others):
 python dim_reduce.py -p angle_quaternion_valencia_joint -train
-python dim_reduce.py -p angle_quaternion_valencia_joint -unit-cube
+python dim_reduce.py -p angle_quaternion_valencia_joint -output-y-offset -1.5 -input-y-offset 0.7
 
 Full body real case with discontinuity problem?
 python dim_reduce.py -p HDM_quaternion_translate_2d -train
@@ -80,11 +80,11 @@ EXPONENTIAL MAP EXPERIMENTS
 
 Artificial case with discontinuity problem:
 python dim_reduce.py -p expmap_spiral -train
-python dim_reduce.py -p expmap_spiral -unit-cube
+python dim_reduce.py -p expmap_spiral -output-y-offset -1.5 -input-y-offset 0.7
 
 Real case with discontinuity problem:
 python dim_reduce.py -p expmap_HDM_joint -train
-python dim_reduce.py -p expmap_HDM_joint -unit-cube -bvh-speed 5
+python dim_reduce.py -p expmap_HDM_joint -output-y-offset -1.5 -input-y-offset 0.7 -bvh-speed 5
 
 
 NAVIGATOR EXPERIMENTS
