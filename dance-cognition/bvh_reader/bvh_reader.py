@@ -228,12 +228,25 @@ class Pose:
     def __init__(self, hierarchy):
         self._hierarchy = hierarchy
         self._root_joint = hierarchy.get_root_joint_definition().create_joint()
+        self._create_joints_dict()
+
+    def _create_joints_dict(self):
+        self._joints_by_name = dict()
+        self._populate_joints_dict_recurse(self._root_joint)
+
+    def _populate_joints_dict_recurse(self, joint):
+        self._joints_by_name[joint.definition.name] = joint
+        for child in joint.children:
+            self._populate_joints_dict_recurse(child)
 
     def get_root_joint(self):
         return self._root_joint
 
     def get_vertices(self):
         return self._root_joint.get_vertices()
+
+    def get_joint(self, name):
+        return self._joints_by_name[name]
 
 class ScaleInfo:
     min_x = None
