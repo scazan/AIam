@@ -76,6 +76,12 @@ python dim_reduce.py -p HDM_quaternion_translate_2d -train
 python dim_reduce.py -p HDM_quaternion_translate_2d
 
 
+EXPONENTIAL MAP EXPERIMENTS
+
+Artificial case with discontinuity problem:
+python dim_reduce.py -p expmap_spiral -train
+python dim_reduce.py -p expmap_spiral -unit-cube
+
 
 NAVIGATOR EXPERIMENTS
 
