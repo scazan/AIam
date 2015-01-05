@@ -23,7 +23,7 @@ class JointAnglePlotter:
         self.args = args
         self.bvh_reader = bvh_reader_module.BvhReader(args.bvh)
         self.bvh_reader.read()
-        self._skeleton = self.bvh_reader.create_skeleton()
+        self._pose = self.bvh_reader.create_pose()
 
         self.width = self.args.spacing * 6 + self.args.radius * 6
         self.height = self.args.spacing * 2 + self.args.radius * 2
@@ -41,9 +41,9 @@ class JointAnglePlotter:
             self.unique_angles = {}
 
     def _create_outputs(self):
-        root_joint = self.bvh_reader.get_hierarchy().get_root_joint()
+        root_joint_definition = self.bvh_reader.get_hierarchy().get_root_joint_definition()
         self.outputs = []
-        self._identify_joints_with_rotation(root_joint)
+        self._identify_joints_with_rotation(root_joint_definition)
 
         for output in self.outputs:
             image_buffer = numpy.empty(self.width * self.height * 3)
@@ -52,17 +52,17 @@ class JointAnglePlotter:
             if self.args.count_unique_angles:
                 output["unique_angles"] = set()
 
-    def _identify_joints_with_rotation(self, joint):
-        if joint.has_rotation:
-            joint.index_with_rotation = len(self.outputs)
-            self.outputs.append({"joint": joint})
-        for child in joint.children:
-            self._identify_joints_with_rotation(child)
+    def _identify_joints_with_rotation(self, joint_definition):
+        if joint_definition.has_rotation:
+            joint_definition.index_with_rotation = len(self.outputs)
+            self.outputs.append({"joint": joint_definition})
+        for child_definition in joint_definition.child_definitions:
+            self._identify_joints_with_rotation(child_definition)
 
     def plot(self):
-        for n in range(self.bvh_reader.skeleton.num_frames):
-            self.bvh_reader.set_skeleton_pose_from_frame(self._skeleton, n)
-            root_joint = self._skeleton.get_root_joint()
+        for frame in self.bvh_reader.frames:
+            self.bvh_reader.get_hierarchy().set_pose_from_frame(self._pose, frame)
+            root_joint = self._pose.get_root_joint()
             self._process_joint_recurse(root_joint)
         self._save_images()
 
@@ -83,13 +83,13 @@ class JointAnglePlotter:
         return "".join([chr(int(x)) for x in xs])
 
     def _process_joint_recurse(self, joint):
-        if joint.has_rotation:
+        if joint.definition.has_rotation:
             self._process_rotation(joint)
         for child in joint.children:
             self._process_joint_recurse(child)
 
     def _process_rotation(self, joint):
-        image_buffer = self.outputs[joint.index_with_rotation]["image_buffer"]
+        image_buffer = self.outputs[joint.definition.index_with_rotation]["image_buffer"]
         for axis, angle in zip(joint.rotation.axes[1:], joint.rotation.angles):
             self._plot_angle(image_buffer, axis, angle)
 
