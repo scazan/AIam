@@ -2,6 +2,7 @@ import numpy
 import random
 import math
 from transformations import quaternion_from_euler, euler_from_quaternion
+from expmap import *
 
 def radians_to_vector2d(radians):
     return numpy.array([math.cos(radians), math.sin(radians)])
@@ -49,3 +50,14 @@ class EulerToQuaternion:
         normalized_quaternion = non_normalized_quaternion / numpy.linalg.norm(
             non_normalized_quaternion)
         return euler_from_quaternion(normalized_quaternion, axes)
+
+class EulerToExpmap:
+    num_parameters = 4
+
+    @staticmethod
+    def rotation_to_parameters(euler):
+        return expmap_from_euler(*euler.angles, axes=euler.axes)
+
+    @staticmethod
+    def parameters_to_rotation(parameters, axes):
+        return euler_from_expmap(parameters, axes)

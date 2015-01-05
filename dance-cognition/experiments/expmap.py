@@ -3,7 +3,7 @@ import so3
 import vectorops
 
 def expmap_from_euler(ai, aj, ak, axes="sxyz"):
-    matrix = transformations.euler_matrix(ai, aj, ak, axes="sxyz")
+    matrix = transformations.euler_matrix(ai, aj, ak, axes)
     R = so3.from_matrix(matrix)
     moment = so3.moment(R)
     axis_angle_parameters = vectorops.unit(moment) + [vectorops.norm(moment)]
