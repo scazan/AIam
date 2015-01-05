@@ -33,13 +33,13 @@ class AngleParametersTest(unittest.TestCase):
         self._test_angle_3dof_inversion(EulerToQuaternion)
 
     def _test_angle_3dof_inversion(self, parameterization):
-        eulers = [
-            (0.1, 0.3, 1.8),
-            (4.1, 2.3, 3.8),
-            (5.1, 0.1, 2.8),
-            ]
-        for angles in eulers:
-            euler = Euler(angles)
+        for n in range(100):
+            t = float(n) / 100 * 2*math.pi * 4
+            x = (t / 1) % (2*math.pi)
+            y = (t / 2) % (2*math.pi)
+            z = (t / 4) % (2*math.pi)
+
+            euler = Euler((x, y, z))
             parameters = parameterization.rotation_to_parameters(euler)
             self._assert_euler_equals(
                 euler.angles,
