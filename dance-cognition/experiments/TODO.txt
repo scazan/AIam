@@ -1,3 +1,9 @@
+increase max novelty for new Val profile (also in web UI)
+
+add logo to web UI
+
+web UI access via internet (rather than local wifi)?
+
 parametrize 0.3 in navigator.py
 
 singular matrix exception:
