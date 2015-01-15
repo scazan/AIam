@@ -10,6 +10,7 @@ from event_listener import EventListener
 from stopwatch import Stopwatch
 from fps_meter import FpsMeter
 from parameters_form import ParametersForm
+from color_schemes import *
 
 TOOLBAR_WIDTH = 400
 SLIDER_PRECISION = 1000
@@ -83,7 +84,6 @@ class BaseScene(QtOpenGL.QGLWidget):
         glPopMatrix()
 
     def initializeGL(self):
-        glClearColor(1.0, 1.0, 1.0, 0.0)
         glClearAccum(0.0, 0.0, 0.0, 0.0)
         glClearDepth(1.0)
         glShadeModel(GL_SMOOTH)
@@ -105,6 +105,7 @@ class BaseScene(QtOpenGL.QGLWidget):
         self.min_dimension = min(self.width, self.height)
 
     def paintGL(self):
+        glClearColor(*self._parent.color_scheme["background"])
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glLoadIdentity()
         glTranslatef(self.margin, self.margin, 0)
@@ -112,7 +113,7 @@ class BaseScene(QtOpenGL.QGLWidget):
 
     def _draw_unit_cube(self):
         glLineWidth(1.0)
-        glColor4f(0,0,0,0.2)
+        glColor4f(*self._parent.color_scheme["unit_cube"])
         glutWireCube(2.0)
 
     def configure_3d_projection(self, pixdx=0, pixdy=0):
@@ -156,7 +157,7 @@ class BaseScene(QtOpenGL.QGLWidget):
         x2 = GRID_SIZE/2
 
         glLineWidth(1.0)
-        glColor4f(0, 0, 0, 0.2)
+        glColor4f(*self._parent.color_scheme["floor"])
 
         for n in range(GRID_NUM_CELLS):
             glBegin(GL_LINES)
@@ -174,7 +175,7 @@ class BaseScene(QtOpenGL.QGLWidget):
 
     def _draw_focus(self):
         glLineWidth(1.0)
-        glColor4f(0, 0, 0, 0.2)
+        glColor4f(*self._parent.color_scheme["focus"])
         self._draw_circle(self._focus, FOCUS_RADIUS)
 
     def _draw_circle(self, center, radius):
@@ -310,6 +311,7 @@ class MainWindow(QtGui.QWidget, EventListener):
         self.outer_vertical_layout.addLayout(inner_horizontal_layout)
         self.setLayout(self.outer_vertical_layout)
 
+        self._set_color_scheme("white")
         self.time_increment = 0
         self._stopwatch = Stopwatch()
         self._frame_count = 0
@@ -330,6 +332,7 @@ class MainWindow(QtGui.QWidget, EventListener):
         self.outer_vertical_layout.setMenuBar(self._menu_bar)
         self._create_main_menu()
         self._create_view_menu()
+        self._create_color_scheme_menu()
 
     def _create_main_menu(self):
         self._main_menu = self._menu_bar.addMenu("Main")
@@ -446,6 +449,32 @@ class MainWindow(QtGui.QWidget, EventListener):
 
     def _toggled_floor(self):
         self._scene.view_floor = self._floor_action.isChecked()
+        
+    def _create_color_scheme_menu(self):
+        menu = self._menu_bar.addMenu("Color scheme")
+        action_group = QtGui.QActionGroup(self, exclusive=True)
+        self._color_scheme_menu_actions = {}
+        index = 1
+        for name, scheme in color_schemes.iteritems():
+            action = QtGui.QAction(name, action_group)
+            action.setData(name)
+            action.setCheckable(True)
+            action.setShortcut(str(index))
+            action_group.addAction(action)
+            self._color_scheme_menu_actions[name] = action
+            index += 1
+        action_group.triggered.connect(
+            lambda: self._changed_color_scheme(action_group.checkedAction()))
+        menu.addActions(action_group.actions())
+
+    def _set_color_scheme(self, scheme_name, caused_by_menu=False):
+        self.color_scheme = color_schemes[scheme_name]
+        if not caused_by_menu:
+            self._color_scheme_menu_actions[scheme_name].setChecked(True)
+
+    def _changed_color_scheme(self, checked_action):
+        scheme_name = str(checked_action.data().toString())
+        self._set_color_scheme(scheme_name, caused_by_menu=True)
 
     def _refresh(self):
         self._now = self._stopwatch.get_elapsed_time()

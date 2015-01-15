@@ -20,12 +20,12 @@ class Scene(BaseScene):
             self._camera_movement.proceed(self.parent().time_increment)
 
     def draw_input(self, vertices):
-        glColor3f(0, 1, 0)
+        glColor3f(*self._parent.color_scheme["input"])
         self._draw_vertices(vertices)
 
     def draw_output(self, vertices):
         self._update_camera_translation(vertices)
-        glColor3f(0, 0, 0)
+        glColor3f(*self._parent.color_scheme["output"])
         self._draw_vertices(vertices)
 
     def _draw_vertices(self, vertices):
