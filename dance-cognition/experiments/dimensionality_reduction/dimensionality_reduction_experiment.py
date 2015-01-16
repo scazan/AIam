@@ -23,6 +23,7 @@ class DimensionalityReductionExperiment(Experiment):
                                      modes.IMPROVISE,
                                      modes.EXPLORE],
                             default=modes.FOLLOW)
+        parser.add_argument("--max-novelty", type=float, default=1.)
         parser.add_argument("--plot-velocity")
         parser.add_argument("--analyze-components", action="store_true")
         parser.add_argument("--analyze-accuracy", action="store_true")
@@ -244,10 +245,10 @@ class Improviser:
 
     def _generate_path(self):
         return self.experiment.navigator.generate_path(
-            departure=self._departure(),
-            num_segments=self.params.num_segments,
-            novelty=self.params.novelty,
-            preferred_distance=self.params.preferred_distance)
+            departure = self._departure(),
+            num_segments = self.params.num_segments,
+            novelty = self.params.novelty * self.experiment.args.max_novelty,
+            preferred_distance = self.params.preferred_distance)
 
     def _departure(self):
         if self.experiment.reduction is None:
