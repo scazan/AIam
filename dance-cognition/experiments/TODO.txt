@@ -1,6 +1,8 @@
-add logo to web UI
-
-web UI access via internet (rather than local wifi)?
+electrodome:
+  add logo (with link) to web UI
+  web UI error message on failed connection
+  web UI access via internet (rather than local wifi)?
+  better 3d experience of skeleton?
 
 parametrize 0.3 in navigator.py
 
