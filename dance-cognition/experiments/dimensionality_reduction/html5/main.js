@@ -45,7 +45,6 @@ function setUpSlider(name, min, max) {
 	step: 0.001,
 	value: (min + max) / 2,
 	orientation: "horizontal",
-	//animate: true,
 	range:"min",
 	slide: function(event, ui) {
             if (event.originalEvent) {
