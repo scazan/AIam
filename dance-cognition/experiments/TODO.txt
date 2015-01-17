@@ -1,4 +1,5 @@
 electrodome:
+  increase max speed in UI
   web UI access via internet (rather than local wifi)?
   better 3d experience of skeleton?
 
