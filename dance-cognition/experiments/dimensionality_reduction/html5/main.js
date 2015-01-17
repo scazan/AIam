@@ -38,15 +38,15 @@ function getQueryStringParameter(name, defaultValue) {
     return results == null ? defaultValue : decodeURIComponent(results[1].replace(/\+/g, " "));
 }
 
-function setUpSlider(name, min, max, value) {
+function setUpSlider(name, min, max) {
     $("#slider_" + name).slider({
 	min: min,
 	max: max,
 	step: 0.001,
-    value: value,
-    orientation: "horizontal",
-    //animate: true,
-    range:"min",
+	value: (min + max) / 2,
+	orientation: "horizontal",
+	//animate: true,
+	range:"min",
 	slide: function(event, ui) {
             if (event.originalEvent) {
 		client.sendEvent(new Event("PARAMETER", new PyDict({
@@ -65,8 +65,8 @@ function applyStylesheet() {
 
 $(function() {
     applyStylesheet();
-    setUpSlider("novelty", 0, 1, .5);
-    setUpSlider("preferred_distance", 0, 2, 1);
-    setUpSlider("velocity", 0.1, 0.9, 0.5);
+    setUpSlider("novelty", 0, 1);
+    setUpSlider("preferred_distance", 0, 2);
+    setUpSlider("velocity", 0.1, 0.9);
     connectToBackend();
 });
