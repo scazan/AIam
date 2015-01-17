@@ -1,11 +1,18 @@
 var client;
+var errorMessages = "";
 
 function connectToBackend() {
     var host = getQueryStringParameter("host", "localhost");
     var port = getQueryStringParameter("port", "15001");
     var backendURL = "ws://" + host + ":" + port + "/aiam";
 
-    client = new WebsocketClient(backendURL, handleEvent);
+    client = new WebsocketClient(
+	backendURL, handleConnected, handleEvent, handleWebsocketError);
+}
+
+function handleConnected() {
+    $("#logo").css("display", "inline");
+    $("#error").css("display", "none");
 }
 
 function handleEvent(event) {
@@ -15,6 +22,13 @@ function handleEvent(event) {
 	    slider.slider("value", event.content.value);
 	}
     }
+}
+
+function handleWebsocketError(errorMessage) {
+    errorMessages += errorMessage + "<br>";
+    $("#logo").css("display", "none");
+    $("#error").html(errorMessages);
+    $("#error").css("display", "inline");
 }
 
 function getQueryStringParameter(name, defaultValue) {

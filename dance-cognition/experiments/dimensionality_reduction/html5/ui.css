@@ -63,6 +63,16 @@ body{
     position: relative;
 }
 
+#logo {
+    display: none;
+}
+
+#error {
+    display: none;
+}
+
+
+
 .ui-corner-all{
 	border-radius: 11px;
 }
