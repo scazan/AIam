@@ -30,7 +30,7 @@ class Scene(BaseScene):
 
     def _draw_vertices(self, vertices):
         edges = self.bvh_reader.vertices_to_edges(vertices)
-        glLineWidth(2.0)
+        glLineWidth(3.0)
         for edge in edges:
             self._draw_line(edge.v1, edge.v2)
 
