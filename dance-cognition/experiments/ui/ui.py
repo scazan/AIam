@@ -67,12 +67,12 @@ class BaseScene(QtOpenGL.QGLWidget):
 
     def render(self):
         self.configure_3d_projection(-100, 0)
-        self._draw_io(self.processed_input, self.draw_input, self.args.input_y_offset)
-        self._draw_io(self.processed_output, self.draw_output, self.args.output_y_offset)
         if self.view_floor:
             self._draw_floor()
         if self._parent.focus_action.isChecked():
             self._draw_focus()
+        self._draw_io(self.processed_input, self.draw_input, self.args.input_y_offset)
+        self._draw_io(self.processed_output, self.draw_output, self.args.output_y_offset)
 
     def _draw_io(self, value, rendering_method, y_offset):
         glPushMatrix()
@@ -159,21 +159,44 @@ class BaseScene(QtOpenGL.QGLWidget):
         z2 = GRID_SIZE/2
         x1 = -GRID_SIZE/2
         x2 = GRID_SIZE/2
+        self._camera_x = self._camera_position[0]
+        self._camera_z = self._camera_position[2]
+        color_r = self._parent.color_scheme["floor"][0]
+        color_g = self._parent.color_scheme["floor"][1]
+        color_b = self._parent.color_scheme["floor"][2]
+        color_a = self._parent.color_scheme["floor"][3]
 
         glLineWidth(3.0)
-        glColor4f(*self._parent.color_scheme["floor"])
 
         for n in range(GRID_NUM_CELLS):
             glBegin(GL_LINES)
             x = x1 + float(n) / GRID_NUM_CELLS * GRID_SIZE
+            color_a1 = color_a * (1 - abs(x - self._camera_x) / GRID_SIZE)
+
+            glColor4f(color_r, color_g, color_b, 0)
             glVertex3f(x, y, z1)
+            glColor4f(color_r, color_g, color_b, color_a1)
+            glVertex3f(x, y, self._camera_z)
+
+            glColor4f(color_r, color_g, color_b, color_a1)
+            glVertex3f(x, y, self._camera_z)
+            glColor4f(color_r, color_g, color_b, 0)
             glVertex3f(x, y, z2)
             glEnd()
 
         for n in range(GRID_NUM_CELLS):
             glBegin(GL_LINES)
             z = z1 + float(n) / GRID_NUM_CELLS * GRID_SIZE
+            color_a1 = color_a * (1 - abs(z - self._camera_z) / GRID_SIZE)
+
+            glColor4f(color_r, color_g, color_b, 0)
             glVertex3f(x1, y, z)
+            glColor4f(color_r, color_g, color_b, color_a1)
+            glVertex3f(self._camera_x, y, z)
+
+            glColor4f(color_r, color_g, color_b, color_a1)
+            glVertex3f(self._camera_x, y, z)
+            glColor4f(color_r, color_g, color_b, 0)
             glVertex3f(x2, y, z)
             glEnd()
 
