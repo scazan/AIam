@@ -271,6 +271,7 @@ class MainWindow(QtGui.QWidget, EventListener):
         parser.add_argument("--width", dest="preferred_width", type=int, default=1000)
         parser.add_argument("--height", dest="preferred_height", type=int, default=720)
         parser.add_argument("--no-toolbar", action="store_true")
+        parser.add_argument("--fullscreen", action="store_true")
 
     def __init__(self, client, entity, student, bvh_reader, scene_widget_class, toolbar_class, args):
         self.client = client
@@ -317,6 +318,9 @@ class MainWindow(QtGui.QWidget, EventListener):
         self._frame_count = 0
         if self.args.show_fps:
             self._fps_meter = FpsMeter()
+
+        if self.args.fullscreen:
+            self._fullscreen_action.toggle()
 
         client.set_event_listener(self)
 
@@ -492,8 +496,13 @@ class MainWindow(QtGui.QWidget, EventListener):
         self._frame_count += 1
 
     def keyPressEvent(self, event):
-        self._scene.keyPressEvent(event)
-        QtGui.QWidget.keyPressEvent(self, event)
+        key = event.key()
+        if key == QtCore.Qt.Key_Escape:
+            if self._fullscreen_action.isChecked():
+                self._fullscreen_action.toggle()
+        else:            
+            self._scene.keyPressEvent(event)
+            QtGui.QWidget.keyPressEvent(self, event)
 
     def customEvent(self, custom_qt_event):
         custom_qt_event.callback()
