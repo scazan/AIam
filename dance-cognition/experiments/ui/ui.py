@@ -166,7 +166,7 @@ class BaseScene(QtOpenGL.QGLWidget):
         color_b = self._parent.color_scheme["floor"][2]
         color_a = self._parent.color_scheme["floor"][3]
 
-        glLineWidth(3.0)
+        glLineWidth(1.4)
 
         for n in range(GRID_NUM_CELLS):
             glBegin(GL_LINES)
