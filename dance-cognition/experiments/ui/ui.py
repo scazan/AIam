@@ -272,6 +272,7 @@ class MainWindow(QtGui.QWidget, EventListener):
         parser.add_argument("--height", dest="preferred_height", type=int, default=720)
         parser.add_argument("--no-toolbar", action="store_true")
         parser.add_argument("--fullscreen", action="store_true")
+        parser.add_argument("--color-scheme", default="white")
 
     def __init__(self, client, entity, student, bvh_reader, scene_widget_class, toolbar_class, args):
         self.client = client
@@ -312,7 +313,7 @@ class MainWindow(QtGui.QWidget, EventListener):
         self.outer_vertical_layout.addLayout(inner_horizontal_layout)
         self.setLayout(self.outer_vertical_layout)
 
-        self._set_color_scheme("white")
+        self._set_color_scheme(self.args.color_scheme)
         self.time_increment = 0
         self._stopwatch = Stopwatch()
         self._frame_count = 0
