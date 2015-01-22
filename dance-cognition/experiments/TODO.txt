@@ -1,5 +1,4 @@
 electrodome:
-  more interesting default improvisation parameters
   validate usb tethering for internet access on laptop
   fullscreen in separate display?
   web UI access via internet (rather than local wifi)?

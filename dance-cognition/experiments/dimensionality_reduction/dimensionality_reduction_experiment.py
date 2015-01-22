@@ -217,9 +217,9 @@ class DimensionalityReductionExperiment(Experiment):
 class ImproviserParameters(Parameters):
     def __init__(self):
         Parameters.__init__(self)
-        self.add_parameter("novelty", type=float, default=0,
+        self.add_parameter("novelty", type=float, default=.5,
                            choices=ParameterFloatRange(0., 1.))
-        self.add_parameter("preferred_distance", type=float, default=0.5,
+        self.add_parameter("preferred_distance", type=float, default=1.,
                            choices=ParameterFloatRange(0., 2.))
         self.add_parameter("num_segments", type=int, default=10)
         self.add_parameter("resolution", type=int, default=100)
