@@ -83,7 +83,10 @@ class BaseScene(QtOpenGL.QGLWidget):
         glColor4f(1, 1, 1, 1)
         glEnable(GL_TEXTURE_2D)
         glPushMatrix()
-        glTranslatef(self.width - self._image.width() * self.args.image_scale, 0, 0)
+        glTranslatef(
+            self.width - self._image.width() * self.args.image_scale - self.args.image_margin,
+            self.args.image_margin,
+            0)
         glScalef(self.args.image_scale, self.args.image_scale, 1)
         self.drawTexture(QtCore.QPointF(0, 0), self._image_texture)
         glPopMatrix()
@@ -325,6 +328,7 @@ class MainWindow(QtGui.QWidget, EventListener):
         parser.add_argument("--color-scheme", default="white")
         parser.add_argument("--image")
         parser.add_argument("--image-scale", type=float, default=1)
+        parser.add_argument("--image-margin", type=int, default=0)
 
     def __init__(self, client, entity, student, bvh_reader, scene_widget_class, toolbar_class, args):
         self.client = client
