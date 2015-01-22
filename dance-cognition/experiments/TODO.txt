@@ -1,7 +1,8 @@
 electrodome:
-  verify that can run with closed lid, uninterrupted by screen saver
   hide mouse in fullscreen mode
+  zoom in more
   more interesting default improvisation parameters
+  validate usb tethering for internet access on laptop
   fullscreen in separate display?
   web UI access via internet (rather than local wifi)?
   better 3d experience of skeleton?
