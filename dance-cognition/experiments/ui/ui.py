@@ -37,6 +37,8 @@ class BaseScene(QtOpenGL.QGLWidget):
         self.processed_input = None
         self.processed_output = None
         QtOpenGL.QGLWidget.__init__(self, parent)
+        if args.image:
+            self._image = QtGui.QImage(args.image)
         self.setMouseTracking(True)
 
     def _set_camera_from_arg(self, arg):
@@ -66,6 +68,8 @@ class BaseScene(QtOpenGL.QGLWidget):
             self._set_focus()
 
     def render(self):
+        if self.args.image:
+            self._render_image()
         self.configure_3d_projection(-100, 0)
         if self.view_floor:
             self._draw_floor()
@@ -73,6 +77,20 @@ class BaseScene(QtOpenGL.QGLWidget):
             self._draw_focus()
         self._draw_io(self.processed_input, self.draw_input, self.args.input_y_offset)
         self._draw_io(self.processed_output, self.draw_output, self.args.output_y_offset)
+
+    def _render_image(self):
+        self.configure_2d_projection()
+        glColor4f(1, 1, 1, 1)
+        glEnable(GL_TEXTURE_2D)
+        glPushMatrix()
+        glTranslatef(
+            self.width - self._image.width() * self.args.image_scale - self.args.image_margin,
+            self.args.image_margin,
+            0)
+        glScalef(self.args.image_scale, self.args.image_scale, 1)
+        self.drawTexture(QtCore.QPointF(0, 0), self._image_texture)
+        glPopMatrix()
+        glDisable(GL_TEXTURE_2D)
 
     def _draw_io(self, value, rendering_method, y_offset):
         glPushMatrix()
@@ -91,6 +109,8 @@ class BaseScene(QtOpenGL.QGLWidget):
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glutInit(sys.argv)
+        if self.args.image:
+            self._image_texture = self.bindTexture(self._image)
 
     def resizeGL(self, window_width, window_height):
         self.window_width = window_width
@@ -115,6 +135,12 @@ class BaseScene(QtOpenGL.QGLWidget):
         glLineWidth(1.0)
         glColor4f(*self._parent.color_scheme["unit_cube"])
         glutWireCube(2.0)
+
+    def configure_2d_projection(self):
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        glOrtho(0.0, self.width, self.height, 0.0, -1.0, 1.0)
+        glMatrixMode(GL_MODELVIEW)
 
     def configure_3d_projection(self, pixdx=0, pixdy=0):
         self.fovy = 45
@@ -300,6 +326,9 @@ class MainWindow(QtGui.QWidget, EventListener):
         parser.add_argument("--no-toolbar", action="store_true")
         parser.add_argument("--fullscreen", action="store_true")
         parser.add_argument("--color-scheme", default="white")
+        parser.add_argument("--image")
+        parser.add_argument("--image-scale", type=float, default=1)
+        parser.add_argument("--image-margin", type=int, default=0)
 
     def __init__(self, client, entity, student, bvh_reader, scene_widget_class, toolbar_class, args):
         self.client = client
