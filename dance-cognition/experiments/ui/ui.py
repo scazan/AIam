@@ -320,9 +320,13 @@ class MainWindow(QtGui.QWidget, EventListener):
             self._fps_meter = FpsMeter()
 
         if self.args.fullscreen:
+            self._give_keyboard_focus_to_fullscreen_window()
             self._fullscreen_action.toggle()
 
         client.set_event_listener(self)
+
+    def _give_keyboard_focus_to_fullscreen_window(self):
+        self.resizeEvent = lambda event: self.activateWindow()
 
     def received_event(self, event):
         callback = lambda: self.handle_event(event)

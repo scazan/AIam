@@ -2,7 +2,6 @@ electrodome:
   script for running
     with black color profile
   verify that can run with closed lid, uninterrupted by screen saver
-  leave fullscreen by escape key without having to click window first
   fullscreen in separate display?
   web UI access via internet (rather than local wifi)?
   better 3d experience of skeleton?
