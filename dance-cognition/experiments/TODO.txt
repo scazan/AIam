@@ -1,5 +1,4 @@
 electrodome:
-  hide mouse in fullscreen mode
   zoom in more
   more interesting default improvisation parameters
   validate usb tethering for internet access on laptop

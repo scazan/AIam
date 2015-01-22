@@ -423,8 +423,10 @@ class MainWindow(QtGui.QWidget, EventListener):
 
     def _toggled_fullscreen(self):
         if self._fullscreen_action.isChecked():
+            self.setCursor(QtCore.Qt.BlankCursor)
             self.showFullScreen()
         else:
+            self.setCursor(QtCore.Qt.ArrowCursor)
             self.showNormal()
 
     def _add_follow_action(self):
