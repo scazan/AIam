@@ -14,7 +14,7 @@ color_schemes["white"] = {
 color_schemes["black"] = {
     "background": (0.0, 0.0, 0.0, 0.0),
     "unit_cube": (1, 1, 1, 0.2),
-    "floor": (1, 1, 1, 0.05),
+    "floor": (1, 1, 1, 0.3),
     "focus": (1, 1, 1, 0.2),
     "input": (0, 1, 0),
     "output": (1, 1, 1),
