@@ -1,5 +1,6 @@
 electrodome:
   validate usb tethering for internet access on laptop
+  eliminate ugly floor horizon? (e.g. by applying a gradient)
   logo in corner?
   fullscreen in separate display?
   web UI access via internet (rather than local wifi)?
