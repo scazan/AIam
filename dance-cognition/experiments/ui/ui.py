@@ -67,12 +67,12 @@ class BaseScene(QtOpenGL.QGLWidget):
 
     def render(self):
         self.configure_3d_projection(-100, 0)
-        self._draw_io(self.processed_input, self.draw_input, self.args.input_y_offset)
-        self._draw_io(self.processed_output, self.draw_output, self.args.output_y_offset)
         if self.view_floor:
             self._draw_floor()
         if self._parent.focus_action.isChecked():
             self._draw_focus()
+        self._draw_io(self.processed_input, self.draw_input, self.args.input_y_offset)
+        self._draw_io(self.processed_output, self.draw_output, self.args.output_y_offset)
 
     def _draw_io(self, value, rendering_method, y_offset):
         glPushMatrix()
