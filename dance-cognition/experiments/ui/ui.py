@@ -159,21 +159,44 @@ class BaseScene(QtOpenGL.QGLWidget):
         z2 = GRID_SIZE/2
         x1 = -GRID_SIZE/2
         x2 = GRID_SIZE/2
+        self._camera_x = self._camera_position[0]
+        self._camera_z = self._camera_position[2]
+        color_r = self._parent.color_scheme["floor"][0]
+        color_g = self._parent.color_scheme["floor"][1]
+        color_b = self._parent.color_scheme["floor"][2]
+        color_a = self._parent.color_scheme["floor"][3]
 
         glLineWidth(1.0)
-        glColor4f(*self._parent.color_scheme["floor"])
 
         for n in range(GRID_NUM_CELLS):
             glBegin(GL_LINES)
             x = x1 + float(n) / GRID_NUM_CELLS * GRID_SIZE
+            color_a1 = color_a * (1 - abs(x - self._camera_x) / GRID_SIZE)
+
+            glColor4f(color_r, color_g, color_b, 0)
             glVertex3f(x, y, z1)
+            glColor4f(color_r, color_g, color_b, color_a1)
+            glVertex3f(x, y, self._camera_z)
+
+            glColor4f(color_r, color_g, color_b, color_a1)
+            glVertex3f(x, y, self._camera_z)
+            glColor4f(color_r, color_g, color_b, 0)
             glVertex3f(x, y, z2)
             glEnd()
 
         for n in range(GRID_NUM_CELLS):
             glBegin(GL_LINES)
             z = z1 + float(n) / GRID_NUM_CELLS * GRID_SIZE
+            color_a1 = color_a * (1 - abs(z - self._camera_z) / GRID_SIZE)
+
+            glColor4f(color_r, color_g, color_b, 0)
             glVertex3f(x1, y, z)
+            glColor4f(color_r, color_g, color_b, color_a1)
+            glVertex3f(self._camera_x, y, z)
+
+            glColor4f(color_r, color_g, color_b, color_a1)
+            glVertex3f(self._camera_x, y, z)
+            glColor4f(color_r, color_g, color_b, 0)
             glVertex3f(x2, y, z)
             glEnd()
 
