@@ -10,11 +10,12 @@ class Scene(BaseScene):
         if self._camera_translation is not None:
             return self._camera_translation
         else:
-            return numpy.zeros(3)
+            return numpy.zeros(2)
 
     def _update_camera_translation(self, vertices):
         if self._camera_translation is None:
-            self._camera_translation = -vertices[0]
+            root_vertex = vertices[0]
+            self._camera_translation = numpy.array([-root_vertex[0], -root_vertex[2]])
         elif self._camera_movement and self._camera_movement.is_active():
             self._camera_translation = self._camera_movement.translation()
             self._camera_movement.proceed(self.parent().time_increment)
@@ -47,4 +48,4 @@ class Scene(BaseScene):
 
     def central_output_position(self, output):
         root_vertex = output[0]
-        return numpy.array([root_vertex[0], 0, root_vertex[2]])
+        return numpy.array([root_vertex[0], root_vertex[2]])

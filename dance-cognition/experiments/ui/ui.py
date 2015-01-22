@@ -15,9 +15,9 @@ from color_schemes import *
 TOOLBAR_WIDTH = 400
 SLIDER_PRECISION = 1000
 CIRCLE_PRECISION = 100
-CAMERA_Y_SPEED = .1
-CAMERA_KEY_SPEED = .5
-CAMERA_DRAG_SPEED = .5
+CAMERA_Y_SPEED = .01
+CAMERA_KEY_SPEED = .1
+CAMERA_DRAG_SPEED = .1
 FOCUS_RADIUS = 1.
 
 class BaseScene(QtOpenGL.QGLWidget):
@@ -139,10 +139,14 @@ class BaseScene(QtOpenGL.QGLWidget):
 
         glRotatef(self._camera_x_orientation, 1.0, 0.0, 0.0)
         glRotatef(self._camera_y_orientation, 0.0, 1.0, 0.0)
-        glTranslatef(*(self.camera_translation() + self._camera_position))
+        camera_translation = self.camera_translation()
+        translate_x = self._camera_position[0] + camera_translation[0]
+        translate_y = self._camera_position[1]
+        translate_z = self._camera_position[2] + camera_translation[1]
+        glTranslatef(translate_x, translate_y, translate_z)
 
     def camera_translation(self):
-        return numpy.zeros(3)
+        return numpy.zeros(2)
 
     def centralize_output(self):
         pass
@@ -176,15 +180,15 @@ class BaseScene(QtOpenGL.QGLWidget):
     def _draw_focus(self):
         glLineWidth(1.0)
         glColor4f(*self._parent.color_scheme["focus"])
-        self._draw_circle(self._focus, FOCUS_RADIUS)
+        self._draw_circle_on_floor(self._focus, FOCUS_RADIUS)
 
-    def _draw_circle(self, center, radius):
-        y = center[1]
+    def _draw_circle_on_floor(self, center, radius):
+        y = 0
         glBegin(GL_LINE_STRIP)
         for i in range(CIRCLE_PRECISION):
             angle = math.pi * 2 * float(i) / (CIRCLE_PRECISION-1)
             x = center[0] + radius * math.cos(angle)
-            z = center[2] + radius * math.sin(angle)
+            z = center[1] + radius * math.sin(angle)
             glVertex3f(x, y, z)
         glEnd()
 
@@ -252,7 +256,7 @@ class BaseScene(QtOpenGL.QGLWidget):
         return self._parent.following_output()
 
     def central_output_position(self, output):
-        return numpy.zeros(3)
+        return numpy.zeros(2)
 
 class ExperimentToolbar(QtGui.QWidget):
     def __init__(self, parent, args):

@@ -1,5 +1,4 @@
 electrodome:
-  zoom in more
   more interesting default improvisation parameters
   validate usb tethering for internet access on laptop
   fullscreen in separate display?
