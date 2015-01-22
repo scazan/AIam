@@ -1,5 +1,6 @@
 electrodome:
   validate usb tethering for internet access on laptop
+  logo in corner?
   fullscreen in separate display?
   web UI access via internet (rather than local wifi)?
   better 3d experience of skeleton?
