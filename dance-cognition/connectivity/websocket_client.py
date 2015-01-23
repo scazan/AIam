@@ -6,12 +6,14 @@ import contextlib
 from tornado.stack_context import StackContext
 
 class WebsocketClient(ws4py.client.threadedclient.WebSocketClient):
-    def __init__(self, host):
+    def __init__(self, owner_name, host):
+        self._owner_name = owner_name
         address = "ws://%s:%s%s" % (host, WEBSOCKET_PORT, WEBSOCKET_APPLICATION)
         ws4py.client.threadedclient.WebSocketClient.__init__(self, address)
 
     def opened(self):
         print "connected to server"
+        self.send_event(Event(Event.REGISTER, self._owner_name))
 
     def closed(self, code, reason=None):
         print "connection to server was closed (code=%r reason=%r)" % (code, reason)
@@ -32,6 +34,8 @@ class WebsocketClient(ws4py.client.threadedclient.WebSocketClient):
         pass
 
     def send_event(self, event):
+        if event.source is None:
+            event.source = self._owner_name
         self.send(EventPacker.pack(event))
 
     def set_event_listener(self, event_listener):

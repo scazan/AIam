@@ -10,7 +10,8 @@ function serialize(event) {
 
     return {"py/Event": {
 	"type": event.type,
-	"content": content
+	"content": content,
+	"source": event.source
     }};
 }
 

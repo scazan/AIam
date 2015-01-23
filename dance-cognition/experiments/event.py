@@ -1,4 +1,5 @@
 class Event:
+    REGISTER = "REGISTER"
     SUBSCRIBE = "SUBSCRIBE"
     REGISTER_REMOTE_UI = "REGISTER_REMOTE_UI"
     START = "START"
@@ -21,7 +22,7 @@ class Event:
         self.source = None
 
     def __str__(self):
-        return "Event(%r, %r)" % (self.type, self.content)
+        return "Event(%r, %r, %r)" % (self.type, self.content, self.source)
 
     def __eq__(self, other):
         return self.type == other.type and self.content == other.content

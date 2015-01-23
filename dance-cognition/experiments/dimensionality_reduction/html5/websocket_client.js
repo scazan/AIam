@@ -1,10 +1,10 @@
-function WebsocketClient(address, handleConnected, handleEvent, handleError) {
+function WebsocketClient(ownerName, address, handleConnected, handleEvent, handleError) {
     this.ws = new WebSocket(address);
 
     this.ws.onopen = function(_event) {
 	console.log("WebSocket connection established");
-	var event = new Event("REGISTER_REMOTE_UI", []);
-	this.send(packEvent(event));
+	this.send(packEvent(new Event("REGISTER", ownerName)));
+	this.send(packEvent(new Event("REGISTER_REMOTE_UI", [])));
 	handleConnected();
     }
 
@@ -24,6 +24,7 @@ function WebsocketClient(address, handleConnected, handleEvent, handleError) {
     }
 
     this.sendEvent = function(event) {
+	event.source = ownerName;
 	this.ws.send(packEvent(event));
     }
 }

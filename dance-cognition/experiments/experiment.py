@@ -175,13 +175,14 @@ class Experiment(EventListener):
 
         if run_backend and run_ui:
             if self.args.websockets:
-                self._websocket_client = WebsocketClient(self.args.websocket_host)
+                self._websocket_client = WebsocketClient(
+                    "backend", self.args.websocket_host)
                 self._websocket_client.set_event_listener(self)
                 self._websocket_client.connect()
             self._server = self._create_single_process_server()
             self._set_up_timed_refresh()
             self._start_in_new_thread(self._server)
-            client = SingleProcessClient(self._server)
+            client = SingleProcessClient("backend", self._server)
             self.run_ui(client)
         elif run_ui and not run_backend:
             client = WebsocketClient(self.args.backend_host)

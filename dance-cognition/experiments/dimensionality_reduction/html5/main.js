@@ -1,13 +1,19 @@
 var client;
 var errorMessages = "";
+var clientName;
 
 function connectToBackend() {
     var host = getQueryStringParameter("host", "localhost");
     var port = getQueryStringParameter("port", "15001");
     var backendURL = "ws://" + host + ":" + port + "/aiam";
 
+    clientName = createUniqueName();
     client = new WebsocketClient(
-	backendURL, handleConnected, handleEvent, handleWebsocketError);
+	clientName, backendURL, handleConnected, handleEvent, handleWebsocketError);
+}
+
+function createUniqueName() {
+    return "UI_" + new Date().getTime() + "_" + Math.floor(Math.random() * 10000000)
 }
 
 function handleConnected() {

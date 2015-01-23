@@ -31,7 +31,8 @@ class EventPacker:
             return {
                 "py/Event": {
                     "type": obj.type,
-                    "content": cls._serialize(obj.content)}}
+                    "content": cls._serialize(obj.content),
+                    "source": obj.source}}
         raise TypeError("Type %s not obj-serializable" % type(obj))
 
     @classmethod
@@ -52,7 +53,9 @@ class EventPacker:
 
         try:
             data = obj["py/Event"]
-            return Event(data["type"], cls._restore(data["content"]))
+            event = Event(data["type"], cls._restore(data["content"]))
+            event.source = data["source"]
+            return event
         except KeyError:
             pass
 
