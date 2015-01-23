@@ -2,8 +2,6 @@ import tornado.web
 import tornado.ioloop
 import tornado.websocket
 from tornado.httpserver import HTTPServer
-from event import Event
-from event_packing import EventPacker
 
 WEBSOCKET_APPLICATION = "/aiam"
 WEBSOCKET_PORT = 15001
@@ -11,7 +9,6 @@ WEBSOCKET_PORT = 15001
 class ClientHandler(tornado.websocket.WebSocketHandler):
     def __init__(self, server, request, **kwargs):
         super(ClientHandler, self).__init__(server, request, **kwargs)
-        self.subscribed_events = []
         self._server = server
         server.client_handlers.add(self)
 
@@ -19,22 +16,12 @@ class ClientHandler(tornado.websocket.WebSocketHandler):
         self._server.client_handlers.remove(self)
         
     def on_message(self, message):
-        event = EventPacker.unpack(str(message))
-        self._handle_event(event)
-
-    def _handle_event(self, event):
-        if event.type == Event.SUBSCRIBE:
-            self.subscribed_events = event.content
-            self.registered()
-        else:
-            self.received_event(event, self)
+        self._broadcast_to_other_clients(message)
         
-    def send_event(self, event):
-        if event.type in self.subscribed_events:
-            self.write_message(EventPacker.pack(event))
-
-    def registered(self):
-        pass
+    def _broadcast_to_other_clients(self, message):
+        for handler in self._server.client_handlers:
+            if handler != self:
+                handler.write_message(message)
 
     def check_origin(self, origin):
         return True
@@ -52,6 +39,9 @@ class WebsocketServer(tornado.web.Application):
         self._listen(WEBSOCKET_PORT)
         self.client_handlers = set()
 
+    def set_event_listener(self, event_listener):
+        self._event_listener = event_listener
+
     def _listen(self, port, address="", **kwargs):
         self._server = HTTPServer(self, **kwargs)
         self._server.listen(port, address)
@@ -62,12 +52,3 @@ class WebsocketServer(tornado.web.Application):
     def stop(self):
         self._loop.stop()
         self._server.stop()
-
-    def add_periodic_callback(self, callback, callback_time):
-        periodic_callback = tornado.ioloop.PeriodicCallback(callback, callback_time, self._loop)
-        periodic_callback.start()
-
-    def client_subscribes_to(self, event_type):
-        for handler in self.client_handlers:
-            if event_type in handler.subscribed_events:
-                return True

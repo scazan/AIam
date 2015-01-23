@@ -12,7 +12,6 @@ from event import Event
 from event_listener import EventListener
 from bvh_writer import BvhWriter
 
-from connectivity.websocket_server import WebsocketServer, ClientHandler
 from connectivity.websocket_client import WebsocketClient
 from connectivity.single_process_server import SingleProcessServer
 from connectivity.single_process_client import SingleProcessClient
@@ -84,6 +83,7 @@ class Experiment(EventListener):
         parser.add_argument("--backend-host", default="localhost")
         parser.add_argument("--websockets", action="store_true",
                             help="Force websockets support (enabled automatically by --backend-only)")
+        parser.add_argument("--websocket-host", default="localhost")
         parser.add_argument("--show-fps", action="store_true")
         parser.add_argument("--output-receiver-host")
         parser.add_argument("--output-receiver-port", type=int, default=10000)
@@ -171,19 +171,15 @@ class Experiment(EventListener):
 
         if run_backend and run_ui:
             if self.args.websockets:
-                websocket_server = self._create_websocket_server()
-                self._start_in_new_thread(websocket_server)
-
+                self._websocket_client = WebsocketClient(self.args.websocket_host)
+                self._websocket_client.set_event_listener(self)
+                self._websocket_client.connect()
             self._server = self._create_single_process_server()
             self._set_up_timed_refresh()
             self._start_in_new_thread(self._server)
             client = SingleProcessClient(self._server)
             self.run_ui(client)
-        elif run_backend:
-            self._server = self._create_websocket_server()
-            self._set_up_timed_refresh()
-            self._server.start()
-        elif run_ui:
+        elif run_ui and not run_backend:
             client = WebsocketClient(self.args.backend_host)
             self.run_ui(client)
 
@@ -229,9 +225,17 @@ class Experiment(EventListener):
             self._send_output()
 
     def send_event_to_ui(self, event):
+        self._send_event_to_local_uis(event)
+        if event.type == Event.PARAMETER and self.args.websockets:
+            self._send_event_to_websocket_uis(event)
+
+    def _send_event_to_local_uis(self, event):
         for ui_handler in self._ui_handlers:
             if event.source is None or event.source != ui_handler:
                 ui_handler.send_event(event)
+
+    def _send_event_to_websocket_uis(self, event):
+        self._websocket_client.send_event(event)
 
     def current_time(self):
         return self.stopwatch.get_elapsed_time()
@@ -248,11 +252,6 @@ class Experiment(EventListener):
 
     def _create_single_process_server(self):
         return SingleProcessServer(SingleProcessUiHandler, experiment=self)
-
-    def _create_websocket_server(self):
-        server = WebsocketServer(WebsocketUiHandler, {"experiment": self})
-        print "websocket server ready"
-        return server
 
     def _set_up_timed_refresh(self):
         self._server.add_periodic_callback(
@@ -343,25 +342,6 @@ class SingleProcessUiHandler:
 
     def send_event(self, event):
         self._client.received_event(event)
-
-    def received_event(self, event, source):
-        event.source = source
-        self._experiment.handle_event(event)
-
-class WebsocketUiHandler(ClientHandler):
-    def __init__(self, *args, **kwargs):
-        print "UI connected"
-        self._experiment = kwargs.pop("experiment")
-        super(WebsocketUiHandler, self).__init__(*args, **kwargs)
-
-    def registered(self):
-        print "UI registered"
-        self._experiment.ui_connected(self)
-
-    def on_close(self):
-        print "UI disconnected"
-        super(WebsocketUiHandler, self).on_close()
-        self._experiment.ui_disconnected(self)
 
     def received_event(self, event, source):
         event.source = source
