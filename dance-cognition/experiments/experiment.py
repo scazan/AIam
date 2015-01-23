@@ -182,7 +182,7 @@ class Experiment(EventListener):
             self._server = self._create_single_process_server()
             self._set_up_timed_refresh()
             self._start_in_new_thread(self._server)
-            client = SingleProcessClient("backend", self._server)
+            client = SingleProcessClient(self._server)
             self.run_ui(client)
         elif run_ui and not run_backend:
             client = WebsocketClient(self.args.backend_host)
@@ -348,6 +348,5 @@ class SingleProcessUiHandler:
     def send_event(self, event):
         self._client.received_event(event)
 
-    def received_event(self, event, source):
-        event.source = source
+    def received_event(self, event):
         self._experiment.handle_event(event)
