@@ -1,4 +1,6 @@
 electrodome:
+  web portal
+    link to web questinonaire?
   validate usb tethering for internet access on laptop
   fullscreen in separate display?
   web UI access via internet (rather than local wifi)?
