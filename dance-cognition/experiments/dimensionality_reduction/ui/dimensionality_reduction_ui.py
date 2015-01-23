@@ -167,12 +167,15 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._improvise_tab_layout = QtGui.QVBoxLayout()
         self._improviser_params = ImproviserParameters()
         self.parent().add_event_handler(Event.PARAMETER, self._received_parameter)
-        self._improviser_params.add_notifier(self.parent().client)
+        self._improviser_params.add_listener(self)
         self._improviser_params_form = self.add_parameter_fields(
             self._improviser_params, self._improvise_tab_layout)
         self.improvise_tab.setLayout(self._improvise_tab_layout)
         self.tabs.addTab(self.improvise_tab, "Improvise")
         self._mode_tabs[modes.IMPROVISE] = self.improvise_tab
+
+    def parameter_changed(self, parameter):
+        self.parent().client.send_event(parameter.get_event())
 
     def _received_parameter(self, event):
         self._improviser_params.handle_event(event)

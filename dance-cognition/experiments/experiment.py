@@ -157,6 +157,10 @@ class Experiment(EventListener):
         self.add_event_handler(
             Event.SET_CURSOR,
             lambda event: self.entity.set_cursor(event.content))
+        self.add_event_handler(Event.REGISTER_REMOTE_UI, self.handle_new_remote_ui)
+
+    def handle_new_remote_ui(self, event):
+        pass
 
     def add_ui_parser_arguments(self, parser):
         from ui.ui import MainWindow
@@ -227,14 +231,14 @@ class Experiment(EventListener):
     def send_event_to_ui(self, event):
         self._send_event_to_local_uis(event)
         if event.type == Event.PARAMETER and self.args.websockets:
-            self._send_event_to_websocket_uis(event)
+            self._send_event_to_remote_uis(event)
 
     def _send_event_to_local_uis(self, event):
         for ui_handler in self._ui_handlers:
             if event.source is None or event.source != ui_handler:
                 ui_handler.send_event(event)
 
-    def _send_event_to_websocket_uis(self, event):
+    def _send_event_to_remote_uis(self, event):
         self._websocket_client.send_event(event)
 
     def current_time(self):

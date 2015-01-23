@@ -17,6 +17,12 @@ class Parameter:
         if notify:
             self._parameters.notify_changed(self)
 
+    def get_event(self):
+        return Event(
+            Event.PARAMETER,
+            {"name": self.name,
+             "value": self.value()})
+
     def __repr__(self):
         return "Parameter(name=%s, type=%s, default=%s, choices=%s)" % (
             self.name, self.type, self.default, self.choices)
@@ -25,13 +31,13 @@ class Parameters:
     def __init__(self):
         self._parameters = []
         self._parameters_by_name = {}
-        self._notifiers = set()
+        self._listeners = set()
 
-    def add_notifier(self, notifier):
-        self._notifiers.add(notifier)
+    def add_listener(self, listener):
+        self._listeners.add(listener)
 
-    def remove_notifier(self, notifier):
-        self._notifiers.remove(notifier)
+    def remove_listener(self, listener):
+        self._listeners.remove(listener)
 
     def add_parameter(self, *args, **kwargs):
         parameter = Parameter(self, *args, **kwargs)
@@ -48,11 +54,8 @@ class Parameters:
         return self._parameters.__iter__()
 
     def notify_changed(self, parameter):
-        for notifier in self._notifiers:
-            notifier.send_event(Event(
-                    Event.PARAMETER,
-                    {"name": parameter.name,
-                     "value": parameter.value()}))
+        for listener in self._listeners:
+            listener.parameter_changed(parameter)
 
     def notify_changed_all(self):
         for parameter in self._parameters:

@@ -3,7 +3,7 @@ function WebsocketClient(address, handleConnected, handleEvent, handleError) {
 
     this.ws.onopen = function(_event) {
 	console.log("WebSocket connection established");
-	var event = new Event("SUBSCRIBE", ["PARAMETER"]);
+	var event = new Event("REGISTER_REMOTE_UI", []);
 	this.send(packEvent(event));
 	handleConnected();
     }

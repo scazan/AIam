@@ -1,5 +1,6 @@
 class Event:
     SUBSCRIBE = "SUBSCRIBE"
+    REGISTER_REMOTE_UI = "REGISTER_REMOTE_UI"
     START = "START"
     STOP = "STOP"
     INPUT = "INPUT"

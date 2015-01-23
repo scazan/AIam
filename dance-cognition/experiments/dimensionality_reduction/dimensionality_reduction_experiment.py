@@ -44,12 +44,16 @@ class DimensionalityReductionExperiment(Experiment):
         handler.send_event(Event(Event.MODE, self._mode))
         if self.reduction is not None:
             handler.send_event(Event(Event.REDUCTION, self.reduction))
-        self._improviser_params.add_notifier(handler)
+        handler.params_notifier = LocalParamsNotifier(handler)
+        self._improviser_params.add_listener(handler.params_notifier)
         self._improviser_params.notify_changed_all()
 
     def ui_disconnected(self, handler):
         Experiment.ui_disconnected(self, handler)
-        self._improviser_params.remove_notifier(handler)
+        self._improviser_params.remove_listener(handler.params_notifier)
+
+    def handle_new_remote_ui(self, event):
+        self._improviser_params.notify_changed_all()
 
     def _handle_mode_event(self, event):
         self._mode = event.content
@@ -98,6 +102,7 @@ class DimensionalityReductionExperiment(Experiment):
                 self._training_data = load_training_data(self._training_data_path)
                 self.navigator = Navigator(map_points=self.student.normalized_observed_reductions)
                 self._improviser_params = ImproviserParameters()
+                self._improviser_params.add_listener(RemoteParamsNotifier(self))
                 self.add_event_handler(Event.PARAMETER, self._handle_parameter_event)
                 self._improviser = Improviser(
                     self, self._improviser_params,
@@ -228,6 +233,20 @@ class ImproviserParameters(Parameters):
         self.add_parameter("min_relative_velocity", type=float, default=.3,
                            choices=ParameterFloatRange(.001, 1.))
         self.add_parameter("dynamics", choices=["constant", "sine", "exponential"], default="sine")
+
+class LocalParamsNotifier:
+    def __init__(self, ui_handler):
+        self._ui_handler = ui_handler
+
+    def parameter_changed(self, parameter):
+        self._ui_handler.send_event(parameter.get_event())
+
+class RemoteParamsNotifier:
+    def __init__(self, experiment):
+        self._experiment = experiment
+
+    def parameter_changed(self, parameter):
+        self._experiment._send_event_to_remote_uis(parameter.get_event())
 
 class Improviser:
     def __init__(self, experiment, params, on_changed_path):
