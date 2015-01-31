@@ -1,10 +1,4 @@
-electrodome:
-  web portal
-    link to web questinonaire?
-  validate usb tethering for internet access on laptop
-  fullscreen in separate display?
-  web UI access via internet (rather than local wifi)?
-  better 3d experience of skeleton?
+prevent floor from disappearing when avatar moves a lot
 
 parametrize 0.3 in navigator.py
 
