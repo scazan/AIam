@@ -21,19 +21,30 @@ parser.add_argument("--segments-output")
 args = parser.parse_args()
 model = load_model(args.model)[0]
 
-segments = []
-segment = []
-previous_observation = None
+def split_observations_into_segments(observations, sensitivity):
+    segments = []
+    segment = []
+    previous_observation = None
+    for observation in observations:
+        if previous_observation is not None and \
+                numpy.linalg.norm(observation - previous_observation) > sensitivity:
+            segments.append(segment)
+            segment = []
+        segment.append(observation)
+        previous_observation = observation
+    return segments
+
+if args.split_sensitivity:
+    segments = split_observations_into_segments(
+        model.normalized_observed_reductions, args.split_sensitivity)
+else:
+    segments = [model.normalized_observed_reductions]
+
 out = open(args.output, "w")
-for observation in model.normalized_observed_reductions:
-    if previous_observation is not None and args.split_sensitivity and \
-            numpy.linalg.norm(observation - previous_observation) > args.split_sensitivity:
-        segments.append(segment)
-        segment = []
-        print >>out
-    segment.append(observation)
-    previous_observation = observation
-    print >>out, " ".join([str(value) for value in observation])
+for observations in segments:
+    for observation in observations:
+        print >>out, " ".join([str(value) for value in observation])
+    print >>out
 out.close()
 
 if args.segments_output:
