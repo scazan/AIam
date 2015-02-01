@@ -3,7 +3,7 @@ prevent floor from disappearing when avatar moves a lot
 parametrize 0.3 in navigator.py
 
 singular matrix exception:
-  rm scenes/valencia_all.bvh.quaternion.10fps.data && python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_all.bvh -training-data-frame-rate 10 -train -n 7 --translate --translation-weight 10
+  python dim_reduce.py hierarchical -r quaternion -bvh scenes/valencia_kinect/*.bvh -training-data-frame-rate 10 -train -n 7 --translate --translation-weight 10
 
 ensure that quaternion discontinuity problem (see README) cannot appear in real cases
   see tournier09.pdf

@@ -251,6 +251,25 @@ class Pose:
 class ScaleInfo:
     min_x = None
 
+    def update_with_vector(self, x, y, z):
+        if self.min_x is None:
+            self.min_x = self.max_x = x
+            self.min_y = self.max_y = y
+            self.min_z = self.max_z = z
+        else:
+            self.min_x = min(self.min_x, x)
+            self.min_y = min(self.min_y, y)
+            self.min_z = min(self.min_z, z)
+            self.max_x = max(self.max_x, x)
+            self.max_y = max(self.max_y, y)
+            self.max_z = max(self.max_z, z)
+
+    def update_scale_factor(self):
+        self.scale_factor = max([
+                self.max_x - self.min_x,
+                self.max_y - self.min_y,
+                self.max_z - self.min_z])
+
 class BvhReader(cgkit.bvh.BVHReader):
     def read(self):
         if self._cache_exists():
@@ -292,9 +311,10 @@ class BvhReader(cgkit.bvh.BVHReader):
         cgkit.bvh.BVHReader.read(self)
         self.hierarchy = Hierarchy(self._root_nood)
         self.num_joints = self.hierarchy.num_joints
+        self._duration = self.num_frames * self.frame_time
 
     def get_duration(self):
-        return self.num_frames * self.dt
+        return self._duration
 
     def set_pose_from_time(self, pose, t):
         frame_index = self._frame_index(t)
@@ -307,7 +327,7 @@ class BvhReader(cgkit.bvh.BVHReader):
         return self.hierarchy.create_pose()
 
     def _frame_index(self, t):
-        return int(t / self.dt) % self.num_frames
+        return int(t / self.frame_time) % self.num_frames
 
     def vertices_to_edges(self, vertices):
         edges = []
@@ -315,25 +335,13 @@ class BvhReader(cgkit.bvh.BVHReader):
             vertices, edges)
         return edges
 
-    def normalize_vector(self, v):
-        return array([
-            (v[0] - self._scale_info.min_x) / self._scale_info.scale_factor * 2 - 1,
-            (v[1] - self._scale_info.min_y) / self._scale_info.scale_factor * 2 - 1,
-            (v[2] - self._scale_info.min_z) / self._scale_info.scale_factor * 2 - 1])
-
-    def skeleton_scale_vector(self, v):
-        return array([
-            (v[0] + 1) / 2 * self._scale_info.scale_factor + self._scale_info.min_x,
-            (v[1] + 1) / 2 * self._scale_info.scale_factor + self._scale_info.min_y,
-            (v[2] + 1) / 2 * self._scale_info.scale_factor + self._scale_info.min_z])
-
     def onHierarchy(self, root_nood):
         self._root_nood = root_nood
         self.frames = []
 
-    def onMotion(self, num_frames, dt):
+    def onMotion(self, num_frames, frame_time):
         self.num_frames = num_frames
-        self.dt = dt
+        self.frame_time = frame_time
 
     def onFrame(self, values):
         self.frames.append(values)
@@ -346,25 +354,9 @@ class BvhReader(cgkit.bvh.BVHReader):
             self.hierarchy.set_pose_from_frame(pose, self.frames[n])
             vertices = pose.get_vertices()
             for vertex in vertices:
-                self._update_range_with_vector(*vertex[0:3])
-        self._scale_info.scale_factor = max([
-                self._scale_info.max_x - self._scale_info.min_x,
-                self._scale_info.max_y - self._scale_info.min_y,
-                self._scale_info.max_z - self._scale_info.min_z])
+                self._scale_info.update_with_vector(*vertex[0:3])
+        self._scale_info.update_scale_factor()
         print "ok"
-
-    def _update_range_with_vector(self, x, y, z):
-        if self._scale_info.min_x is None:
-            self._scale_info.min_x = self._scale_info.max_x = x
-            self._scale_info.min_y = self._scale_info.max_y = y
-            self._scale_info.min_z = self._scale_info.max_z = z
-        else:
-            self._scale_info.min_x = min(self._scale_info.min_x, x)
-            self._scale_info.min_y = min(self._scale_info.min_y, y)
-            self._scale_info.min_z = min(self._scale_info.min_z, z)
-            self._scale_info.max_x = max(self._scale_info.max_x, x)
-            self._scale_info.max_y = max(self._scale_info.max_y, y)
-            self._scale_info.max_z = max(self._scale_info.max_z, z)
 
     def _probe_static_rotations(self):
         print "probing static rotations..."

@@ -1,1 +1,1 @@
--entity point_joint -bvh scenes/valencia_all.bvh
+-entity point_joint -bvh scenes/valencia_kinect/*.bvh

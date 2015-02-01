@@ -1,1 +1,1 @@
--entity vertices -bvh scenes/valencia_all.bvh
+-entity vertices -bvh scenes/valencia_kinect/*.bvh

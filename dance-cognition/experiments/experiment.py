@@ -4,13 +4,14 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/..")
 
 from argparse import ArgumentParser
 from storage import *
-from bvh_reader import bvh_reader as bvh_reader_module
+from bvh_reader.bvh_collection import BvhCollection
 import imp
 from stopwatch import Stopwatch
 import threading
 from event import Event
 from event_listener import EventListener
 from bvh_writer import BvhWriter
+import glob
 
 from connectivity.websocket_server import WebsocketServer, ClientHandler
 from connectivity.websocket_client import WebsocketClient
@@ -126,9 +127,10 @@ class Experiment(EventListener):
 
         self.args = args
         if args.bvh:
-            self.bvh_reader = bvh_reader_module.BvhReader(args.bvh)
+            bvh_filenames = glob.glob(args.bvh)
+            self.bvh_reader = BvhCollection(bvh_filenames)
             self.bvh_reader.read()
-            self.bvh_writer = BvhWriter(self.bvh_reader.get_hierarchy(), self.bvh_reader.dt)
+            self.bvh_writer = BvhWriter(self.bvh_reader.get_hierarchy(), self.bvh_reader.get_frame_time())
             self.pose = self.bvh_reader.get_hierarchy().create_pose()
         else:
             self.bvh_reader = None

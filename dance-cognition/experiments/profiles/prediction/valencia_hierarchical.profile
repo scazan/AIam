@@ -1,1 +1,1 @@
--entity hierarchical -r quaternion -bvh scenes/valencia_all.bvh
+-entity hierarchical -r quaternion -bvh scenes/valencia_kinect/*.bvh
