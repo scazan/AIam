@@ -1,3 +1,6 @@
+perhaps training data for BVHs should use all motion frames by default, rather than sampling the BVH with a mandatory frame rate
+  see similar issue in plot_observations.py
+
 prevent floor from disappearing when avatar moves a lot
 
 parametrize 0.3 in navigator.py
