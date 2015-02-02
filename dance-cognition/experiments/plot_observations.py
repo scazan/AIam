@@ -20,30 +20,49 @@ parser.add_argument("--stroke-width", type=float, default=1)
 parser.add_argument("--plot-width", type=float, default=500)
 parser.add_argument("--plot-height", type=float, default=500)
 
-DimensionalityReductionExperiment.add_parser_arguments(parser)
-experiment = DimensionalityReductionExperiment(parser)
-experiment._load_model()
+class ObservationsPlotter:
+    def __init__(self, experiment):
+        self._experiment = experiment
+        self._args = experiment.args
 
-def split_observations_into_segments(observations, sensitivity):
-    segments = []
-    segment = []
-    previous_observation = None
-    for observation in observations:
-        if previous_observation is not None and \
-                numpy.linalg.norm(observation - previous_observation) > sensitivity:
+    def plot(self):
+        generator_class = eval("%sGenerator" % self._args.plot_type)
+
+        if self._args.output:
+            output_filename = self._args.output
+        else:
+            output_filename = generator_class.DEFAULT_FILENAME
+
+        observations = experiment.student.normalized_observed_reductions
+        if self._args.split_sensitivity:
+            segments = self._split_observations_into_segments(
+                observations, self._args.split_sensitivity)
+        else:
+            segments = [observations]
+
+        out = open(output_filename, "w")
+        generator = generator_class(out, self._args)
+        generator.generate(segments)
+        out.close()
+
+        print "Plotted %d observations in %d segments to file %s" % (
+            sum([len(segment) for segment in segments]),
+            len(segments), output_filename)
+
+    def _split_observations_into_segments(self, observations, sensitivity):
+        segments = []
+        segment = []
+        previous_observation = None
+        for observation in observations:
+            if previous_observation is not None and \
+                    numpy.linalg.norm(observation - previous_observation) > sensitivity:
+                segments.append(segment)
+                segment = []
+            segment.append(observation)
+            previous_observation = observation
+        if len(segment) > 0:
             segments.append(segment)
-            segment = []
-        segment.append(observation)
-        previous_observation = observation
-    if len(segment) > 0:
-        segments.append(segment)
-    return segments
-
-if experiment.args.split_sensitivity:
-    segments = split_observations_into_segments(
-        experiment.student.normalized_observed_reductions, experiment.args.split_sensitivity)
-else:
-    segments = [experiment.student.normalized_observed_reductions]
+        return segments
 
 class Generator:
     def __init__(self, out, args):
@@ -102,18 +121,10 @@ class svgGenerator(Generator):
     def _generate_footer(self):
         self._write('</svg>\n')
 
-generator_class = eval("%sGenerator" % experiment.args.plot_type)
 
-if experiment.args.output:
-    output_filename = experiment.args.output
-else:
-    output_filename = generator_class.DEFAULT_FILENAME
+DimensionalityReductionExperiment.add_parser_arguments(parser)
+experiment = DimensionalityReductionExperiment(parser)
+experiment._load_model()
+plotter = ObservationsPlotter(experiment)
+plotter.plot()
 
-out = open(output_filename, "w")
-generator = generator_class(out, experiment.args)
-generator.generate(segments)
-out.close()
-
-print "Plotted %d observations in %d segments to file %s" % (
-    sum([len(segment) for segment in segments]),
-    len(segments), output_filename)
