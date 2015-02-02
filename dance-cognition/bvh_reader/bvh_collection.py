@@ -16,14 +16,17 @@ class BvhCollection:
     def _read_bvhs(self):
         self._duration = 0
         frame_offset = 0
+        index = 0
         for reader in self._readers:
             reader.read()
+            reader.index = index
             reader.start_time = self._duration
             reader.end_time = self._duration + reader.get_duration()
             reader.start_index = frame_offset
             reader.end_index = frame_offset + reader.get_num_frames()
             self._duration += reader.get_duration()
             frame_offset += reader.get_num_frames()
+            index += 1
 
     def _set_scale_info(self):
         self._scale_info = bvh_reader.ScaleInfo()
@@ -45,11 +48,14 @@ class BvhCollection:
         return self._duration
 
     def set_pose_from_time(self, pose, t):
+        reader = self.get_reader_at_time(t)
+        reader.set_pose_from_time(pose, t - reader.start_time)
+
+    def get_reader_at_time(self, t):
         for reader in self._readers:
             if reader.start_time <= t and t < reader.end_time:
-                reader.set_pose_from_time(pose, t - reader.start_time)
-                return
-        raise Exception("set_pose_from_time failed for t=%s" % t)
+                return reader
+        raise Exception("get_reader_at_time failed for t=%s" % t)
 
     def normalize_vector(self, v):
         return array([

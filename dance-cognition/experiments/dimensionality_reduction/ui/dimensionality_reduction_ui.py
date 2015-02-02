@@ -21,6 +21,7 @@ class DimensionalityReductionMainWindow(MainWindow):
         self.add_event_handler(Event.IMPROVISER_PATH, self._set_improviser_path)
         self.add_event_handler(Event.VELOCITY, self._set_velocity)
         self.add_event_handler(Event.CURSOR, self._set_cursor)
+        self.add_event_handler(Event.BVH_INDEX, self._update_bvh_selector)
         self._add_toggleable_action(
             '&Plot reduction', self._start_plot_reduction,
             '&Stop plot', self._stop_plot_reduction,
@@ -70,6 +71,9 @@ class DimensionalityReductionMainWindow(MainWindow):
         if hasattr(self.toolbar, "cursor_slider"):
             self.toolbar.cursor_slider.setValue(event.content * SLIDER_PRECISION)
 
+    def _update_bvh_selector(self, event):
+        self.toolbar.bvh_selector.setCurrentIndex(event.content)
+
 class DimensionalityReductionToolbar(ExperimentToolbar):
     def __init__(self, *args):
         ExperimentToolbar.__init__(self, *args)
@@ -109,6 +113,8 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._follow_tab_layout = QtGui.QVBoxLayout()
         if hasattr(self.parent().entity, "get_duration"):
             self._add_cursor_slider()
+        if self.args.bvh:
+            self._add_bvh_selector()
         self._add_velocity_view()
         self._follow_tab_layout.addStretch(1)
         self.follow_tab.setLayout(self._follow_tab_layout)
@@ -122,6 +128,12 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self.cursor_slider.setValue(0.0)
         self.cursor_slider.valueChanged.connect(self._cursor_changed)
         self._follow_tab_layout.addWidget(self.cursor_slider)
+
+    def _add_bvh_selector(self):
+        self.bvh_selector = QtGui.QComboBox()
+        for bvh_reader in self.parent().entity.bvh_reader.get_readers():
+            self.bvh_selector.addItem(bvh_reader.filename)
+        self._follow_tab_layout.addWidget(self.bvh_selector)
 
     def _cursor_changed(self, value):
         self.parent().client.send_event(Event(

@@ -156,9 +156,10 @@ class Experiment(EventListener):
         self.add_event_handler(Event.STOP, self._stop)
         self.add_event_handler(Event.START_EXPORT_OUTPUT, self._start_export_output)
         self.add_event_handler(Event.STOP_EXPORT_OUTPUT, self._stop_export_output)
-        self.add_event_handler(
-            Event.SET_CURSOR,
-            lambda event: self.entity.set_cursor(event.content))
+        self.add_event_handler(Event.SET_CURSOR, self.update_cursor)
+
+    def update_cursor(self, event):
+        self.entity.set_cursor(event.content)
 
     def add_ui_parser_arguments(self, parser):
         from ui.ui import MainWindow

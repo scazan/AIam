@@ -175,9 +175,23 @@ class DimensionalityReductionExperiment(Experiment):
             self.send_event_to_ui(Event(
                     Event.CURSOR,
                     self.entity.get_cursor() / self.entity.get_duration()))
+            self._potentially_send_bvh_index_to_ui()
         elif self._mode == modes.IMPROVISE:
             self._improviser.proceed(self.time_increment)
 
+    def update_cursor(self, event):
+        Experiment.update_cursor(self, event)
+        self._potentially_send_bvh_index_to_ui()
+
+    def _potentially_send_bvh_index_to_ui(self):
+        if self.args.bvh:
+            bvh_index = self._get_current_bvh_index()
+            self.send_event_to_ui(Event(Event.BVH_INDEX, bvh_index))
+
+    def _get_current_bvh_index(self):
+        bvh_reader = self.bvh_reader.get_reader_at_time(self.entity.get_cursor())
+        return bvh_reader.index
+            
     def _follow(self):
         self.input = self.get_adapted_stimulus_value()
         next_reduction = self.student.transform(numpy.array([self.input]))[0]

@@ -13,6 +13,7 @@ class Event:
     VELOCITY = "VELOCITY"
     START_EXPORT_OUTPUT = "START_EXPORT_OUTPUT"
     STOP_EXPORT_OUTPUT = "STOP_EXPORT_OUTPUT"
+    BVH_INDEX = "BVH_INDEX"
 
     def __init__(self, type_, content=None):
         self.type = type_
