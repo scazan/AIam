@@ -311,10 +311,16 @@ class BvhReader(cgkit.bvh.BVHReader):
         cgkit.bvh.BVHReader.read(self)
         self.hierarchy = Hierarchy(self._root_nood)
         self.num_joints = self.hierarchy.num_joints
-        self._duration = self.num_frames * self.frame_time
+        self._duration = self._num_frames * self._frame_time
 
     def get_duration(self):
         return self._duration
+
+    def get_frame_time(self):
+        return self._frame_time
+
+    def get_num_frames(self):
+        return self._num_frames
 
     def set_pose_from_time(self, pose, t):
         frame_index = self._frame_index(t)
@@ -327,7 +333,7 @@ class BvhReader(cgkit.bvh.BVHReader):
         return self.hierarchy.create_pose()
 
     def _frame_index(self, t):
-        return int(t / self.frame_time) % self.num_frames
+        return int(t / self._frame_time) % self._num_frames
 
     def vertices_to_edges(self, vertices):
         edges = []
@@ -340,8 +346,8 @@ class BvhReader(cgkit.bvh.BVHReader):
         self.frames = []
 
     def onMotion(self, num_frames, frame_time):
-        self.num_frames = num_frames
-        self.frame_time = frame_time
+        self._num_frames = num_frames
+        self._frame_time = frame_time
 
     def onFrame(self, values):
         self.frames.append(values)
@@ -350,7 +356,7 @@ class BvhReader(cgkit.bvh.BVHReader):
         print "probing BVH vertex range..."
         self._scale_info = ScaleInfo()
         pose = self.hierarchy.create_pose()
-        for n in range(self.num_frames):
+        for n in range(self._num_frames):
             self.hierarchy.set_pose_from_frame(pose, self.frames[n])
             vertices = pose.get_vertices()
             for vertex in vertices:
@@ -362,7 +368,7 @@ class BvhReader(cgkit.bvh.BVHReader):
         print "probing static rotations..."
         self._unique_rotations = defaultdict(set)
         pose = self.hierarchy.create_pose()
-        for n in range(self.num_frames):
+        for n in range(self._num_frames):
             self.hierarchy.set_pose_from_frame(pose, self.frames[n])
             root_joint = pose.get_root_joint()
             self._process_static_rotations_recurse(root_joint)

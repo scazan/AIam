@@ -33,12 +33,9 @@ class ObservationsPlotter:
         else:
             output_filename = generator_class.DEFAULT_FILENAME
 
-        observations = experiment.student.normalized_observed_reductions
+        segments = self._get_segments_from_bvhs()
         if self._args.split_sensitivity:
-            segments = self._split_observations_into_segments(
-                observations, self._args.split_sensitivity)
-        else:
-            segments = [observations]
+            segments = self._split_segments_by_sensitivity(segments)
 
         out = open(output_filename, "w")
         generator = generator_class(out, self._args)
@@ -49,13 +46,27 @@ class ObservationsPlotter:
             sum([len(segment) for segment in segments]),
             len(segments), output_filename)
 
-    def _split_observations_into_segments(self, observations, sensitivity):
+    def _get_segments_from_bvhs(self):
+        return [self._get_observations_from_bvh(bvh_reader)
+                for bvh_reader in experiment.bvh_reader.get_readers()]
+
+    def _get_observations_from_bvh(self, bvh_reader):
+        return self._experiment.student.normalized_observed_reductions[
+            bvh_reader.start_index : bvh_reader.end_index]
+
+    def _split_segments_by_sensitivity(self, segments):
+        result = []
+        for observations in segments:
+            result += self._split_observations_by_sensitivity(observations)
+        return result
+
+    def _split_observations_by_sensitivity(self, observations):
         segments = []
         segment = []
         previous_observation = None
         for observation in observations:
             if previous_observation is not None and \
-                    numpy.linalg.norm(observation - previous_observation) > sensitivity:
+                    numpy.linalg.norm(observation - previous_observation) > self._args.split_sensitivity:
                 segments.append(segment)
                 segment = []
             segment.append(observation)

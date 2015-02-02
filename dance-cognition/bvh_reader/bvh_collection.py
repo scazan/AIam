@@ -6,17 +6,24 @@ class BvhCollection:
         self._readers = [bvh_reader.BvhReader(filename) for filename in filenames]
         self._base_reader = self._readers[0]
 
+    def get_readers(self):
+        return self._readers
+
     def read(self):
         self._read_bvhs()
         self._set_scale_info()
 
     def _read_bvhs(self):
         self._duration = 0
+        frame_offset = 0
         for reader in self._readers:
             reader.read()
             reader.start_time = self._duration
             reader.end_time = self._duration + reader.get_duration()
+            reader.start_index = frame_offset
+            reader.end_index = frame_offset + reader.get_num_frames()
             self._duration += reader.get_duration()
+            frame_offset += reader.get_num_frames()
 
     def _set_scale_info(self):
         self._scale_info = bvh_reader.ScaleInfo()
@@ -32,7 +39,7 @@ class BvhCollection:
         self._scale_info.update_scale_factor()
 
     def get_frame_time(self):
-        return self._base_reader.frame_time
+        return self._base_reader.get_frame_time()
 
     def get_duration(self):
         return self._duration
