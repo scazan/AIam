@@ -120,7 +120,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self.cursor_slider.setRange(0, SLIDER_PRECISION)
         self.cursor_slider.setSingleStep(1)
         self.cursor_slider.setValue(0.0)
-        self.cursor_slider.sliderMoved.connect(self._cursor_changed)
+        self.cursor_slider.valueChanged.connect(self._cursor_changed)
         self._follow_tab_layout.addWidget(self.cursor_slider)
 
     def _cursor_changed(self, value):
