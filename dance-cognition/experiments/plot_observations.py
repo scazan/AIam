@@ -9,21 +9,20 @@
 # set out "observations.eps"
 # replot
 
-from argparse import ArgumentParser
-from storage import load_model
-import numpy
+from dimensionality_reduction.dimensionality_reduction_experiment import *
 
 parser = ArgumentParser()
-parser.add_argument("model")
 parser.add_argument("--output", "-o")
 parser.add_argument("--split-sensitivity", type=float)
 parser.add_argument("--segments-output")
-parser.add_argument("--type", choices=["gnuplot", "svg"], default="gnuplot")
+parser.add_argument("--plot-type", choices=["gnuplot", "svg"], default="gnuplot")
 parser.add_argument("--stroke-width", type=float, default=1)
-parser.add_argument("--width", type=float, default=500)
-parser.add_argument("--height", type=float, default=500)
-args = parser.parse_args()
-model = load_model(args.model)[0]
+parser.add_argument("--plot-width", type=float, default=500)
+parser.add_argument("--plot-height", type=float, default=500)
+
+DimensionalityReductionExperiment.add_parser_arguments(parser)
+experiment = DimensionalityReductionExperiment(parser)
+experiment._load_model()
 
 def split_observations_into_segments(observations, sensitivity):
     segments = []
@@ -40,11 +39,11 @@ def split_observations_into_segments(observations, sensitivity):
         segments.append(segment)
     return segments
 
-if args.split_sensitivity:
+if experiment.args.split_sensitivity:
     segments = split_observations_into_segments(
-        model.normalized_observed_reductions, args.split_sensitivity)
+        experiment.student.normalized_observed_reductions, experiment.args.split_sensitivity)
 else:
-    segments = [model.normalized_observed_reductions]
+    segments = [experiment.student.normalized_observed_reductions]
 
 class Generator:
     def __init__(self, out, args):
@@ -84,7 +83,7 @@ class svgGenerator(Generator):
     def _generate_header(self):
         self._write('<svg xmlns="http://www.w3.org/2000/svg" version="1.1">\n')
         self._write('<rect width="%f" height="%f" fill="white" />' % (
-            self._args.width, self._args.height))
+            self._args.plot_width, self._args.plot_height))
 
     def _generate_segment(self, segment):
         self._write('<path '''
@@ -97,23 +96,24 @@ class svgGenerator(Generator):
         self._write('" />\n')
 
     def _path_coordinates(self, observation):
-        return "%s %s" % (self._args.width * observation[0],
-                          self._args.height * observation[1])
+        return "%s %s" % (self._args.plot_width * observation[0],
+                          self._args.plot_height * observation[1])
 
     def _generate_footer(self):
         self._write('</svg>\n')
 
-generator_class = eval("%sGenerator" % args.type)
+generator_class = eval("%sGenerator" % experiment.args.plot_type)
 
-if args.output:
-    output_filename = args.output
+if experiment.args.output:
+    output_filename = experiment.args.output
 else:
     output_filename = generator_class.DEFAULT_FILENAME
 
 out = open(output_filename, "w")
-generator = generator_class(out, args)
+generator = generator_class(out, experiment.args)
 generator.generate(segments)
 out.close()
 
 print "Plotted %d observations in %d segments to file %s" % (
-    len(model.normalized_observed_reductions), len(segments), output_filename)
+    sum([len(segment) for segment in segments]),
+    len(segments), output_filename)
