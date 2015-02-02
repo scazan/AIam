@@ -36,6 +36,8 @@ def split_observations_into_segments(observations, sensitivity):
             segment = []
         segment.append(observation)
         previous_observation = observation
+    if len(segment) > 0:
+        segments.append(segment)
     return segments
 
 if args.split_sensitivity:
