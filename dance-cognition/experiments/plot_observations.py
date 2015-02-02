@@ -19,6 +19,7 @@ parser.add_argument("--plot-type", choices=["gnuplot", "svg"], default="gnuplot"
 parser.add_argument("--stroke-width", type=float, default=1)
 parser.add_argument("--plot-width", type=float, default=500)
 parser.add_argument("--plot-height", type=float, default=500)
+parser.add_argument("--plot-dimensions", help="e.g. 0,3 (x as 1st dimension and y as 4th)")
 
 class ObservationsPlotter:
     def __init__(self, experiment):
@@ -105,6 +106,11 @@ class svgGenerator(Generator):
     DEFAULT_FILENAME = "observations.svg"
 
     def generate(self, segments):
+        if self._args.plot_dimensions:
+            self._dimensions = [int(string) for string in self._args.plot_dimensions.split(",")]
+        else:
+            self._dimensions = [0, 1]
+
         self._generate_header()
         for segment in segments:
             self._generate_segment(segment)
@@ -117,7 +123,7 @@ class svgGenerator(Generator):
 
     def _generate_segment(self, segment):
         self._write('<path '''
-                    'style="stroke:black;fill:none;stroke-width:%f" '''
+                    'style="stroke:black;fill:none;stroke-width:%f;stroke-opacity:0.1" '''
                     'd="M %s' % (
                 self._args.stroke_width,
                 self._path_coordinates(segment[0])))
@@ -126,8 +132,8 @@ class svgGenerator(Generator):
         self._write('" />\n')
 
     def _path_coordinates(self, observation):
-        return "%s %s" % (self._args.plot_width * observation[0],
-                          self._args.plot_height * observation[1])
+        return "%s %s" % (self._args.plot_width * observation[self._dimensions[0]],
+                          self._args.plot_height * observation[self._dimensions[1]])
 
     def _generate_footer(self):
         self._write('</svg>\n')
