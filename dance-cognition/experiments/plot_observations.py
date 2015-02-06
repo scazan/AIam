@@ -17,6 +17,7 @@ parser.add_argument("--split-sensitivity", type=float)
 parser.add_argument("--segments-output")
 parser.add_argument("--plot-type", choices=["gnuplot", "svg"], default="gnuplot")
 parser.add_argument("--stroke-width", type=float, default=1)
+parser.add_argument("--stroke-opacity", type=float, default=.1)
 parser.add_argument("--plot-width", type=float, default=500)
 parser.add_argument("--plot-height", type=float, default=500)
 parser.add_argument("--plot-dimensions", help="e.g. 0,3 (x as 1st dimension and y as 4th)")
@@ -123,9 +124,10 @@ class svgGenerator(Generator):
 
     def _generate_segment(self, segment):
         self._write('<path '''
-                    'style="stroke:black;fill:none;stroke-width:%f;stroke-opacity:0.1" '''
+                    'style="stroke:black;fill:none;stroke-width:%f;stroke-opacity:%f" '''
                     'd="M %s' % (
                 self._args.stroke_width,
+                self._args.stroke_opacity,
                 self._path_coordinates(segment[0])))
         for observation in segment[1:]:
             self._write(' L %s' % self._path_coordinates(observation))
