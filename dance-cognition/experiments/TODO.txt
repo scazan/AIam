@@ -6,6 +6,8 @@ investigate discontinuities in map trajectories within BVHs, causing the need fo
 
 prevent floor from disappearing when avatar moves a lot
 
+protection against hypothetical runtime exception in interpolation of improvised path (see plot_observations.py)
+
 parametrize 0.3 in navigator.py
 
 singular matrix exception:

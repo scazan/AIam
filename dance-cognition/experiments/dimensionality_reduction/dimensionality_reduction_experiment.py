@@ -8,6 +8,7 @@ from navigator import Navigator, PathFollower
 import dynamics as dynamics_module
 import modes
 from parameters import *
+import interpolation
 
 class DimensionalityReductionExperiment(Experiment):
     @staticmethod
@@ -273,7 +274,7 @@ class Improviser:
         return self.experiment.student.normalize_reduction(unnormalized_departure)
 
     def _interpolate_path(self, path_segments):
-        return self.experiment.navigator.interpolate_path(
+        return interpolation.interpolate(
             path_segments,
             resolution=self.params.resolution)
 

@@ -11,6 +11,7 @@
 
 from dimensionality_reduction.dimensionality_reduction_experiment import *
 import fnmatch
+import interpolation
 
 parser = ArgumentParser()
 parser.add_argument("--output", "-o")
@@ -23,6 +24,8 @@ parser.add_argument("--plot-width", type=float, default=500)
 parser.add_argument("--plot-height", type=float, default=500)
 parser.add_argument("--plot-dimensions", help="e.g. 0,3 (x as 1st dimension and y as 4th)")
 parser.add_argument("--select-bvh")
+parser.add_argument("--interpolate", action="store_true")
+parser.add_argument("--interpolation-resolution", type=int, default=100)
 
 class ObservationsPlotter:
     def __init__(self, experiment):
@@ -40,6 +43,10 @@ class ObservationsPlotter:
         segments = self._get_segments_from_bvhs()
         if self._args.split_sensitivity:
             segments = self._split_segments_by_sensitivity(segments)
+
+        if self._args.interpolate:
+            segments = [self._interpolate_segment(segment)
+                        for segment in segments]
 
         out = open(output_filename, "w")
         generator = generator_class(out, self._args)
@@ -89,6 +96,13 @@ class ObservationsPlotter:
         if len(segment) > 0:
             segments.append(segment)
         return segments
+
+    def _interpolate_segment(self, segment):
+        try:
+            return interpolation.interpolate(segment, self._args.interpolation_resolution)
+        except interpolation.InterpolationException as exception:
+            print "WARNING: interpolation failed: %s" % exception
+            return segment
 
 class Generator:
     def __init__(self, out, args):

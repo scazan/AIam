@@ -14,6 +14,7 @@ from sklearn.datasets import make_classification
 from stopwatch import Stopwatch
 from argparse import ArgumentParser
 import random
+import interpolation
 
 FRAME_RATE = 50
 SLIDER_PRECISION = 1000
@@ -241,7 +242,7 @@ class Experiment:
             num_segments=10,
             novelty=self._novelty(),
             preferred_distance=self._preferred_distance())
-        self.path = self._navigator.interpolate_path(
+        self.path = interpolation.interpolate(
             self.path_segments,
             resolution=100)
         self.path_followers = [

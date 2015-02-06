@@ -1,7 +1,6 @@
 import sklearn.neighbors
 import numpy
 import copy
-from scipy.interpolate import InterpolatedUnivariateSpline
 import dynamics as dynamics_module
 import random
 import math
@@ -56,31 +55,6 @@ class Navigator:
         for n in range(num_segments-1):
             self._add_path_segment(n, novelty)
         return self._segments
-
-    def interpolate_path(self, uninterpolated_path, resolution):
-        uninterpolated_path_numpy = numpy.array(uninterpolated_path)
-        unclamped_interpolated_path = numpy.column_stack(
-                [self._spline_interpolation_1d(uninterpolated_path_numpy[:,n], resolution)
-                 for n in range(self._n_dimensions)])
-        return list(self._clamp_path(unclamped_interpolated_path, uninterpolated_path))
-
-    def _spline_interpolation_1d(self, points, resolution):
-        x = numpy.arange(0., 1., 1./len(points))
-        x_new = numpy.arange(0., 1., 1./resolution)
-        k = min(3, len(points)-1)
-        curve = InterpolatedUnivariateSpline(x, points, k=k)
-        return curve(x_new)
-
-    def _clamp_path(self, unclamped_interpolated_path, uninterpolated_path):
-        startpoint = uninterpolated_path[0]
-        endpoint = uninterpolated_path[-1]
-        index_nearest_start = self._nearest_index(unclamped_interpolated_path, startpoint)
-        index_nearest_end = self._nearest_index(unclamped_interpolated_path, endpoint)
-        return unclamped_interpolated_path[index_nearest_start:index_nearest_end]
-
-    def _nearest_index(self, iterable, target):
-        return min(range(len(iterable)),
-                   key=lambda i: self._distance(iterable[i], target))
 
     def _distance(self, a, b):
         return numpy.linalg.norm(a - b)
