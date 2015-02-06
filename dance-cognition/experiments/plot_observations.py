@@ -19,6 +19,7 @@ parser.add_argument("--split-sensitivity", type=float)
 parser.add_argument("--segments-output")
 parser.add_argument("--plot-type", choices=["gnuplot", "svg"], default="gnuplot")
 parser.add_argument("--stroke-width", type=float, default=1)
+parser.add_argument("--stroke-width-min", type=float, default=1)
 parser.add_argument("--stroke-opacity", type=float, default=.1)
 parser.add_argument("--plot-width", type=float, default=500)
 parser.add_argument("--plot-height", type=float, default=500)
@@ -150,6 +151,12 @@ class svgGenerator(Generator):
             self._args.plot_width, self._args.plot_height))
 
     def _generate_segment(self, segment):
+        if len(self._dimensions) == 2:
+            self._generate_segment_2d(segment)
+        elif len(self._dimensions) == 3:
+            self._generate_segment_3d(segment)
+
+    def _generate_segment_2d(self, segment):
         self._write('<path '''
                     'style="stroke:black;fill:none;stroke-width:%f;stroke-opacity:%f" '''
                     'd="M %s' % (
@@ -159,6 +166,22 @@ class svgGenerator(Generator):
         for observation in segment[1:]:
             self._write(' L %s' % self._path_coordinates(observation))
         self._write('" />\n')
+
+    def _generate_segment_3d(self, segment):
+        previous_observation = segment[0]
+        for observation in segment[1:]:
+            z = pow((1-observation[2]), .8)
+            stroke_width = max(self._args.stroke_width_min,
+                               z * self._args.stroke_width)
+            opacity = self._args.stroke_opacity * z
+            self._write('<path '''
+                    'style="stroke:black;fill:none;stroke-width:%f;stroke-opacity:%f" '''
+                    'd="M %s L %s" />' % (
+                stroke_width,
+                opacity,
+                self._path_coordinates(previous_observation),
+                self._path_coordinates(observation)))
+            previous_observation = observation
 
     def _path_coordinates(self, observation):
         return "%s %s" % (self._args.plot_width * observation[self._dimensions[0]],
