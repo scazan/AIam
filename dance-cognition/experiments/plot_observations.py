@@ -10,6 +10,7 @@
 # replot
 
 from dimensionality_reduction.dimensionality_reduction_experiment import *
+import fnmatch
 
 parser = ArgumentParser()
 parser.add_argument("--output", "-o")
@@ -21,6 +22,7 @@ parser.add_argument("--stroke-opacity", type=float, default=.1)
 parser.add_argument("--plot-width", type=float, default=500)
 parser.add_argument("--plot-height", type=float, default=500)
 parser.add_argument("--plot-dimensions", help="e.g. 0,3 (x as 1st dimension and y as 4th)")
+parser.add_argument("--select-bvh")
 
 class ObservationsPlotter:
     def __init__(self, experiment):
@@ -50,7 +52,18 @@ class ObservationsPlotter:
 
     def _get_segments_from_bvhs(self):
         return [self._get_observations_from_bvh(bvh_reader)
-                for bvh_reader in experiment.bvh_reader.get_readers()]
+                for bvh_reader in self._selected_bvhs()]
+
+    def _selected_bvhs(self):
+        all_bvhs = self._experiment.bvh_reader.get_readers()
+        if self._args.select_bvh:
+            return [bvh_reader for bvh_reader in all_bvhs
+                    if self._bvh_is_selected(bvh_reader.filename)]
+        else:
+            return all_bvhs
+
+    def _bvh_is_selected(self, filename):
+        return fnmatch.fnmatch(filename, self._args.select_bvh)
 
     def _get_observations_from_bvh(self, bvh_reader):
         return self._experiment.student.normalized_observed_reductions[
