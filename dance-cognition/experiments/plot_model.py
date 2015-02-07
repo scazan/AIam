@@ -21,19 +21,30 @@ class ModelPlotter:
             self._dimensions = [0, 1]
 
     def plot(self):
-        self._output_buffer = numpy.zeros((self._size, self._size))
-        for observation in self._experiment.student.normalized_observed_reductions:
-            self._update_buffer(observation)
+        self._create_empty_buffer()
+        self._add_observation_regions_to_buffer()
+        self._convert_buffer_to_bitmap()
+        self._save_bitmap_to_file()
 
+    def _create_empty_buffer(self):
+        self._output_buffer = numpy.zeros((self._size, self._size))
+
+    def _add_observation_regions_to_buffer(self):
+        for observation in self._experiment.student.normalized_observed_reductions:
+            self._add_observation_region_to_buffer(observation)
+
+    def _convert_buffer_to_bitmap(self):
         monochromatic_bitmap = self._output_buffer.flatten()
         monochromatic_normalized_bitmap = monochromatic_bitmap / max(monochromatic_bitmap)
         rgb_normalized_bitmap = numpy.concatenate([[1-value]*3 for value in monochromatic_normalized_bitmap])
-        rgb_bitmap = [int(value * 255) for value in rgb_normalized_bitmap]
+        self._rgb_bitmap = [int(value * 255) for value in rgb_normalized_bitmap]
+
+    def _save_bitmap_to_file(self):
         image = Image.fromstring("RGB", (self._size, self._size),
-                                 data=self._array_to_string(rgb_bitmap))
+                                 data=self._array_to_string(self._rgb_bitmap))
         image.save(self._args.output)
 
-    def _update_buffer(self, observation):
+    def _add_observation_region_to_buffer(self, observation):
         observation_px = int(observation[self._dimensions[0]] * self._size)
         observation_py = int(observation[self._dimensions[1]] * self._size)
         radius = int(self._args.novelty * self._size)
