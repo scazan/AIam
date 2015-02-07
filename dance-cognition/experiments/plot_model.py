@@ -71,11 +71,16 @@ class ModelPlotter:
         px2 = observation_px + self._observation_region_radius + 1
         py1 = observation_py - self._observation_region_radius
         py2 = observation_py + self._observation_region_radius + 1
-        if self._within_boundaries(px1, py1) and self._within_boundaries(px2, py2):
-            self._output_buffer[px1:px2, py1:py2] += self._observation_region_template
-        else:
-            print "WARNING: ignoring observation region beyond boundaries: (%s,%s)-(%s,%s)" % (
-                px1, py1, px2, py2)
+        px1a = self._fit_within_boundaries(px1)
+        px2a = self._fit_within_boundaries(px2)
+        py1a = self._fit_within_boundaries(py1)
+        py2a = self._fit_within_boundaries(py2)
+        rx1 = px1a - px1
+        rx2 = rx1 + (px2a - px1a)
+        ry1 = py1a - py1
+        ry2 = ry1 + (py2a - py1a)
+        self._output_buffer[px1a:px2a, py1a:py2a] += self._observation_region_template[
+            rx1:rx2, ry1:ry2]
 
     def _normalized_reduction_value_to_bitmap_coordinate(self, reduction_value):
         return int((reduction_value - self._explored_min) / self._explored_range * self._size)
@@ -83,12 +88,8 @@ class ModelPlotter:
     def _increase_pixel_value(self, px, py):
         self._output_buffer[px, py] += 1
 
-    def _within_boundaries(self, px, py):
-        if px < 0: return False
-        if py < 0: return False
-        if px >= self._size: return False
-        if py >= self._size: return False
-        return True
+    def _fit_within_boundaries(self, x):
+        return min(max(x, 0), self._size)
 
     def _array_to_string(self, xs):
         return "".join([chr(int(x)) for x in xs])
