@@ -20,6 +20,10 @@ class ModelPlotter:
         else:
             self._dimensions = [0, 1]
 
+        self._explored_range = 1.0 + self._args.explore_beyond_observations
+        self._explored_min = .5 - self._explored_range/2
+        self._explored_max = .5 + self._explored_range/2
+
     def plot(self):
         self._create_empty_buffer()
         self._add_observation_regions_to_buffer()
@@ -56,7 +60,7 @@ class ModelPlotter:
                         dy + observation_py)
 
     def _normalized_reduction_value_to_bitmap_coordinate(self, reduction_value):
-        return int(reduction_value * self._size)
+        return int((reduction_value - self._explored_min) / self._explored_range * self._size)
 
     def _increase_pixel_value(self, px, py):
         if self._within_boundaries(px, py):
