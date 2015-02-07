@@ -27,7 +27,7 @@ class ModelPlotter:
 
         monochromatic_bitmap = self._output_buffer.flatten()
         monochromatic_normalized_bitmap = monochromatic_bitmap / max(monochromatic_bitmap)
-        rgb_normalized_bitmap = numpy.concatenate([[value]*3 for value in monochromatic_normalized_bitmap])
+        rgb_normalized_bitmap = numpy.concatenate([[1-value]*3 for value in monochromatic_normalized_bitmap])
         rgb_bitmap = [int(value * 255) for value in rgb_normalized_bitmap]
         image = Image.fromstring("RGB", (self._size, self._size),
                                  data=self._array_to_string(rgb_bitmap))
