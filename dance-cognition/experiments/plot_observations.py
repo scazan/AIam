@@ -140,6 +140,10 @@ class svgGenerator(Generator):
         else:
             self._dimensions = [0, 1]
 
+        self._explored_range = 1.0 + self._args.explore_beyond_observations
+        self._explored_min = .5 - self._explored_range/2
+        self._explored_max = .5 + self._explored_range/2
+
         self._generate_header()
         for segment in segments:
             self._generate_segment(segment)
@@ -184,8 +188,11 @@ class svgGenerator(Generator):
             previous_observation = observation
 
     def _path_coordinates(self, observation):
-        return "%s %s" % (self._args.plot_width * observation[self._dimensions[0]],
-                          self._args.plot_height * observation[self._dimensions[1]])
+        px = self._args.plot_width * (
+            observation[self._dimensions[0]] - self._explored_min) / self._explored_range
+        py = self._args.plot_height * (
+            observation[self._dimensions[1]] - self._explored_min) / self._explored_range
+        return "%s %s" % (px, py)
 
     def _generate_footer(self):
         self._write('</svg>\n')

@@ -53,7 +53,7 @@ class ModelPlotter:
 
     def _convert_buffer_to_bitmap(self):
         print "converting plot to bitmap..."
-        monochromatic_bitmap = self._output_buffer.flatten()
+        monochromatic_bitmap = self._output_buffer.flatten('F')
         monochromatic_normalized_bitmap = monochromatic_bitmap / max(monochromatic_bitmap)
         rgb_normalized_bitmap = numpy.concatenate([[1-value]*3 for value in monochromatic_normalized_bitmap])
         self._rgb_bitmap = [int(value * 255) for value in rgb_normalized_bitmap]
