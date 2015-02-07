@@ -45,8 +45,8 @@ class ModelPlotter:
         image.save(self._args.output)
 
     def _add_observation_region_to_buffer(self, observation):
-        observation_px = int(observation[self._dimensions[0]] * self._size)
-        observation_py = int(observation[self._dimensions[1]] * self._size)
+        observation_px = self._normalized_reduction_value_to_bitmap_coordinate(observation[0])
+        observation_py = self._normalized_reduction_value_to_bitmap_coordinate(observation[1])
         radius = int(self._args.novelty * self._size)
         for dx in xrange(-radius, radius+1):
             for dy in xrange(-radius, radius+1):
@@ -54,6 +54,9 @@ class ModelPlotter:
                     self._increase_pixel_value(
                         dx + observation_px,
                         dy + observation_py)
+
+    def _normalized_reduction_value_to_bitmap_coordinate(self, reduction_value):
+        return int(reduction_value * self._size)
 
     def _increase_pixel_value(self, px, py):
         if self._within_boundaries(px, py):
