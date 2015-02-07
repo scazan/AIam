@@ -27,6 +27,7 @@ parser.add_argument("--plot-dimensions", help="e.g. 0,3 (x as 1st dimension and 
 parser.add_argument("--select-bvh")
 parser.add_argument("--interpolate", action="store_true")
 parser.add_argument("--interpolation-resolution", type=int, default=100)
+parser.add_argument("--observations-from-file")
 
 class ObservationsPlotter:
     def __init__(self, experiment):
@@ -41,9 +42,12 @@ class ObservationsPlotter:
         else:
             output_filename = generator_class.DEFAULT_FILENAME
 
-        segments = self._get_segments_from_bvhs()
-        if self._args.split_sensitivity:
-            segments = self._split_segments_by_sensitivity(segments)
+        if self._args.observations_from_file:
+            segments = [self._load_observations_from_file()]
+        else:
+            segments = self._get_segments_from_bvhs()
+            if self._args.split_sensitivity:
+                segments = self._split_segments_by_sensitivity(segments)
 
         if self._args.interpolate:
             segments = [self._interpolate_segment(segment)
@@ -57,6 +61,13 @@ class ObservationsPlotter:
         print "Plotted %d observations in %d segments to file %s" % (
             sum([len(segment) for segment in segments]),
             len(segments), output_filename)
+
+    def _load_observations_from_file(self):
+        result = []
+        for line in open(self._args.observations_from_file).readlines():
+            observation = map(float, line.split(" "))
+            result.append(observation)
+        return result
 
     def _get_segments_from_bvhs(self):
         return [self._get_observations_from_bvh(bvh_reader)
@@ -174,7 +185,7 @@ class svgGenerator(Generator):
     def _generate_segment_3d(self, segment):
         previous_observation = segment[0]
         for observation in segment[1:]:
-            z = pow((1-observation[2]), .8)
+            z = pow((1 - min(observation[2], 1)), .8)
             stroke_width = max(self._args.stroke_width_min,
                                z * self._args.stroke_width)
             opacity = self._args.stroke_opacity * z
