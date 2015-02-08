@@ -16,7 +16,10 @@ parser.add_argument("--camera-x", "-cx", type=float, default=0)
 parser.add_argument("--camera-y", "-cy", type=float, default=10)
 parser.add_argument("--camera-z", "-cz", type=float, default=1500)
 parser.add_argument("--grid-resolution", type=int, default=10)
-parser.add_argument("--min-opacity", type=float, default=.02)
+parser.add_argument("--stroke-width", type=float, default=2)
+parser.add_argument("--min-stroke-width", type=float, default=.5)
+parser.add_argument("--stroke-width-contrast", type=float, default=.5)
+parser.add_argument("--min-opacity", type=float, default=.1)
 parser.add_argument("--opacity-contrast", type=float, default=.5)
 
 class PoseMapRenderer:
@@ -65,13 +68,20 @@ class PoseMapRenderer:
 
     def _render_cell(self, grid_x, grid_y):
         normalized_reduction = self._get_normalized_reduction(grid_x, grid_y)
+
         px = float(grid_x) / self._args.grid_resolution * self._args.plot_size
         py = float(grid_y) / self._args.grid_resolution * self._args.plot_size
+
+        stroke_width = self._args.min_stroke_width + (
+            (1 - pow(self._model_values[grid_x, grid_y], self._args.stroke_width_contrast))
+            * (self._args.stroke_width - self._args.min_stroke_width))
+
         opacity = self._args.min_opacity + (
-            1 - pow(self._model_values[grid_x, grid_y], self._args.opacity_contrast)
+            (1 - pow(self._model_values[grid_x, grid_y], self._args.opacity_contrast))
             * (1 - self._args.min_opacity))
+
         self._get_pose(normalized_reduction)
-        self._render_pose(px, py, opacity)
+        self._render_pose(px, py, stroke_width, opacity)
 
     def _get_normalized_reduction(self, grid_x, grid_y):
         normalized_reduction = [0.5] * self._experiment.student.n_components
@@ -86,9 +96,9 @@ class PoseMapRenderer:
         output = self._experiment.student.inverse_transform(numpy.array([reduction]))[0]
         self._experiment.entity.parameters_to_processed_pose(output, self._experiment.pose)
 
-    def _render_pose(self, px, py, opacity):
+    def _render_pose(self, px, py, stroke_width, opacity):
         self._save_pose_as_temp_bvh()
-        self._export_temp_bvh_to_svg(px, py, opacity)
+        self._export_temp_bvh_to_svg(px, py, stroke_width, opacity)
         self._delete_temp_bvh()
 
     def _save_pose_as_temp_bvh(self):
@@ -99,7 +109,7 @@ class PoseMapRenderer:
         bvh_writer.add_frame(frame)
         bvh_writer.write(self._bvh_tempfile_path)
 
-    def _export_temp_bvh_to_svg(self, px, py, opacity):
+    def _export_temp_bvh_to_svg(self, px, py, stroke_width, opacity):
         bvh_to_svg_exporter = SvgExporter(
             self._bvh_tempfile_path,
             self._args.camera_x, self._args.camera_y, self._args.camera_z)
@@ -111,6 +121,7 @@ class PoseMapRenderer:
             width=self._cell_size,
             height=self._cell_size,
             opacity=opacity,
+            stroke_width=stroke_width,
             auto_crop=True)
 
     def _delete_temp_bvh(self):

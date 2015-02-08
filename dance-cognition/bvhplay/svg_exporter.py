@@ -39,7 +39,7 @@ class SvgExporter:
         for sv1, sv2 in screen_vertices:
             sv1x, sv1y = sv1
             sv2x, sv2y = sv2
-            svg_file.write('<line x1="%s" y1="%s" x2="%s" y2="%s" style="stroke:black;fill:none;stroke-width:%f;stroke-opacity:%f" />' % (
+            svg_file.write('<line x1="%s" y1="%s" x2="%s" y2="%s" style="stroke:black;fill:none;stroke-width:%f;stroke-opacity:%f" />\n' % (
                 sv1x * width + x,
                 sv1y * height + y,
                 sv2x * width + x,
