@@ -13,7 +13,7 @@ parser.add_argument("--output", "-o", default="pose_map.svg")
 parser.add_argument("--plot-size", type=float, default=500)
 parser.add_argument("--camera-x", "-cx", type=float, default=0)
 parser.add_argument("--camera-y", "-cy", type=float, default=10)
-parser.add_argument("--camera-z", "-cz", type=float, default=520)
+parser.add_argument("--camera-z", "-cz", type=float, default=1500)
 parser.add_argument("--grid-resolution", type=int, default=10)
 
 class PoseMapRenderer:
@@ -22,6 +22,9 @@ class PoseMapRenderer:
     def __init__(self, experiment):
         self._experiment = experiment
         self._args = experiment.args
+        self._explored_range = 1.0 + self._args.explore_beyond_observations
+        self._explored_min = .5 - self._explored_range/2
+        self._explored_max = .5 + self._explored_range/2
 
     def render(self):
         self._experiment.bvh_reader.set_pose_from_time(self._experiment.pose, 0) # hack (should not be needed)
@@ -42,8 +45,10 @@ class PoseMapRenderer:
 
     def _get_pose_in_cell(self, grid_x, grid_y):
         normalized_reduction = [0.5] * self._experiment.student.n_components
-        normalized_reduction[0] = float(grid_x) / (self._args.grid_resolution - 1)
-        normalized_reduction[1] = float(grid_y) / (self._args.grid_resolution - 1)
+        normalized_reduction[0] = float(grid_x) / (self._args.grid_resolution - 1) \
+            * self._explored_range + self._explored_min
+        normalized_reduction[1] = float(grid_y) / (self._args.grid_resolution - 1) \
+            * self._explored_range + self._explored_min
         reduction = self._experiment.student.unnormalize_reduction(normalized_reduction)
         output = self._experiment.student.inverse_transform(numpy.array([reduction]))[0]
         self._experiment.entity.parameters_to_processed_pose(output, self._experiment.pose)
