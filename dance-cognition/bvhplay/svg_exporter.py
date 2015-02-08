@@ -8,7 +8,7 @@ class SvgExporter:
         self._skelscreenedges = self._skeleton.make_skelscreenedges()
         self._floor_y = None
 
-    def export_frame(self, svg_file, t, frame_width, frame_height,
+    def export_frame(self, svg_file, t, width, height,
                      opacity=1, x_offset=0, constrain_floor=False, auto_crop=False, stroke_width=1):
         self._skeleton.populate_skelscreenedges(self._skelscreenedges, t)
 
@@ -39,10 +39,10 @@ class SvgExporter:
             sv1x, sv1y = sv1
             sv2x, sv2y = sv2
             svg_file.write('<line x1="%s" y1="%s" x2="%s" y2="%s" style="stroke:black;fill:none;stroke-width:%f;stroke-opacity:%f" />' % (
-                sv1x * frame_width + x_offset,
-                sv1y * frame_height,
-                sv2x * frame_width + x_offset,
-                sv2y * frame_height,
+                sv1x * width + x_offset,
+                sv1y * height,
+                sv2x * width + x_offset,
+                sv2y * height,
                 stroke_width,
                 opacity))
 
