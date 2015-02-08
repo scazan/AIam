@@ -13,7 +13,7 @@ parser.add_argument("--output", "-o", default="pose_map.svg")
 parser.add_argument("--plot-size", type=float, default=500)
 parser.add_argument("--camera-x", "-cx", type=float, default=0)
 parser.add_argument("--camera-y", "-cy", type=float, default=10)
-parser.add_argument("--camera-z", "-cz", type=float, default=220)
+parser.add_argument("--camera-z", "-cz", type=float, default=520)
 parser.add_argument("--grid-resolution", type=int, default=10)
 
 class PoseMapRenderer:
