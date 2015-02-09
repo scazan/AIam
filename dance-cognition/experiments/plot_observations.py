@@ -10,7 +10,7 @@
 # replot
 
 from dimensionality_reduction.dimensionality_reduction_experiment import *
-import fnmatch
+import re
 import interpolation
 
 parser = ArgumentParser()
@@ -82,7 +82,7 @@ class ObservationsPlotter:
             return all_bvhs
 
     def _bvh_is_selected(self, filename):
-        return fnmatch.fnmatch(filename, self._args.select_bvh)
+        return re.match(self._args.select_bvh, filename)
 
     def _get_observations_from_bvh(self, bvh_reader):
         return self._experiment.student.normalized_observed_reductions[
