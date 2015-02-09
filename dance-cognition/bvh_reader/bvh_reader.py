@@ -287,22 +287,22 @@ class BvhReader(cgkit.bvh.BVHReader):
 
     def _load_from_cache(self):
         cache_filename = self._cache_filename()
-        print "loading BVH cache from %s ..." % cache_filename
+        # print "loading BVH cache from %s ..." % cache_filename
         f = open(cache_filename)
         self._scale_info = ScaleInfo()
         self._scale_info.__dict__ = cPickle.load(f)
         self._unique_rotations = cPickle.load(f)
         f.close()
-        print "ok"
+        # print "ok"
 
     def _save_to_cache(self):
         cache_filename = self._cache_filename()
-        print "saving BVH cache to %s ..." % cache_filename
+        # print "saving BVH cache to %s ..." % cache_filename
         f = open(cache_filename, "w")
         cPickle.dump(self._scale_info.__dict__, f)
         cPickle.dump(self._unique_rotations, f)
         f.close()
-        print "ok"
+        # print "ok"
 
     def _cache_filename(self):
         return "%s.cache" % self.filename
