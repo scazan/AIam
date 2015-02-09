@@ -12,14 +12,15 @@ import sklearn.neighbors
 parser = ArgumentParser()
 parser.add_argument("--output", "-o", default="pose_map.svg")
 parser.add_argument("--plot-size", type=float, default=500)
+parser.add_argument("--padding", type=float, default=5)
 parser.add_argument("--camera-x", "-cx", type=float, default=0)
 parser.add_argument("--camera-y", "-cy", type=float, default=10)
 parser.add_argument("--camera-z", "-cz", type=float, default=1500)
 parser.add_argument("--grid-resolution", type=int, default=10)
-parser.add_argument("--stroke-width", type=float, default=2)
+parser.add_argument("--stroke-width", type=float, default=2.5)
 parser.add_argument("--min-stroke-width", type=float, default=.5)
 parser.add_argument("--stroke-width-contrast", type=float, default=.5)
-parser.add_argument("--min-opacity", type=float, default=.1)
+parser.add_argument("--min-opacity", type=float, default=.3)
 parser.add_argument("--opacity-contrast", type=float, default=.5)
 
 class PoseMapRenderer:
@@ -35,7 +36,8 @@ class PoseMapRenderer:
     def render(self):
         self._experiment.bvh_reader.set_pose_from_time(self._experiment.pose, 0) # hack (should not be needed)
         self._out = open(self._args.output, "w")
-        self._cell_size = self._args.plot_size / self._args.grid_resolution
+        self._outer_cell_size = self._args.plot_size / self._args.grid_resolution
+        self._inner_cell_size = self._outer_cell_size - 2 * self._args.padding
         self._approximate_model_values()
         self._generate_header()
         for grid_y in xrange(self._args.grid_resolution):
@@ -69,8 +71,8 @@ class PoseMapRenderer:
     def _render_cell(self, grid_x, grid_y):
         normalized_reduction = self._get_normalized_reduction(grid_x, grid_y)
 
-        px = float(grid_x) / self._args.grid_resolution * self._args.plot_size
-        py = float(grid_y) / self._args.grid_resolution * self._args.plot_size
+        px = float(grid_x) / self._args.grid_resolution * self._args.plot_size + self._args.padding
+        py = float(grid_y) / self._args.grid_resolution * self._args.plot_size + self._args.padding
 
         stroke_width = self._args.min_stroke_width + (
             (1 - pow(self._model_values[grid_x, grid_y], self._args.stroke_width_contrast))
@@ -118,8 +120,8 @@ class PoseMapRenderer:
             t=0,
             x=px,
             y=py,
-            width=self._cell_size,
-            height=self._cell_size,
+            width=self._inner_cell_size,
+            height=self._inner_cell_size,
             opacity=opacity,
             stroke_width=stroke_width,
             auto_crop=True)
