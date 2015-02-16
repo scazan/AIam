@@ -21,6 +21,8 @@ parser.add_argument("--plot-type", choices=["gnuplot", "svg"], default="gnuplot"
 parser.add_argument("--stroke-width", type=float, default=1)
 parser.add_argument("--stroke-width-min", type=float, default=1)
 parser.add_argument("--stroke-opacity", type=float, default=.1)
+parser.add_argument("--stroke-color", default="black")
+parser.add_argument("--stroke-dasharray")
 parser.add_argument("--plot-width", type=float, default=500)
 parser.add_argument("--plot-height", type=float, default=500)
 parser.add_argument("--plot-dimensions", help="e.g. 0,3 (x as 1st dimension and y as 4th)")
@@ -28,6 +30,8 @@ parser.add_argument("--select-bvh")
 parser.add_argument("--interpolate", action="store_true")
 parser.add_argument("--interpolation-resolution", type=int, default=100)
 parser.add_argument("--observations-from-file")
+parser.add_argument("--plot-joint-worldpos")
+parser.add_argument("--background-color")
 
 class ObservationsPlotter:
     def __init__(self, experiment):
@@ -85,8 +89,29 @@ class ObservationsPlotter:
         return re.match(self._args.select_bvh, filename)
 
     def _get_observations_from_bvh(self, bvh_reader):
-        return self._experiment.student.normalized_observed_reductions[
-            bvh_reader.start_index : bvh_reader.end_index]
+        if self._args.plot_joint_worldpos:
+            return self._track_joint_worldpos(bvh_reader)
+        else:
+            return self._experiment.student.normalized_observed_reductions[
+                bvh_reader.start_index : bvh_reader.end_index]
+
+    def _track_joint_worldpos(self, bvh_reader):
+        path = [self._get_worldpos(bvh_reader, n)
+                for n in xrange(bvh_reader.get_num_frames())]
+        path = self._normalize_vertices(path)
+        return path
+
+    def _normalize_vertices(self, vertices):
+        return [self._normalize_vector(v) for v in vertices]
+
+    def _normalize_vector(self, v):
+        v = self._experiment.bvh_reader.normalize_vector(v)
+        return (v + [1,1,1]) / 2
+
+    def _get_worldpos(self, bvh_reader, n):
+        frame = bvh_reader.frames[n]
+        bvh_reader.get_hierarchy().set_pose_from_frame(self._experiment.pose, frame)
+        return self._experiment.pose.get_joint(self._args.plot_joint_worldpos).get_vertex()
 
     def _split_segments_by_sensitivity(self, segments):
         result = []
@@ -162,8 +187,13 @@ class svgGenerator(Generator):
 
     def _generate_header(self):
         self._write('<svg xmlns="http://www.w3.org/2000/svg" version="1.1">\n')
-        self._write('<rect width="%f" height="%f" fill="white" />' % (
-            self._args.plot_width, self._args.plot_height))
+        if self._args.background_color:
+            self._write('<rect width="%f" height="%f" fill="%s" />' % (
+                    self._args.plot_width, self._args.plot_height, self._args.background_color))
+        else:
+            self._write('<rect width="%f" height="%f" style="stroke-width:0;stroke:black;fill:none" />' % (
+                    self._args.plot_width, self._args.plot_height))
+        self._write('<g>\n')
 
     def _generate_segment(self, segment):
         if len(self._dimensions) == 2:
@@ -172,12 +202,13 @@ class svgGenerator(Generator):
             self._generate_segment_3d(segment)
 
     def _generate_segment_2d(self, segment):
-        self._write('<path '''
-                    'style="stroke:black;fill:none;stroke-width:%f;stroke-opacity:%f" '''
-                    'd="M %s' % (
-                self._args.stroke_width,
-                self._args.stroke_opacity,
-                self._path_coordinates(segment[0])))
+        path_attributes = 'style="stroke:%s;fill:none;stroke-width:%f;stroke-opacity:%f"' % (
+            self._args.stroke_color,
+            self._args.stroke_width,
+            self._args.stroke_opacity)
+        if self._args.stroke_dasharray:
+            path_attributes += ' stroke-dasharray="%s"' % self._args.stroke_dasharray
+        self._write('<path %s d="M %s' % (path_attributes, self._path_coordinates(segment[0])))
         for observation in segment[1:]:
             self._write(' L %s' % self._path_coordinates(observation))
         self._write('" />\n')
@@ -190,12 +221,13 @@ class svgGenerator(Generator):
                                z * self._args.stroke_width)
             opacity = self._args.stroke_opacity * z
             self._write('<path '''
-                    'style="stroke:black;fill:none;stroke-width:%f;stroke-opacity:%f" '''
+                    'style="stroke:%s;fill:none;stroke-width:%f;stroke-opacity:%f" '''
                     'd="M %s L %s" />' % (
-                stroke_width,
-                opacity,
-                self._path_coordinates(previous_observation),
-                self._path_coordinates(observation)))
+                    self._args.stroke_color,
+                    stroke_width,
+                    opacity,
+                    self._path_coordinates(previous_observation),
+                    self._path_coordinates(observation)))
             previous_observation = observation
 
     def _path_coordinates(self, observation):
@@ -206,6 +238,7 @@ class svgGenerator(Generator):
         return "%s %s" % (px, py)
 
     def _generate_footer(self):
+        self._write('</g>\n')
         self._write('</svg>\n')
 
 
