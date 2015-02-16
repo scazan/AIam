@@ -17,11 +17,12 @@ parser.add_argument("--camera-x", "-cx", type=float, default=0)
 parser.add_argument("--camera-y", "-cy", type=float, default=10)
 parser.add_argument("--camera-z", "-cz", type=float, default=1500)
 parser.add_argument("--grid-resolution", type=int, default=10)
-parser.add_argument("--stroke-width", type=float, default=2.5)
-parser.add_argument("--min-stroke-width", type=float, default=.5)
+parser.add_argument("--stroke-width", type=float, default=2.0)
+parser.add_argument("--min-stroke-width", type=float, default=2.0)
 parser.add_argument("--stroke-width-contrast", type=float, default=.5)
-parser.add_argument("--min-opacity", type=float, default=.3)
-parser.add_argument("--opacity-contrast", type=float, default=.5)
+parser.add_argument("--min-opacity", type=float, default=.6)
+parser.add_argument("--opacity-contrast", type=float, default=1)
+parser.add_argument("--background-color")
 
 class PoseMapRenderer:
     _bvh_tempfile_path = "_temp.bvh"
@@ -131,10 +132,13 @@ class PoseMapRenderer:
         
     def _generate_header(self):
         self._write('<svg xmlns="http://www.w3.org/2000/svg" version="1.1">\n')
-        self._write('<rect width="%f" height="%f" fill="white" />' % (
-            self._args.plot_size, self._args.plot_size))
+        if self._args.background_color:
+            self._write('<rect width="%f" height="%f" fill="%s" />' % (
+                    self._args.plot_size, self._args.plot_size, self._args.background_color))
+        self._write('<g>\n')
 
     def _generate_footer(self):
+        self._write('</g>\n')
         self._write('</svg>\n')
 
     def _write(self, string):
