@@ -1,10 +1,11 @@
 #!/usr/bin/python
 
-from bvh_reader import BvhReader
+from bvh_collection import BvhCollection
 from argparse import ArgumentParser
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
+import glob
 
 import sys
 import os
@@ -18,7 +19,7 @@ class BvhViewer(window.Window):
         global bvh_reader
         window.Window.__init__(self, *args)
         self.reader = bvh_reader
-        self._pose = bvh_reader.create_pose()
+        self._pose = bvh_reader.get_hierarchy().create_pose()
         self.t = 0.0
 
     def InitGL(self):
@@ -97,7 +98,8 @@ parser.add_argument("-unit-cube", action="store_true")
 parser.add_argument("-loop", action="store_true")
 args = parser.parse_args()
 
-bvh_reader = BvhReader(args.bvh)
+bvh_filenames = glob.glob(args.bvh)
+bvh_reader = BvhCollection(bvh_filenames)
 bvh_reader.read()
 
 window.run(BvhViewer, args)
