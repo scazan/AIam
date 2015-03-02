@@ -6,7 +6,7 @@ from reduction_sliders import ReductionSliders
 from .. import modes
 
 REDUCTION_PLOT_PATH = "reduction.dat"
-HTML5_TOOLBAR_HEIGHT = 150
+HTML5_TOOLBAR_HEIGHT = 250
 
 class DimensionalityReductionMainWindow(MainWindow):
     @staticmethod
@@ -34,7 +34,7 @@ class DimensionalityReductionMainWindow(MainWindow):
         from PyQt4.QtCore import QUrl
         from PyQt4.QtWebKit import QWebView, QWebSettings
         view = QWebView()
-        view.load(QUrl("dimensionality_reduction/html5/index.html?stylesheet=ui_480p"))
+        view.load(QUrl("dimensionality_reduction/html5/index.html?stylesheet=ui_720p"))
         view.show()
         view.setFixedSize(self.args.preferred_width, HTML5_TOOLBAR_HEIGHT)
         self.setFixedSize(self.args.preferred_width, self.args.preferred_height)
