@@ -406,8 +406,8 @@ class MainWindow(QtGui.QWidget, EventListener):
             "Stop", lambda: self.client.send_event(Event(Event.STOP)),
             True, " ")
         self._add_toggleable_action(
-            '&Export output', lambda: self.client.send_event(Event(Event.START_EXPORT_OUTPUT)),
-            '&Stop export', lambda: self.client.send_event(Event(Event.STOP_EXPORT_OUTPUT)),
+            '&Export BVH', lambda: self.client.send_event(Event(Event.START_EXPORT_BVH)),
+            '&Stop export BVH', lambda: self.client.send_event(Event(Event.STOP_EXPORT_BVH)),
             False, 'Ctrl+E')
         self._add_show_camera_settings_action()
 

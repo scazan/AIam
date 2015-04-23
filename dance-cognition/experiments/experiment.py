@@ -154,8 +154,8 @@ class Experiment(EventListener):
     def _add_event_handlers(self):
         self.add_event_handler(Event.START, self._start)
         self.add_event_handler(Event.STOP, self._stop)
-        self.add_event_handler(Event.START_EXPORT_OUTPUT, self._start_export_output)
-        self.add_event_handler(Event.STOP_EXPORT_OUTPUT, self._stop_export_output)
+        self.add_event_handler(Event.START_EXPORT_BVH, self._start_export_bvh)
+        self.add_event_handler(Event.STOP_EXPORT_BVH, self._stop_export_bvh)
         self.add_event_handler(Event.SET_CURSOR, self.update_cursor)
 
     def update_cursor(self, event):
@@ -227,7 +227,7 @@ class Experiment(EventListener):
         self._frame_count += 1
 
         if self._exporting_output:
-            self._export_output()
+            self._export_bvh()
         if self._output_sender:
             self._send_output()
 
@@ -266,11 +266,11 @@ class Experiment(EventListener):
         server_thread.daemon = True
         server_thread.start()
 
-    def _start_export_output(self, event):
-        print "exporting output"
+    def _start_export_bvh(self, event):
+        print "exporting BVH"
         self._exporting_output = True
 
-    def _stop_export_output(self, event):
+    def _stop_export_bvh(self, event):
         if not os.path.exists(self.args.export_dir):
             os.mkdir(self.args.export_dir)
         export_path = self._get_export_path()
@@ -286,7 +286,7 @@ class Experiment(EventListener):
                 return path
             i += 1
 
-    def _export_output(self):
+    def _export_bvh(self):
         if self.output is not None:
             self.entity.parameters_to_processed_pose(self.output, self.pose)
             frame = self.pose_to_bvh_frame(self.pose)
