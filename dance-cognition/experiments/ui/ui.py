@@ -11,6 +11,8 @@ from stopwatch import Stopwatch
 from fps_meter import FpsMeter
 from parameters_form import ParametersForm
 from color_schemes import *
+from exporter import Exporter
+import shutil
 
 TOOLBAR_WIDTH = 400
 SLIDER_PRECISION = 1000
@@ -19,6 +21,7 @@ CAMERA_Y_SPEED = .01
 CAMERA_KEY_SPEED = .1
 CAMERA_DRAG_SPEED = .1
 FOCUS_RADIUS = 1.
+VIDEO_EXPORT_PATH = "rendered_video"
 
 class BaseScene(QtOpenGL.QGLWidget):
     @staticmethod
@@ -39,6 +42,7 @@ class BaseScene(QtOpenGL.QGLWidget):
         QtOpenGL.QGLWidget.__init__(self, parent)
         if args.image:
             self._image = QtGui.QImage(args.image)
+        self._exporting_video = False
         self.setMouseTracking(True)
 
     def _set_camera_from_arg(self, arg):
@@ -77,6 +81,8 @@ class BaseScene(QtOpenGL.QGLWidget):
             self._draw_focus()
         self._draw_io(self.processed_input, self.draw_input, self.args.input_y_offset)
         self._draw_io(self.processed_output, self.draw_output, self.args.output_y_offset)
+        if self._exporting_video:
+            self._exporter.export_frame()
 
     def _render_image(self):
         self.configure_2d_projection()
@@ -307,6 +313,18 @@ class BaseScene(QtOpenGL.QGLWidget):
     def central_output_position(self, output):
         return numpy.zeros(2)
 
+    def start_export_video(self):
+        if os.path.exists(VIDEO_EXPORT_PATH):
+            shutil.rmtree(VIDEO_EXPORT_PATH)
+        os.mkdir(VIDEO_EXPORT_PATH)
+        self._exporter = Exporter(VIDEO_EXPORT_PATH, 0, 0, self.width, self.height)
+        self._exporting_video = True
+        print "exporting video to %s" % VIDEO_EXPORT_PATH
+
+    def stop_export_video(self):
+        self._exporting_video = False
+        print "stopped exporting video"
+
 class ExperimentToolbar(QtGui.QWidget):
     def __init__(self, parent, args):
         self.args = args
@@ -409,6 +427,10 @@ class MainWindow(QtGui.QWidget, EventListener):
             '&Export BVH', lambda: self.client.send_event(Event(Event.START_EXPORT_BVH)),
             '&Stop export BVH', lambda: self.client.send_event(Event(Event.STOP_EXPORT_BVH)),
             False, 'Ctrl+E')
+        self._add_toggleable_action(
+            '&Export video', self._scene.start_export_video,
+            '&Stop export video', self._scene.stop_export_video,
+            False, 'Ctrl+O')
         self._add_show_camera_settings_action()
 
     def _add_toggleable_action(self,
