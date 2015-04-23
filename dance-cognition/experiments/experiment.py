@@ -157,6 +157,7 @@ class Experiment(EventListener):
         self.add_event_handler(Event.START_EXPORT_BVH, self._start_export_bvh)
         self.add_event_handler(Event.STOP_EXPORT_BVH, self._stop_export_bvh)
         self.add_event_handler(Event.SET_CURSOR, self.update_cursor)
+        self.add_event_handler(Event.PROCEED_TO_NEXT_FRAME, self._proceed_to_next_frame)
 
     def update_cursor(self, event):
         self.entity.set_cursor(event.content)
@@ -211,17 +212,17 @@ class Experiment(EventListener):
                 self.time_increment = self.now - self.previous_frame_time
                 self.proceed()
 
-            self.entity.update()
-            self.update()
+                self.entity.update()
+                self.update()
 
-            if self.entity.processed_input is not None:
-                self.send_event_to_ui(Event(Event.INPUT, self.entity.processed_input))
+                if self.entity.processed_input is not None:
+                    self.send_event_to_ui(Event(Event.INPUT, self.entity.processed_input))
 
-            if self.output is not None:
-                if (self._server.client_subscribes_to(Event.OUTPUT) or
-                    self._output_sender and self.args.output_receiver_type == "world"):
-                    self.processed_output = self.entity.process_output(self.output)
-                    self.send_event_to_ui(Event(Event.OUTPUT, self.processed_output))
+                if self.output is not None:
+                    if (self._server.client_subscribes_to(Event.OUTPUT) or
+                        self._output_sender and self.args.output_receiver_type == "world"):
+                        self.processed_output = self.entity.process_output(self.output)
+                        self.send_event_to_ui(Event(Event.OUTPUT, self.processed_output))
 
         self.previous_frame_time = self.now
         self._frame_count += 1
@@ -230,6 +231,16 @@ class Experiment(EventListener):
             self._export_bvh()
         if self._output_sender:
             self._send_output()
+
+    def _proceed_to_next_frame(self, event):
+        self.time_increment = 1. / self.args.frame_rate
+        self.proceed()
+
+        self.entity.update()
+        self.update()
+
+        self.processed_output = self.entity.process_output(self.output)
+        self.send_event_to_ui(Event(Event.OUTPUT, self.processed_output))
 
     def send_event_to_ui(self, event):
         for ui_handler in self._ui_handlers:

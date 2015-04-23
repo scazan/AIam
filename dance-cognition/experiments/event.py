@@ -14,6 +14,7 @@ class Event:
     START_EXPORT_BVH = "START_EXPORT_BVH"
     STOP_EXPORT_BVH = "STOP_EXPORT_BVH"
     BVH_INDEX = "BVH_INDEX"
+    PROCEED_TO_NEXT_FRAME = "PROCEED_TO_NEXT_FRAME"
 
     def __init__(self, type_, content=None):
         self.type = type_

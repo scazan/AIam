@@ -83,6 +83,7 @@ class BaseScene(QtOpenGL.QGLWidget):
         self._draw_io(self.processed_output, self.draw_output, self.args.output_y_offset)
         if self._exporting_video:
             self._exporter.export_frame()
+            self._parent.client.send_event(Event(Event.PROCEED_TO_NEXT_FRAME))
 
     def _render_image(self):
         self.configure_2d_projection()
@@ -320,6 +321,8 @@ class BaseScene(QtOpenGL.QGLWidget):
         self._exporter = Exporter(VIDEO_EXPORT_PATH, 0, 0, self.width, self.height)
         self._exporting_video = True
         print "exporting video to %s" % VIDEO_EXPORT_PATH
+        self._parent.client.send_event(Event(Event.STOP))
+        self._parent.client.send_event(Event(Event.PROCEED_TO_NEXT_FRAME))
 
     def stop_export_video(self):
         self._exporting_video = False
