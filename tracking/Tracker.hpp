@@ -3,8 +3,6 @@
 
 #include "NiTE.h"
 
-#define MAX_DEPTH 10000
-
 class Tracker
 {
 public:
@@ -15,12 +13,10 @@ public:
   virtual openni::Status mainLoop();
 
 private:
-  Tracker(const Tracker&);
-  Tracker& operator=(Tracker&);
   void processFrame();
 
-  openni::Device m_device;
-  nite::UserTracker* m_pUserTracker;
+  openni::Device device;
+  nite::UserTracker* userTracker;
 };
 
 
