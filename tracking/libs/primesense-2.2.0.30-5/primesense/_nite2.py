@@ -567,10 +567,10 @@ def load_dll(dllname):
     _niteUserTrackerFrameRelease.restype  = NiteStatus
     _niteUserTrackerFrameRelease.argtypes = [NiteUserTrackerHandle, ctypes.POINTER(NiteUserTrackerFrame)]
 
-    global _niteDumpUserTrackerCalibrationDataToFile
-    _niteDumpUserTrackerCalibrationDataToFile = dll.niteDumpUserTrackerCalibrationDataToFile
-    _niteDumpUserTrackerCalibrationDataToFile.restype  = NiteStatus
-    _niteDumpUserTrackerCalibrationDataToFile.argtypes = [NiteUserTrackerHandle, NiteUserId, ctypes.c_char_p]
+    # global _niteDumpUserTrackerCalibrationDataToFile
+    # _niteDumpUserTrackerCalibrationDataToFile = dll.niteDumpUserTrackerCalibrationDataToFile
+    # _niteDumpUserTrackerCalibrationDataToFile.restype  = NiteStatus
+    # _niteDumpUserTrackerCalibrationDataToFile.argtypes = [NiteUserTrackerHandle, NiteUserId, ctypes.c_char_p]
 
     global _niteShutdownHandTracker
     _niteShutdownHandTracker = dll.niteShutdownHandTracker
