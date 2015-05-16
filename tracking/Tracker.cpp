@@ -7,8 +7,6 @@
 
 #include "Tracker.hpp"
 
-#include "NiteSampleUtilities.h"
-
 Tracker::Tracker() {
   m_pUserTracker = new nite::UserTracker;
 }
