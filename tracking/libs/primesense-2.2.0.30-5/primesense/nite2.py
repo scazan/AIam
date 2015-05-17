@@ -145,11 +145,11 @@ class UserData(object):
     def __init__(self, userdata):
         self._userdata = userdata
     def is_new(self):
-        return (self.state & c_api.NiteUserState.NITE_USER_STATE_NEW) != 0
+        return (self.state & int(c_api.NiteUserState.NITE_USER_STATE_NEW)) != 0
     def is_visible(self):
-        return (self.state & c_api.NiteUserState.NITE_USER_STATE_VISIBLE) != 0;
+        return (self.state & int(c_api.NiteUserState.NITE_USER_STATE_VISIBLE)) != 0;
     def is_lost(self):
-        return (self.state & c_api.NiteUserState.NITE_USER_STATE_LOST) != 0;
+        return (self.state & int(c_api.NiteUserState.NITE_USER_STATE_LOST)) != 0;
     def get_pose(self, posetype):
         return PoseData(self.poses[posetype])
 
