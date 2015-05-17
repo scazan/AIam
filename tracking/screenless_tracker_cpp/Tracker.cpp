@@ -37,6 +37,8 @@ openni::Status Tracker::init() {
     return openni::STATUS_ERROR;
   }
 
+  transmitSocket = new UdpTransmitSocket(IpEndpointName(OSC_HOST, OSC_PORT));
+
   return openni::STATUS_OK;
 }
 
@@ -66,8 +68,28 @@ void Tracker::processFrame() {
     if(!userData.isLost()) {
       printf("%d in state %d\n", userData.getId(), userData.getSkeleton().getState());
       if(userData.getSkeleton().getState() == nite::SKELETON_TRACKED) {
-	// send skeleton data here
+	sendSkeletonData(userData.getSkeleton());
       }
     }
   }
+}
+
+void Tracker::sendSkeletonData(const nite::Skeleton &skeleton) {
+  const nite::SkeletonJoint& torso = skeleton.getJoint(nite::JOINT_TORSO);
+
+  printf("%.3f %.3f %.3f\n",
+	 torso.getPosition().x,
+	 torso.getPosition().y,
+	 torso.getPosition().z);
+
+  osc::OutboundPacketStream p(oscBuffer, OSC_BUFFER_SIZE);
+    
+  p << osc::BeginBundleImmediate
+    << osc::BeginMessage( "/test1" ) 
+    << true << 23 << (float)3.1415 << "hello" << osc::EndMessage
+    << osc::BeginMessage( "/test2" ) 
+    << true << 24 << (float)10.8 << "world" << osc::EndMessage
+    << osc::EndBundle;
+    
+  transmitSocket->Send(p.Data(), p.Size());
 }
