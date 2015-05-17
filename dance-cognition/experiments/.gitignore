@@ -1,5 +1,8 @@
 *.log
 scenes/
 plots/
+export/
+rendered_video/
+*.dat
 *.data
 *.model
