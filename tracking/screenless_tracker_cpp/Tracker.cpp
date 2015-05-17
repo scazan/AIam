@@ -75,20 +75,22 @@ void Tracker::processFrame() {
 }
 
 void Tracker::sendSkeletonData(const nite::Skeleton &skeleton) {
-  const nite::SkeletonJoint& torso = skeleton.getJoint(nite::JOINT_TORSO);
+  const nite::SkeletonJoint& leftHand = skeleton.getJoint(nite::JOINT_LEFT_HAND);
 
   printf("%.3f %.3f %.3f\n",
-	 torso.getPosition().x,
-	 torso.getPosition().y,
-	 torso.getPosition().z);
+	 leftHand.getPosition().x,
+	 leftHand.getPosition().y,
+	 leftHand.getPosition().z);
 
   osc::OutboundPacketStream p(oscBuffer, OSC_BUFFER_SIZE);
     
   p << osc::BeginBundleImmediate
-    << osc::BeginMessage( "/test1" ) 
-    << true << 23 << (float)3.1415 << "hello" << osc::EndMessage
-    << osc::BeginMessage( "/test2" ) 
-    << true << 24 << (float)10.8 << "world" << osc::EndMessage
+    << osc::BeginMessage("/joint")
+    << "left_hand"
+    << leftHand.getPosition().x
+    << leftHand.getPosition().y
+    << leftHand.getPosition().z
+    << osc::EndMessage
     << osc::EndBundle;
     
   transmitSocket->Send(p.Data(), p.Size());
