@@ -113,7 +113,7 @@ class DimensionalityReductionExperiment(Experiment):
     def run_ui(self, client):
         from PyQt4 import QtGui
         app = QtGui.QApplication(sys.argv)
-        app.setStyleSheet(open("stylesheet.qss").read())
+        app.setStyleSheet(open("dimensionality_reduction/ui/stylesheet.qss").read())
         window = self._create_ui_window(client)
         client.connect()
         window.show()
