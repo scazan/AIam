@@ -56,65 +56,18 @@ void Tracker::processFrame() {
     return;
   }
 
-  const nite::Array<nite::UserData>& userDatas = userTrackerFrame.getUsers();
-  for(int i = 0; i < userDatas.getSize(); ++i) {
-    const nite::UserData& userData = userDatas[i];
-    users[userData.getId()].updateState(userData, userTrackerFrame.getTimestamp());
+  const nite::Array<nite::UserData>& users = userTrackerFrame.getUsers();
+  for(int i = 0; i < users.getSize(); ++i) {
+    const nite::UserData& userData = users[i];
     if(userData.isNew()) {
+      printf("New %d\n", userData.getId());
       userTracker->startSkeletonTracking(userData.getId());
     }
-    else if(!userData.isLost()) {
+    if(!userData.isLost()) {
+      printf("%d in state %d\n", userData.getId(), userData.getSkeleton().getState());
       if(userData.getSkeleton().getState() == nite::SKELETON_TRACKED) {
 	// send skeleton data here
       }
     }
   }
-}
-
-Tracker::User::User() {
-  visible = false;
-  skeletonState = nite::SKELETON_NONE;
-}
-
-void Tracker::User::updateState(const nite::UserData& userData, uint64_t ts) {
-  if(userData.isNew()) {
-    id = userData.getId();
-    debug("New", ts);
-  }
-
-  else if(userData.isVisible() && !visible)
-    printf("[%08" PRIu64 "] User #%d:\tVisible\n", ts, id);
-  else if(!userData.isVisible() && visible)
-    printf("[%08" PRIu64 "] User #%d:\tOut of Scene\n", ts, id);
-  else if(userData.isLost()) {
-    debug("Lost", ts);
-  }
-  visible = userData.isVisible();
-
-  if(skeletonState != userData.getSkeleton().getState())
-    {
-      switch(skeletonState = userData.getSkeleton().getState())
-	{
-	case nite::SKELETON_NONE:
-	  debug("Stopped tracking.", ts);
-	  break;
-	case nite::SKELETON_CALIBRATING:
-	  debug("Calibrating...", ts);
-	  break;
-	case nite::SKELETON_TRACKED:
-	  debug("Tracking!", ts);
-	  break;
-	case nite::SKELETON_CALIBRATION_ERROR_NOT_IN_POSE:
-	case nite::SKELETON_CALIBRATION_ERROR_HANDS:
-	case nite::SKELETON_CALIBRATION_ERROR_LEGS:
-	case nite::SKELETON_CALIBRATION_ERROR_HEAD:
-	case nite::SKELETON_CALIBRATION_ERROR_TORSO:
-	  debug("Calibration Failed... :-|", ts);
-	  break;
-	}
-    }
-}
-
-void Tracker::User::debug(const char *message, uint64_t ts) {
-  printf("[%08" PRIu64 "] User #%d:\t%s\n", ts, id, message);
 }
