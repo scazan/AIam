@@ -1,3 +1,4 @@
+import setup_paths
 from argparse import ArgumentParser
 from simple_osc_sender import OscSender
 import time

@@ -1,3 +1,4 @@
+import setup_paths
 from simple_osc_receiver import OscReceiver
 from simple_osc_sender import OscSender
 import time
