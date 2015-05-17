@@ -4,13 +4,13 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/..")
 
 from argparse import ArgumentParser
 from storage import *
-from bvh_reader.bvh_collection import BvhCollection
+from bvh.bvh_reader.bvh_collection import BvhCollection
 import imp
 from stopwatch import Stopwatch
 import threading
 from event import Event
 from event_listener import EventListener
-from bvh_writer import BvhWriter
+from bvh.bvh_writer import BvhWriter
 import glob
 
 from connectivity.websocket_server import WebsocketServer, ClientHandler

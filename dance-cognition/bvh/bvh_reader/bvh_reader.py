@@ -2,8 +2,8 @@
 
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../libs")
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../experiments")
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../../libs")
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../../experiments")
 
 import cgkit.bvh
 from geo import *

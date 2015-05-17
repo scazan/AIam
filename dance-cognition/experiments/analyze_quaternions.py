@@ -5,7 +5,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/..")
 
 from argparse import ArgumentParser
-from bvh_reader import bvh_reader as bvh_reader_module
+from bvh.bvh_reader import bvh_reader as bvh_reader_module
 from angle_parameters import quaternion_from_euler
 from collections import defaultdict
 

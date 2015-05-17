@@ -6,7 +6,7 @@ from transformations import euler_matrix, is_same_transform
 import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/..")
-from bvh_reader.geo import Euler
+from bvh.bvh_reader.geo import Euler
 
 class AngleParametersTest(unittest.TestCase):
     def test_radians_vector2d_inversion(self):

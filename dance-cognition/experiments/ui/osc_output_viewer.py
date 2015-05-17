@@ -9,7 +9,7 @@ from PyQt4 import QtCore, QtGui, QtOpenGL
 import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../..")
-from bvh_reader import bvh_reader as bvh_reader_module
+from bvh.bvh_reader import bvh_reader as bvh_reader_module
 from simple_osc_receiver import OscReceiver
 
 FRAME_RATE = 50
