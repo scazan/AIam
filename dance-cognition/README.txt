@@ -1,6 +1,6 @@
 BACKEND REQUIREMENTS
 
-sudo apt-get install python-numpy python-scikit-learn
+sudo apt-get install python-numpy python-sklearn
 sudo pip install tornado==2.4.1
 
 UI REQUIREMENTS
