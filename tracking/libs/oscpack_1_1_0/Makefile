@@ -16,7 +16,7 @@ UNAME := $(shell uname)
 
 CXX := g++
 INCLUDES := -I.
-COPTS  := -Wall -Wextra -O3
+COPTS  := -Wall -Wextra -O3 -fPIC
 CDEBUG := -Wall -Wextra -g 
 CXXFLAGS := $(COPTS) $(INCLUDES) -D$(ENDIANESS)
 
