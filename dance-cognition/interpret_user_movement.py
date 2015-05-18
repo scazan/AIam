@@ -11,19 +11,23 @@ OSC_PORT = 15002
 WEBSOCKET_HOST = "localhost"
 
 def handle_joint_data(path, args, types, src, user_data):
-    joint_name, x, y, z = args
-    preferred_distance = float(abs(x - 200)) / 300
+    user_id, joint_name, x, y, z = args
+    preferred_distance = novelty = float(abs(x - 200)) / 300
     websocket_client.send_event(
         Event(Event.PARAMETER,
               {"name": "preferred_distance",
                "value": preferred_distance}))
+    websocket_client.send_event(
+        Event(Event.PARAMETER,
+              {"name": "novelty",
+               "value": novelty}))
 
 websocket_client = WebsocketClient(WEBSOCKET_HOST)
 websocket_client.set_event_listener(EventListener())
 websocket_client.connect()
 
 osc_receiver = OscReceiver(OSC_PORT)
-osc_receiver.add_method("/joint", "sfff", handle_joint_data)
+osc_receiver.add_method("/joint", "isfff", handle_joint_data)
 osc_receiver.start()
 
 while True:

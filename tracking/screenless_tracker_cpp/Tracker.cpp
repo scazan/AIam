@@ -70,7 +70,7 @@ void Tracker::processFrame() {
     }
     else {
       if(userData.getSkeleton().getState() == nite::SKELETON_TRACKED) {
-	sendSkeletonData(userData.getSkeleton());
+	sendSkeletonData(userData);
       }
       printStateIfChanged(userData);
     }
@@ -109,13 +109,15 @@ void Tracker::printStateIfChanged(const nite::UserData& userData) {
   }
 }
 
-void Tracker::sendSkeletonData(const nite::Skeleton &skeleton) {
+void Tracker::sendSkeletonData(const nite::UserData& userData) {
+  const nite::Skeleton skeleton = userData.getSkeleton();
   const nite::SkeletonJoint& leftHand = skeleton.getJoint(nite::JOINT_LEFT_HAND);
 
   osc::OutboundPacketStream p(oscBuffer, OSC_BUFFER_SIZE);
     
   p << osc::BeginBundleImmediate
     << osc::BeginMessage("/joint")
+    << userData.getId()
     << "left_hand"
     << leftHand.getPosition().x
     << leftHand.getPosition().y

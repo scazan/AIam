@@ -20,7 +20,7 @@ public:
 
 private:
   void processFrame();
-  void sendSkeletonData(const nite::Skeleton&);
+  void sendSkeletonData(const nite::UserData&);
   void printStateIfChanged(const nite::UserData&);
 
   openni::Device device;
