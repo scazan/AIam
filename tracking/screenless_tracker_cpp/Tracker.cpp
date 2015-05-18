@@ -65,22 +65,52 @@ void Tracker::processFrame() {
       printf("New %d\n", userData.getId());
       userTracker->startSkeletonTracking(userData.getId());
     }
-    if(!userData.isLost()) {
-      printf("%d in state %d\n", userData.getId(), userData.getSkeleton().getState());
+    else if(userData.isLost()) {
+      printf("Lost %d\n", userData.getId());
+    }
+    else {
       if(userData.getSkeleton().getState() == nite::SKELETON_TRACKED) {
 	sendSkeletonData(userData.getSkeleton());
       }
+      printStateIfChanged(userData);
+    }
+  }
+}
+
+void Tracker::printStateIfChanged(const nite::UserData& userData) {
+  bool stateChanged = false;
+  nite::SkeletonState newState = userData.getSkeleton().getState();
+  if(previousStates.find(userData.getId()) == previousStates.end()) {
+    stateChanged = true;
+  }
+  else if(newState != previousStates[userData.getId()]) {
+    stateChanged = true;
+  }
+  if(stateChanged) {
+    previousStates[userData.getId()] = newState;
+    switch(newState) {
+    case nite::SKELETON_NONE:
+      printf("Stopped tracking %d\n", userData.getId());
+      break;
+    case nite::SKELETON_CALIBRATING:
+      printf("Calibrating %d\n", userData.getId());
+      break;
+    case nite::SKELETON_TRACKED:
+      printf("Tracking %d\n", userData.getId());
+      break;
+    case nite::SKELETON_CALIBRATION_ERROR_NOT_IN_POSE:
+    case nite::SKELETON_CALIBRATION_ERROR_HANDS:
+    case nite::SKELETON_CALIBRATION_ERROR_LEGS:
+    case nite::SKELETON_CALIBRATION_ERROR_HEAD:
+    case nite::SKELETON_CALIBRATION_ERROR_TORSO:
+      printf("Calibration failed for %d\n", userData.getId());
+      break;
     }
   }
 }
 
 void Tracker::sendSkeletonData(const nite::Skeleton &skeleton) {
   const nite::SkeletonJoint& leftHand = skeleton.getJoint(nite::JOINT_LEFT_HAND);
-
-  printf("%.3f %.3f %.3f\n",
-	 leftHand.getPosition().x,
-	 leftHand.getPosition().y,
-	 leftHand.getPosition().z);
 
   osc::OutboundPacketStream p(oscBuffer, OSC_BUFFER_SIZE);
     

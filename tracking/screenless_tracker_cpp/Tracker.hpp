@@ -2,6 +2,7 @@
 #define _TRACKER_HPP_
 
 #include "NiTE.h"
+#include <map>
 #include <oscpack/osc/OscOutboundPacketStream.h>
 #include <oscpack/ip/UdpSocket.h>
 
@@ -19,10 +20,12 @@ public:
 
 private:
   void processFrame();
-  void sendSkeletonData(const nite::Skeleton &);
+  void sendSkeletonData(const nite::Skeleton&);
+  void printStateIfChanged(const nite::UserData&);
 
   openni::Device device;
   nite::UserTracker* userTracker;
+  std::map<nite::UserId, nite::SkeletonState> previousStates;
   UdpTransmitSocket* transmitSocket;
   char oscBuffer[OSC_BUFFER_SIZE];
 };
