@@ -72,7 +72,7 @@ class Experiment(EventListener):
         parser.add_argument("-bvh", type=str)
         parser.add_argument("-bvh-speed", type=float, default=1.0)
         parser.add_argument("-joint")
-        parser.add_argument("-frame-rate", type=float, default=100.0)
+        parser.add_argument("-frame-rate", type=float, default=50.0)
         parser.add_argument("-unit-cube", action="store_true")
         parser.add_argument("-input-y-offset", type=float, default=.0)
         parser.add_argument("-output-y-offset", type=float, default=.0)
