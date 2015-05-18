@@ -7,9 +7,6 @@ class LeakyIntegrator:
         self._current_value = None
         self._response_factor = response_factor
 
-    def set_value(self, new_value):
-        self._current_value = new_value
-
     def integrate(self, new_value, time_increment):
         if self._current_value:
             self._current_value += (new_value - self._current_value) * \

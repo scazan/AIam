@@ -6,6 +6,7 @@ from websocket_client import WebsocketClient
 from event_listener import EventListener
 from event import Event
 from leaky_integrator import LeakyIntegrator
+from vector import Vector3d
 import time
 
 OSC_PORT = 15002
@@ -14,19 +15,20 @@ WEBSOCKET_HOST = "localhost"
 class Joint:
     def __init__(self):
         self._previous_time = None
-        self._activity = LeakyIntegrator(response_factor=.98)
+        self._activity = LeakyIntegrator(response_factor=.999)
 
     def get_activity(self):
         return self._activity.value()
 
-    def update(self, value):
+    def update(self, x, y, z):
         now = time.time()
-        if self._previous_time is None:
-            self._activity.set_value(value)
-        else:
+        new_position = Vector3d(x, y, z)
+        if self._previous_time is not None:
+            movement = (new_position - self._previous_position).mag()
             time_increment = now - self._previous_time
-            self._activity.integrate(value, time_increment)
+            self._activity.integrate(movement, time_increment)
         self._previous_time = now
+        self._previous_position = new_position
 
 class UserMovementInterpreter:
     def __init__(self):
@@ -34,17 +36,17 @@ class UserMovementInterpreter:
 
     def handle_joint_data(self, user_id, joint_name, x, y, z):
         joint = self._joints[joint_name]
-        value = float(abs(x - 200)) / 300
-        joint.update(value)
-        preferred_distance = novelty = joint.get_activity()
-        websocket_client.send_event(
-            Event(Event.PARAMETER,
-                  {"name": "preferred_distance",
-                   "value": preferred_distance}))
-        websocket_client.send_event(
-            Event(Event.PARAMETER,
-                  {"name": "novelty",
-                   "value": novelty}))
+        joint.update(x, y, z)
+        if joint.get_activity() is not None:
+            preferred_distance = novelty = joint.get_activity() * .02
+            websocket_client.send_event(
+                Event(Event.PARAMETER,
+                      {"name": "preferred_distance",
+                       "value": preferred_distance}))
+            websocket_client.send_event(
+                Event(Event.PARAMETER,
+                      {"name": "novelty",
+                       "value": novelty}))
 
 interpreter = UserMovementInterpreter()
 
