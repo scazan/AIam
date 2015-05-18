@@ -12,9 +12,7 @@ WEBSOCKET_HOST = "localhost"
 
 def handle_joint_data(path, args, types, src, user_data):
     joint_name, x, y, z = args
-    print "%s: %s %s %s" % (joint_name, x, y, z)
     preferred_distance = float(abs(x - 200)) / 300
-    print preferred_distance
     websocket_client.send_event(
         Event(Event.PARAMETER,
               {"name": "preferred_distance",
