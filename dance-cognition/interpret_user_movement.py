@@ -38,15 +38,20 @@ class UserMovementInterpreter:
         joint = self._joints[joint_name]
         joint.update(x, y, z)
         if joint.get_activity() is not None:
-            preferred_distance = novelty = joint.get_activity() * .02
+            # preferred_distance = novelty = joint.get_activity() * .02
+            # websocket_client.send_event(
+            #     Event(Event.PARAMETER,
+            #           {"name": "preferred_distance",
+            #            "value": preferred_distance}))
+            # websocket_client.send_event(
+            #     Event(Event.PARAMETER,
+            #           {"name": "novelty",
+            #            "value": novelty}))
+            velocity = joint.get_activity() * .02
             websocket_client.send_event(
                 Event(Event.PARAMETER,
-                      {"name": "preferred_distance",
-                       "value": preferred_distance}))
-            websocket_client.send_event(
-                Event(Event.PARAMETER,
-                      {"name": "novelty",
-                       "value": novelty}))
+                      {"name": "velocity",
+                       "value": velocity}))
 
 interpreter = UserMovementInterpreter()
 
