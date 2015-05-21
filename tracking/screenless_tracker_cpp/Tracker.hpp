@@ -21,6 +21,11 @@ public:
 private:
   void processFrame();
   void sendSkeletonData(const nite::UserData&);
+  void addJointData(osc::OutboundPacketStream &stream,
+		    const nite::UserId& userId,
+		    const nite::Skeleton& skeleton,
+		    nite::JointType type,
+		    const char *jointName);
   void printStateIfChanged(const nite::UserData&);
 
   openni::Device device;

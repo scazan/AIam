@@ -111,19 +111,28 @@ void Tracker::printStateIfChanged(const nite::UserData& userData) {
 
 void Tracker::sendSkeletonData(const nite::UserData& userData) {
   const nite::Skeleton skeleton = userData.getSkeleton();
-  const nite::SkeletonJoint& leftHand = skeleton.getJoint(nite::JOINT_LEFT_HAND);
+  const nite::UserId userId = userData.getId();
 
-  osc::OutboundPacketStream p(oscBuffer, OSC_BUFFER_SIZE);
+  osc::OutboundPacketStream stream(oscBuffer, OSC_BUFFER_SIZE);
     
-  p << osc::BeginBundleImmediate
-    << osc::BeginMessage("/joint")
-    << userData.getId()
-    << "left_hand"
-    << leftHand.getPosition().x
-    << leftHand.getPosition().y
-    << leftHand.getPosition().z
-    << osc::EndMessage
-    << osc::EndBundle;
+  stream << osc::BeginBundleImmediate;
+  addJointData(stream, userId, skeleton, nite::JOINT_LEFT_HAND, "left_hand");
+  stream << osc::EndBundle;
     
-  transmitSocket->Send(p.Data(), p.Size());
+  transmitSocket->Send(stream.Data(), stream.Size());
+}
+
+void Tracker::addJointData(osc::OutboundPacketStream &stream,
+			   const nite::UserId& userId,
+			   const nite::Skeleton& skeleton,
+			   nite::JointType type,
+			   const char *jointName) {
+  const nite::SkeletonJoint& joint = skeleton.getJoint(type);
+  stream << osc::BeginMessage("/joint")
+	 << userId
+	 << jointName
+	 << joint.getPosition().x
+	 << joint.getPosition().y
+	 << joint.getPosition().z
+	 << osc::EndMessage;
 }
