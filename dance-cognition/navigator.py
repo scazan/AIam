@@ -72,9 +72,8 @@ class Navigator:
 
 
 class PathFollower:
-    def __init__(self, path, velocity, dynamics):
+    def __init__(self, path, dynamics):
         self._path = path
-        self._desired_average_velocity = velocity
         self._velocity_correction = 1.
         if dynamics.__class__ != dynamics_module.constant_dynamics():
             self._velocity_correction = \
@@ -133,7 +132,6 @@ class PathFollower:
 
     def _current_strip_velocity(self):
         return self._dynamics.velocity((self._relative_cursor())) \
-            * self._desired_average_velocity \
             / self._velocity_correction
 
     def _relative_cursor(self):

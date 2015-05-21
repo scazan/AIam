@@ -18,6 +18,7 @@ import interpolation
 
 FRAME_RATE = 50
 SLIDER_PRECISION = 1000
+VELOCITY = .1
 
 class MapView(QtOpenGL.QGLWidget):
     def __init__(self, parent, experiment):
@@ -246,13 +247,13 @@ class Experiment:
             self.path_segments,
             resolution=100)
         self.path_followers = [
-            PathFollower(self.path, velocity=0.1, dynamics=dynamics.constant_dynamics()),
-            PathFollower(self.path, velocity=0.1, dynamics=dynamics.sine_dynamics()),
+            PathFollower(self.path, dynamics=dynamics.constant_dynamics()),
+            PathFollower(self.path, dynamics=dynamics.sine_dynamics()),
             ]
 
     def proceed(self, time_increment):
         for path_follower in self.path_followers:
-            path_follower.proceed(time_increment)
+            path_follower.proceed(time_increment * VELOCITY)
 
 parser = ArgumentParser()
 parser.add_argument("-model")

@@ -281,14 +281,14 @@ class Improviser:
     def _create_path_follower(self, path):
         dynamics_class = getattr(dynamics_module, "%s_dynamics" % self.params.dynamics)
         dynamics = dynamics_class(min_relative_velocity=self.params.min_relative_velocity)
-        return PathFollower(path, self.params.velocity, dynamics)
+        return PathFollower(path, dynamics)
 
     def proceed(self, time_increment):
         if self._path_follower is None:
             self._select_next_move()
         if self._path_follower.reached_destination():
             self._select_next_move()
-        self._path_follower.proceed(time_increment)
+        self._path_follower.proceed(time_increment * self.params.velocity)
 
     def current_position(self):
         normalized_position = self._path_follower.current_position()
