@@ -32,26 +32,30 @@ class Joint:
 
 class UserMovementInterpreter:
     def __init__(self):
-        self._joints = {"left_hand": Joint()}
+        self._joints = {"left_hand": Joint(),
+                        "right_hand": Joint()}
 
     def handle_joint_data(self, user_id, joint_name, x, y, z):
         joint = self._joints[joint_name]
         joint.update(x, y, z)
         if joint.get_activity() is not None:
-            # preferred_distance = novelty = joint.get_activity() * .02
-            # websocket_client.send_event(
-            #     Event(Event.PARAMETER,
-            #           {"name": "preferred_distance",
-            #            "value": preferred_distance}))
-            # websocket_client.send_event(
-            #     Event(Event.PARAMETER,
-            #           {"name": "novelty",
-            #            "value": novelty}))
-            velocity = joint.get_activity() * .02
-            websocket_client.send_event(
-                Event(Event.PARAMETER,
-                      {"name": "velocity",
-                       "value": velocity}))
+            if joint_name == "right_hand":
+                average_activity = sum([joint.get_activity() for joint in self._joints.values()]) / \
+                    len(self._joints)
+                # preferred_distance = novelty = average_activity * .02
+                # websocket_client.send_event(
+                #     Event(Event.PARAMETER,
+                #           {"name": "preferred_distance",
+                #            "value": preferred_distance}))
+                # websocket_client.send_event(
+                #     Event(Event.PARAMETER,
+                #           {"name": "novelty",
+                #            "value": novelty}))
+                velocity = average_activity * .02
+                websocket_client.send_event(
+                    Event(Event.PARAMETER,
+                          {"name": "velocity",
+                           "value": velocity}))
 
 interpreter = UserMovementInterpreter()
 

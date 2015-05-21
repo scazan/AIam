@@ -117,6 +117,7 @@ void Tracker::sendSkeletonData(const nite::UserData& userData) {
     
   stream << osc::BeginBundleImmediate;
   addJointData(stream, userId, skeleton, nite::JOINT_LEFT_HAND, "left_hand");
+  addJointData(stream, userId, skeleton, nite::JOINT_RIGHT_HAND, "right_hand");
   stream << osc::EndBundle;
     
   transmitSocket->Send(stream.Data(), stream.Size());
