@@ -13,6 +13,7 @@ OSC_PORT = 15002
 WEBSOCKET_HOST = "localhost"
 WINDOW_DURATION = 1.0
 FPS = 30.0
+ACTIVITY_THRESHOLD = 5
 
 class Joint:
     def __init__(self):
@@ -84,7 +85,7 @@ class UserMovementInterpreter:
         #     Event(Event.PARAMETER,
         #           {"name": "novelty",
         #            "value": novelty}))
-        velocity = self._highest_user_activity * .02
+        velocity = max(0, self._highest_user_activity - ACTIVITY_THRESHOLD) * .02
         websocket_client.send_event(
             Event(Event.PARAMETER,
                   {"name": "velocity",
