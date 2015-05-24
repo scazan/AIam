@@ -118,6 +118,18 @@ void Tracker::sendSkeletonData(const nite::UserData& userData) {
   stream << osc::BeginBundleImmediate;
   addJointData(stream, userId, skeleton, nite::JOINT_LEFT_HAND, "left_hand");
   addJointData(stream, userId, skeleton, nite::JOINT_RIGHT_HAND, "right_hand");
+  addJointData(stream, userId, skeleton, nite::JOINT_HEAD, "head");
+  addJointData(stream, userId, skeleton, nite::JOINT_LEFT_SHOULDER, "left_shoulder");
+  addJointData(stream, userId, skeleton, nite::JOINT_LEFT_ELBOW, "left_elbow");
+  addJointData(stream, userId, skeleton, nite::JOINT_RIGHT_SHOULDER, "right_shoulder");
+  addJointData(stream, userId, skeleton, nite::JOINT_RIGHT_ELBOW, "right_elbow");
+  addJointData(stream, userId, skeleton, nite::JOINT_TORSO, "torso");
+  addJointData(stream, userId, skeleton, nite::JOINT_LEFT_HIP, "left_hip");
+  addJointData(stream, userId, skeleton, nite::JOINT_LEFT_KNEE, "left_knee");
+  addJointData(stream, userId, skeleton, nite::JOINT_RIGHT_HIP, "right_hip");
+  addJointData(stream, userId, skeleton, nite::JOINT_RIGHT_KNEE, "right_knee");
+  addJointData(stream, userId, skeleton, nite::JOINT_LEFT_FOOT, "left_foot");
+  addJointData(stream, userId, skeleton, nite::JOINT_RIGHT_FOOT, "right_foot");
   stream << osc::EndBundle;
     
   transmitSocket->Send(stream.Data(), stream.Size());

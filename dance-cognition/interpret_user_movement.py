@@ -42,17 +42,18 @@ class User:
         self._activity = 0
 
     def handle_joint_data(self, joint_name, x, y, z):
-        joint = self._joints[joint_name]
-        joint.update(x, y, z)
-        self._last_updated_joint = joint_name
-        self._num_updated_joints += 1
-        if self._num_updated_joints == len(self._joints):
-            self._num_updated_joints = 0
-            self._num_received_frames += 1
-            if self._num_received_frames > 1:
-                self._activity = sum([joint.get_activity() for joint in self._joints.values()]) / \
-                    len(self._joints)
-                self._interpreter.user_has_new_information()
+        if joint_name in self._joints:
+            joint = self._joints[joint_name]
+            joint.update(x, y, z)
+            self._last_updated_joint = joint_name
+            self._num_updated_joints += 1
+            if self._num_updated_joints == len(self._joints):
+                self._num_updated_joints = 0
+                self._num_received_frames += 1
+                if self._num_received_frames > 1:
+                    self._activity = sum([joint.get_activity() for joint in self._joints.values()]) / \
+                        len(self._joints)
+                    self._interpreter.user_has_new_information()
 
     def get_activity(self):
         return self._activity
