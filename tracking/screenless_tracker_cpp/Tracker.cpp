@@ -119,6 +119,7 @@ void Tracker::sendSkeletonData(const nite::UserData& userData) {
   addJointData(stream, userId, skeleton, nite::JOINT_LEFT_HAND, "left_hand");
   addJointData(stream, userId, skeleton, nite::JOINT_RIGHT_HAND, "right_hand");
   addJointData(stream, userId, skeleton, nite::JOINT_HEAD, "head");
+  addJointData(stream, userId, skeleton, nite::JOINT_HEAD, "neck");
   addJointData(stream, userId, skeleton, nite::JOINT_LEFT_SHOULDER, "left_shoulder");
   addJointData(stream, userId, skeleton, nite::JOINT_LEFT_ELBOW, "left_elbow");
   addJointData(stream, userId, skeleton, nite::JOINT_RIGHT_SHOULDER, "right_shoulder");
