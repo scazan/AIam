@@ -10,6 +10,8 @@ from PyQt4 import QtCore, QtGui, QtOpenGL
 import collections
 import math
 from argparse import ArgumentParser
+from vector import Vector3d
+text_renderer_module = __import__("text_renderer")
 
 OSC_PORT = 15002
 FRAME_RATE = 30
@@ -21,7 +23,7 @@ class Scene(QtOpenGL.QGLWidget):
     def __init__(self, parent):
         QtOpenGL.QGLWidget.__init__(self)
         self._users_joints = collections.defaultdict(dict)
-
+        self._text_renderer_class = getattr(text_renderer_module, "GlutTextRenderer")
         self._set_camera_from_arg(parent.args.camera)
         self._dragging_orientation = False
         self._dragging_y_position = False
@@ -142,6 +144,8 @@ class Scene(QtOpenGL.QGLWidget):
             self._draw_user(user_id, joints)
 
     def _draw_user(self, user_id, joints):
+        self._draw_label(user_id, joints)
+
         self._draw_limb(joints, "head", "neck")
 
         self._draw_limb(joints, "left_shoulder", "left_elbow")
@@ -164,6 +168,11 @@ class Scene(QtOpenGL.QGLWidget):
 
         self._draw_limb(joints, "right_hip", "right_knee")
         self._draw_limb(joints, "right_knee", "right_foot")
+
+    def _draw_label(self, user_id, joints):
+        glColor3f(0, 0, 0)
+        position = Vector3d(*joints["head"]) + Vector3d(0, 100, 0)
+        self._draw_text(str(user_id), 100, *position)
 
     def _draw_limb(self, joints, name1, name2):
         joint1 = joints[name1]
@@ -239,6 +248,13 @@ class Scene(QtOpenGL.QGLWidget):
             new_position[0] -= CAMERA_KEY_SPEED * math.cos(r + math.pi/2)
             new_position[2] -= CAMERA_KEY_SPEED * math.sin(r + math.pi/2)
             self._set_camera_position(new_position)
+
+    def _draw_text(self, text, size, x, y, z, font=GLUT_STROKE_ROMAN, spacing=None,
+                  v_align="left", h_align="top"):
+        self._text_renderer(text, size, font).render(x, y, z, v_align, h_align)
+
+    def _text_renderer(self, text, size, font):
+        return self._text_renderer_class(self, text, size, font)
 
 class MainWindow(QtGui.QWidget):
     def __init__(self, args):
