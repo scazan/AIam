@@ -172,7 +172,7 @@ class Scene(QtOpenGL.QGLWidget):
     def _draw_label(self, user_id, joints):
         glColor3f(0, 0, 0)
         position = Vector3d(*joints["head"]) + Vector3d(0, 100, 0)
-        self._draw_text(str(user_id), 100, *position)
+        self._draw_text(str(user_id), 100, *position, h_align="center")
 
     def _draw_limb(self, joints, name1, name2):
         joint1 = joints[name1]

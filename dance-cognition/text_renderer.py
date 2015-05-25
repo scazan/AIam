@@ -14,30 +14,25 @@ class TextRenderer:
         self.spacing = spacing
         self.scale = 1
 
-    def render(self, x, y, z, v_align="left", h_align="top"):
+    def render(self, x, y, z, v_align="bottom", h_align="left"):
         width, height = self.get_size()
         glPushMatrix()
         glTranslatef(x, y, z)
         glRotatef(-self.window._camera_x_orientation, 1.0, 0.0, 0.0)
         glRotatef(-self.window._camera_y_orientation, 0.0, 1.0, 0.0)
         glScalef(self.scale, self.scale, self.scale)
+
         if h_align == "right":
             glTranslatef(-width, 0, 0)
+        elif h_align == "center":
+            glTranslatef(-width/2, 0, 0)
+
         if v_align == "top":
             glTranslatef(0, -self.size, 0)
+
         self.stroke()
         #self._draw_bbox() # TEMP
         glPopMatrix()
-
-    def bounding_box(self, x1, y1, v_align="left", h_align="top"):
-        width, height = self.get_size()
-        if h_align == "right":
-            x1 -= width
-        if v_align == "top":
-            y1 -= self.size
-        x2 = x1 + width
-        y2 = y1 + height
-        return x1, y1, x2, y2
 
     def _draw_bbox(self):
         width, height = self.get_size()
