@@ -9,6 +9,7 @@ from OpenGL.GLU import *
 from PyQt4 import QtCore, QtGui, QtOpenGL
 import collections
 import math
+from argparse import ArgumentParser
 
 OSC_PORT = 15002
 FRAME_RATE = 30
@@ -21,13 +22,15 @@ class Scene(QtOpenGL.QGLWidget):
         QtOpenGL.QGLWidget.__init__(self)
         self._users_joints = collections.defaultdict(dict)
 
-        self._camera_x_orientation = 55
-        self._camera_y_orientation = 0
-        self._camera_position = [0, 0, -2000]
-
+        self._set_camera_from_arg(parent.args.camera)
         self._dragging_orientation = False
         self._dragging_y_position = False
         self.setMouseTracking(True)
+
+    def _set_camera_from_arg(self, arg):
+        pos_x, pos_y, pos_z, orient_y, orient_z = map(float, arg.split(","))
+        self._set_camera_position([pos_x, pos_y, pos_z])
+        self._set_camera_orientation(orient_y, orient_z)
 
     def initializeGL(self):
         glClearColor(1.0, 1.0, 1.0, 0.0)
@@ -238,12 +241,14 @@ class Scene(QtOpenGL.QGLWidget):
             self._set_camera_position(new_position)
 
 class MainWindow(QtGui.QWidget):
-    def __init__(self):
+    def __init__(self, args):
         QtGui.QWidget.__init__(self)
+        self.args = args
         self._layout = QtGui.QVBoxLayout()
         self.setLayout(self._layout)
         self._scene = Scene(self)
         self._layout.addWidget(self._scene)
+        self._create_menu()
 
         osc_receiver = OscReceiver(OSC_PORT)
         osc_receiver.add_method("/joint", "isfff", self._scene.handle_joint_data)
@@ -254,11 +259,31 @@ class MainWindow(QtGui.QWidget):
         QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), self._scene.updateGL)
         timer.start()
 
+    def _create_menu(self):
+        self._menu_bar = QtGui.QMenuBar()
+        self._layout.setMenuBar(self._menu_bar)
+        self._create_main_menu()
+
+    def _create_main_menu(self):
+        self._main_menu = self._menu_bar.addMenu("Main")
+        self._add_show_camera_settings_action()
+
+    def _add_show_camera_settings_action(self):
+        action = QtGui.QAction('Show camera settings', self)
+        action.triggered.connect(self._scene.print_camera_settings)
+        self._main_menu.addAction(action)
+
     def keyPressEvent(self, event):
         self._scene.keyPressEvent(event)
         QtGui.QWidget.keyPressEvent(self, event)
 
+
+parser = ArgumentParser()
+parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
+                    default="-70.364,-47.000,-5189.173,-8.800,10.400")
+args = parser.parse_args()
+
 app = QtGui.QApplication(sys.argv)
-window = MainWindow()
+window = MainWindow(args)
 window.show()
 app.exec_()
