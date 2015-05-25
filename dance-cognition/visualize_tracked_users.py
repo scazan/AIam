@@ -12,17 +12,34 @@ import math
 
 OSC_PORT = 15002
 FRAME_RATE = 30
+CAMERA_Y_SPEED = 1
+CAMERA_KEY_SPEED = 10
+CAMERA_DRAG_SPEED = .1
 
 class Scene(QtOpenGL.QGLWidget):
     def __init__(self, parent):
         QtOpenGL.QGLWidget.__init__(self)
         self._users_joints = collections.defaultdict(dict)
 
+        self._camera_x_orientation = 55
+        self._camera_y_orientation = 0
+        self._camera_position = [0, 0, -2000]
+
+        self._dragging_orientation = False
+        self._dragging_y_position = False
+        self.setMouseTracking(True)
+
     def initializeGL(self):
         glClearColor(1.0, 1.0, 1.0, 0.0)
         glClearAccum(0.0, 0.0, 0.0, 0.0)
         glClearDepth(1.0)
         glEnable(GL_POINT_SMOOTH)
+
+        glShadeModel(GL_SMOOTH)
+        glEnable(GL_LINE_SMOOTH)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
         glutInit(sys.argv)
 
     def resizeGL(self, window_width, window_height):
@@ -35,7 +52,6 @@ class Scene(QtOpenGL.QGLWidget):
         self.width = window_width - 2*self.margin
         self.height = window_height - 2*self.margin
         self._aspect_ratio = float(window_width) / window_height
-        self.configure_3d_projection()
 
     def configure_3d_projection(self, pixdx=0, pixdy=0):
         self.fovy = 40.0
@@ -58,19 +74,66 @@ class Scene(QtOpenGL.QGLWidget):
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
 
-#-3.767,-1.400,-3.485,-55.500,18.500
-        self._camera_x_orientation = 55
-        self._camera_y_orientation = 0
-        self._camera_position = [0, 0, -2000]
-
         glRotatef(self._camera_x_orientation, 1.0, 0.0, 0.0)
         glRotatef(self._camera_y_orientation, 0.0, 1.0, 0.0)
         glTranslatef(*self._camera_position)
+
+    def _draw_floor(self):
+        GRID_NUM_CELLS = 30
+        GRID_SIZE = self.far - self.near
+        y = 0
+        z1 = -GRID_SIZE/2
+        z2 = GRID_SIZE/2
+        x1 = -GRID_SIZE/2
+        x2 = GRID_SIZE/2
+        self._camera_x = self._camera_position[0]
+        self._camera_z = self._camera_position[2]
+        color_r = 0
+        color_g = 0
+        color_b = 0
+        color_a = 0.2
+
+        glLineWidth(1.4)
+
+        for n in range(GRID_NUM_CELLS):
+            glBegin(GL_LINES)
+            x = x1 + float(n) / GRID_NUM_CELLS * GRID_SIZE
+            color_a1 = color_a * (1 - abs(x - self._camera_x) / GRID_SIZE)
+
+            glColor4f(color_r, color_g, color_b, 0)
+            glVertex3f(x, y, z1)
+            glColor4f(color_r, color_g, color_b, color_a1)
+            glVertex3f(x, y, self._camera_z)
+
+            glColor4f(color_r, color_g, color_b, color_a1)
+            glVertex3f(x, y, self._camera_z)
+            glColor4f(color_r, color_g, color_b, 0)
+            glVertex3f(x, y, z2)
+            glEnd()
+
+        for n in range(GRID_NUM_CELLS):
+            glBegin(GL_LINES)
+            z = z1 + float(n) / GRID_NUM_CELLS * GRID_SIZE
+            color_a1 = color_a * (1 - abs(z - self._camera_z) / GRID_SIZE)
+
+            glColor4f(color_r, color_g, color_b, 0)
+            glVertex3f(x1, y, z)
+            glColor4f(color_r, color_g, color_b, color_a1)
+            glVertex3f(self._camera_x, y, z)
+
+            glColor4f(color_r, color_g, color_b, color_a1)
+            glVertex3f(self._camera_x, y, z)
+            glColor4f(color_r, color_g, color_b, 0)
+            glVertex3f(x2, y, z)
+            glEnd()
 
     def paintGL(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glLoadIdentity()
         glTranslatef(self.margin, self.margin, 0)
+        self.configure_3d_projection(-100, 0)
+
+        self._draw_floor()
 
         for user_id, joints in self._users_joints.iteritems():
             self._draw_user(user_id, joints)
@@ -109,11 +172,70 @@ class Scene(QtOpenGL.QGLWidget):
         glEnd()
 
     def sizeHint(self):
-        return QtCore.QSize(500, 500)
+        return QtCore.QSize(640, 480)
 
     def handle_joint_data(self, path, args, types, src, user_data):
         user_id, joint_name, x, y, z = args
         self._users_joints[user_id][joint_name] = [x, y, z]
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self._dragging_orientation = True
+        elif event.button() == QtCore.Qt.RightButton:
+            self._dragging_y_position = True
+
+    def mouseReleaseEvent(self, event):
+        self._dragging_orientation = False
+        self._dragging_y_position = False
+        self._drag_x_previous = event.x()
+        self._drag_y_previous = event.y()
+
+    def mouseMoveEvent(self, event):
+        x = event.x()
+        y = event.y()
+        if self._dragging_orientation:
+            self._set_camera_orientation(
+                self._camera_y_orientation + CAMERA_DRAG_SPEED * (x - self._drag_x_previous),
+                self._camera_x_orientation + CAMERA_DRAG_SPEED * (y - self._drag_y_previous))
+        elif self._dragging_y_position:
+            self._camera_position[1] += CAMERA_Y_SPEED * (y - self._drag_y_previous)
+        self._drag_x_previous = x
+        self._drag_y_previous = y
+
+    def print_camera_settings(self):
+        print "%.3f,%.3f,%.3f,%.3f,%.3f" % (
+            self._camera_position[0],
+            self._camera_position[1],
+            self._camera_position[2],
+            self._camera_y_orientation, self._camera_x_orientation)
+
+    def _set_camera_position(self, position):
+        self._camera_position = position
+
+    def _set_camera_orientation(self, y_orientation, x_orientation):
+        self._camera_y_orientation = y_orientation
+        self._camera_x_orientation = x_orientation
+
+    def keyPressEvent(self, event):
+        r = math.radians(self._camera_y_orientation)
+        new_position = self._camera_position
+        key = event.key()
+        if key == QtCore.Qt.Key_A:
+            new_position[0] += CAMERA_KEY_SPEED * math.cos(r)
+            new_position[2] += CAMERA_KEY_SPEED * math.sin(r)
+            self._set_camera_position(new_position)
+        elif key == QtCore.Qt.Key_D:
+            new_position[0] -= CAMERA_KEY_SPEED * math.cos(r)
+            new_position[2] -= CAMERA_KEY_SPEED * math.sin(r)
+            self._set_camera_position(new_position)
+        elif key == QtCore.Qt.Key_W:
+            new_position[0] += CAMERA_KEY_SPEED * math.cos(r + math.pi/2)
+            new_position[2] += CAMERA_KEY_SPEED * math.sin(r + math.pi/2)
+            self._set_camera_position(new_position)
+        elif key == QtCore.Qt.Key_S:
+            new_position[0] -= CAMERA_KEY_SPEED * math.cos(r + math.pi/2)
+            new_position[2] -= CAMERA_KEY_SPEED * math.sin(r + math.pi/2)
+            self._set_camera_position(new_position)
 
 class MainWindow(QtGui.QWidget):
     def __init__(self):
@@ -131,6 +253,10 @@ class MainWindow(QtGui.QWidget):
         timer.setInterval(1000. / FRAME_RATE)
         QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), self._scene.updateGL)
         timer.start()
+
+    def keyPressEvent(self, event):
+        self._scene.keyPressEvent(event)
+        QtGui.QWidget.keyPressEvent(self, event)
 
 app = QtGui.QApplication(sys.argv)
 window = MainWindow()
