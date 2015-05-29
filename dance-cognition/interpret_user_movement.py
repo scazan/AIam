@@ -12,11 +12,19 @@ from argparse import ArgumentParser
 from tracked_users_viewer import TrackedUsersViewer
 from PyQt4 import QtGui
 
+ACTIVITY_THRESHOLD = 5
+ACTIVITY_CEILING = 40
+MIN_VELOCITY = 0.3
+MAX_VELOCITY = 1.0
+MIN_NOVELTY = 0.1
+MAX_NOVELTY = 1.0
+MIN_PREFERRED_DISTANCE = 0.1
+MAX_PREFERRED_DISTANCE = 2.0
+
 OSC_PORT = 15002
 WEBSOCKET_HOST = "localhost"
 WINDOW_DURATION = 1.0
 FPS = 30.0
-ACTIVITY_THRESHOLD = 5
 
 class Joint:
     def __init__(self):
@@ -84,20 +92,23 @@ class UserMovementInterpreter:
         self._highest_user_activity = max(user_activities)
 
     def _send_interpretation(self):
-        # preferred_distance = novelty = average_activity * .02
-        # websocket_client.send_event(
-        #     Event(Event.PARAMETER,
-        #           {"name": "preferred_distance",
-        #            "value": preferred_distance}))
-        # websocket_client.send_event(
-        #     Event(Event.PARAMETER,
-        #           {"name": "novelty",
-        #            "value": novelty}))
-        velocity = max(0, self._highest_user_activity - ACTIVITY_THRESHOLD) * .02
+        relative_activity = max(0, self._highest_user_activity - ACTIVITY_THRESHOLD) / \
+            (ACTIVITY_CEILING - ACTIVITY_THRESHOLD)
+        velocity = MIN_VELOCITY + relative_activity * (MAX_VELOCITY - MIN_VELOCITY)
+        novelty = MIN_NOVELTY + relative_activity * (MAX_NOVELTY - MIN_NOVELTY)
+        preferred_distance = MIN_PREFERRED_DISTANCE + relative_activity * (MAX_PREFERRED_DISTANCE - MIN_PREFERRED_DISTANCE)
         websocket_client.send_event(
             Event(Event.PARAMETER,
                   {"name": "velocity",
                    "value": velocity}))
+        websocket_client.send_event(
+            Event(Event.PARAMETER,
+                  {"name": "novelty",
+                   "value": novelty}))
+        websocket_client.send_event(
+            Event(Event.PARAMETER,
+                  {"name": "preferred_distance",
+                   "value": preferred_distance}))
 
     def get_users(self):
         return self._users
