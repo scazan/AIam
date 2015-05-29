@@ -1,8 +1,3 @@
-import sys
-import os
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/connectivity")
-from osc_receiver import OscReceiver
-
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
@@ -13,7 +8,6 @@ from argparse import ArgumentParser
 from vector import Vector3d
 text_renderer_module = __import__("text_renderer")
 
-OSC_PORT = 15002
 FRAME_RATE = 30
 CAMERA_Y_SPEED = 1
 CAMERA_KEY_SPEED = 10
@@ -186,8 +180,7 @@ class Scene(QtOpenGL.QGLWidget):
     def sizeHint(self):
         return QtCore.QSize(640, 480)
 
-    def handle_joint_data(self, path, args, types, src, user_data):
-        user_id, joint_name, x, y, z = args
+    def handle_joint_data(self, user_id, joint_name, x, y, z):
         self._users_joints[user_id][joint_name] = [x, y, z]
 
     def mousePressEvent(self, event):
@@ -256,7 +249,7 @@ class Scene(QtOpenGL.QGLWidget):
     def _text_renderer(self, text, size, font):
         return self._text_renderer_class(self, text, size, font)
 
-class MainWindow(QtGui.QWidget):
+class TrackedUsersViewer(QtGui.QWidget):
     def __init__(self, args):
         QtGui.QWidget.__init__(self)
         self.args = args
@@ -266,14 +259,15 @@ class MainWindow(QtGui.QWidget):
         self._layout.addWidget(self._scene)
         self._create_menu()
 
-        osc_receiver = OscReceiver(OSC_PORT)
-        osc_receiver.add_method("/joint", "isfff", self._scene.handle_joint_data)
-        osc_receiver.start()
-
         timer = QtCore.QTimer(self)
         timer.setInterval(1000. / FRAME_RATE)
         QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), self._scene.updateGL)
         timer.start()
+
+    @staticmethod
+    def add_parser_arguments(parser):
+        parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
+                            default="-70.364,-47.000,-5189.173,-8.800,10.400")
 
     def _create_menu(self):
         self._menu_bar = QtGui.QMenuBar()
@@ -293,13 +287,5 @@ class MainWindow(QtGui.QWidget):
         self._scene.keyPressEvent(event)
         QtGui.QWidget.keyPressEvent(self, event)
 
-
-parser = ArgumentParser()
-parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
-                    default="-70.364,-47.000,-5189.173,-8.800,10.400")
-args = parser.parse_args()
-
-app = QtGui.QApplication(sys.argv)
-window = MainWindow(args)
-window.show()
-app.exec_()
+    def handle_joint_data(self, *args):
+        self._scene.handle_joint_data(*args)

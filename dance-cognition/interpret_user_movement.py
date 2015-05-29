@@ -8,6 +8,9 @@ from event import Event
 from vector import Vector3d
 import time
 import collections
+from argparse import ArgumentParser
+from tracked_users_viewer import TrackedUsersViewer
+from PyQt4 import QtGui
 
 OSC_PORT = 15002
 WEBSOCKET_HOST = "localhost"
@@ -94,8 +97,19 @@ class UserMovementInterpreter:
 
 interpreter = UserMovementInterpreter()
 
-def handle_joint_data(path, args, types, src, user_data):
-    interpreter.handle_joint_data(*args)
+parser = ArgumentParser()
+TrackedUsersViewer.add_parser_arguments(parser)
+parser.add_argument("--with-viewer", action="store_true")
+args = parser.parse_args()
+
+if args.with_viewer:
+    app = QtGui.QApplication(sys.argv)
+    viewer = TrackedUsersViewer(args)
+
+def handle_joint_data(path, values, types, src, user_data):
+    interpreter.handle_joint_data(*values)
+    if args.with_viewer:
+        viewer.handle_joint_data(*values)
 
 websocket_client = WebsocketClient(WEBSOCKET_HOST)
 websocket_client.set_event_listener(EventListener())
@@ -105,5 +119,9 @@ osc_receiver = OscReceiver(OSC_PORT)
 osc_receiver.add_method("/joint", "isfff", handle_joint_data)
 osc_receiver.start()
 
-while True:
-    time.sleep(1)
+if args.with_viewer:
+    viewer.show()
+    app.exec_()
+else:
+    while True:
+        time.sleep(1)

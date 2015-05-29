@@ -1,5 +1,4 @@
 tracking:
-  viewing tracked users while interpreting
   consider confidence? (see Viewer.cpp)
 
 perhaps training data for BVHs should use all motion frames by default, rather than sampling the BVH with a mandatory frame rate
