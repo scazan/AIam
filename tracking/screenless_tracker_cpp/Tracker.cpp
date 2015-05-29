@@ -64,22 +64,22 @@ void Tracker::processFrame() {
   for(int i = 0; i < users.getSize(); ++i) {
     const nite::UserData& userData = users[i];
     if(userData.isNew()) {
-      printf("New %d\n", userData.getId());
+      sendState(userData.getId(), "new");
       userTracker->startSkeletonTracking(userData.getId());
     }
     else if(userData.isLost()) {
-      printf("Lost %d\n", userData.getId());
+      sendState(userData.getId(), "lost");
     }
     else {
       if(userData.getSkeleton().getState() == nite::SKELETON_TRACKED) {
 	sendSkeletonData(userData);
       }
-      printStateIfChanged(userData);
+      sendStateIfChanged(userData);
     }
   }
 }
 
-void Tracker::printStateIfChanged(const nite::UserData& userData) {
+void Tracker::sendStateIfChanged(const nite::UserData& userData) {
   bool stateChanged = false;
   nite::SkeletonState newState = userData.getSkeleton().getState();
   if(previousStates.find(userData.getId()) == previousStates.end()) {
@@ -92,20 +92,20 @@ void Tracker::printStateIfChanged(const nite::UserData& userData) {
     previousStates[userData.getId()] = newState;
     switch(newState) {
     case nite::SKELETON_NONE:
-      printf("Stopped tracking %d\n", userData.getId());
+      sendState(userData.getId(), "stopped_tracking");
       break;
     case nite::SKELETON_CALIBRATING:
-      printf("Calibrating %d\n", userData.getId());
+      sendState(userData.getId(), "calibrating");
       break;
     case nite::SKELETON_TRACKED:
-      printf("Tracking %d\n", userData.getId());
+      sendState(userData.getId(), "tracking");
       break;
     case nite::SKELETON_CALIBRATION_ERROR_NOT_IN_POSE:
     case nite::SKELETON_CALIBRATION_ERROR_HANDS:
     case nite::SKELETON_CALIBRATION_ERROR_LEGS:
     case nite::SKELETON_CALIBRATION_ERROR_HEAD:
     case nite::SKELETON_CALIBRATION_ERROR_TORSO:
-      printf("Calibration failed for %d\n", userData.getId());
+      sendState(userData.getId(), "calibration_failed");
       break;
     }
   }
@@ -152,4 +152,14 @@ void Tracker::addJointData(osc::OutboundPacketStream &stream,
 	 << joint.getPosition().z
 	 << joint.getPositionConfidence()
 	 << osc::EndMessage;
+}
+
+void Tracker::sendState(const nite::UserId& userId, const char *state) {
+  printf("%s %d\n", state, userId);
+  osc::OutboundPacketStream stream(oscBuffer, OSC_BUFFER_SIZE);
+  stream << osc::BeginBundleImmediate
+	 << osc::BeginMessage("/state") << userId << state
+	 << osc::EndMessage
+	 << osc::EndBundle;
+  transmitSocket->Send(stream.Data(), stream.Size());
 }

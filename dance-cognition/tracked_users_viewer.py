@@ -253,6 +253,14 @@ class Scene(QtOpenGL.QGLWidget):
     def _text_renderer(self, text, size, font):
         return self._text_renderer_class(self, text, size, font)
 
+class LogWidget(QtGui.QTextEdit):
+    def __init__(self, *args, **kwargs):
+        QtGui.QTextEdit.__init__(self, *args, **kwargs)
+        self.setReadOnly(True)
+
+    def sizeHint(self):
+        return QtCore.QSize(640, 50)
+
 class TrackedUsersViewer(QtGui.QWidget):
     def __init__(self, args):
         QtGui.QWidget.__init__(self)
@@ -261,6 +269,8 @@ class TrackedUsersViewer(QtGui.QWidget):
         self.setLayout(self._layout)
         self._scene = Scene(self)
         self._layout.addWidget(self._scene)
+        self._log_widget = LogWidget(self)
+        self._layout.addWidget(self._log_widget)
         self._create_menu()
 
         timer = QtCore.QTimer(self)
@@ -293,3 +303,8 @@ class TrackedUsersViewer(QtGui.QWidget):
 
     def handle_joint_data(self, *args):
         self._scene.handle_joint_data(*args)
+
+    def handle_state(self, user_id, state):
+        self._log_widget.insertPlainText("%s %s\n" % (state, user_id))
+        scrollbar = self._log_widget.verticalScrollBar()
+        scrollbar.setValue(scrollbar.maximum())

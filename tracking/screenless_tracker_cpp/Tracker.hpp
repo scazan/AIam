@@ -26,7 +26,8 @@ private:
 		    const nite::Skeleton& skeleton,
 		    nite::JointType type,
 		    const char *jointName);
-  void printStateIfChanged(const nite::UserData&);
+  void sendStateIfChanged(const nite::UserData&);
+  void sendState(const nite::UserId& userId, const char *state);
 
   openni::Device device;
   nite::UserTracker* userTracker;

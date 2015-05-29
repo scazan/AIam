@@ -111,12 +111,17 @@ def handle_joint_data(path, values, types, src, user_data):
     if args.with_viewer:
         viewer.handle_joint_data(*values)
 
+def handle_state(path, values, types, src, user_data):
+    if args.with_viewer:
+        viewer.handle_state(*values)
+
 websocket_client = WebsocketClient(WEBSOCKET_HOST)
 websocket_client.set_event_listener(EventListener())
 websocket_client.connect()
 
 osc_receiver = OscReceiver(OSC_PORT)
 osc_receiver.add_method("/joint", "isffff", handle_joint_data)
+osc_receiver.add_method("/state", "is", handle_state)
 osc_receiver.start()
 
 if args.with_viewer:
