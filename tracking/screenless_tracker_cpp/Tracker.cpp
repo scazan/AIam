@@ -150,5 +150,6 @@ void Tracker::addJointData(osc::OutboundPacketStream &stream,
 	 << joint.getPosition().x
 	 << joint.getPosition().y
 	 << joint.getPosition().z
+	 << joint.getPositionConfidence()
 	 << osc::EndMessage;
 }

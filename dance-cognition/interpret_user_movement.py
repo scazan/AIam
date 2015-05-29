@@ -65,7 +65,7 @@ class UserMovementInterpreter:
     def __init__(self):
         self._users = {}
 
-    def handle_joint_data(self, user_id, joint_name, x, y, z):
+    def handle_joint_data(self, user_id, joint_name, x, y, z, confidence):
         if user_id not in self._users:
             self._users[user_id] = User(self)
         user = self._users[user_id]
@@ -116,7 +116,7 @@ websocket_client.set_event_listener(EventListener())
 websocket_client.connect()
 
 osc_receiver = OscReceiver(OSC_PORT)
-osc_receiver.add_method("/joint", "isfff", handle_joint_data)
+osc_receiver.add_method("/joint", "isffff", handle_joint_data)
 osc_receiver.start()
 
 if args.with_viewer:

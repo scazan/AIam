@@ -4,7 +4,6 @@ from OpenGL.GLU import *
 from PyQt4 import QtCore, QtGui, QtOpenGL
 import collections
 import math
-from argparse import ArgumentParser
 from vector import Vector3d
 text_renderer_module = __import__("text_renderer")
 
@@ -165,23 +164,28 @@ class Scene(QtOpenGL.QGLWidget):
 
     def _draw_label(self, user_id, joints):
         glColor3f(0, 0, 0)
-        position = Vector3d(*joints["head"]) + Vector3d(0, 100, 0)
+        position = Vector3d(*joints["head"][0:3]) + Vector3d(0, 100, 0)
         self._draw_text(str(user_id), 100, *position, h_align="center")
 
     def _draw_limb(self, joints, name1, name2):
-        joint1 = joints[name1]
-        joint2 = joints[name2]
-        glColor3f(0, 0, 0)
+        x1, y1, z1, confidence1 = joints[name1]
+        x2, y2, z2, confidence2 = joints[name2]
         glBegin(GL_LINES)
-        glVertex3f(*joint1)
-        glVertex3f(*joint2)
+        self._set_color_by_confidence(confidence1)
+        glVertex3f(x1, y1, z1)
+        self._set_color_by_confidence(confidence2)
+        glVertex3f(x2, y2, z2)
         glEnd()
+
+    def _set_color_by_confidence(self, confidence):
+        c = .8 - confidence*.8
+        glColor3f(c, c, c)
 
     def sizeHint(self):
         return QtCore.QSize(640, 480)
 
-    def handle_joint_data(self, user_id, joint_name, x, y, z):
-        self._users_joints[user_id][joint_name] = [x, y, z]
+    def handle_joint_data(self, user_id, joint_name, x, y, z, confidence):
+        self._users_joints[user_id][joint_name] = [x, y, z, confidence]
 
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
