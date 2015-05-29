@@ -163,9 +163,16 @@ class Scene(QtOpenGL.QGLWidget):
         self._draw_limb(joints, "right_knee", "right_foot")
 
     def _draw_label(self, user_id, joints):
+        head_position = joints["head"][0:3]
+
         glColor3f(0, 0, 0)
-        position = Vector3d(*joints["head"][0:3]) + Vector3d(0, 100, 0)
+        position = Vector3d(*head_position) + Vector3d(0, 140, 0)
         self._draw_text(str(user_id), 100, *position, h_align="center")
+
+        glColor3f(.5, .5, 1)
+        activity = self.parent().interpreter.get_users()[user_id].get_activity()
+        position = Vector3d(*head_position) + Vector3d(0, 60, 0)
+        self._draw_text("%.1f" % activity, 80, *position, h_align="center")
 
     def _draw_limb(self, joints, name1, name2):
         x1, y1, z1, confidence1 = joints[name1]
@@ -267,9 +274,10 @@ class LogWidget(QtGui.QTextEdit):
         return QtCore.QSize(640, 50)
 
 class TrackedUsersViewer(QtGui.QWidget):
-    def __init__(self, args):
+    def __init__(self, interpreter, args):
         QtGui.QWidget.__init__(self)
         self.args = args
+        self.interpreter = interpreter
         self._layout = QtGui.QVBoxLayout()
         self.setLayout(self._layout)
         self._scene = Scene(self)

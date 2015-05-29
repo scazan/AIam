@@ -1,5 +1,4 @@
 tracking:
-  optimize osc::OutboundPacketStream stream(oscBuffer, OSC_BUFFER_SIZE);
   dealing with multiple users
   consider confidence?
 

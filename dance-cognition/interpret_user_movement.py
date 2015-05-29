@@ -36,7 +36,8 @@ class Joint:
         self._previous_position = new_position
 
 class User:
-    def __init__(self, interpreter):
+    def __init__(self, user_id, interpreter):
+        self._user_id = user_id
         self._interpreter = interpreter
         self._joints = {"left_hand": Joint(),
                         "right_hand": Joint()}
@@ -56,22 +57,25 @@ class User:
                 if self._num_received_frames > 1:
                     self._activity = sum([joint.get_activity() for joint in self._joints.values()]) / \
                         len(self._joints)
-                    self._interpreter.user_has_new_information()
+                    self._interpreter.user_has_new_information(self._user_id)
 
     def get_activity(self):
         return self._activity
     
+    def get_id(self):
+        return self._id
+
 class UserMovementInterpreter:
     def __init__(self):
         self._users = {}
 
     def handle_joint_data(self, user_id, joint_name, x, y, z, confidence):
         if user_id not in self._users:
-            self._users[user_id] = User(self)
+            self._users[user_id] = User(user_id, self)
         user = self._users[user_id]
         user.handle_joint_data(joint_name, x, y, z)
 
-    def user_has_new_information(self):
+    def user_has_new_information(self, user):
         self._interpret_current_state()
         self._send_interpretation()
 
@@ -95,6 +99,9 @@ class UserMovementInterpreter:
                   {"name": "velocity",
                    "value": velocity}))
 
+    def get_users(self):
+        return self._users
+
 interpreter = UserMovementInterpreter()
 
 parser = ArgumentParser()
@@ -104,7 +111,7 @@ args = parser.parse_args()
 
 if args.with_viewer:
     app = QtGui.QApplication(sys.argv)
-    viewer = TrackedUsersViewer(args)
+    viewer = TrackedUsersViewer(interpreter, args)
 
 def handle_joint_data(path, values, types, src, user_data):
     interpreter.handle_joint_data(*values)
