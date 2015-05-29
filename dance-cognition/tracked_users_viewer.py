@@ -258,6 +258,11 @@ class LogWidget(QtGui.QTextEdit):
         QtGui.QTextEdit.__init__(self, *args, **kwargs)
         self.setReadOnly(True)
 
+    def append(self, string):
+        self.insertPlainText(string)
+        scrollbar = self.verticalScrollBar()
+        scrollbar.setValue(scrollbar.maximum())
+
     def sizeHint(self):
         return QtCore.QSize(640, 50)
 
@@ -305,6 +310,4 @@ class TrackedUsersViewer(QtGui.QWidget):
         self._scene.handle_joint_data(*args)
 
     def handle_state(self, user_id, state):
-        self._log_widget.insertPlainText("%s %s\n" % (state, user_id))
-        scrollbar = self._log_widget.verticalScrollBar()
-        scrollbar.setValue(scrollbar.maximum())
+        self._log_widget.append("%s %s\n" % (state, user_id))
