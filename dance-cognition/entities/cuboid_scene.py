@@ -1,6 +1,6 @@
 from ui.ui import *
 
-class CuboidScene(BaseScene):
+class CuboidScene(BvhScene):
     def initializeGL(self):
         glEnable(GL_LIGHTING)
         glEnable(GL_LIGHT0)
@@ -13,7 +13,7 @@ class CuboidScene(BaseScene):
         glEnable(GL_CULL_FACE)
         glCullFace(GL_FRONT)
 
-        BaseScene.initializeGL(self)
+        BvhScene.initializeGL(self)
 
     def draw_cuboid_shape(self):
         self._draw_cuboid(

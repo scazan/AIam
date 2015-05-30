@@ -1,8 +1,8 @@
 from ui.ui import *
 
-class Scene(BaseScene):
+class Scene(BvhScene):
     def __init__(self, *args, **kwargs):
-        BaseScene.__init__(self, *args, **kwargs)
+        BvhScene.__init__(self, *args, **kwargs)
         self._camera_translation = None
         self._camera_movement = None
 

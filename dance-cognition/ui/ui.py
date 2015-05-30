@@ -23,7 +23,7 @@ CAMERA_DRAG_SPEED = .1
 FOCUS_RADIUS = 1.
 VIDEO_EXPORT_PATH = "rendered_video"
 
-class BaseScene(QtOpenGL.QGLWidget):
+class BvhScene(QtOpenGL.QGLWidget):
     @staticmethod
     def add_parser_arguments(parser):
         pass

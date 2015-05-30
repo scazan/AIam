@@ -1,6 +1,6 @@
 from ui.ui import *
 
-class Scene(BaseScene):
+class Scene(BvhScene):
     def draw_input(self, inp):
         glColor3f(0, 1, 0)
         self._draw_point(inp)
