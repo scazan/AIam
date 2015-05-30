@@ -114,6 +114,7 @@ class DimensionalityReductionExperiment(Experiment):
         from PyQt4 import QtGui
         app = QtGui.QApplication(sys.argv)
         app.setStyleSheet(open("dimensionality_reduction/ui/stylesheet.qss").read())
+        app.setWindowIcon(QtGui.QIcon("ui/icon.png"))
         window = self._create_ui_window(client)
         client.connect()
         window.show()
