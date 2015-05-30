@@ -35,7 +35,6 @@ class PoseMapRenderer:
         self._explored_max = .5 + self._explored_range/2
 
     def render(self):
-        self._experiment.bvh_reader.set_pose_from_time(self._experiment.pose, 0) # hack (should not be needed)
         self._out = open(self._args.output, "w")
         self._outer_cell_size = self._args.plot_size / self._args.grid_resolution
         self._inner_cell_size = self._outer_cell_size - 2 * self._args.padding

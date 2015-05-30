@@ -111,8 +111,9 @@ class Joint:
                 child.set_vertices(vertices)
 
 class Hierarchy:
-    def __init__(self, root_node):
+    def __init__(self, root_node, example_frame):
         self._joint_index = 0
+        self._example_frame = example_frame
         self._joint_definitions = {}
         self._root_joint_definition = self._process_node(root_node)
         self.num_joints = self._joint_index
@@ -149,7 +150,12 @@ class Hierarchy:
         return joint_definition
 
     def create_pose(self):
-        return Pose(self)
+        pose = Pose(self)
+        self._initialize_pose_angles(pose)
+        return pose
+
+    def _initialize_pose_angles(self, pose):
+        self.set_pose_from_frame(pose, self._example_frame)
 
     def set_pose_vertices(self, pose, vertices, recurse=True):
         pose.get_root_joint().set_vertices(vertices, recurse)
@@ -309,7 +315,7 @@ class BvhReader(cgkit.bvh.BVHReader):
 
     def _read(self):
         cgkit.bvh.BVHReader.read(self)
-        self.hierarchy = Hierarchy(self._root_nood)
+        self.hierarchy = Hierarchy(self._root_nood, self.frames[0])
         self.num_joints = self.hierarchy.num_joints
         self._duration = self._num_frames * self._frame_time
 
