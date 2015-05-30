@@ -16,20 +16,21 @@ ACTIVITY_THRESHOLD = 5
 ACTIVITY_CEILING = 40
 MIN_VELOCITY = 0.3
 MAX_VELOCITY = 1.0
-MIN_NOVELTY = 0.1
+MIN_NOVELTY = 0.03
 MAX_NOVELTY = 1.0
-MIN_PREFERRED_DISTANCE = 0.1
+MIN_PREFERRED_DISTANCE = 0.02
 MAX_PREFERRED_DISTANCE = 2.0
+RESPONSE_TIME = 1.0
+JOINT_SMOOTHING_DURATION = 1.0
+FPS = 30.0
 
 OSC_PORT = 15002
 WEBSOCKET_HOST = "localhost"
-WINDOW_DURATION = 1.0
-FPS = 30.0
 
 class Joint:
     def __init__(self):
         self._previous_position = None
-        self._buffer_size = int(WINDOW_DURATION * FPS)
+        self._buffer_size = int(JOINT_SMOOTHING_DURATION * FPS)
         self._activity_buffer = collections.deque(
             [0] * self._buffer_size, maxlen=self._buffer_size)
 
@@ -76,6 +77,8 @@ class User:
 class UserMovementInterpreter:
     def __init__(self):
         self._users = {}
+        self._response_buffer_size = max(1, int(RESPONSE_TIME * FPS))
+        self._response_buffer = []
 
     def handle_joint_data(self, user_id, joint_name, x, y, z, confidence):
         if user_id not in self._users:
@@ -85,30 +88,36 @@ class UserMovementInterpreter:
 
     def user_has_new_information(self, user):
         self._interpret_current_state()
-        self._send_interpretation()
+        self._add_interpretation_to_response_buffer()
+        self._send_interpretation_from_response_buffer()
 
     def _interpret_current_state(self):
         user_activities = [user.get_activity() for user in self._users.values()]
         self._highest_user_activity = max(user_activities)
 
-    def _send_interpretation(self):
+    def _add_interpretation_to_response_buffer(self):
         relative_activity = max(0, self._highest_user_activity - ACTIVITY_THRESHOLD) / \
             (ACTIVITY_CEILING - ACTIVITY_THRESHOLD)
         velocity = MIN_VELOCITY + relative_activity * (MAX_VELOCITY - MIN_VELOCITY)
         novelty = MIN_NOVELTY + relative_activity * (MAX_NOVELTY - MIN_NOVELTY)
         preferred_distance = MIN_PREFERRED_DISTANCE + relative_activity * (MAX_PREFERRED_DISTANCE - MIN_PREFERRED_DISTANCE)
-        websocket_client.send_event(
-            Event(Event.PARAMETER,
-                  {"name": "velocity",
-                   "value": velocity}))
-        websocket_client.send_event(
-            Event(Event.PARAMETER,
-                  {"name": "novelty",
-                   "value": novelty}))
-        websocket_client.send_event(
-            Event(Event.PARAMETER,
-                  {"name": "preferred_distance",
-                   "value": preferred_distance}))
+        self._response_buffer.append((velocity, novelty, preferred_distance))
+
+    def _send_interpretation_from_response_buffer(self):
+        while len(self._response_buffer) >= self._response_buffer_size:
+            velocity, novelty, preferred_distance = self._response_buffer.pop(0)
+            websocket_client.send_event(
+                Event(Event.PARAMETER,
+                      {"name": "velocity",
+                       "value": velocity}))
+            websocket_client.send_event(
+                Event(Event.PARAMETER,
+                      {"name": "novelty",
+                       "value": novelty}))
+            websocket_client.send_event(
+                Event(Event.PARAMETER,
+                      {"name": "preferred_distance",
+                       "value": preferred_distance}))
 
     def get_users(self):
         return self._users
