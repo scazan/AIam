@@ -1,31 +1,27 @@
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
-from PyQt4 import QtCore, QtGui, QtOpenGL
+from PyQt4 import QtCore, QtGui
 import collections
-import math
 from vector import Vector3d
+from ui.scene import Scene
 text_renderer_module = __import__("text_renderer")
 
 FRAME_RATE = 30
 CAMERA_Y_SPEED = 1
 CAMERA_KEY_SPEED = 10
 CAMERA_DRAG_SPEED = .1
+PROJECTION_NEAR = 300.0
+PROJECTION_FAR = 20000.0
 
-class Scene(QtOpenGL.QGLWidget):
+class TrackedUsersScene(Scene):
     def __init__(self, parent):
-        QtOpenGL.QGLWidget.__init__(self)
+        Scene.__init__(self, parent, parent.args,
+                       camera_y_speed=CAMERA_Y_SPEED,
+                       camera_key_speed=CAMERA_KEY_SPEED,
+                       camera_drag_speed=CAMERA_DRAG_SPEED)
         self._users_joints = collections.defaultdict(dict)
         self._text_renderer_class = getattr(text_renderer_module, "GlutTextRenderer")
-        self._set_camera_from_arg(parent.args.camera)
-        self._dragging_orientation = False
-        self._dragging_y_position = False
-        self.setMouseTracking(True)
-
-    def _set_camera_from_arg(self, arg):
-        pos_x, pos_y, pos_z, orient_y, orient_z = map(float, arg.split(","))
-        self._set_camera_position([pos_x, pos_y, pos_z])
-        self._set_camera_orientation(orient_y, orient_z)
 
     def initializeGL(self):
         glClearColor(1.0, 1.0, 1.0, 0.0)
@@ -40,45 +36,9 @@ class Scene(QtOpenGL.QGLWidget):
 
         glutInit(sys.argv)
 
-    def resizeGL(self, window_width, window_height):
-        self.window_width = window_width
-        self.window_height = window_height
-        if window_height == 0:
-            window_height = 1
-        glViewport(0, 0, window_width, window_height)
-        self.margin = 0
-        self.width = window_width - 2*self.margin
-        self.height = window_height - 2*self.margin
-        self._aspect_ratio = float(window_width) / window_height
-
-    def configure_3d_projection(self, pixdx=0, pixdy=0):
-        self.fovy = 40.0
-        self.near = 300.0
-        self.far = 20000.0
-
-        fov2 = ((self.fovy*math.pi) / 180.0) / 2.0
-        top = self.near * math.tan(fov2)
-        bottom = -top
-        right = top * self._aspect_ratio
-        left = -right
-        xwsize = right - left
-        ywsize = top - bottom
-        dx = -(pixdx*xwsize/self.width)
-        dy = -(pixdy*ywsize/self.height)
-
-        glMatrixMode(GL_PROJECTION)
-        glLoadIdentity()
-        glFrustum (left + dx, right + dx, bottom + dy, top + dy, self.near, self.far)
-        glMatrixMode(GL_MODELVIEW)
-        glLoadIdentity()
-
-        glRotatef(self._camera_x_orientation, 1.0, 0.0, 0.0)
-        glRotatef(self._camera_y_orientation, 0.0, 1.0, 0.0)
-        glTranslatef(*self._camera_position)
-
     def _draw_floor(self):
         GRID_NUM_CELLS = 30
-        GRID_SIZE = self.far - self.near
+        GRID_SIZE = PROJECTION_FAR - PROJECTION_NEAR
         y = 0
         z1 = -GRID_SIZE/2
         z2 = GRID_SIZE/2
@@ -129,7 +89,8 @@ class Scene(QtOpenGL.QGLWidget):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glLoadIdentity()
         glTranslatef(self.margin, self.margin, 0)
-        self.configure_3d_projection(-100, 0)
+        self.configure_3d_projection(pixdx=-100, pixdy=0, fovy=40.0,
+                                     near=PROJECTION_NEAR, far=PROJECTION_FAR)
 
         self._draw_floor()
 
@@ -194,65 +155,6 @@ class Scene(QtOpenGL.QGLWidget):
     def handle_joint_data(self, user_id, joint_name, x, y, z, confidence):
         self._users_joints[user_id][joint_name] = [x, y, z, confidence]
 
-    def mousePressEvent(self, event):
-        if event.button() == QtCore.Qt.LeftButton:
-            self._dragging_orientation = True
-        elif event.button() == QtCore.Qt.RightButton:
-            self._dragging_y_position = True
-
-    def mouseReleaseEvent(self, event):
-        self._dragging_orientation = False
-        self._dragging_y_position = False
-        self._drag_x_previous = event.x()
-        self._drag_y_previous = event.y()
-
-    def mouseMoveEvent(self, event):
-        x = event.x()
-        y = event.y()
-        if self._dragging_orientation:
-            self._set_camera_orientation(
-                self._camera_y_orientation + CAMERA_DRAG_SPEED * (x - self._drag_x_previous),
-                self._camera_x_orientation + CAMERA_DRAG_SPEED * (y - self._drag_y_previous))
-        elif self._dragging_y_position:
-            self._camera_position[1] += CAMERA_Y_SPEED * (y - self._drag_y_previous)
-        self._drag_x_previous = x
-        self._drag_y_previous = y
-
-    def print_camera_settings(self):
-        print "%.3f,%.3f,%.3f,%.3f,%.3f" % (
-            self._camera_position[0],
-            self._camera_position[1],
-            self._camera_position[2],
-            self._camera_y_orientation, self._camera_x_orientation)
-
-    def _set_camera_position(self, position):
-        self._camera_position = position
-
-    def _set_camera_orientation(self, y_orientation, x_orientation):
-        self._camera_y_orientation = y_orientation
-        self._camera_x_orientation = x_orientation
-
-    def keyPressEvent(self, event):
-        r = math.radians(self._camera_y_orientation)
-        new_position = self._camera_position
-        key = event.key()
-        if key == QtCore.Qt.Key_A:
-            new_position[0] += CAMERA_KEY_SPEED * math.cos(r)
-            new_position[2] += CAMERA_KEY_SPEED * math.sin(r)
-            self._set_camera_position(new_position)
-        elif key == QtCore.Qt.Key_D:
-            new_position[0] -= CAMERA_KEY_SPEED * math.cos(r)
-            new_position[2] -= CAMERA_KEY_SPEED * math.sin(r)
-            self._set_camera_position(new_position)
-        elif key == QtCore.Qt.Key_W:
-            new_position[0] += CAMERA_KEY_SPEED * math.cos(r + math.pi/2)
-            new_position[2] += CAMERA_KEY_SPEED * math.sin(r + math.pi/2)
-            self._set_camera_position(new_position)
-        elif key == QtCore.Qt.Key_S:
-            new_position[0] -= CAMERA_KEY_SPEED * math.cos(r + math.pi/2)
-            new_position[2] -= CAMERA_KEY_SPEED * math.sin(r + math.pi/2)
-            self._set_camera_position(new_position)
-
     def _draw_text(self, text, size, x, y, z, font=GLUT_STROKE_ROMAN, spacing=None,
                   v_align="left", h_align="top"):
         self._text_renderer(text, size, font).render(x, y, z, v_align, h_align)
@@ -280,7 +182,7 @@ class TrackedUsersViewer(QtGui.QWidget):
         self.interpreter = interpreter
         self._layout = QtGui.QVBoxLayout()
         self.setLayout(self._layout)
-        self._scene = Scene(self)
+        self._scene = TrackedUsersScene(self)
         self._layout.addWidget(self._scene)
         self._log_widget = LogWidget(self)
         self._layout.addWidget(self._log_widget)

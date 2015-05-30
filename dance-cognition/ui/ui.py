@@ -12,18 +12,19 @@ from fps_meter import FpsMeter
 from parameters_form import ParametersForm
 from color_schemes import *
 from exporter import Exporter
+from scene import Scene
 import shutil
 
 TOOLBAR_WIDTH = 400
 SLIDER_PRECISION = 1000
 CIRCLE_PRECISION = 100
+FOCUS_RADIUS = 1.
+VIDEO_EXPORT_PATH = "rendered_video"
 CAMERA_Y_SPEED = .01
 CAMERA_KEY_SPEED = .1
 CAMERA_DRAG_SPEED = .1
-FOCUS_RADIUS = 1.
-VIDEO_EXPORT_PATH = "rendered_video"
 
-class BvhScene(QtOpenGL.QGLWidget):
+class BvhScene(Scene):
     @staticmethod
     def add_parser_arguments(parser):
         pass
@@ -31,28 +32,17 @@ class BvhScene(QtOpenGL.QGLWidget):
     def __init__(self, parent, bvh_reader, args):
         self._parent = parent
         self.bvh_reader = bvh_reader
-        self.args = args
         self.view_floor = args.floor
-        self._dragging_orientation = False
-        self._dragging_y_position = False
         self._focus = None
-        self._set_camera_from_arg(args.camera)
         self.processed_input = None
         self.processed_output = None
-        QtOpenGL.QGLWidget.__init__(self, parent)
+        Scene.__init__(self, parent, args,
+                       camera_y_speed=CAMERA_Y_SPEED,
+                       camera_key_speed=CAMERA_KEY_SPEED,
+                       camera_drag_speed=CAMERA_DRAG_SPEED)
         if args.image:
             self._image = QtGui.QImage(args.image)
         self._exporting_video = False
-        self.setMouseTracking(True)
-
-    def _set_camera_from_arg(self, arg):
-        pos_x, pos_y, pos_z, orient_y, orient_z = map(float, arg.split(","))
-        self._set_camera_position([pos_x, pos_y, pos_z])
-        self._set_camera_orientation(orient_y, orient_z)
-
-    def set_default_camera_orientation(self):
-        pos_x, pos_y, pos_z, orient_y, orient_z = map(float, self.args.camera.split(","))
-        self._set_camera_orientation(orient_y, orient_z)
 
     def _set_focus(self):
         self._focus = self.central_output_position(self.processed_output)
@@ -67,7 +57,7 @@ class BvhScene(QtOpenGL.QGLWidget):
         self.processed_output = processed_output
         if self._focus is None:
             self._set_focus()
-        if self._following_output() and self._output_outside_focus():
+        if self.following_output() and self._output_outside_focus():
             self.centralize_output(self.processed_output)
             self._set_focus()
 
@@ -119,18 +109,6 @@ class BvhScene(QtOpenGL.QGLWidget):
         if self.args.image:
             self._image_texture = self.bindTexture(self._image)
 
-    def resizeGL(self, window_width, window_height):
-        self.window_width = window_width
-        self.window_height = window_height
-        if window_height == 0:
-            window_height = 1
-        glViewport(0, 0, window_width, window_height)
-        self.margin = 0
-        self.width = window_width - 2*self.margin
-        self.height = window_height - 2*self.margin
-        self._aspect_ratio = float(window_width) / window_height
-        self.min_dimension = min(self.width, self.height)
-
     def paintGL(self):
         glClearColor(*self._parent.color_scheme["background"])
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -148,38 +126,6 @@ class BvhScene(QtOpenGL.QGLWidget):
         glLoadIdentity()
         glOrtho(0.0, self.width, self.height, 0.0, -1.0, 1.0)
         glMatrixMode(GL_MODELVIEW)
-
-    def configure_3d_projection(self, pixdx=0, pixdy=0):
-        self.fovy = 45
-        self.near = 0.1
-        self.far = 100.0
-
-        fov2 = ((self.fovy*math.pi) / 180.0) / 2.0
-        top = self.near * math.tan(fov2)
-        bottom = -top
-        right = top * self._aspect_ratio
-        left = -right
-        xwsize = right - left
-        ywsize = top - bottom
-        dx = -(pixdx*xwsize/self.width)
-        dy = -(pixdy*ywsize/self.height)
-
-        glMatrixMode(GL_PROJECTION)
-        glLoadIdentity()
-        glFrustum (left + dx, right + dx, bottom + dy, top + dy, self.near, self.far)
-        glMatrixMode(GL_MODELVIEW)
-        glLoadIdentity()
-
-        glRotatef(self._camera_x_orientation, 1.0, 0.0, 0.0)
-        glRotatef(self._camera_y_orientation, 0.0, 1.0, 0.0)
-        camera_translation = self.camera_translation()
-        translate_x = self._camera_position[0] + camera_translation[0]
-        translate_y = self._camera_position[1]
-        translate_z = self._camera_position[2] + camera_translation[1]
-        glTranslatef(translate_x, translate_y, translate_z)
-
-    def camera_translation(self):
-        return numpy.zeros(2)
 
     def centralize_output(self):
         pass
@@ -248,67 +194,7 @@ class BvhScene(QtOpenGL.QGLWidget):
             glVertex3f(x, y, z)
         glEnd()
 
-    def mousePressEvent(self, event):
-        if event.button() == QtCore.Qt.LeftButton and not self._following_output():
-            self._dragging_orientation = True
-        elif event.button() == QtCore.Qt.RightButton:
-            self._dragging_y_position = True
-
-    def mouseReleaseEvent(self, event):
-        self._dragging_orientation = False
-        self._dragging_y_position = False
-        self._drag_x_previous = event.x()
-        self._drag_y_previous = event.y()
-
-    def mouseMoveEvent(self, event):
-        x = event.x()
-        y = event.y()
-        if self._dragging_orientation:
-            self._set_camera_orientation(
-                self._camera_y_orientation + CAMERA_DRAG_SPEED * (x - self._drag_x_previous),
-                self._camera_x_orientation + CAMERA_DRAG_SPEED * (y - self._drag_y_previous))
-        elif self._dragging_y_position:
-            self._camera_position[1] += CAMERA_Y_SPEED * (y - self._drag_y_previous)
-        self._drag_x_previous = x
-        self._drag_y_previous = y
-
-    def print_camera_settings(self):
-        print "%.3f,%.3f,%.3f,%.3f,%.3f" % (
-            self._camera_position[0],
-            self._camera_position[1],
-            self._camera_position[2],
-            self._camera_y_orientation, self._camera_x_orientation)
-
-    def _set_camera_position(self, position):
-        self._camera_position = position
-
-    def _set_camera_orientation(self, y_orientation, x_orientation):
-        self._camera_y_orientation = y_orientation
-        self._camera_x_orientation = x_orientation
-
-    def keyPressEvent(self, event):
-        if not self._following_output():
-            r = math.radians(self._camera_y_orientation)
-            new_position = self._camera_position
-            key = event.key()
-            if key == QtCore.Qt.Key_A:
-                new_position[0] += CAMERA_KEY_SPEED * math.cos(r)
-                new_position[2] += CAMERA_KEY_SPEED * math.sin(r)
-                self._set_camera_position(new_position)
-            elif key == QtCore.Qt.Key_D:
-                new_position[0] -= CAMERA_KEY_SPEED * math.cos(r)
-                new_position[2] -= CAMERA_KEY_SPEED * math.sin(r)
-                self._set_camera_position(new_position)
-            elif key == QtCore.Qt.Key_W:
-                new_position[0] += CAMERA_KEY_SPEED * math.cos(r + math.pi/2)
-                new_position[2] += CAMERA_KEY_SPEED * math.sin(r + math.pi/2)
-                self._set_camera_position(new_position)
-            elif key == QtCore.Qt.Key_S:
-                new_position[0] -= CAMERA_KEY_SPEED * math.cos(r + math.pi/2)
-                new_position[2] -= CAMERA_KEY_SPEED * math.sin(r + math.pi/2)
-                self._set_camera_position(new_position)
-
-    def _following_output(self):
+    def following_output(self):
         return self._parent.following_output()
 
     def central_output_position(self, output):
