@@ -4,6 +4,9 @@ tracking:
 
 avatar should face user
 
+when user is passive, avatar should revert to default pose much faster
+
+
 perhaps training data for BVHs should use all motion frames by default, rather than sampling the BVH with a mandatory frame rate
   see similar issue in plot_observations.py
 

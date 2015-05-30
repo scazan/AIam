@@ -167,6 +167,11 @@ class DimensionalityReductionExperiment(Experiment):
         elif self._mode == modes.IMPROVISE:
             self.reduction = self._improviser.current_position()
             self.send_event_to_ui(Event(Event.REDUCTION, self.reduction))
+        elif self._mode == modes.EXPLORE:
+            if self.reduction is None:
+                self.bvh_reader.set_pose_from_time(self.pose, 0) # hack (should not be needed)
+                normalized_reduction = numpy.array([.5] * self.args.num_components)
+                self.reduction = self.student.unnormalize_reduction(normalized_reduction)
         self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
 
     def proceed(self):
