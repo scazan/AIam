@@ -9,7 +9,7 @@ text_renderer_module = __import__("text_renderer")
 
 FRAME_RATE = 30
 CAMERA_Y_SPEED = 1
-CAMERA_KEY_SPEED = 10
+CAMERA_KEY_SPEED = 40
 CAMERA_DRAG_SPEED = .1
 PROJECTION_NEAR = 300.0
 PROJECTION_FAR = 20000.0
@@ -196,7 +196,7 @@ class TrackedUsersViewer(QtGui.QWidget):
     @staticmethod
     def add_parser_arguments(parser):
         parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
-                            default="-70.364,-47.000,-5189.173,-8.800,10.400")
+                            default="463.324,-20.000,1515.835,-194.200,4.400")
 
     def _create_menu(self):
         self._menu_bar = QtGui.QMenuBar()
