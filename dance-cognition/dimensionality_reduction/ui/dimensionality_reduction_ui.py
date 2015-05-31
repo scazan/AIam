@@ -27,8 +27,18 @@ class DimensionalityReductionMainWindow(MainWindow):
             '&Stop plot', self._stop_plot_reduction,
             False, 'F1')
         self._reduction_plot = None
+        self._add_show_reduction_action()
         if self.args.html5_toolbar:
             self._add_html5_toolbar()
+
+    def _add_show_reduction_action(self):
+        action = QtGui.QAction('Show normalized reduction', self)
+        action.triggered.connect(self._show_normalized_reduction)
+        self._main_menu.addAction(action)
+
+    def _show_normalized_reduction(self):
+        normalized_reduction = self.student.normalize_reduction(self.reduction)
+        print ",".join([str(v) for v in normalized_reduction])
 
     def _add_html5_toolbar(self):
         from PyQt4.QtCore import QUrl

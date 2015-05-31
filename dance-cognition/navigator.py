@@ -11,10 +11,18 @@ class Navigator:
     def __init__(self, map_points):
         self.map_points = map_points
         self._n_dimensions = len(map_points[0])
+        self._max_distance = math.sqrt(self._n_dimensions) / 2
         self._nearest_neighbor_classifier = sklearn.neighbors.KNeighborsClassifier(
             n_neighbors=1, weights='uniform')
         self._nearest_neighbor_classifier.fit(map_points, map_points)
         self._departure = None
+        self._preferred_location = None
+
+    def set_preferred_location(self, location):
+        self._preferred_location = location
+
+    def get_preferred_location(self):
+        return self._preferred_location
 
     def _select_destination(self, novelty=.0):
         if self._departure is None:
@@ -28,16 +36,25 @@ class Navigator:
             for n in range(NUM_DESTINATION_CANDIDATES)]
         best_destination = min(
             destination_candidates,
-            key=lambda destination: self._difference_from_extension(destination))
+            key=lambda destination: self._score_destination(destination))
         return best_destination
 
     def _generate_destination(self, novelty):
         known_destination = random.choice(self.map_points)
         return known_destination + self._random_vector_of_magnitude(novelty)
 
+    def _score_destination(self, destination):
+        score = self._difference_from_extension(destination)
+        if self._preferred_location is not None:
+            score += self._location_preference * self._distance_from_preferred_location(destination)
+        return score
+
     def _difference_from_extension(self, destination):
         distance = self._distance(self._departure, destination)
         return abs(distance - self._extension)
+
+    def _distance_from_preferred_location(self, destination):
+        return self._distance(destination, self._preferred_location)
 
     def _random_vector_of_magnitude(self, magnitude):
         v = self._random_vector()
@@ -46,10 +63,11 @@ class Navigator:
     def _random_vector(self):
         return numpy.array([random.uniform(-1, 1) for n in range(self._n_dimensions)])
 
-    def generate_path(self, departure, num_segments, novelty, extension):
+    def generate_path(self, departure, num_segments, novelty, extension, location_preference):
         self._departure = departure
         self._num_segments = num_segments
-        self._extension = math.sqrt(self._n_dimensions) / 2 * extension
+        self._extension = self._max_distance * extension
+        self._location_preference = location_preference
         self._destination = self._select_destination(novelty)
         self._segments = [departure]
         for n in range(num_segments-1):

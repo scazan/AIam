@@ -30,6 +30,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--analyze-accuracy", action="store_true")
         parser.add_argument("--training-data-stats", action="store_true")
         parser.add_argument("--export-stills")
+        parser.add_argument("--preferred-location", type=str)
         ImproviserParameters().add_parser_arguments(parser)
 
     def __init__(self, parser):
@@ -98,7 +99,12 @@ class DimensionalityReductionExperiment(Experiment):
             self._load_model()
             if not self.args.ui_only:
                 self._training_data = load_training_data(self._training_data_path)
-                self.navigator = Navigator(map_points=self.student.normalized_observed_reductions)
+                self.navigator = Navigator(
+                    map_points=self.student.normalized_observed_reductions)
+                if self.args.preferred_location:
+                    preferred_location = numpy.array([
+                            float(s) for s in self.args.preferred_location.split(",")])
+                    self.navigator.set_preferred_location(preferred_location)
                 self._improviser_params = ImproviserParameters()
                 self._improviser_params.set_values_from_args(self.args)
                 self.add_event_handler(Event.PARAMETER, self._handle_parameter_event)
@@ -250,6 +256,8 @@ class ImproviserParameters(Parameters):
         self.add_parameter("min_relative_velocity", type=float, default=.3,
                            choices=ParameterFloatRange(.001, 1.))
         self.add_parameter("dynamics", choices=["constant", "sine", "exponential"], default="sine")
+        self.add_parameter("location_preference", type=float, default=0,
+                           choices=ParameterFloatRange(0., 1.))
 
 class Improviser:
     def __init__(self, experiment, params, on_changed_path):
@@ -270,7 +278,8 @@ class Improviser:
             departure = self._departure(),
             num_segments = self.params.num_segments,
             novelty = self.params.novelty * self.experiment.args.max_novelty,
-            extension = self.params.extension)
+            extension = self.params.extension,
+            location_preference = self.params.location_preference)
 
     def _departure(self):
         if self.experiment.reduction is None:

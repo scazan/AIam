@@ -20,6 +20,8 @@ MIN_NOVELTY = 0.03
 MAX_NOVELTY = 1.0
 MIN_EXTENSION = 0.02
 MAX_EXTENSION = 2.0
+MIN_LOCATION_PREFERENCE = 0.0
+MAX_LOCATION_PREFERENCE = 1.0
 RESPONSE_TIME = 1.0
 JOINT_SMOOTHING_DURATION = 1.0
 FPS = 30.0
@@ -101,11 +103,13 @@ class UserMovementInterpreter:
         velocity = MIN_VELOCITY + relative_activity * (MAX_VELOCITY - MIN_VELOCITY)
         novelty = MIN_NOVELTY + relative_activity * (MAX_NOVELTY - MIN_NOVELTY)
         extension = MIN_EXTENSION + relative_activity * (MAX_EXTENSION - MIN_EXTENSION)
-        self._response_buffer.append((velocity, novelty, extension))
+        location_preference = MIN_LOCATION_PREFERENCE + (1-relative_activity) \
+            * (MAX_LOCATION_PREFERENCE - MIN_LOCATION_PREFERENCE)
+        self._response_buffer.append((velocity, novelty, extension, location_preference))
 
     def _send_interpretation_from_response_buffer(self):
         while len(self._response_buffer) >= self._response_buffer_size:
-            velocity, novelty, extension = self._response_buffer.pop(0)
+            velocity, novelty, extension, location_preference = self._response_buffer.pop(0)
             websocket_client.send_event(
                 Event(Event.PARAMETER,
                       {"name": "velocity",
@@ -118,6 +122,10 @@ class UserMovementInterpreter:
                 Event(Event.PARAMETER,
                       {"name": "extension",
                        "value": extension}))
+            websocket_client.send_event(
+                Event(Event.PARAMETER,
+                      {"name": "location_preference",
+                       "value": location_preference}))
 
     def get_users(self):
         return self._users

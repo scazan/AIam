@@ -98,3 +98,8 @@ Valencia model (2d):
 
 python dim_reduce.py -p valencia_quaternion_translate_2d -training-data-frame-rate 10 -train
 python test_navigator.py -model profiles/dimensionality_reduction/valencia_quaternion_translate_2d.model
+
+
+IJCAI / KINETIC DIALOGUES
+
+python dim_reduce.py -p valencia_quaternion_7d_friction --mode=improvise --websockets --velocity=0.3 --novelty=0.03 --extension=0.02 --location_preference=1 --preferred-location=0.873942873678,0.700499395398,0.595342711165,0.225725946789,0.452013014739,0.546188528849,0.532588731088

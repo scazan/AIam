@@ -31,9 +31,10 @@ class MapView(QtOpenGL.QGLWidget):
         self._render_path()
         for path_follower in self._experiment.path_followers:
             self._render_path_follower_position(path_follower)
+        self._render_preferred_location()
 
     def _render_map(self):
-        glColor3f(0, 1, 0)
+        glColor3f(.8, .8, .8)
         glPointSize(1.0)
         glBegin(GL_POINTS)
         for x,y in self._experiment.map_points:
@@ -80,6 +81,15 @@ class MapView(QtOpenGL.QGLWidget):
         glVertex2f(*self._vertex(*path_follower.current_position()))
         glEnd()
 
+    def _render_preferred_location(self):
+        preferred_location = self._experiment.navigator.get_preferred_location()
+        if preferred_location is not None:
+            glColor3f(0, .8, 0)
+            glPointSize(3.0)
+            glBegin(GL_POINTS)
+            glVertex2f(*self._vertex(*preferred_location))
+            glEnd()            
+
     def initializeGL(self):
         glClearColor(1.0, 1.0, 1.0, 0.0)
         glClearAccum(0.0, 0.0, 0.0, 0.0)
@@ -110,12 +120,20 @@ class MapView(QtOpenGL.QGLWidget):
     def sizeHint(self):
         return QtCore.QSize(500, 500)
 
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            preferred_location = numpy.array([
+                    float(event.x()) / self.window_width,
+                    float(event.y()) / self.window_height])
+            self._experiment.navigator.set_preferred_location(preferred_location)
+
 class MainWindow(QtGui.QWidget):
     def __init__(self, experiment):
         QtGui.QMainWindow.__init__(self)
         experiment.window = self
         self._experiment = experiment
         self._layout = QtGui.QVBoxLayout()
+        self.sliders = {}
         self.setLayout(self._layout)
         self._add_parameter_form()
         self._add_map_view()
@@ -135,23 +153,18 @@ class MainWindow(QtGui.QWidget):
 
     def _add_parameter_form(self):
         layout = QtGui.QFormLayout()
-        self._add_novelty_slider(layout)
-        self._add_extension_slider(layout)
+        self._add_slider(layout, "novelty")
+        self._add_slider(layout, "extension")
+        self._add_slider(layout, "location_preference")
         self._layout.addLayout(layout)
 
-    def _add_novelty_slider(self, layout):
-        self.novelty_slider = QtGui.QSlider(QtCore.Qt.Horizontal)
-        self.novelty_slider.setRange(0, SLIDER_PRECISION)
-        self.novelty_slider.setSingleStep(1)
-        self.novelty_slider.setValue(0.0)
-        layout.addRow("novelty", self.novelty_slider)
-
-    def _add_extension_slider(self, layout):
-        self.extension_slider = QtGui.QSlider(QtCore.Qt.Horizontal)
-        self.extension_slider.setRange(0, SLIDER_PRECISION)
-        self.extension_slider.setSingleStep(1)
-        self.extension_slider.setValue(0.0)
-        layout.addRow("extension", self.extension_slider)
+    def _add_slider(self, layout, name):
+        slider = QtGui.QSlider(QtCore.Qt.Horizontal)
+        slider.setRange(0, SLIDER_PRECISION)
+        slider.setSingleStep(1)
+        slider.setValue(0.0)
+        layout.addRow(name, slider)
+        self.sliders[name] = slider
 
     def _create_menu(self):
         menu_bar = QtGui.QMenuBar()
@@ -221,7 +234,7 @@ class Experiment:
         return (points - min_value) / (max_value - min_value)
 
     def create_navigator(self):
-        self._navigator = Navigator(map_points=self.map_points)
+        self.navigator = Navigator(map_points=self.map_points)
 
     def generate_new_path(self):
         departure = random.choice(self.map_points)
@@ -231,18 +244,16 @@ class Experiment:
         departure = self.path[-1]
         self._generate_path(departure)
 
-    def _novelty(self):
-        return float(self.window.novelty_slider.value()) / SLIDER_PRECISION
-
-    def _extension(self):
-        return float(self.window.extension_slider.value()) / SLIDER_PRECISION
+    def _get_slider_value(self, name):
+        return float(self.window.sliders[name].value()) / SLIDER_PRECISION
 
     def _generate_path(self, departure):
-        self.path_segments = self._navigator.generate_path(
+        self.path_segments = self.navigator.generate_path(
             departure,
             num_segments=10,
-            novelty=self._novelty(),
-            extension=self._extension())
+            novelty=self._get_slider_value("novelty"),
+            extension=self._get_slider_value("extension"),
+            location_preference=self._get_slider_value("location_preference"))
         self.path = interpolation.interpolate(
             self.path_segments,
             resolution=100)
