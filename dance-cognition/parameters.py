@@ -21,6 +21,13 @@ class Parameter:
         return "Parameter(name=%s, type=%s, default=%s, choices=%s)" % (
             self.name, self.type, self.default, self.choices)
 
+    def add_parser_argument(self, parser):
+        parser.add_argument("--%s" % self.name, type=self.type)
+
+    def set_value_from_arg(self, arg):
+        if arg is not None:
+            self._value = arg
+
 class Parameters:
     def __init__(self):
         self._parameters = []
@@ -60,6 +67,15 @@ class Parameters:
 
     def handle_event(self, event):
         self._parameters_by_name[event.content["name"]].set_value(event.content["value"], notify=False)
+
+    def add_parser_arguments(self, parser):
+        for parameter in self._parameters:
+            parameter.add_parser_argument(parser)
+
+    def set_values_from_args(self, args):
+        for parameter in self._parameters:
+            if hasattr(args, parameter.name):
+                parameter.set_value_from_arg(getattr(args, parameter.name))
 
 class ParameterFloatRange:
     def __init__(self, min_value, max_value):

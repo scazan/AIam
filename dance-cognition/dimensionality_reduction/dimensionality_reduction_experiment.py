@@ -30,6 +30,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--analyze-accuracy", action="store_true")
         parser.add_argument("--training-data-stats", action="store_true")
         parser.add_argument("--export-stills")
+        ImproviserParameters().add_parser_arguments(parser)
 
     def __init__(self, parser):
         self.profiles_dir = "profiles/dimensionality_reduction"
@@ -99,6 +100,7 @@ class DimensionalityReductionExperiment(Experiment):
                 self._training_data = load_training_data(self._training_data_path)
                 self.navigator = Navigator(map_points=self.student.normalized_observed_reductions)
                 self._improviser_params = ImproviserParameters()
+                self._improviser_params.set_values_from_args(self.args)
                 self.add_event_handler(Event.PARAMETER, self._handle_parameter_event)
                 self._improviser = Improviser(
                     self, self._improviser_params,

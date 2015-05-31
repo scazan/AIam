@@ -3,8 +3,11 @@ tracking:
   consider confidence?
 
 avatar should face user
+  support for specifying preferred location
+  new parameter "preference", controlling the degree to which candidate destinations should be scored w.r.t distance to the preferred location
 
 when user is passive, avatar should revert to default pose much faster
+  passivity => high "preference" (see above)
 
 
 perhaps training data for BVHs should use all motion frames by default, rather than sampling the BVH with a mandatory frame rate
