@@ -65,7 +65,7 @@ function applyStylesheet() {
 $(function() {
     applyStylesheet();
     setUpSlider("novelty", 0, 1);
-    setUpSlider("preferred_distance", 0, 2);
+    setUpSlider("extension", 0, 2);
     setUpSlider("velocity", 0.1, 1.6);
     connectToBackend();
 });

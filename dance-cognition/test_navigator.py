@@ -136,7 +136,7 @@ class MainWindow(QtGui.QWidget):
     def _add_parameter_form(self):
         layout = QtGui.QFormLayout()
         self._add_novelty_slider(layout)
-        self._add_preferred_distance_slider(layout)
+        self._add_extension_slider(layout)
         self._layout.addLayout(layout)
 
     def _add_novelty_slider(self, layout):
@@ -146,12 +146,12 @@ class MainWindow(QtGui.QWidget):
         self.novelty_slider.setValue(0.0)
         layout.addRow("novelty", self.novelty_slider)
 
-    def _add_preferred_distance_slider(self, layout):
-        self.preferred_distance_slider = QtGui.QSlider(QtCore.Qt.Horizontal)
-        self.preferred_distance_slider.setRange(0, SLIDER_PRECISION)
-        self.preferred_distance_slider.setSingleStep(1)
-        self.preferred_distance_slider.setValue(0.0)
-        layout.addRow("preferred_distance", self.preferred_distance_slider)
+    def _add_extension_slider(self, layout):
+        self.extension_slider = QtGui.QSlider(QtCore.Qt.Horizontal)
+        self.extension_slider.setRange(0, SLIDER_PRECISION)
+        self.extension_slider.setSingleStep(1)
+        self.extension_slider.setValue(0.0)
+        layout.addRow("extension", self.extension_slider)
 
     def _create_menu(self):
         menu_bar = QtGui.QMenuBar()
@@ -234,15 +234,15 @@ class Experiment:
     def _novelty(self):
         return float(self.window.novelty_slider.value()) / SLIDER_PRECISION
 
-    def _preferred_distance(self):
-        return float(self.window.preferred_distance_slider.value()) / SLIDER_PRECISION
+    def _extension(self):
+        return float(self.window.extension_slider.value()) / SLIDER_PRECISION
 
     def _generate_path(self, departure):
         self.path_segments = self._navigator.generate_path(
             departure,
             num_segments=10,
             novelty=self._novelty(),
-            preferred_distance=self._preferred_distance())
+            extension=self._extension())
         self.path = interpolation.interpolate(
             self.path_segments,
             resolution=100)

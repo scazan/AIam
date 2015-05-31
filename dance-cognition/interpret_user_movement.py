@@ -18,8 +18,8 @@ MIN_VELOCITY = 0.3
 MAX_VELOCITY = 1.0
 MIN_NOVELTY = 0.03
 MAX_NOVELTY = 1.0
-MIN_PREFERRED_DISTANCE = 0.02
-MAX_PREFERRED_DISTANCE = 2.0
+MIN_EXTENSION = 0.02
+MAX_EXTENSION = 2.0
 RESPONSE_TIME = 1.0
 JOINT_SMOOTHING_DURATION = 1.0
 FPS = 30.0
@@ -100,12 +100,12 @@ class UserMovementInterpreter:
             (ACTIVITY_CEILING - ACTIVITY_THRESHOLD)
         velocity = MIN_VELOCITY + relative_activity * (MAX_VELOCITY - MIN_VELOCITY)
         novelty = MIN_NOVELTY + relative_activity * (MAX_NOVELTY - MIN_NOVELTY)
-        preferred_distance = MIN_PREFERRED_DISTANCE + relative_activity * (MAX_PREFERRED_DISTANCE - MIN_PREFERRED_DISTANCE)
-        self._response_buffer.append((velocity, novelty, preferred_distance))
+        extension = MIN_EXTENSION + relative_activity * (MAX_EXTENSION - MIN_EXTENSION)
+        self._response_buffer.append((velocity, novelty, extension))
 
     def _send_interpretation_from_response_buffer(self):
         while len(self._response_buffer) >= self._response_buffer_size:
-            velocity, novelty, preferred_distance = self._response_buffer.pop(0)
+            velocity, novelty, extension = self._response_buffer.pop(0)
             websocket_client.send_event(
                 Event(Event.PARAMETER,
                       {"name": "velocity",
@@ -116,8 +116,8 @@ class UserMovementInterpreter:
                        "value": novelty}))
             websocket_client.send_event(
                 Event(Event.PARAMETER,
-                      {"name": "preferred_distance",
-                       "value": preferred_distance}))
+                      {"name": "extension",
+                       "value": extension}))
 
     def get_users(self):
         return self._users

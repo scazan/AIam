@@ -28,16 +28,16 @@ class Navigator:
             for n in range(NUM_DESTINATION_CANDIDATES)]
         best_destination = min(
             destination_candidates,
-            key=lambda destination: self._difference_from_preferred_distance(destination))
+            key=lambda destination: self._difference_from_extension(destination))
         return best_destination
 
     def _generate_destination(self, novelty):
         known_destination = random.choice(self.map_points)
         return known_destination + self._random_vector_of_magnitude(novelty)
 
-    def _difference_from_preferred_distance(self, destination):
+    def _difference_from_extension(self, destination):
         distance = self._distance(self._departure, destination)
-        return abs(distance - self._preferred_distance)
+        return abs(distance - self._extension)
 
     def _random_vector_of_magnitude(self, magnitude):
         v = self._random_vector()
@@ -46,10 +46,10 @@ class Navigator:
     def _random_vector(self):
         return numpy.array([random.uniform(-1, 1) for n in range(self._n_dimensions)])
 
-    def generate_path(self, departure, num_segments, novelty, preferred_distance):
+    def generate_path(self, departure, num_segments, novelty, extension):
         self._departure = departure
         self._num_segments = num_segments
-        self._preferred_distance = math.sqrt(self._n_dimensions) / 2 * preferred_distance
+        self._extension = math.sqrt(self._n_dimensions) / 2 * extension
         self._destination = self._select_destination(novelty)
         self._segments = [departure]
         for n in range(num_segments-1):

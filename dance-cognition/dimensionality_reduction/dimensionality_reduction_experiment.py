@@ -241,7 +241,7 @@ class ImproviserParameters(Parameters):
         Parameters.__init__(self)
         self.add_parameter("novelty", type=float, default=.5,
                            choices=ParameterFloatRange(0., 1.))
-        self.add_parameter("preferred_distance", type=float, default=1.,
+        self.add_parameter("extension", type=float, default=1.,
                            choices=ParameterFloatRange(0., 2.))
         self.add_parameter("num_segments", type=int, default=10)
         self.add_parameter("resolution", type=int, default=100)
@@ -270,7 +270,7 @@ class Improviser:
             departure = self._departure(),
             num_segments = self.params.num_segments,
             novelty = self.params.novelty * self.experiment.args.max_novelty,
-            preferred_distance = self.params.preferred_distance)
+            extension = self.params.extension)
 
     def _departure(self):
         if self.experiment.reduction is None:
