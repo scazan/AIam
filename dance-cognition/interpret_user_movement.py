@@ -135,6 +135,8 @@ interpreter = UserMovementInterpreter()
 parser = ArgumentParser()
 TrackedUsersViewer.add_parser_arguments(parser)
 parser.add_argument("--with-viewer", action="store_true")
+parser.add_argument("--log-source")
+parser.add_argument("--log-target")
 args = parser.parse_args()
 
 if args.with_viewer:
@@ -154,7 +156,7 @@ websocket_client = WebsocketClient(WEBSOCKET_HOST)
 websocket_client.set_event_listener(EventListener())
 websocket_client.connect()
 
-osc_receiver = OscReceiver(OSC_PORT)
+osc_receiver = OscReceiver(OSC_PORT, log_source=args.log_source, log_target=args.log_target)
 osc_receiver.add_method("/joint", "isffff", handle_joint_data)
 osc_receiver.add_method("/state", "is", handle_state)
 osc_receiver.start()
