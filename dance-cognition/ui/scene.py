@@ -127,3 +127,46 @@ class Scene(QtOpenGL.QGLWidget):
 
     def following_output(self):
         return False
+
+    def draw_floor(self, num_cells, size, color, y=0):
+        z1 = -size/2
+        z2 = size/2
+        x1 = -size/2
+        x2 = size/2
+        self._camera_x = self._camera_position[0]
+        self._camera_z = self._camera_position[2]
+        color_r, color_g, color_b, color_a = color
+
+        glLineWidth(1.4)
+
+        for n in range(num_cells):
+            glBegin(GL_LINES)
+            x = x1 + float(n) / num_cells * size
+            color_a1 = color_a * (1 - abs(x - self._camera_x) / size)
+
+            glColor4f(color_r, color_g, color_b, 0)
+            glVertex3f(x, y, z1)
+            glColor4f(color_r, color_g, color_b, color_a1)
+            glVertex3f(x, y, self._camera_z)
+
+            glColor4f(color_r, color_g, color_b, color_a1)
+            glVertex3f(x, y, self._camera_z)
+            glColor4f(color_r, color_g, color_b, 0)
+            glVertex3f(x, y, z2)
+            glEnd()
+
+        for n in range(num_cells):
+            glBegin(GL_LINES)
+            z = z1 + float(n) / num_cells * size
+            color_a1 = color_a * (1 - abs(z - self._camera_z) / size)
+
+            glColor4f(color_r, color_g, color_b, 0)
+            glVertex3f(x1, y, z)
+            glColor4f(color_r, color_g, color_b, color_a1)
+            glVertex3f(self._camera_x, y, z)
+
+            glColor4f(color_r, color_g, color_b, color_a1)
+            glVertex3f(self._camera_x, y, z)
+            glColor4f(color_r, color_g, color_b, 0)
+            glVertex3f(x2, y, z)
+            glEnd()
