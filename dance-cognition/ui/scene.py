@@ -139,6 +139,9 @@ class Scene(QtOpenGL.QGLWidget):
 
         glLineWidth(1.4)
 
+        glPushMatrix()
+        glRotatef(45, 0, 1, 0)
+
         for n in range(num_cells):
             glBegin(GL_LINES)
             x = x1 + float(n) / num_cells * size
@@ -170,3 +173,5 @@ class Scene(QtOpenGL.QGLWidget):
             glColor4f(color_r, color_g, color_b, 0)
             glVertex3f(x2, y, z)
             glEnd()
+
+        glPopMatrix()
