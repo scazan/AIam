@@ -23,6 +23,7 @@ VIDEO_EXPORT_PATH = "rendered_video"
 CAMERA_Y_SPEED = .01
 CAMERA_KEY_SPEED = .1
 CAMERA_DRAG_SPEED = .1
+FRAME_RATE_WHILE_PAUSED = 30.0
 
 class BvhScene(Scene):
     @staticmethod
@@ -283,6 +284,10 @@ class MainWindow(QtGui.QWidget, EventListener):
         if self.args.show_fps:
             self._fps_meter = FpsMeter()
 
+        self._update_timer = QtCore.QTimer(self)
+        self._update_timer.setInterval(1000. / FRAME_RATE_WHILE_PAUSED)
+        QtCore.QObject.connect(self._update_timer, QtCore.SIGNAL('timeout()'), self._scene.updateGL)
+
         if self.args.fullscreen:
             self._give_keyboard_focus_to_fullscreen_window()
             self._fullscreen_action.toggle()
@@ -309,8 +314,8 @@ class MainWindow(QtGui.QWidget, EventListener):
     def _create_main_menu(self):
         self._main_menu = self._menu_bar.addMenu("Main")
         self._add_toggleable_action(
-            "Start", lambda: self.client.send_event(Event(Event.START)),
-            "Stop", lambda: self.client.send_event(Event(Event.STOP)),
+            "Start", self._start,
+            "Stop", self._stop,
             True, " ")
         self._add_toggleable_action(
             '&Export BVH', lambda: self.client.send_event(Event(Event.START_EXPORT_BVH)),
@@ -321,6 +326,14 @@ class MainWindow(QtGui.QWidget, EventListener):
             '&Stop export video', self._scene.stop_export_video,
             False, 'Ctrl+O')
         self._add_show_camera_settings_action()
+
+    def _start(self):
+        self._update_timer.stop()
+        self.client.send_event(Event(Event.START))
+
+    def _stop(self):
+        self.client.send_event(Event(Event.STOP))
+        self._update_timer.start()
 
     def _add_toggleable_action(self,
                                enable_title, enable_handler,
