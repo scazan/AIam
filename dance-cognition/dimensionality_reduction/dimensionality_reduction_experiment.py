@@ -102,9 +102,9 @@ class DimensionalityReductionExperiment(Experiment):
                 self.navigator = Navigator(
                     map_points=self.student.normalized_observed_reductions)
                 if self.args.preferred_location:
-                    preferred_location = numpy.array([
+                    self.preferred_location = numpy.array([
                             float(s) for s in self.args.preferred_location.split(",")])
-                    self.navigator.set_preferred_location(preferred_location)
+                    self.navigator.set_preferred_location(self.preferred_location)
                 self._improviser_params = ImproviserParameters()
                 self._improviser_params.set_values_from_args(self.args)
                 self.add_event_handler(Event.PARAMETER, self._handle_parameter_event)
@@ -283,11 +283,17 @@ class Improviser:
 
     def _departure(self):
         if self.experiment.reduction is None:
-            unnormalized_departure = self.experiment.student.transform(numpy.array([
-                        self.experiment.get_adapted_stimulus_value()]))[0]
+            if self.experiment.args.preferred_location:
+                unnormalized_departure = self.experiment.preferred_location
+            else:
+                unnormalized_departure = self._get_stimulus()
         else:
             unnormalized_departure = self.experiment.reduction
         return self.experiment.student.normalize_reduction(unnormalized_departure)
+
+    def _get_stimulus(self):
+        return self.experiment.student.transform(numpy.array([
+                    self.experiment.get_adapted_stimulus_value()]))[0]
 
     def _interpolate_path(self, path_segments):
         return interpolation.interpolate(

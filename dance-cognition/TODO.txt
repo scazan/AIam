@@ -2,8 +2,6 @@ tracking:
   dealing with multiple users
   consider confidence?
 
-select preferred location as initial "departure"
-
 change floor orientation for improved aeshetics?
 
 
