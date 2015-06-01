@@ -13,6 +13,7 @@ CAMERA_KEY_SPEED = 40
 CAMERA_DRAG_SPEED = .1
 PROJECTION_NEAR = 300.0
 PROJECTION_FAR = 20000.0
+LOG_HEIGHT = 50
 
 class TrackedUsersScene(Scene):
     def __init__(self, parent):
@@ -149,9 +150,6 @@ class TrackedUsersScene(Scene):
         c = .8 - confidence*.8
         glColor3f(c, c, c)
 
-    def sizeHint(self):
-        return QtCore.QSize(640, 480)
-
     def handle_joint_data(self, user_id, joint_name, x, y, z, confidence):
         self._users_joints[user_id][joint_name] = [x, y, z, confidence]
 
@@ -173,7 +171,7 @@ class LogWidget(QtGui.QTextEdit):
         scrollbar.setValue(scrollbar.maximum())
 
     def sizeHint(self):
-        return QtCore.QSize(640, 50)
+        return QtCore.QSize(640, LOG_HEIGHT)
 
 class TrackedUsersViewer(QtGui.QWidget):
     def __init__(self, interpreter, args):
@@ -181,8 +179,18 @@ class TrackedUsersViewer(QtGui.QWidget):
         self.args = args
         self.interpreter = interpreter
         self._layout = QtGui.QVBoxLayout()
+        self._layout.setSpacing(0)
+        self._layout.setMargin(0)
+        self._layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self._layout)
+
         self._scene = TrackedUsersScene(self)
+        size_policy = QtGui.QSizePolicy(
+            QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
+        size_policy.setVerticalStretch(2)
+        size_policy.setHorizontalStretch(2)
+        self._scene.setSizePolicy(size_policy)
+
         self._layout.addWidget(self._scene)
         self._log_widget = LogWidget(self)
         self._layout.addWidget(self._log_widget)
@@ -221,3 +229,6 @@ class TrackedUsersViewer(QtGui.QWidget):
 
     def handle_state(self, user_id, state):
         self._log_widget.append("%s %s\n" % (state, user_id))
+
+    def sizeHint(self):
+        return QtCore.QSize(640, 480)
