@@ -51,37 +51,34 @@ class TrackedUsersScene(Scene):
 
     def _draw_user(self, user_id, joints):
         self._draw_label(user_id, joints)
+        self._draw_activity(user_id, joints)
+        self._draw_skeleton(joints)
 
+    def _draw_skeleton(self, joints):
         self._draw_limb(joints, "head", "neck")
-
         self._draw_limb(joints, "left_shoulder", "left_elbow")
         self._draw_limb(joints, "left_elbow", "left_hand")
-
         self._draw_limb(joints, "right_shoulder", "right_elbow")
         self._draw_limb(joints, "right_elbow", "right_hand")
-
         self._draw_limb(joints, "left_shoulder", "right_shoulder")
-
         self._draw_limb(joints, "left_shoulder", "torso")
         self._draw_limb(joints, "right_shoulder", "torso")
-
         self._draw_limb(joints, "left_hip", "torso")
         self._draw_limb(joints, "right_hip", "torso")
         self._draw_limb(joints, "left_hip", "right_hip")
-
         self._draw_limb(joints, "left_hip", "left_knee")
         self._draw_limb(joints, "left_knee", "left_foot")
-
         self._draw_limb(joints, "right_hip", "right_knee")
         self._draw_limb(joints, "right_knee", "right_foot")
 
     def _draw_label(self, user_id, joints):
         head_position = joints["head"][0:3]
-
         glColor3f(0, 0, 0)
         position = Vector3d(*head_position) + Vector3d(0, 140, 0)
         self._draw_text(str(user_id), 100, *position, h_align="center")
 
+    def _draw_activity(self, user_id, joints):
+        head_position = joints["head"][0:3]
         glColor3f(.5, .5, 1)
         activity = self.parent().interpreter.get_users()[user_id].get_activity()
         position = Vector3d(*head_position) + Vector3d(0, 60, 0)
