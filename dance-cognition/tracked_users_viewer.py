@@ -79,10 +79,26 @@ class TrackedUsersScene(Scene):
 
     def _draw_activity(self, user_id, joints):
         head_position = joints["head"][0:3]
+        position = Vector3d(*head_position) + Vector3d(150, 140, 0)
+
         glColor3f(.5, .5, 1)
         activity = self.parent().interpreter.get_users()[user_id].get_activity()
-        position = Vector3d(*head_position) + Vector3d(0, 60, 0)
-        self._draw_text("%.1f" % activity, 80, *position, h_align="center")
+        self._draw_solid_cube(*position, sx=70, sz=70, sy=self._activity_as_height(activity))
+
+        glColor3f(.5, .5, 1)
+        self._draw_text("%.1f" % activity, 100, *(position + Vector3d(0, -100, 0)), h_align="center")
+
+    def _activity_as_height(self, activity):
+        return activity * 3
+
+    def _draw_solid_cube(self, x, y, z, sx, sy, sz, y_align_bottom=True):
+        if y_align_bottom:
+            y += sy/2
+        glPushMatrix()
+        glTranslatef(x, y, z)
+        glScale(sx, sy, sz)
+        glutSolidCube(1)
+        glPopMatrix()
 
     def _draw_limb(self, joints, name1, name2):
         x1, y1, z1, confidence1 = joints[name1]
