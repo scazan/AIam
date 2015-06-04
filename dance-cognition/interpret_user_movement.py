@@ -90,8 +90,9 @@ class UserMovementInterpreter:
 
     def user_has_new_information(self, user):
         self._interpret_current_state()
-        self._add_interpretation_to_response_buffer()
-        self._send_interpretation_from_response_buffer()
+        if not args.without_sending:
+            self._add_interpretation_to_response_buffer()
+            self._send_interpretation_from_response_buffer()
 
     def _interpret_current_state(self):
         user_activities = [user.get_activity() for user in self._users.values()]
@@ -135,6 +136,7 @@ interpreter = UserMovementInterpreter()
 parser = ArgumentParser()
 TrackedUsersViewer.add_parser_arguments(parser)
 parser.add_argument("--with-viewer", action="store_true")
+parser.add_argument("--without-sending", action="store_true")
 parser.add_argument("--log-source")
 parser.add_argument("--log-target")
 args = parser.parse_args()
@@ -152,9 +154,10 @@ def handle_state(path, values, types, src, user_data):
     if args.with_viewer:
         viewer.handle_state(*values)
 
-websocket_client = WebsocketClient(WEBSOCKET_HOST)
-websocket_client.set_event_listener(EventListener())
-websocket_client.connect()
+if not args.without_sending:
+    websocket_client = WebsocketClient(WEBSOCKET_HOST)
+    websocket_client.set_event_listener(EventListener())
+    websocket_client.connect()
 
 osc_receiver = OscReceiver(OSC_PORT, log_source=args.log_source, log_target=args.log_target)
 osc_receiver.add_method("/joint", "isffff", handle_joint_data)
