@@ -81,6 +81,7 @@ class UserMovementInterpreter:
         self._users = {}
         self._response_buffer_size = max(1, int(RESPONSE_TIME * FPS))
         self._response_buffer = []
+        self.activity_ceiling = ACTIVITY_CEILING
 
     def handle_joint_data(self, user_id, joint_name, x, y, z, confidence):
         if user_id not in self._users:
@@ -100,7 +101,7 @@ class UserMovementInterpreter:
 
     def _add_interpretation_to_response_buffer(self):
         relative_activity = max(0, self._highest_user_activity - ACTIVITY_THRESHOLD) / \
-            (ACTIVITY_CEILING - ACTIVITY_THRESHOLD)
+            (self.activity_ceiling - ACTIVITY_THRESHOLD)
         velocity = MIN_VELOCITY + relative_activity * (MAX_VELOCITY - MIN_VELOCITY)
         novelty = MIN_NOVELTY + relative_activity * (MAX_NOVELTY - MIN_NOVELTY)
         extension = MIN_EXTENSION + relative_activity * (MAX_EXTENSION - MIN_EXTENSION)

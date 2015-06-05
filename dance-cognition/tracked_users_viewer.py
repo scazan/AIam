@@ -81,6 +81,10 @@ class TrackedUsersScene(Scene):
         head_position = joints["head"][0:3]
         position = Vector3d(*head_position) + Vector3d(150, 140, 0)
 
+        glColor3f(.8, .8, 1)
+        self._draw_solid_cube(*position, sx=70, sz=70, sy=self._activity_as_height(
+                self.parent().interpreter.activity_ceiling))
+
         glColor3f(.5, .5, 1)
         activity = self.parent().interpreter.get_users()[user_id].get_activity()
         self._draw_solid_cube(*position, sx=70, sz=70, sy=self._activity_as_height(activity))
