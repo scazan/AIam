@@ -14,6 +14,10 @@ CAMERA_DRAG_SPEED = .1
 PROJECTION_NEAR = 0.1
 PROJECTION_FAR = 20000.0
 LOG_HEIGHT = 50
+SKELETON_WIDTH_SELECTED = 2
+SKELETON_WIDTH_UNSELECTED = 1
+SKELETON_COLOR_SELECTED = (0, 0, 0)
+SKELETON_COLOR_UNSELECTED = (.2, .2, .4)
 
 class TrackedUsersScene(Scene):
     def __init__(self, parent):
@@ -45,6 +49,7 @@ class TrackedUsersScene(Scene):
 
         self.draw_floor(num_cells=30, size=PROJECTION_FAR-PROJECTION_NEAR, color=(0,0,0,0.2))
 
+        self._selected_user = self.parent().interpreter.get_selected_user()
         for user in self.parent().interpreter.get_users().values():
             self._draw_user(user)
 
@@ -54,6 +59,11 @@ class TrackedUsersScene(Scene):
         self._draw_skeleton(user)
 
     def _draw_skeleton(self, user):
+        if user == self._selected_user:
+            line_width = SKELETON_WIDTH_SELECTED
+        else:
+            line_width = SKELETON_WIDTH_UNSELECTED
+        glLineWidth(line_width)
         self._draw_limb(user, "head", "neck")
         self._draw_limb(user, "left_shoulder", "left_elbow")
         self._draw_limb(user, "left_elbow", "left_hand")
@@ -105,15 +115,19 @@ class TrackedUsersScene(Scene):
 
     def _draw_limb(self, user, name1, name2):
         glBegin(GL_LINES)
-        self._set_color_by_confidence(user.get_joint(name1).get_confidence())
+        self._set_color_by_joint(user, user.get_joint(name1))
         glVertex3f(*user.get_joint(name1).get_position())
-        self._set_color_by_confidence(user.get_joint(name2).get_confidence())
+        self._set_color_by_joint(user, user.get_joint(name2))
         glVertex3f(*user.get_joint(name2).get_position())
         glEnd()
 
-    def _set_color_by_confidence(self, confidence):
-        c = .8 - confidence*.8
-        glColor3f(c, c, c)
+    def _set_color_by_joint(self, user, joint):
+        a = 1 - (.8 - joint.get_confidence() * .8)
+        if user == self._selected_user:
+            r, g, b = SKELETON_COLOR_SELECTED
+        else:
+            r, g, b = SKELETON_COLOR_UNSELECTED
+        glColor4f(r, g, b, a)
 
     def _draw_text(self, text, size, x, y, z, font=GLUT_STROKE_ROMAN, spacing=None,
                   v_align="left", h_align="top"):

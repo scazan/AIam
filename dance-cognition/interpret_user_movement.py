@@ -94,6 +94,7 @@ class UserMovementInterpreter:
         self._users = {}
         self._response_buffer_size = max(1, int(RESPONSE_TIME * FPS))
         self._response_buffer = []
+        self._selected_user = None
         self.activity_ceiling = ACTIVITY_CEILING
 
     def handle_joint_data(self, user_id, joint_name, x, y, z, confidence):
@@ -102,6 +103,9 @@ class UserMovementInterpreter:
         user = self._users[user_id]
         user.handle_joint_data(joint_name, x, y, z, confidence)
 
+    def get_selected_user(self):
+        return self._selected_user
+
     def user_has_new_information(self, user):
         self._interpret_current_state()
         if not args.without_sending:
@@ -109,8 +113,9 @@ class UserMovementInterpreter:
             self._send_interpretation_from_response_buffer()
 
     def _interpret_current_state(self):
-        user_activities = [user.get_activity() for user in self._users.values()]
-        self._highest_user_activity = max(user_activities)
+        self._selected_user = max(self._users.values(),
+                            key=lambda user: user.get_activity())
+        self._highest_user_activity = self._selected_user.get_activity()
 
     def _add_interpretation_to_response_buffer(self):
         relative_activity = max(0, self._highest_user_activity - ACTIVITY_THRESHOLD) / \
