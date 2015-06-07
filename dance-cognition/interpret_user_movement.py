@@ -103,6 +103,10 @@ class UserMovementInterpreter:
         user = self._users[user_id]
         user.handle_joint_data(joint_name, x, y, z, confidence)
 
+    def handle_state(self, user_id, state):
+        if state == "lost":
+            del self._users[user_id]
+
     def get_selected_user(self):
         return self._selected_user
 
@@ -168,6 +172,7 @@ def handle_joint_data(path, values, types, src, user_data):
     interpreter.handle_joint_data(*values)
 
 def handle_state(path, values, types, src, user_data):
+    interpreter.handle_state(*values)
     if args.with_viewer:
         viewer.handle_state(*values)
 
