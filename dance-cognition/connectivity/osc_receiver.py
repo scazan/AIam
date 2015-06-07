@@ -1,5 +1,5 @@
 import liblo
-import pickle
+import cPickle
 import threading
 import traceback_printer
 import time
@@ -46,7 +46,7 @@ class OscReceiver(liblo.Server):
         if self._log_start_time is None:
             self._log_start_time = time.time()
         t = time.time() - self._log_start_time
-        self._log_target_file.write(pickle.dumps((t, path, args)))
+        self._log_target_file.write(cPickle.dumps((t, path, args)))
 
     def start(self):
         if self._freed:
@@ -84,7 +84,7 @@ class OscReceiver(liblo.Server):
         self._log_entries = []
         try:
             while True:
-                entry = pickle.load(f)
+                entry = cPickle.load(f)
                 self._log_entries.append(entry)
         except EOFError:
             pass
