@@ -6,8 +6,6 @@ tracking:
   consider confidence?
   don't process ignored joints (at least not when viewer isn't used)
 
-replace pickle w cPickle
-
 external fullscreen
 
 investigate adding pelvis
