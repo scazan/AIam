@@ -1,9 +1,12 @@
 tracking:
   dealing with multiple users
-  disregard "lost" users (and don't display them)
+    visualize selected user
+    disregard "lost" users (and don't display them)
+    select user closest to "movement center"
   remove/reduce joint smoothing (and add support for toggle to display with or without smoothing)
   eliminate (harmless) KeyError in viewer, probably caused by non-bundled OSC handling
   consider confidence?
+  don't process ignored joints (at least not when viewer isn't used)
 
 replace pickle w cPickle
 
