@@ -21,7 +21,6 @@ class TrackedUsersScene(Scene):
                        camera_y_speed=CAMERA_Y_SPEED,
                        camera_key_speed=CAMERA_KEY_SPEED,
                        camera_drag_speed=CAMERA_DRAG_SPEED)
-        self._users_joints = collections.defaultdict(dict)
         self._text_renderer_class = getattr(text_renderer_module, "GlutTextRenderer")
 
     def initializeGL(self):
@@ -46,47 +45,47 @@ class TrackedUsersScene(Scene):
 
         self.draw_floor(num_cells=30, size=PROJECTION_FAR-PROJECTION_NEAR, color=(0,0,0,0.2))
 
-        for user_id, joints in self._users_joints.iteritems():
-            self._draw_user(user_id, joints)
+        for user in self.parent().interpreter.get_users().values():
+            self._draw_user(user)
 
-    def _draw_user(self, user_id, joints):
-        self._draw_label(user_id, joints)
-        self._draw_activity(user_id, joints)
-        self._draw_skeleton(joints)
+    def _draw_user(self, user):
+        self._draw_label(user)
+        self._draw_activity(user)
+        self._draw_skeleton(user)
 
-    def _draw_skeleton(self, joints):
-        self._draw_limb(joints, "head", "neck")
-        self._draw_limb(joints, "left_shoulder", "left_elbow")
-        self._draw_limb(joints, "left_elbow", "left_hand")
-        self._draw_limb(joints, "right_shoulder", "right_elbow")
-        self._draw_limb(joints, "right_elbow", "right_hand")
-        self._draw_limb(joints, "left_shoulder", "right_shoulder")
-        self._draw_limb(joints, "left_shoulder", "torso")
-        self._draw_limb(joints, "right_shoulder", "torso")
-        self._draw_limb(joints, "left_hip", "torso")
-        self._draw_limb(joints, "right_hip", "torso")
-        self._draw_limb(joints, "left_hip", "right_hip")
-        self._draw_limb(joints, "left_hip", "left_knee")
-        self._draw_limb(joints, "left_knee", "left_foot")
-        self._draw_limb(joints, "right_hip", "right_knee")
-        self._draw_limb(joints, "right_knee", "right_foot")
+    def _draw_skeleton(self, user):
+        self._draw_limb(user, "head", "neck")
+        self._draw_limb(user, "left_shoulder", "left_elbow")
+        self._draw_limb(user, "left_elbow", "left_hand")
+        self._draw_limb(user, "right_shoulder", "right_elbow")
+        self._draw_limb(user, "right_elbow", "right_hand")
+        self._draw_limb(user, "left_shoulder", "right_shoulder")
+        self._draw_limb(user, "left_shoulder", "torso")
+        self._draw_limb(user, "right_shoulder", "torso")
+        self._draw_limb(user, "left_hip", "torso")
+        self._draw_limb(user, "right_hip", "torso")
+        self._draw_limb(user, "left_hip", "right_hip")
+        self._draw_limb(user, "left_hip", "left_knee")
+        self._draw_limb(user, "left_knee", "left_foot")
+        self._draw_limb(user, "right_hip", "right_knee")
+        self._draw_limb(user, "right_knee", "right_foot")
 
-    def _draw_label(self, user_id, joints):
-        head_position = joints["head"][0:3]
+    def _draw_label(self, user):
+        head_position = user.get_joint("head").get_position()
         glColor3f(0, 0, 0)
         position = Vector3d(*head_position) + Vector3d(0, 140, 0)
-        self._draw_text(str(user_id), 100, *position, h_align="center")
+        self._draw_text(str(user.get_id()), 100, *position, h_align="center")
 
-    def _draw_activity(self, user_id, joints):
-        head_position = joints["head"][0:3]
+    def _draw_activity(self, user):
+        head_position = user.get_joint("head").get_position()
         position = Vector3d(*head_position) + Vector3d(150, 140, 0)
+        activity = user.get_activity()
 
         glColor3f(.8, .8, 1)
         self._draw_solid_cube(*position, sx=70, sz=70, sy=self._activity_as_height(
                 self.parent().interpreter.activity_ceiling))
 
         glColor3f(.5, .5, 1)
-        activity = self.parent().interpreter.get_users()[user_id].get_activity()
         self._draw_solid_cube(*position, sx=70, sz=70, sy=self._activity_as_height(activity))
 
         glColor3f(.5, .5, 1)
@@ -104,22 +103,17 @@ class TrackedUsersScene(Scene):
         glutSolidCube(1)
         glPopMatrix()
 
-    def _draw_limb(self, joints, name1, name2):
-        x1, y1, z1, confidence1 = joints[name1]
-        x2, y2, z2, confidence2 = joints[name2]
+    def _draw_limb(self, user, name1, name2):
         glBegin(GL_LINES)
-        self._set_color_by_confidence(confidence1)
-        glVertex3f(x1, y1, z1)
-        self._set_color_by_confidence(confidence2)
-        glVertex3f(x2, y2, z2)
+        self._set_color_by_confidence(user.get_joint(name1).get_confidence())
+        glVertex3f(*user.get_joint(name1).get_position())
+        self._set_color_by_confidence(user.get_joint(name2).get_confidence())
+        glVertex3f(*user.get_joint(name2).get_position())
         glEnd()
 
     def _set_color_by_confidence(self, confidence):
         c = .8 - confidence*.8
         glColor3f(c, c, c)
-
-    def handle_joint_data(self, user_id, joint_name, x, y, z, confidence):
-        self._users_joints[user_id][joint_name] = [x, y, z, confidence]
 
     def _draw_text(self, text, size, x, y, z, font=GLUT_STROKE_ROMAN, spacing=None,
                   v_align="left", h_align="top"):

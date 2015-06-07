@@ -1,7 +1,11 @@
 tracking:
   dealing with multiple users
   disregard "lost" users (and don't display them)
+  remove/reduce joint smoothing (and add support for toggle to display with or without smoothing)
+  eliminate (harmless) KeyError in viewer, probably caused by non-bundled OSC handling
   consider confidence?
+
+replace pickle w cPickle
 
 external fullscreen
 

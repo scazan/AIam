@@ -36,45 +36,58 @@ class Joint:
         self._activity_buffer = collections.deque(
             [0] * self._buffer_size, maxlen=self._buffer_size)
 
+    def get_position(self):
+        return self._previous_position
+
+    def get_confidence(self):
+        return self._confidence
+
     def get_activity(self):
         return sum(self._activity_buffer) / self._buffer_size
 
-    def update(self, x, y, z):
+    def set_position(self, x, y, z):
         new_position = Vector3d(x, y, z)
         if self._previous_position is not None:
             movement = (new_position - self._previous_position).mag()
             self._activity_buffer.append(movement)
         self._previous_position = new_position
 
+    def set_confidence(self, confidence):
+        self._confidence = confidence
+
 class User:
     def __init__(self, user_id, interpreter):
         self._user_id = user_id
         self._interpreter = interpreter
-        self._joints = {"left_hand": Joint(),
-                        "right_hand": Joint()}
+        self._joints = {}
         self._num_updated_joints = 0
         self._num_received_frames = 0
         self._activity = 0
 
-    def handle_joint_data(self, joint_name, x, y, z):
-        if joint_name in self._joints:
-            joint = self._joints[joint_name]
-            joint.update(x, y, z)
-            self._last_updated_joint = joint_name
-            self._num_updated_joints += 1
-            if self._num_updated_joints == len(self._joints):
-                self._num_updated_joints = 0
-                self._num_received_frames += 1
-                if self._num_received_frames > 1:
-                    self._activity = sum([joint.get_activity() for joint in self._joints.values()]) / \
-                        len(self._joints)
-                    self._interpreter.user_has_new_information(self._user_id)
+    def handle_joint_data(self, joint_name, x, y, z, confidence):
+        if joint_name not in self._joints:
+            self._joints[joint_name] = Joint()
+        joint = self._joints[joint_name]
+        joint.set_position(x, y, z)
+        joint.set_confidence(confidence)
+        self._last_updated_joint = joint_name
+        self._num_updated_joints += 1
+        if self._num_updated_joints == len(self._joints):
+            self._num_updated_joints = 0
+            self._num_received_frames += 1
+            if self._num_received_frames > 1:
+                self._activity = sum([joint.get_activity() for joint in self._joints.values()]) / \
+                    len(self._joints)
+                self._interpreter.user_has_new_information(self._user_id)
 
     def get_activity(self):
         return self._activity
     
     def get_id(self):
-        return self._id
+        return self._user_id
+
+    def get_joint(self, name):
+        return self._joints[name]
 
 class UserMovementInterpreter:
     def __init__(self):
@@ -87,7 +100,7 @@ class UserMovementInterpreter:
         if user_id not in self._users:
             self._users[user_id] = User(user_id, self)
         user = self._users[user_id]
-        user.handle_joint_data(joint_name, x, y, z)
+        user.handle_joint_data(joint_name, x, y, z, confidence)
 
     def user_has_new_information(self, user):
         self._interpret_current_state()
@@ -148,8 +161,6 @@ if args.with_viewer:
 
 def handle_joint_data(path, values, types, src, user_data):
     interpreter.handle_joint_data(*values)
-    if args.with_viewer:
-        viewer.handle_joint_data(*values)
 
 def handle_state(path, values, types, src, user_data):
     if args.with_viewer:
