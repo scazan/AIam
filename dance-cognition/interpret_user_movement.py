@@ -166,10 +166,13 @@ parser.add_argument("--log-target")
 args = parser.parse_args()
 
 interpreter = UserMovementInterpreter(args)
+osc_receiver = OscReceiver(OSC_PORT, log_source=args.log_source, log_target=args.log_target)
 
 if args.with_viewer:
     app = QtGui.QApplication(sys.argv)
-    viewer = TrackedUsersViewer(interpreter, args)
+    viewer = TrackedUsersViewer(interpreter, args,
+                                enable_osc_replay=args.log_source,
+                                osc_receiver=osc_receiver)
 
 def handle_joint_data(path, values, types, src, user_data):
     interpreter.handle_joint_data(*values)
@@ -184,7 +187,6 @@ if not args.without_sending:
     websocket_client.set_event_listener(EventListener())
     websocket_client.connect()
 
-osc_receiver = OscReceiver(OSC_PORT, log_source=args.log_source, log_target=args.log_target)
 osc_receiver.add_method("/joint", "isffff", handle_joint_data)
 osc_receiver.add_method("/state", "is", handle_state)
 osc_receiver.start()

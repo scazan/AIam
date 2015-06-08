@@ -20,7 +20,8 @@ class OscReceiver(liblo.Server):
         if log_source:
             self._read_log(log_source)
             self._reading_from_log = True
-            self._last_log_time = None
+            self._current_log_time = None
+            self.log_replay_speed = 1
             self._sender = liblo.Address("localhost", self.port, liblo.UDP)
         else:
             self._reading_from_log = False
@@ -97,10 +98,20 @@ class OscReceiver(liblo.Server):
                 print "finished processing log"
                 return
             (t, path, args) = self._log_entries.pop(0)
-            if self._last_log_time is not None:
-                time.sleep(t - self._last_log_time)
+            if self._current_log_time is None:
+                self._current_log_time = t
+            else:
+                self._sleep_until(t)
             liblo.send(self._sender, path, *args)
-            self._last_log_time = t
+
+    def _sleep_until(self, t, max_sleep_duration=1.0, min_sleep_duration=0.0001):
+        while self._current_log_time < t:
+            sleep_duration = min(t - self._current_log_time, max_sleep_duration)
+            if sleep_duration < min_sleep_duration:
+                self._current_log_time = t
+                return
+            time.sleep(sleep_duration)
+            self._current_log_time += sleep_duration * self.log_replay_speed
 
     def _fire_callback_with_exception_handler(self, path, args, types, src, callback, user_data):
         try:

@@ -186,9 +186,11 @@ class LogWidget(QtGui.QTextEdit):
         return QtCore.QSize(640, LOG_HEIGHT)
 
 class TrackedUsersViewer(QtGui.QWidget):
-    def __init__(self, interpreter, args):
+    def __init__(self, interpreter, args, enable_osc_replay=False, osc_receiver=None):
         QtGui.QWidget.__init__(self)
         self.args = args
+        self._enable_osc_replay = enable_osc_replay
+        self._osc_receiver = osc_receiver
         self.interpreter = interpreter
         self.floor_y = args.floor_y
         self._layout = QtGui.QVBoxLayout()
@@ -225,6 +227,8 @@ class TrackedUsersViewer(QtGui.QWidget):
         self._layout.setMenuBar(self._menu_bar)
         self._create_main_menu()
         self._create_view_menu()
+        if self._enable_osc_replay:
+            self._create_replay_menu()
 
     def _create_main_menu(self):
         self._main_menu = self._menu_bar.addMenu("Main")
@@ -252,6 +256,39 @@ class TrackedUsersViewer(QtGui.QWidget):
         self.show_center_position_action.setShortcut("Ctrl+p")
         self._view_menu.addAction(self.show_center_position_action)
 
+    def _create_replay_menu(self):
+        self._replay_menu = self._menu_bar.addMenu("Replay")
+        self._add_replay_slower_action()
+        self._add_replay_faster_action()
+        self._add_reset_replay_speed_action()
+
+    def _add_replay_slower_action(self):
+        action = QtGui.QAction("Replay slower", self)
+        action.setShortcut("-")
+        action.triggered.connect(lambda: self._change_replay_speed(-1))
+        self._replay_menu.addAction(action)
+
+    def _add_replay_faster_action(self):
+        action = QtGui.QAction("Replay faster", self)
+        action.setShortcut("+")
+        action.triggered.connect(lambda: self._change_replay_speed(+1))
+        self._replay_menu.addAction(action)
+
+    def _add_reset_replay_speed_action(self):
+        action = QtGui.QAction("Reset replay speed", self)
+        action.setShortcut("0")
+        action.triggered.connect(lambda: self._set_replay_speed(1))
+        self._replay_menu.addAction(action)
+
+    def _change_replay_speed(self, factor):
+        current_speed = self._osc_receiver.log_replay_speed
+        new_speed = max(current_speed + factor * 0.2, 0.1)
+        self._set_replay_speed(new_speed)
+
+    def _set_replay_speed(self, speed):
+        self._osc_receiver.log_replay_speed = speed
+        print "OSC replay speed: %.1f" % speed
+        
     def keyPressEvent(self, event):
         self._scene.keyPressEvent(event)
         QtGui.QWidget.keyPressEvent(self, event)
