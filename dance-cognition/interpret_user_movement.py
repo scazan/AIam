@@ -111,7 +111,10 @@ class UserMovementInterpreter:
 
     def handle_state(self, user_id, state):
         if state == "lost":
-            del self._users[user_id]
+            try:
+                del self._users[user_id]
+            except KeyError:
+                pass
 
     def get_selected_user(self):
         return self._selected_user
