@@ -1,10 +1,12 @@
 tracking:
   dealing with multiple users
     select user closest to "movement center"
+  KeyError in del self._users[user_id]
   remove/reduce joint smoothing (and add support for toggle to display with or without smoothing)
   eliminate (harmless) KeyError in viewer, probably caused by non-bundled OSC handling
   consider confidence?
   don't process ignored joints (at least not when viewer isn't used)
+
 
 external fullscreen
 

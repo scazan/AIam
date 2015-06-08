@@ -18,6 +18,7 @@ SKELETON_WIDTH_SELECTED = 2
 SKELETON_WIDTH_UNSELECTED = 1
 SKELETON_COLOR_SELECTED = (0, 0, 0)
 SKELETON_COLOR_UNSELECTED = (.2, .2, .4)
+CIRCLE_PRECISION = 100
 
 class TrackedUsersScene(Scene):
     def __init__(self, parent):
@@ -47,11 +48,20 @@ class TrackedUsersScene(Scene):
         self.configure_3d_projection(pixdx=-100, pixdy=0, fovy=40.0,
                                      near=PROJECTION_NEAR, far=PROJECTION_FAR)
 
-        self.draw_floor(num_cells=30, size=PROJECTION_FAR-PROJECTION_NEAR, color=(0,0,0,0.2))
+        self.draw_floor(
+            num_cells=30,
+            size=PROJECTION_FAR-PROJECTION_NEAR,
+            y=self.parent().floor_y,
+            color=(0,0,0,0.2))
+
+        self._draw_center_position()
 
         self._selected_user = self.parent().interpreter.get_selected_user()
         for user in self.parent().interpreter.get_users().values():
             self._draw_user(user)
+
+        if self.parent().show_positions_action.isChecked():
+            self._print_positions()
 
     def _draw_user(self, user):
         self._draw_label(user)
@@ -136,6 +146,22 @@ class TrackedUsersScene(Scene):
     def _text_renderer(self, text, size, font):
         return self._text_renderer_class(self, text, size, font)
 
+    def _draw_center_position(self):
+        glLineWidth(1)
+        glColor4f(0, 0, 0, .8)
+        self.draw_circle_on_floor(
+            center_x=self.parent().interpreter.center_x,
+            center_z=self.parent().interpreter.center_z,
+            y=self.parent().floor_y,
+            radius=100)
+        
+    def _print_positions(self):
+        for user in self.parent().interpreter.get_users().values():
+            torso_x, _, torso_z = user.get_joint("torso").get_position()
+            floor_y = min([user.get_joint("left_foot").get_position()[1],
+                           user.get_joint("right_foot").get_position()[1]])
+            print "[%s] torso: %.1f,%.1f  floor_y: %.1f" % (user.get_id(), torso_x, torso_z, floor_y)
+
 class LogWidget(QtGui.QTextEdit):
     def __init__(self, *args, **kwargs):
         QtGui.QTextEdit.__init__(self, *args, **kwargs)
@@ -154,6 +180,7 @@ class TrackedUsersViewer(QtGui.QWidget):
         QtGui.QWidget.__init__(self)
         self.args = args
         self.interpreter = interpreter
+        self.floor_y = args.floor_y
         self._layout = QtGui.QVBoxLayout()
         self._layout.setSpacing(0)
         self._layout.setMargin(0)
@@ -181,20 +208,39 @@ class TrackedUsersViewer(QtGui.QWidget):
     def add_parser_arguments(parser):
         parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
                             default="463.324,-20.000,1515.835,-194.200,4.400")
+        parser.add_argument("--floor-y", type=float, default=0)
 
     def _create_menu(self):
         self._menu_bar = QtGui.QMenuBar()
         self._layout.setMenuBar(self._menu_bar)
         self._create_main_menu()
+        self._create_view_menu()
 
     def _create_main_menu(self):
         self._main_menu = self._menu_bar.addMenu("Main")
         self._add_show_camera_settings_action()
+        self._add_show_positions_action()
 
     def _add_show_camera_settings_action(self):
         action = QtGui.QAction('Show camera settings', self)
         action.triggered.connect(self._scene.print_camera_settings)
         self._main_menu.addAction(action)
+
+    def _add_show_positions_action(self):
+        self.show_positions_action = QtGui.QAction('Show positions', self)
+        self.show_positions_action.setCheckable(True)
+        self.show_positions_action.setShortcut("Ctrl+Shift+p")
+        self._main_menu.addAction(self.show_positions_action)
+
+    def _create_view_menu(self):
+        self._view_menu = self._menu_bar.addMenu("View")
+        self._add_show_center_position_action()
+
+    def _add_show_center_position_action(self):
+        self.show_center_position = QtGui.QAction('Show center position', self)
+        self.show_center_position.setCheckable(True)
+        self.show_center_position.setShortcut("Ctrl+p")
+        self._view_menu.addAction(self.show_center_position)
 
     def keyPressEvent(self, event):
         self._scene.keyPressEvent(event)

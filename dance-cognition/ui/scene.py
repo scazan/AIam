@@ -4,6 +4,8 @@ from OpenGL.GLU import *
 from PyQt4 import QtCore, QtOpenGL
 import math
 
+CIRCLE_PRECISION = 100
+
 class Scene(QtOpenGL.QGLWidget):
     def __init__(self, parent, args, camera_y_speed, camera_key_speed, camera_drag_speed):
         self.args = args
@@ -175,3 +177,12 @@ class Scene(QtOpenGL.QGLWidget):
             glEnd()
 
         glPopMatrix()
+
+    def draw_circle_on_floor(self, center_x, center_z, radius, y=0):
+        glBegin(GL_LINE_STRIP)
+        for i in range(CIRCLE_PRECISION):
+            angle = math.pi * 2 * float(i) / (CIRCLE_PRECISION-1)
+            x = center_x + radius * math.cos(angle)
+            z = center_z + radius * math.sin(angle)
+            glVertex3f(x, y, z)
+        glEnd()

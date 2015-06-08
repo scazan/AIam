@@ -90,12 +90,14 @@ class User:
         return self._joints[name]
 
 class UserMovementInterpreter:
-    def __init__(self):
+    def __init__(self, args):
+        self.args = args
         self._users = {}
         self._response_buffer_size = max(1, int(RESPONSE_TIME * FPS))
         self._response_buffer = []
         self._selected_user = None
         self.activity_ceiling = ACTIVITY_CEILING
+        self.center_x, self.center_z = [float(s) for s in args.center_position.split(",")]
 
     def handle_joint_data(self, user_id, joint_name, x, y, z, confidence):
         if user_id not in self._users:
@@ -112,7 +114,7 @@ class UserMovementInterpreter:
 
     def user_has_new_information(self, user):
         self._interpret_current_state()
-        if not args.without_sending:
+        if not self.args.without_sending:
             self._add_interpretation_to_response_buffer()
             self._send_interpretation_from_response_buffer()
 
@@ -154,15 +156,16 @@ class UserMovementInterpreter:
     def get_users(self):
         return self._users
 
-interpreter = UserMovementInterpreter()
-
 parser = ArgumentParser()
 TrackedUsersViewer.add_parser_arguments(parser)
+parser.add_argument("--center-position", default="0,3000")
 parser.add_argument("--with-viewer", action="store_true")
 parser.add_argument("--without-sending", action="store_true")
 parser.add_argument("--log-source")
 parser.add_argument("--log-target")
 args = parser.parse_args()
+
+interpreter = UserMovementInterpreter(args)
 
 if args.with_viewer:
     app = QtGui.QApplication(sys.argv)

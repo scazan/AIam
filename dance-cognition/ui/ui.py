@@ -17,7 +17,6 @@ import shutil
 
 TOOLBAR_WIDTH = 400
 SLIDER_PRECISION = 1000
-CIRCLE_PRECISION = 100
 FOCUS_RADIUS = 1.
 VIDEO_EXPORT_PATH = "rendered_video"
 CAMERA_Y_SPEED = .01
@@ -134,17 +133,7 @@ class BvhScene(Scene):
     def _draw_focus(self):
         glLineWidth(1.0)
         glColor4f(*self._parent.color_scheme["focus"])
-        self._draw_circle_on_floor(self._focus, FOCUS_RADIUS)
-
-    def _draw_circle_on_floor(self, center, radius):
-        y = 0
-        glBegin(GL_LINE_STRIP)
-        for i in range(CIRCLE_PRECISION):
-            angle = math.pi * 2 * float(i) / (CIRCLE_PRECISION-1)
-            x = center[0] + radius * math.cos(angle)
-            z = center[1] + radius * math.sin(angle)
-            glVertex3f(x, y, z)
-        glEnd()
+        self.draw_circle_on_floor(self._focus[0], self._focus[1], FOCUS_RADIUS)
 
     def following_output(self):
         return self._parent.following_output()
