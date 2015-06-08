@@ -25,6 +25,7 @@ MAX_LOCATION_PREFERENCE = 1.0
 RESPONSE_TIME = 0
 JOINT_SMOOTHING_DURATION = 1.0
 FPS = 30.0
+NUM_JOINTS = 15
 
 OSC_PORT = 15002
 WEBSOCKET_HOST = "localhost"
@@ -72,7 +73,7 @@ class User:
         joint.set_confidence(confidence)
         self._last_updated_joint = joint_name
         self._num_updated_joints += 1
-        if self._num_updated_joints == len(self._joints):
+        if self._num_updated_joints >= NUM_JOINTS:
             self._num_updated_joints = 0
             self._num_received_frames += 1
             if self._num_received_frames > 1:
@@ -88,6 +89,9 @@ class User:
 
     def get_joint(self, name):
         return self._joints[name]
+
+    def has_complete_joint_data(self):
+        return len(self._joints) >= NUM_JOINTS
 
 class UserMovementInterpreter:
     def __init__(self, args):
@@ -154,7 +158,8 @@ class UserMovementInterpreter:
                        "value": location_preference}))
 
     def get_users(self):
-        return self._users
+        return [user for user in self._users.values()
+                if user.has_complete_joint_data()]
 
 parser = ArgumentParser()
 TrackedUsersViewer.add_parser_arguments(parser)

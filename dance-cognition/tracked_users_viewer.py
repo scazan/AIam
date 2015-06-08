@@ -56,7 +56,7 @@ class TrackedUsersScene(Scene):
             color=(0,0,0,0.2))
 
         self._selected_user = self.parent().interpreter.get_selected_user()
-        for user in self.parent().interpreter.get_users().values():
+        for user in self.parent().interpreter.get_users():
             self._draw_user(user)
 
         if self.parent().show_center_position_action.isChecked():
@@ -166,7 +166,7 @@ class TrackedUsersScene(Scene):
         glEnd()
         
     def _print_positions(self):
-        for user in self.parent().interpreter.get_users().values():
+        for user in self.parent().interpreter.get_users():
             torso_x, _, torso_z = user.get_joint("torso").get_position()
             floor_y = min([user.get_joint("left_foot").get_position()[1],
                            user.get_joint("right_foot").get_position()[1]])
