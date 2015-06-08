@@ -19,6 +19,7 @@ SKELETON_WIDTH_UNSELECTED = 1
 SKELETON_COLOR_SELECTED = (0, 0, 0)
 SKELETON_COLOR_UNSELECTED = (.2, .2, .4)
 CIRCLE_PRECISION = 100
+CENTER_POSITION_SYMBOL_SIZE = 200
 
 class TrackedUsersScene(Scene):
     def __init__(self, parent):
@@ -54,11 +55,12 @@ class TrackedUsersScene(Scene):
             y=self.parent().floor_y,
             color=(0,0,0,0.2))
 
-        self._draw_center_position()
-
         self._selected_user = self.parent().interpreter.get_selected_user()
         for user in self.parent().interpreter.get_users().values():
             self._draw_user(user)
+
+        if self.parent().show_center_position_action.isChecked():
+            self._draw_center_position()
 
         if self.parent().show_positions_action.isChecked():
             self._print_positions()
@@ -149,11 +151,19 @@ class TrackedUsersScene(Scene):
     def _draw_center_position(self):
         glLineWidth(1)
         glColor4f(0, 0, 0, .8)
-        self.draw_circle_on_floor(
-            center_x=self.parent().interpreter.center_x,
-            center_z=self.parent().interpreter.center_z,
-            y=self.parent().floor_y,
-            radius=100)
+        x = self.parent().interpreter.center_x
+        z = self.parent().interpreter.center_z
+        y = self.parent().floor_y
+        x1 = x - CENTER_POSITION_SYMBOL_SIZE/2
+        x2 = x + CENTER_POSITION_SYMBOL_SIZE/2
+        z1 = z - CENTER_POSITION_SYMBOL_SIZE/2
+        z2 = z + CENTER_POSITION_SYMBOL_SIZE/2
+        glBegin(GL_LINES)
+        glVertex3f(x1, y, z1)
+        glVertex3f(x2, y, z2)
+        glVertex3f(x2, y, z1)
+        glVertex3f(x1, y, z2)
+        glEnd()
         
     def _print_positions(self):
         for user in self.parent().interpreter.get_users().values():
@@ -237,10 +247,10 @@ class TrackedUsersViewer(QtGui.QWidget):
         self._add_show_center_position_action()
 
     def _add_show_center_position_action(self):
-        self.show_center_position = QtGui.QAction('Show center position', self)
-        self.show_center_position.setCheckable(True)
-        self.show_center_position.setShortcut("Ctrl+p")
-        self._view_menu.addAction(self.show_center_position)
+        self.show_center_position_action = QtGui.QAction('Show center position', self)
+        self.show_center_position_action.setCheckable(True)
+        self.show_center_position_action.setShortcut("Ctrl+p")
+        self._view_menu.addAction(self.show_center_position_action)
 
     def keyPressEvent(self, event):
         self._scene.keyPressEvent(event)
