@@ -20,6 +20,8 @@ SKELETON_COLOR_SELECTED = (0, 0, 0)
 SKELETON_COLOR_UNSELECTED = (.2, .2, .4)
 CIRCLE_PRECISION = 100
 CENTER_POSITION_SYMBOL_SIZE = 200
+TRACKER_PITCH_SPEED = .1
+TRACKER_Y_POSITION_SPEED = .5
 
 class TrackedUsersScene(Scene):
     def __init__(self, parent):
@@ -28,6 +30,9 @@ class TrackedUsersScene(Scene):
                        camera_key_speed=CAMERA_KEY_SPEED,
                        camera_drag_speed=CAMERA_DRAG_SPEED)
         self._text_renderer_class = getattr(text_renderer_module, "GlutTextRenderer")
+        self._dragging_tracker_y_position = False
+        self._dragging_tracker_pitch = False
+        self._tracker_y_position, self._tracker_pitch = map(float, parent.args.tracker.split(","))
 
     def initializeGL(self):
         glClearColor(1.0, 1.0, 1.0, 0.0)
@@ -56,14 +61,18 @@ class TrackedUsersScene(Scene):
             color=(0,0,0,0.2))
 
         self._selected_user = self.parent().interpreter.get_selected_user()
+
+        glPushMatrix()
+        glRotatef(self._tracker_pitch, 1.0, 0.0, 0.0)
+        glTranslatef(0, self._tracker_y_position, 0)
         for user in self.parent().interpreter.get_users():
             self._draw_user(user)
+        if self.parent().show_positions_action.isChecked():
+            self._print_positions()
+        glPopMatrix()
 
         if self.parent().show_center_position_action.isChecked():
             self._draw_center_position()
-
-        if self.parent().show_positions_action.isChecked():
-            self._print_positions()
 
     def _draw_user(self, user):
         self._draw_label(user)
@@ -172,6 +181,36 @@ class TrackedUsersScene(Scene):
                            user.get_joint("right_foot").get_position()[1]])
             print "[%s] torso: %.1f,%.1f  floor_y: %.1f" % (user.get_id(), torso_x, torso_z, floor_y)
 
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton and \
+            QtGui.QApplication.instance().keyboardModifiers() == QtCore.Qt.ControlModifier:
+            self._dragging_tracker_pitch = True
+        elif event.button() == QtCore.Qt.RightButton and \
+            QtGui.QApplication.instance().keyboardModifiers() == QtCore.Qt.ControlModifier:
+            self._dragging_tracker_y_position = True
+        else:
+            Scene.mousePressEvent(self, event)
+
+    def mouseMoveEvent(self, event):
+        x = event.x()
+        y = event.y()
+        if self._dragging_tracker_pitch:
+            self._tracker_pitch += TRACKER_PITCH_SPEED * (y - self._drag_y_previous)
+            self._drag_y_previous = y
+        elif self._dragging_tracker_y_position:
+            self._tracker_y_position += TRACKER_Y_POSITION_SPEED * (y - self._drag_y_previous)
+            self._drag_y_previous = y
+        else:
+            Scene.mouseMoveEvent(self, event)
+
+    def mouseReleaseEvent(self, event):
+        self._dragging_tracker_pitch = False
+        self._dragging_tracker_y_position = False
+        Scene.mouseReleaseEvent(self, event)
+
+    def print_tracker_settings(self):
+        print "%s,%s" % (self._tracker_y_position, self._tracker_pitch)
+
 class LogWidget(QtGui.QTextEdit):
     def __init__(self, *args, **kwargs):
         QtGui.QTextEdit.__init__(self, *args, **kwargs)
@@ -220,6 +259,7 @@ class TrackedUsersViewer(QtGui.QWidget):
     def add_parser_arguments(parser):
         parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
                             default="463.324,-20.000,1515.835,-194.200,4.400")
+        parser.add_argument("--tracker", help="posY,pitch", default="0,0")
         parser.add_argument("--floor-y", type=float, default=0)
 
     def _create_menu(self):
@@ -233,11 +273,17 @@ class TrackedUsersViewer(QtGui.QWidget):
     def _create_main_menu(self):
         self._main_menu = self._menu_bar.addMenu("Main")
         self._add_show_camera_settings_action()
+        self._add_show_tracker_settings_action()
         self._add_show_positions_action()
 
     def _add_show_camera_settings_action(self):
         action = QtGui.QAction('Show camera settings', self)
         action.triggered.connect(self._scene.print_camera_settings)
+        self._main_menu.addAction(action)
+
+    def _add_show_tracker_settings_action(self):
+        action = QtGui.QAction('Show tracker settings', self)
+        action.triggered.connect(self._scene.print_tracker_settings)
         self._main_menu.addAction(action)
 
     def _add_show_positions_action(self):
