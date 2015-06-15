@@ -76,23 +76,23 @@ class TrackedUsersScene(Scene):
             self._print_positions()
         glPopMatrix()
 
-    def _draw_field_of_view_boundary(self):
+    def _draw_field_of_view_boundary(self, resolution=50):
         y = self.parent().floor_y
-        d = math.sqrt(ASSUMED_VIEW_DISTANCE * ASSUMED_VIEW_DISTANCE / 2)
-        x0 = 0
-        z0 = 0
-        x1 = -d
-        z1 = d
-        x2 = d
-        z2 = d
+        radius = ASSUMED_VIEW_DISTANCE
+        center_x = 0
+        center_z = 0
 
         glColor3f(0, 0.5, 0)
-        glBegin(GL_LINES)
-        glVertex3f(x0, y, z0)
-        glVertex3f(x1, y, z1)
+        glBegin(GL_LINE_STRIP)
+        glVertex3f(center_x, y, center_z)
 
-        glVertex3f(x0, y, z0)
-        glVertex3f(x2, y, z2)
+        for i in range(resolution):
+            angle = math.pi/4 + math.pi / 2 * float(i) / (resolution-1)
+            x = center_x + radius * math.cos(angle)
+            z = center_z + radius * math.sin(angle)
+            glVertex3f(x, y, z)
+
+        glVertex3f(center_x, y, center_z)
         glEnd()
 
     def _draw_user(self, user):
@@ -279,7 +279,7 @@ class TrackedUsersViewer(QtGui.QWidget):
     @staticmethod
     def add_parser_arguments(parser):
         parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
-                            default="463.324,-20.000,1515.835,-194.200,4.400")
+                            default="59.964,-1578.000,2562.016,-188.500,16.000")
         parser.add_argument("--tracker", help="posY,pitch", default="0,0")
         parser.add_argument("--floor-y", type=float, default=0)
 
