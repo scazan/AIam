@@ -1,6 +1,5 @@
 tracking:
   dealing with multiple users
-    select user closest to "movement center"
   remove/reduce joint smoothing (and add support for toggle to display with or without smoothing)
   consider confidence?
   don't process ignored joints (at least not when viewer isn't used)

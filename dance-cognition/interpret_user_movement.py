@@ -120,18 +120,25 @@ class UserMovementInterpreter:
         return self._selected_user
 
     def user_has_new_information(self, user):
-        self._interpret_current_state()
-        if not self.args.without_sending:
+        self._select_user()
+        if not self.args.without_sending and self._selected_user is not None:
             self._add_interpretation_to_response_buffer()
             self._send_interpretation_from_response_buffer()
 
-    def _interpret_current_state(self):
-        self._selected_user = max(self._users.values(),
-                            key=lambda user: user.get_activity())
-        self._highest_user_activity = self._selected_user.get_activity()
+    def _select_user(self):
+        users = self.get_users()
+        if len(users) > 0:
+            self._selected_user = min(
+                users, key=lambda user: self._distance_to_center(user))
+
+    def _distance_to_center(self, user):
+        torso_x, torso_y, torso_z = user.get_joint("torso").get_position()
+        dx = torso_x - self.center_x
+        dz = torso_z - self.center_z
+        return dx*dx + dz*dz
 
     def _add_interpretation_to_response_buffer(self):
-        relative_activity = max(0, self._highest_user_activity - ACTIVITY_THRESHOLD) / \
+        relative_activity = max(0, self._selected_user.get_activity() - ACTIVITY_THRESHOLD) / \
             (self.activity_ceiling - ACTIVITY_THRESHOLD)
         velocity = MIN_VELOCITY + relative_activity * (MAX_VELOCITY - MIN_VELOCITY)
         novelty = MIN_NOVELTY + relative_activity * (MAX_NOVELTY - MIN_NOVELTY)

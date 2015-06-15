@@ -209,7 +209,7 @@ class TrackedUsersScene(Scene):
         Scene.mouseReleaseEvent(self, event)
 
     def print_tracker_settings(self):
-        print "%s,%s" % (self._tracker_y_position, self._tracker_pitch)
+        print "%.3f,%.3f" % (self._tracker_y_position, self._tracker_pitch)
 
 class LogWidget(QtGui.QTextEdit):
     def __init__(self, *args, **kwargs):
