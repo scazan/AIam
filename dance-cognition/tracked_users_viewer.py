@@ -2,6 +2,7 @@ from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from PyQt4 import QtCore, QtGui
+import math
 import collections
 from vector import Vector3d
 from ui.scene import Scene
@@ -22,6 +23,7 @@ CIRCLE_PRECISION = 100
 CENTER_POSITION_SYMBOL_SIZE = 200
 TRACKER_PITCH_SPEED = .1
 TRACKER_Y_POSITION_SPEED = .5
+ASSUMED_VIEW_DISTANCE = 5000
 
 class TrackedUsersScene(Scene):
     def __init__(self, parent):
@@ -56,9 +58,13 @@ class TrackedUsersScene(Scene):
 
         self.draw_floor(
             num_cells=30,
-            size=PROJECTION_FAR-PROJECTION_NEAR,
+            size=30000,
             y=self.parent().floor_y,
             color=(0,0,0,0.2))
+
+        if self.parent().show_field_of_view_action.isChecked():
+            self._draw_field_of_view_boundary()
+            self._draw_center_position()
 
         self._selected_user = self.parent().interpreter.get_selected_user()
 
@@ -71,8 +77,24 @@ class TrackedUsersScene(Scene):
             self._print_positions()
         glPopMatrix()
 
-        if self.parent().show_center_position_action.isChecked():
-            self._draw_center_position()
+    def _draw_field_of_view_boundary(self):
+        y = self.parent().floor_y
+        d = math.sqrt(ASSUMED_VIEW_DISTANCE * ASSUMED_VIEW_DISTANCE / 2)
+        x0 = 0
+        z0 = 0
+        x1 = -d
+        z1 = d
+        x2 = d
+        z2 = d
+
+        glColor3f(0, 0.5, 0)
+        glBegin(GL_LINES)
+        glVertex3f(x0, y, z0)
+        glVertex3f(x1, y, z1)
+
+        glVertex3f(x0, y, z0)
+        glVertex3f(x2, y, z2)
+        glEnd()
 
     def _draw_user(self, user):
         self._draw_label(user)
@@ -159,7 +181,7 @@ class TrackedUsersScene(Scene):
 
     def _draw_center_position(self):
         glLineWidth(1)
-        glColor4f(0, 0, 0, .8)
+        glColor3f(0, 0.5, 0)
         x = self.parent().interpreter.center_x
         z = self.parent().interpreter.center_z
         y = self.parent().floor_y
@@ -294,13 +316,13 @@ class TrackedUsersViewer(QtGui.QWidget):
 
     def _create_view_menu(self):
         self._view_menu = self._menu_bar.addMenu("View")
-        self._add_show_center_position_action()
+        self._add_show_field_of_view_action()
 
-    def _add_show_center_position_action(self):
-        self.show_center_position_action = QtGui.QAction('Show center position', self)
-        self.show_center_position_action.setCheckable(True)
-        self.show_center_position_action.setShortcut("Ctrl+p")
-        self._view_menu.addAction(self.show_center_position_action)
+    def _add_show_field_of_view_action(self):
+        self.show_field_of_view_action = QtGui.QAction('Show field of view', self)
+        self.show_field_of_view_action.setCheckable(True)
+        self.show_field_of_view_action.setShortcut("Ctrl+p")
+        self._view_menu.addAction(self.show_field_of_view_action)
 
     def _create_replay_menu(self):
         self._replay_menu = self._menu_bar.addMenu("Replay")
