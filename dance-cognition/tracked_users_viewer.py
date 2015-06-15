@@ -339,9 +339,6 @@ class TrackedUsersViewer(QtGui.QWidget):
         self._scene.keyPressEvent(event)
         QtGui.QWidget.keyPressEvent(self, event)
 
-    def handle_joint_data(self, *args):
-        self._scene.handle_joint_data(*args)
-
     def handle_state(self, user_id, state):
         self._log_widget.append("%s %s\n" % (state, user_id))
 
