@@ -9,7 +9,8 @@ external fullscreen
 
 investigate adding pelvis
 
-investigate latency / path duration
+reduce interaction latency
+  abort current path when parameters change a lot?
 
 ability to replay entire interaction
   log improv w timestamps?
