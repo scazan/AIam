@@ -49,25 +49,35 @@ tracker_pitch = 0
 tracker_y_position = 0
 
 pitch_step = .01
-y_step = 10
+y_step = 10.
 comparisons = [
     {"pitch": pitch_step, "y": 0},
     {"pitch": -pitch_step, "y": 0},
     {"pitch": 0, "y": y_step},
-    {"pitch": 0, "y": -y_step}]
+    {"pitch": 0, "y": -y_step},
+    {"pitch": pitch_step, "y": y_step},
+    {"pitch": -pitch_step, "y": y_step},
+    {"pitch": pitch_step, "y": -y_step},
+    {"pitch": -pitch_step, "y": -y_step},
+    ]
+min_y_step = 1
 
-previous_error = None
-while True:
+lowest_error = None
+while y_step > min_y_step:
     errors = [(comparison,
                measure_error(tracker_pitch + comparison["pitch"],
                                 tracker_y_position + comparison["y"]))
               for comparison in comparisons]
     best_comparison, min_error = min(errors, key=lambda (comparison, error): error)
-    print "error: %s  tracker: %s,%s" % (min_error, -tracker_y_position, -math.degrees(tracker_pitch))
-    if previous_error is not None and min_error > previous_error:
-        print "finished calibration"
-        break
+    if lowest_error is not None and min_error > lowest_error:
+        print "slowing down"
+        pitch_step /= 2
+        y_step /= 2
     else:
+        print "error: %.3f  tracker: %.3f,%.3f" % (
+            min_error, -tracker_y_position, -math.degrees(tracker_pitch))
         tracker_pitch += best_comparison["pitch"]
         tracker_y_position += best_comparison["y"]
-        previous_error = min_error
+        lowest_error = min_error
+
+print "finished calibration"
