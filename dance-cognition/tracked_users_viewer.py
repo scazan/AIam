@@ -198,9 +198,9 @@ class TrackedUsersScene(Scene):
     def _print_positions(self):
         for user in self.parent().interpreter.get_users():
             torso_x, _, torso_z = user.get_joint("torso").get_position()
-            floor_y = min([user.get_joint("left_foot").get_position()[1],
-                           user.get_joint("right_foot").get_position()[1]])
-            print "[%s] torso: %.1f,%.1f  floor_y: %.1f" % (user.get_id(), torso_x, torso_z, floor_y)
+            bottom_y = min([user.get_joint("left_foot").get_position()[1],
+                            user.get_joint("right_foot").get_position()[1]])
+            print "[%s] torso: %.1f,%.1f  bottom_y: %.1f" % (user.get_id(), torso_x, torso_z, bottom_y)
 
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton and \
