@@ -3,6 +3,7 @@ import cPickle
 import threading
 import traceback_printer
 import time
+import os
 
 class OscReceiver(liblo.Server):
     def __init__(self, port=None, log_source=None, log_target=None, proto=liblo.UDP, name=None):
@@ -28,6 +29,8 @@ class OscReceiver(liblo.Server):
 
         if log_target:
             self._writing_to_log = True
+            if os.path.exists(log_target):
+                raise Exception("log target %r already exists" % log_target)
             self._log_target_file = open(log_target, "w")
             self._log_start_time = None
         else:
