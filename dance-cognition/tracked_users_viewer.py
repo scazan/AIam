@@ -4,8 +4,10 @@ from OpenGL.GLU import *
 from PyQt4 import QtCore, QtGui
 import math
 import collections
+import numpy
 from vector import Vector3d
 from ui.scene import Scene
+from transformations import rotation_matrix
 text_renderer_module = __import__("text_renderer")
 
 FRAME_RATE = 30
@@ -19,6 +21,7 @@ SKELETON_WIDTH_SELECTED = 2
 SKELETON_WIDTH_UNSELECTED = 1
 SKELETON_COLOR_SELECTED = (0, 0, 0)
 SKELETON_COLOR_UNSELECTED = (.2, .2, .4)
+SKELETON_COLOR_BELOW_FLOOR = (1, 0, 0)
 CENTER_POSITION_SYMBOL_SIZE = 200
 TRACKER_PITCH_SPEED = .1
 TRACKER_Y_POSITION_SPEED = .5
@@ -67,14 +70,14 @@ class TrackedUsersScene(Scene):
 
         self._selected_user = self.parent().interpreter.get_selected_user()
 
-        glPushMatrix()
-        glRotatef(self._tracker_pitch, 1.0, 0.0, 0.0)
-        glTranslatef(0, self._tracker_y_position, 0)
+        self._tracker_rotation_matrix = rotation_matrix(
+            math.radians(self._tracker_pitch), [1, 0, 0])
+
         for user in self.parent().interpreter.get_users():
             self._draw_user(user)
+
         if self.parent().show_positions_action.isChecked():
             self._print_positions()
-        glPopMatrix()
 
     def _draw_field_of_view_boundary(self, resolution=50):
         y = self.parent().floor_y
@@ -94,6 +97,15 @@ class TrackedUsersScene(Scene):
 
         glVertex3f(center_x, y, center_z)
         glEnd()
+
+    def _adjust_tracked_position(self, position):
+        unadjusted_vector = [position.x, position.y, position.z, 1]
+        rotated_vector = numpy.dot(self._tracker_rotation_matrix, unadjusted_vector)
+        adjusted_vector = Vector3d(
+            rotated_vector[0],
+            rotated_vector[1] + self._tracker_y_position,
+            rotated_vector[2])
+        return adjusted_vector
 
     def _draw_user(self, user):
         self._draw_label(user)
@@ -123,14 +135,14 @@ class TrackedUsersScene(Scene):
         self._draw_limb(user, "right_knee", "right_foot")
 
     def _draw_label(self, user):
-        head_position = user.get_joint("head").get_position()
+        head_position = self._adjust_tracked_position(user.get_joint("head").get_position())
         glColor3f(0, 0, 0)
-        position = Vector3d(*head_position) + Vector3d(0, 140, 0)
+        position = head_position + Vector3d(0, 140, 0)
         self._draw_text(str(user.get_id()), 100, *position, h_align="center")
 
     def _draw_activity(self, user):
-        head_position = user.get_joint("head").get_position()
-        position = Vector3d(*head_position) + Vector3d(150, 140, 0)
+        head_position = self._adjust_tracked_position(user.get_joint("head").get_position())
+        position = head_position + Vector3d(150, 140, 0)
         activity = user.get_activity()
 
         glColor3f(.8, .8, 1)
@@ -156,19 +168,43 @@ class TrackedUsersScene(Scene):
         glPopMatrix()
 
     def _draw_limb(self, user, name1, name2):
+        vertices = self._split_vertices_at_floor(
+            self._adjust_tracked_position(user.get_joint(name1).get_position()),
+            self._adjust_tracked_position(user.get_joint(name2).get_position()))
+
+        confidence = min([user.get_joint(name1).get_confidence(),
+                          user.get_joint(name2).get_confidence()])
+
         glBegin(GL_LINES)
-        self._set_color_by_joint(user, user.get_joint(name1))
-        glVertex3f(*user.get_joint(name1).get_position())
-        self._set_color_by_joint(user, user.get_joint(name2))
-        glVertex3f(*user.get_joint(name2).get_position())
+        for n in range(len(vertices) - 1):
+            vertex1 = vertices[n]
+            vertex2 = vertices[n+1]
+            self._set_color_by_joint(user, confidence, vertex1)
+            glVertex3f(*vertex1)
+            glVertex3f(*vertex2)
         glEnd()
 
-    def _set_color_by_joint(self, user, joint):
-        a = 1 - (.8 - joint.get_confidence() * .8)
-        if user == self._selected_user:
-            r, g, b = SKELETON_COLOR_SELECTED
+    def _split_vertices_at_floor(self, vertex1, vertex2):
+        floor_y = self.parent().floor_y
+        if (vertex1.y < floor_y < vertex2.y or
+            vertex1.y > floor_y > vertex2.y):
+            floor_x = vertex1.x + (vertex2.x - vertex1.x) / (vertex2.y - vertex1.y) * (floor_y - vertex1.y)
+            floor_z = vertex1.z + (vertex2.z - vertex1.z) / (vertex2.y - vertex1.y) * (floor_y - vertex1.y)
+            return [Vector3d(vertex1.x, vertex1.y, vertex1.z),
+                    Vector3d(floor_x, floor_y,   floor_z),
+                    Vector3d(vertex2.x, vertex2.y, vertex2.z)]
         else:
-            r, g, b = SKELETON_COLOR_UNSELECTED
+            return [vertex1, vertex2]
+
+    def _set_color_by_joint(self, user, confidence, vertex):
+        a = 1 - (.8 - confidence * .8)
+        if vertex.y <= self.parent().floor_y:
+            r, g, b = SKELETON_COLOR_BELOW_FLOOR
+        else:
+            if user == self._selected_user:
+                r, g, b = SKELETON_COLOR_SELECTED
+            else:
+                r, g, b = SKELETON_COLOR_UNSELECTED
         glColor4f(r, g, b, a)
 
     def _draw_text(self, text, size, x, y, z, font=GLUT_STROKE_ROMAN, spacing=None,
