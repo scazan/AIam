@@ -179,9 +179,19 @@ class TrackedUsersScene(Scene):
         for n in range(len(vertices) - 1):
             vertex1 = vertices[n]
             vertex2 = vertices[n+1]
-            self._set_color_by_joint(user, confidence, vertex1)
+            self._set_color_by_joint(user, confidence, vertex1, vertex2)
             glVertex3f(*vertex1)
             glVertex3f(*vertex2)
+        glEnd()
+
+        glBegin(GL_LINES)
+        for n in range(len(vertices) - 1):
+            vertex1 = vertices[n]
+            vertex2 = vertices[n+1]
+            if vertex1.y > self.parent().floor_y and vertex2.y > self.parent().floor_y:
+                self._set_shadow_color_by_joint(user, confidence)
+                glVertex3f(vertex1.x, self.parent().floor_y, vertex1.z)
+                glVertex3f(vertex2.x, self.parent().floor_y, vertex2.z)
         glEnd()
 
     def _split_vertices_at_floor(self, vertex1, vertex2):
@@ -196,15 +206,23 @@ class TrackedUsersScene(Scene):
         else:
             return [vertex1, vertex2]
 
-    def _set_color_by_joint(self, user, confidence, vertex):
+    def _set_color_by_joint(self, user, confidence, vertex1, vertex2):
         a = 1 - (.8 - confidence * .8)
-        if vertex.y <= self.parent().floor_y:
+        if vertex1.y <= self.parent().floor_y and vertex2.y <= self.parent().floor_y:
             r, g, b = SKELETON_COLOR_BELOW_FLOOR
         else:
             if user == self._selected_user:
                 r, g, b = SKELETON_COLOR_SELECTED
             else:
                 r, g, b = SKELETON_COLOR_UNSELECTED
+        glColor4f(r, g, b, a)
+
+    def _set_shadow_color_by_joint(self, user, confidence):
+        a = (1 - (.8 - confidence * .8)) * .3
+        if user == self._selected_user:
+            r, g, b = SKELETON_COLOR_SELECTED
+        else:
+            r, g, b = SKELETON_COLOR_UNSELECTED
         glColor4f(r, g, b, a)
 
     def _draw_text(self, text, size, x, y, z, font=GLUT_STROKE_ROMAN, spacing=None,
