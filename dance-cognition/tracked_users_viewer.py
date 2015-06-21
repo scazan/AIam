@@ -175,6 +175,10 @@ class TrackedUsersScene(Scene):
         confidence = min([user.get_joint(name1).get_confidence(),
                           user.get_joint(name2).get_confidence()])
 
+        self._draw_solid_limb(user, confidence, vertices)
+        self._draw_limb_shadow(user, confidence, vertices)
+
+    def _draw_solid_limb(self, user, confidence, vertices):
         glBegin(GL_LINES)
         for n in range(len(vertices) - 1):
             vertex1 = vertices[n]
@@ -184,6 +188,7 @@ class TrackedUsersScene(Scene):
             glVertex3f(*vertex2)
         glEnd()
 
+    def _draw_limb_shadow(self, user, confidence, vertices):
         glBegin(GL_LINES)
         for n in range(len(vertices) - 1):
             vertex1 = vertices[n]
