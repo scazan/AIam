@@ -7,8 +7,6 @@ tracking:
   don't process ignored joints (at least not when viewer isn't used)
 
 
-external fullscreen for tracker viewer
-
 investigate adding pelvis
 
 reduce interaction latency

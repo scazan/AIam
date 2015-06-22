@@ -13,6 +13,7 @@ from parameters_form import ParametersForm
 from color_schemes import *
 from exporter import Exporter
 from scene import Scene
+from window import Window
 import shutil
 
 TOOLBAR_WIDTH = 400
@@ -166,20 +167,20 @@ class ExperimentToolbar(QtGui.QWidget):
     def add_parameter_fields(self, parameters, parent):
         return ParametersForm(parameters, parent)
 
-class MainWindow(QtGui.QWidget, EventListener):
+class MainWindow(Window, EventListener):
     @staticmethod
     def add_parser_arguments(parser):
+        Window.add_parser_arguments(parser)
         parser.add_argument("--width", dest="preferred_width", type=int, default=1000)
         parser.add_argument("--height", dest="preferred_height", type=int, default=720)
         parser.add_argument("--no-toolbar", action="store_true")
-        parser.add_argument("--fullscreen", action="store_true")
-        parser.add_argument("--fullscreen-display", type=int)
         parser.add_argument("--color-scheme", default="white")
         parser.add_argument("--image")
         parser.add_argument("--image-scale", type=float, default=1)
         parser.add_argument("--image-margin", type=int, default=0)
 
     def __init__(self, client, entity, student, bvh_reader, scene_widget_class, toolbar_class, args):
+        Window.__init__(self, args)
         self.client = client
         self.entity = entity
         self.student = student
@@ -189,7 +190,6 @@ class MainWindow(QtGui.QWidget, EventListener):
         self.add_event_handler(Event.INPUT, self._handle_input)
         self.add_event_handler(Event.OUTPUT, self._handle_output)
 
-        QtGui.QWidget.__init__(self)
         self.outer_vertical_layout = QtGui.QVBoxLayout()
         self.outer_vertical_layout.setSpacing(0)
         self.outer_vertical_layout.setMargin(0)
@@ -230,13 +230,10 @@ class MainWindow(QtGui.QWidget, EventListener):
         QtCore.QObject.connect(self._update_timer, QtCore.SIGNAL('timeout()'), self._scene.updateGL)
 
         if self.args.fullscreen:
-            self._give_keyboard_focus_to_fullscreen_window()
+            self.give_keyboard_focus_to_fullscreen_window()
             self._fullscreen_action.toggle()
 
         client.set_event_listener(self)
-
-    def _give_keyboard_focus_to_fullscreen_window(self):
-        self.resizeEvent = lambda event: self.activateWindow()
 
     def received_event(self, event):
         callback = lambda: self.handle_event(event)
@@ -344,16 +341,9 @@ class MainWindow(QtGui.QWidget, EventListener):
 
     def _toggled_fullscreen(self):
         if self._fullscreen_action.isChecked():
-            self.setCursor(QtCore.Qt.BlankCursor)
-            self.showFullScreen()
-            if self.args.fullscreen_display is not None:
-                geometry = QtGui.QApplication.desktop().screenGeometry(
-                    self.args.fullscreen_display);
-                self.move(QtCore.QPoint(geometry.x(), geometry.y()));
-                self.resize(geometry.width(), geometry.height());
+            self.enter_fullscreen()
         else:
-            self.setCursor(QtCore.Qt.ArrowCursor)
-            self.showNormal()
+            self.leave_fullscreen()
 
     def _add_follow_action(self):
         self._follow_action = QtGui.QAction('&Follow output', self)
