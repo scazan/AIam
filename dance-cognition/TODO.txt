@@ -3,7 +3,6 @@ tracking:
   remove/reduce joint smoothing (and add support for toggle to display with or without smoothing)
     or replace with nite::UserTracker::setSkeletonSmoothingFactor?
   consider confidence?
-  don't process ignored joints (at least not when viewer isn't used)
 
 external fullscreen
 
