@@ -305,11 +305,10 @@ class LogWidget(QtGui.QTextEdit):
         return QtCore.QSize(640, LOG_HEIGHT)
 
 class TrackedUsersViewer(QtGui.QWidget):
-    def __init__(self, interpreter, args, enable_osc_replay=False, osc_receiver=None):
+    def __init__(self, interpreter, args, enable_log_replay=False):
         QtGui.QWidget.__init__(self)
         self.args = args
-        self._enable_osc_replay = enable_osc_replay
-        self._osc_receiver = osc_receiver
+        self._enable_log_replay = enable_log_replay
         self.interpreter = interpreter
         self.floor_y = args.floor_y
         self._layout = QtGui.QVBoxLayout()
@@ -347,7 +346,7 @@ class TrackedUsersViewer(QtGui.QWidget):
         self._layout.setMenuBar(self._menu_bar)
         self._create_main_menu()
         self._create_view_menu()
-        if self._enable_osc_replay:
+        if self._enable_log_replay:
             self._create_replay_menu()
 
     def _create_main_menu(self):
@@ -407,13 +406,13 @@ class TrackedUsersViewer(QtGui.QWidget):
         self._replay_menu.addAction(action)
 
     def _change_replay_speed(self, factor):
-        current_speed = self._osc_receiver.log_replay_speed
+        current_speed = self.interpreter.log_replay_speed
         new_speed = max(current_speed + factor * 0.2, 0.1)
         self._set_replay_speed(new_speed)
 
     def _set_replay_speed(self, speed):
-        self._osc_receiver.log_replay_speed = speed
-        print "OSC replay speed: %.1f" % speed
+        self.interpreter.log_replay_speed = speed
+        print "replay speed: %.1f" % speed
         
     def keyPressEvent(self, event):
         self._scene.keyPressEvent(event)

@@ -1,6 +1,5 @@
 tracking:
   more accurate logging
-    log and process entire frames rather than individual OSC messages
     replace joints buffering with updating viewer on new frames (and when user interacts by mouse etc)?
   dealing with multiple users
   remove/reduce joint smoothing (and add support for toggle to display with or without smoothing)
@@ -20,6 +19,7 @@ ability to replay entire interaction
 
 prevent floor from disappearing when avatar moves a lot
 
+replace our skeleton smoothing with nite::UserTracker::setSkeletonSmoothingFactor?
 
 protection against hypothetical runtime exception in interpolation of improvised path (see plot_observations.py)
 

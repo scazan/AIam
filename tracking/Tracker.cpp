@@ -52,7 +52,6 @@ openni::Status Tracker::mainLoop() {
 }
 
 void Tracker::processFrame() {
-  nite::UserTrackerFrameRef userTrackerFrame;
   openni::VideoFrameRef depthFrame;
   nite::Status status = userTracker->readFrame(&userTrackerFrame);
   if(status != nite::STATUS_OK) {
@@ -60,6 +59,21 @@ void Tracker::processFrame() {
     return;
   }
 
+  sendBeginFrame();
+  sendStatesAndSkeletonData();
+}
+
+void Tracker::sendBeginFrame() {
+  osc::OutboundPacketStream stream(oscBuffer, OSC_BUFFER_SIZE);
+  float timestampMilliSeconds = (float) userTrackerFrame.getTimestamp() / 1000;
+  stream << osc::BeginBundleImmediate
+	 << osc::BeginMessage("/begin_frame") << timestampMilliSeconds
+	 << osc::EndMessage
+	 << osc::EndBundle;
+  transmitSocket->Send(stream.Data(), stream.Size());
+}
+
+void Tracker::sendStatesAndSkeletonData() {
   const nite::Array<nite::UserData>& users = userTrackerFrame.getUsers();
   for(int i = 0; i < users.getSize(); ++i) {
     const nite::UserData& userData = users[i];

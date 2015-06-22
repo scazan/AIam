@@ -1,3 +1,10 @@
+import time
+import collections
+from argparse import ArgumentParser
+from PyQt4 import QtGui
+import cPickle
+import threading
+
 import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/connectivity")
@@ -6,11 +13,7 @@ from websocket_client import WebsocketClient
 from event_listener import EventListener
 from event import Event
 from vector import Vector3d
-import time
-import collections
-from argparse import ArgumentParser
 from tracked_users_viewer import TrackedUsersViewer
-from PyQt4 import QtGui
 
 ACTIVITY_THRESHOLD = 5
 ACTIVITY_CEILING = 80
@@ -103,8 +106,9 @@ class User:
         return self._latest_joints is not None
 
 class UserMovementInterpreter:
-    def __init__(self, args):
-        self.args = args
+    def __init__(self, send_interpretations=True, log_target=None, log_source=None):
+        self._send_interpretations = send_interpretations
+        self._frame = None
         self._users = {}
         self._response_buffer_size = max(1, int(RESPONSE_TIME * FPS))
         self._response_buffer = []
@@ -112,13 +116,64 @@ class UserMovementInterpreter:
         self.activity_ceiling = ACTIVITY_CEILING
         self.center_x, self.center_z = [float(s) for s in args.center_position.split(",")]
 
+        if log_source:
+            self._read_log(log_source)
+            self._reading_from_log = True
+            self._current_log_time = None
+            self.log_replay_speed = 1
+        else:
+            self._reading_from_log = False
+
+        if log_target:
+            self._writing_to_log = True
+            if os.path.exists(log_target):
+                raise Exception("log target %r already exists" % log_target)
+            self._log_target_file = open(log_target, "w")
+            self._log_start_time = None
+        else:
+            self._writing_to_log = False
+
+    def _read_log(self, filename):
+        print "reading log file %s..." % filename
+        f = open(filename, "r")
+        self._log_entries = []
+        try:
+            while True:
+                entry = cPickle.load(f)
+                self._log_entries.append(entry)
+        except EOFError:
+            pass
+        f.close()
+        print "ok"
+
+    def handle_begin_frame(self, timestamp):
+        if self._frame is not None:
+            self._process_frame()
+            if self._writing_to_log:
+                self._log_frame()
+        self._frame = {"timestamp": timestamp,
+                       "states": [],
+                       "joint_data": []}
+
     def handle_joint_data(self, user_id, joint_name, x, y, z, confidence):
+        self._frame["joint_data"].append((user_id, joint_name, x, y, z, confidence))
+
+    def handle_state(self, user_id, state):
+        self._frame["states"].append((user_id, state))
+
+    def _process_frame(self):
+        for values in self._frame["states"]:
+            self._process_state(*values)
+        for values in self._frame["joint_data"]:
+            self._process_joint_data(*values)
+
+    def _process_joint_data(self, user_id, joint_name, x, y, z, confidence):
         if user_id not in self._users:
             self._users[user_id] = User(user_id, self)
         user = self._users[user_id]
         user.handle_joint_data(joint_name, x, y, z, confidence)
 
-    def handle_state(self, user_id, state):
+    def _process_state(self, user_id, state):
         if state == "lost":
             try:
                 del self._users[user_id]
@@ -130,7 +185,7 @@ class UserMovementInterpreter:
 
     def user_has_new_information(self, user):
         self._select_user()
-        if not self.args.without_sending and self._selected_user is not None:
+        if self._send_interpretations and self._selected_user is not None:
             self._add_interpretation_to_response_buffer()
             self._send_interpretation_from_response_buffer()
 
@@ -180,6 +235,34 @@ class UserMovementInterpreter:
         return [user for user in self._users.values()
                 if user.has_complete_joint_data()]
 
+    def _log_frame(self):
+        self._log_target_file.write(cPickle.dumps(self._frame))
+
+    def process_log_in_new_thread(self):
+        thread = threading.Thread(name="process_log", target=self._process_log)
+        thread.daemon = True
+        thread.start()
+
+    def _process_log(self):
+        while True:
+            if len(self._log_entries) == 0:
+                print "finished processing log"
+                return
+            self._frame = self._log_entries.pop(0)
+            t = self._frame["timestamp"] / 1000
+            if self._current_log_time is None:
+                self._current_log_time = t
+            else:
+                self._sleep_until(t)
+            self._process_frame()
+
+    def _sleep_until(self, t, max_sleep_duration=1.0):
+        while self._current_log_time < t:
+            sleep_duration = min(t - self._current_log_time, max_sleep_duration)
+            time.sleep(sleep_duration)
+            self._current_log_time += sleep_duration * self.log_replay_speed
+        
+
 parser = ArgumentParser()
 TrackedUsersViewer.add_parser_arguments(parser)
 parser.add_argument("--center-position", default="0,3000")
@@ -189,31 +272,38 @@ parser.add_argument("--log-source")
 parser.add_argument("--log-target")
 args = parser.parse_args()
 
-interpreter = UserMovementInterpreter(args)
-osc_receiver = OscReceiver(OSC_PORT, log_source=args.log_source, log_target=args.log_target)
+interpreter = UserMovementInterpreter(
+    send_interpretations=not args.without_sending,
+    log_target=args.log_target,
+    log_source=args.log_source)
 
 if args.with_viewer:
     app = QtGui.QApplication(sys.argv)
     viewer = TrackedUsersViewer(interpreter, args,
-                                enable_osc_replay=args.log_source,
-                                osc_receiver=osc_receiver)
+                                enable_log_replay=args.log_source)
+
+def handle_begin_frame(path, values, types, src, user_data):
+    interpreter.handle_begin_frame(*values)
 
 def handle_joint_data(path, values, types, src, user_data):
     interpreter.handle_joint_data(*values)
 
 def handle_state(path, values, types, src, user_data):
     interpreter.handle_state(*values)
-    if args.with_viewer:
-        viewer.handle_state(*values)
 
 if not args.without_sending:
     websocket_client = WebsocketClient(WEBSOCKET_HOST)
     websocket_client.set_event_listener(EventListener())
     websocket_client.connect()
 
-osc_receiver.add_method("/joint", "isffff", handle_joint_data)
-osc_receiver.add_method("/state", "is", handle_state)
-osc_receiver.start()
+if args.log_source:
+    interpreter.process_log_in_new_thread()
+else:
+    osc_receiver = OscReceiver(OSC_PORT)
+    osc_receiver.add_method("/begin_frame", "f", handle_begin_frame)
+    osc_receiver.add_method("/joint", "isffff", handle_joint_data)
+    osc_receiver.add_method("/state", "is", handle_state)
+    osc_receiver.start()
 
 if args.with_viewer:
     viewer.show()

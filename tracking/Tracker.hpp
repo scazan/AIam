@@ -20,6 +20,8 @@ public:
 
 private:
   void processFrame();
+  void sendBeginFrame();
+  void sendStatesAndSkeletonData();
   void sendSkeletonData(const nite::UserData&);
   void addJointData(osc::OutboundPacketStream &stream,
 		    const nite::UserId& userId,
@@ -31,6 +33,7 @@ private:
 
   openni::Device device;
   nite::UserTracker* userTracker;
+  nite::UserTrackerFrameRef userTrackerFrame;
   std::map<nite::UserId, nite::SkeletonState> previousStates;
   UdpTransmitSocket* transmitSocket;
   char oscBuffer[OSC_BUFFER_SIZE];
