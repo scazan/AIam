@@ -7,6 +7,7 @@ import collections
 import numpy
 from vector import Vector3d
 from ui.scene import Scene
+from ui.window import Window
 from transformations import rotation_matrix
 text_renderer_module = __import__("text_renderer")
 
@@ -305,9 +306,9 @@ class LogWidget(QtGui.QTextEdit):
     def sizeHint(self):
         return QtCore.QSize(640, LOG_HEIGHT)
 
-class TrackedUsersViewer(QtGui.QWidget):
+class TrackedUsersViewer(Window):
     def __init__(self, interpreter, args, enable_log_replay=False):
-        QtGui.QWidget.__init__(self)
+        Window.__init__(self, args)
         self.args = args
         self._enable_log_replay = enable_log_replay
         self.interpreter = interpreter
@@ -330,8 +331,13 @@ class TrackedUsersViewer(QtGui.QWidget):
         self._layout.addWidget(self._log_widget)
         self._create_menu()
 
+        if self.args.fullscreen:
+            self.give_keyboard_focus_to_fullscreen_window()
+            self._fullscreen_action.toggle()
+
     @staticmethod
     def add_parser_arguments(parser):
+        Window.add_parser_arguments(parser)
         parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
                             default="59.964,-1578.000,2562.016,-188.500,16.000")
         parser.add_argument("--tracker", help="posY,pitch", default="0,0")
@@ -370,12 +376,26 @@ class TrackedUsersViewer(QtGui.QWidget):
     def _create_view_menu(self):
         self._view_menu = self._menu_bar.addMenu("View")
         self._add_show_field_of_view_action()
+        self._add_fullscreen_action()
 
     def _add_show_field_of_view_action(self):
         self.show_field_of_view_action = QtGui.QAction('Show field of view', self)
         self.show_field_of_view_action.setCheckable(True)
         self.show_field_of_view_action.setShortcut("Ctrl+p")
         self._view_menu.addAction(self.show_field_of_view_action)
+
+    def _add_fullscreen_action(self):
+        self._fullscreen_action = QtGui.QAction('Fullscreen', self)
+        self._fullscreen_action.setCheckable(True)
+        self._fullscreen_action.setShortcut('Ctrl+Return')
+        self._fullscreen_action.toggled.connect(self._toggled_fullscreen)
+        self._view_menu.addAction(self._fullscreen_action)
+
+    def _toggled_fullscreen(self):
+        if self._fullscreen_action.isChecked():
+            self.enter_fullscreen()
+        else:
+            self.leave_fullscreen()
 
     def _create_replay_menu(self):
         self._replay_menu = self._menu_bar.addMenu("Replay")
@@ -409,10 +429,15 @@ class TrackedUsersViewer(QtGui.QWidget):
     def _set_replay_speed(self, speed):
         self.interpreter.log_replay_speed = speed
         print "replay speed: %.1f" % speed
-        
+
     def keyPressEvent(self, event):
-        self._scene.keyPressEvent(event)
-        QtGui.QWidget.keyPressEvent(self, event)
+        key = event.key()
+        if key == QtCore.Qt.Key_Escape:
+            if self._fullscreen_action.isChecked():
+                self._fullscreen_action.toggle()
+        else:
+            self._scene.keyPressEvent(event)
+            QtGui.QWidget.keyPressEvent(self, event)
 
     def sizeHint(self):
         return QtCore.QSize(640, 480)

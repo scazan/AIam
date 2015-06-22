@@ -4,8 +4,6 @@ tracking:
     or replace with nite::UserTracker::setSkeletonSmoothingFactor?
   consider confidence?
 
-external fullscreen
-
 investigate adding pelvis
 
 reduce interaction latency
