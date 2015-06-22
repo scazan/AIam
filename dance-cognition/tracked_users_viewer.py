@@ -414,15 +414,17 @@ class TrackedUsersViewer(QtGui.QWidget):
         self._scene.keyPressEvent(event)
         QtGui.QWidget.keyPressEvent(self, event)
 
-    def handle_state(self, user_id, state):
-        self._log_widget.append("%s %s\n" % (state, user_id))
-
     def sizeHint(self):
         return QtCore.QSize(640, 480)
 
-    def refresh(self):
-        callback = self._scene.updateGL
+    def process_frame(self, frame):
+        callback = lambda: self._process_frame_non_thread_safe(frame)
         QtGui.QApplication.postEvent(self, CustomQtEvent(callback))
+
+    def _process_frame_non_thread_safe(self, frame):
+        for user_id, state in frame["states"]:
+            self._log_widget.append("%s %s\n" % (state, user_id))
+        self._scene.updateGL()
 
     def customEvent(self, custom_qt_event):
         custom_qt_event.callback()

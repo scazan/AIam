@@ -158,7 +158,7 @@ class UserMovementInterpreter:
         for values in self._frame["joint_data"]:
             self._process_joint_data(*values)
         if args.with_viewer:
-            viewer.refresh()
+            viewer.process_frame(self._frame)
 
     def _process_joint_data(self, user_id, joint_name, x, y, z, confidence):
         if user_id not in self._users:
