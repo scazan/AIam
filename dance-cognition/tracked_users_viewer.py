@@ -10,7 +10,6 @@ from ui.scene import Scene
 from transformations import rotation_matrix
 text_renderer_module = __import__("text_renderer")
 
-FRAME_RATE = 30
 CAMERA_Y_SPEED = 1
 CAMERA_KEY_SPEED = 40
 CAMERA_DRAG_SPEED = .1
@@ -277,9 +276,11 @@ class TrackedUsersScene(Scene):
         if self._dragging_tracker_pitch:
             self._tracker_pitch += TRACKER_PITCH_SPEED * (y - self._drag_y_previous)
             self._drag_y_previous = y
+            self.updateGL()
         elif self._dragging_tracker_y_position:
             self._tracker_y_position += TRACKER_Y_POSITION_SPEED * (y - self._drag_y_previous)
             self._drag_y_previous = y
+            self.updateGL()
         else:
             Scene.mouseMoveEvent(self, event)
 
@@ -328,11 +329,6 @@ class TrackedUsersViewer(QtGui.QWidget):
         self._log_widget = LogWidget(self)
         self._layout.addWidget(self._log_widget)
         self._create_menu()
-
-        timer = QtCore.QTimer(self)
-        timer.setInterval(1000. / FRAME_RATE)
-        QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), self._scene.updateGL)
-        timer.start()
 
     @staticmethod
     def add_parser_arguments(parser):
@@ -423,3 +419,17 @@ class TrackedUsersViewer(QtGui.QWidget):
 
     def sizeHint(self):
         return QtCore.QSize(640, 480)
+
+    def refresh(self):
+        callback = self._scene.updateGL
+        QtGui.QApplication.postEvent(self, CustomQtEvent(callback))
+
+    def customEvent(self, custom_qt_event):
+        custom_qt_event.callback()
+
+class CustomQtEvent(QtCore.QEvent):
+    EVENT_TYPE = QtCore.QEvent.Type(QtCore.QEvent.registerEventType())
+
+    def __init__(self, callback):
+        QtCore.QEvent.__init__(self, CustomQtEvent.EVENT_TYPE)
+        self.callback = callback

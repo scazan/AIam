@@ -1,6 +1,4 @@
 tracking:
-  more accurate logging
-    replace joints buffering with updating viewer on new frames (and when user interacts by mouse etc)?
   dealing with multiple users
   remove/reduce joint smoothing (and add support for toggle to display with or without smoothing)
   consider confidence?

@@ -29,7 +29,6 @@ RESPONSE_TIME = 0
 JOINT_SMOOTHING_DURATION = 1.0
 FPS = 30.0
 NUM_JOINTS = 15
-NUM_JOINTS_BUFFERS = 2
 
 OSC_PORT = 15002
 WEBSOCKET_HOST = "localhost"
@@ -64,34 +63,26 @@ class User:
     def __init__(self, user_id, interpreter):
         self._user_id = user_id
         self._interpreter = interpreter
-        self._joints_buffers = [{} for n in range(NUM_JOINTS_BUFFERS)]
-        self._temp_joints_buffer_index = 0
-        self._temp_joints = self._joints_buffers[self._temp_joints_buffer_index]
-        self._latest_joints = None
-        self._updated_joints = set()
+        self._joints = {}
+        self._num_updated_joints = 0
         self._num_received_frames = 0
         self._activity = 0
 
     def handle_joint_data(self, joint_name, x, y, z, confidence):
-        if joint_name not in self._temp_joints:
-            self._temp_joints[joint_name] = Joint()
-        joint = self._temp_joints[joint_name]
+        if joint_name not in self._joints:
+            self._joints[joint_name] = Joint()
+        joint = self._joints[joint_name]
         joint.set_position(x, y, z)
         joint.set_confidence(confidence)
-        self._updated_joints.add(joint_name)
-        if len(self._updated_joints) >= NUM_JOINTS:
-            self._updated_joints.clear()
+        self._last_updated_joint = joint_name
+        self._num_updated_joints += 1
+        if self._num_updated_joints >= NUM_JOINTS:
+            self._num_updated_joints = 0
             self._num_received_frames += 1
-            self._shift_joints_buffers()
             if self._num_received_frames > 1:
-                self._activity = sum([joint.get_activity() for joint in self._latest_joints.values()]) / \
-                    len(self._latest_joints)
+                self._activity = sum([joint.get_activity() for joint in self._joints.values()]) / \
+                    len(self._joints)
                 self._interpreter.user_has_new_information(self._user_id)
-
-    def _shift_joints_buffers(self):
-        self._latest_joints = self._joints_buffers[self._temp_joints_buffer_index]
-        self._temp_joints_buffer_index = (self._temp_joints_buffer_index + 1) % NUM_JOINTS_BUFFERS
-        self._temp_joints = self._joints_buffers[self._temp_joints_buffer_index]
 
     def get_activity(self):
         return self._activity
@@ -100,10 +91,10 @@ class User:
         return self._user_id
 
     def get_joint(self, name):
-        return self._latest_joints[name]
+        return self._joints[name]
 
     def has_complete_joint_data(self):
-        return self._latest_joints is not None
+        return len(self._joints) >= NUM_JOINTS
 
 class UserMovementInterpreter:
     def __init__(self, send_interpretations=True, log_target=None, log_source=None):
@@ -166,6 +157,8 @@ class UserMovementInterpreter:
             self._process_state(*values)
         for values in self._frame["joint_data"]:
             self._process_joint_data(*values)
+        if args.with_viewer:
+            viewer.refresh()
 
     def _process_joint_data(self, user_id, joint_name, x, y, z, confidence):
         if user_id not in self._users:
