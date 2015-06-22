@@ -7,7 +7,7 @@ tracking:
   don't process ignored joints (at least not when viewer isn't used)
 
 
-external fullscreen
+external fullscreen for tracker viewer
 
 investigate adding pelvis
 

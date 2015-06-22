@@ -173,6 +173,7 @@ class MainWindow(QtGui.QWidget, EventListener):
         parser.add_argument("--height", dest="preferred_height", type=int, default=720)
         parser.add_argument("--no-toolbar", action="store_true")
         parser.add_argument("--fullscreen", action="store_true")
+        parser.add_argument("--fullscreen-display", type=int)
         parser.add_argument("--color-scheme", default="white")
         parser.add_argument("--image")
         parser.add_argument("--image-scale", type=float, default=1)
@@ -345,6 +346,11 @@ class MainWindow(QtGui.QWidget, EventListener):
         if self._fullscreen_action.isChecked():
             self.setCursor(QtCore.Qt.BlankCursor)
             self.showFullScreen()
+            if self.args.fullscreen_display is not None:
+                geometry = QtGui.QApplication.desktop().screenGeometry(
+                    self.args.fullscreen_display);
+                self.move(QtCore.QPoint(geometry.x(), geometry.y()));
+                self.resize(geometry.width(), geometry.height());
         else:
             self.setCursor(QtCore.Qt.ArrowCursor)
             self.showNormal()
