@@ -4,13 +4,13 @@ tracking:
     or replace with nite::UserTracker::setSkeletonSmoothingFactor?
   consider confidence?
 
-investigate adding pelvis
+ability to replay entire interaction (tracking + improv/rendering)
+  log improv w timestamps?
 
 reduce interaction latency
   abort current path when parameters change a lot?
 
-ability to replay entire interaction
-  log improv w timestamps?
+investigate adding pelvis
 
 prevent floor from disappearing when avatar moves a lot
 
