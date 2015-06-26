@@ -6,6 +6,7 @@ tracking:
 
 ability to replay entire interaction (tracking + improv/rendering)
   log improv w timestamps?
+  or perhaps all events used by renderer?
 
 reduce interaction latency
   abort current path when parameters change a lot?
