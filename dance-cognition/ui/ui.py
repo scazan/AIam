@@ -178,17 +178,22 @@ class MainWindow(Window, EventListener):
         parser.add_argument("--image")
         parser.add_argument("--image-scale", type=float, default=1)
         parser.add_argument("--image-margin", type=int, default=0)
+        parser.add_argument("--ui-event-log-target")
+        parser.add_argument("--ui-event-log-source")
 
-    def __init__(self, client, entity, student, bvh_reader, scene_widget_class, toolbar_class, args):
+    def __init__(self, client, entity, student, bvh_reader, scene_widget_class, toolbar_class, args,
+                 event_handlers={}):
         Window.__init__(self, args)
         self.client = client
         self.entity = entity
         self.student = student
         self.args = args
 
-        EventListener.__init__(self)
-        self.add_event_handler(Event.INPUT, self._handle_input)
-        self.add_event_handler(Event.OUTPUT, self._handle_output)
+        event_handlers.update({
+                Event.INPUT: self._handle_input,
+                Event.OUTPUT: self._handle_output,
+                })
+        EventListener.__init__(self, handlers=event_handlers)
 
         self.outer_vertical_layout = QtGui.QVBoxLayout()
         self.outer_vertical_layout.setSpacing(0)
@@ -233,7 +238,15 @@ class MainWindow(Window, EventListener):
             self.give_keyboard_focus_to_fullscreen_window()
             self._fullscreen_action.toggle()
 
-        client.set_event_listener(self)
+    def start(self):
+        if self.client:
+            self.client.set_event_listener(self)
+
+        if self.args.ui_event_log_target:
+            self.set_event_log_target(self.args.ui_event_log_target)
+        if self.args.ui_event_log_source:
+            self.set_event_log_source(self.args.ui_event_log_source)
+            self.process_event_log_in_new_thread()
 
     def received_event(self, event):
         callback = lambda: self.handle_event(event)

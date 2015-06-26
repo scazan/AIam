@@ -45,7 +45,9 @@ class PredictionExperiment(Experiment):
         app.setWindowIcon(QtGui.QIcon("ui/icon.png"))
         window = MainWindow(client,
             self.entity, self.student, self.bvh_reader, self._scene_class, ExperimentToolbar, self.args)
-        client.connect()
+        window.start()
+        if client:
+            client.connect()
         window.show()
         app.exec_()
 

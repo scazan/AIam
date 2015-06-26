@@ -15,13 +15,15 @@ class DimensionalityReductionMainWindow(MainWindow):
         parser.add_argument("--html5-toolbar", action="store_true")
 
     def __init__(self, *args, **kwargs):
-        MainWindow.__init__(self, *args, **kwargs)
-        self.add_event_handler(Event.REDUCTION, self._handle_reduction)
-        self.add_event_handler(Event.MODE, self._set_mode)
-        self.add_event_handler(Event.IMPROVISER_PATH, self._set_improviser_path)
-        self.add_event_handler(Event.VELOCITY, self._set_velocity)
-        self.add_event_handler(Event.CURSOR, self._set_cursor)
-        self.add_event_handler(Event.BVH_INDEX, self._update_bvh_selector)
+        MainWindow.__init__(self, *args, event_handlers={
+                Event.REDUCTION: self._handle_reduction,
+                Event.MODE: self._set_mode,
+                Event.IMPROVISER_PATH: self._set_improviser_path,
+                Event.VELOCITY: self._set_velocity,
+                Event.CURSOR: self._set_cursor,
+                Event.BVH_INDEX: self._update_bvh_selector,
+                Event.PARAMETER: self._received_parameter,
+                }, **kwargs)
         self._add_toggleable_action(
             '&Plot reduction', self._start_plot_reduction,
             '&Stop plot', self._stop_plot_reduction,
@@ -30,6 +32,9 @@ class DimensionalityReductionMainWindow(MainWindow):
         self._add_show_reduction_action()
         if self.args.html5_toolbar:
             self._add_html5_toolbar()
+
+    def _received_parameter(self, event):
+        self.toolbar.received_parameter(event)
 
     def _add_show_reduction_action(self):
         action = QtGui.QAction('Show normalized reduction', self)
@@ -188,7 +193,6 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self.improvise_tab = ModeTab(modes.IMPROVISE)
         self._improvise_tab_layout = QtGui.QVBoxLayout()
         self._improviser_params = ImproviserParameters()
-        self.parent().add_event_handler(Event.PARAMETER, self._received_parameter)
         self._improviser_params.add_notifier(self.parent().client)
         self._improviser_params_form = self.add_parameter_fields(
             self._improviser_params, self._improvise_tab_layout)
@@ -196,7 +200,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self.tabs.addTab(self.improvise_tab, "Improvise")
         self._mode_tabs[modes.IMPROVISE] = self.improvise_tab
 
-    def _received_parameter(self, event):
+    def received_parameter(self, event):
         self._improviser_params.handle_event(event)
         self._improviser_params_form.update_field(event.content["name"])
 

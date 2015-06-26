@@ -35,9 +35,11 @@ class DimensionalityReductionExperiment(Experiment):
 
     def __init__(self, parser):
         self.profiles_dir = "profiles/dimensionality_reduction"
-        Experiment.__init__(self, parser)
-        self.add_event_handler(Event.MODE, self._handle_mode_event)
-        self.add_event_handler(Event.REDUCTION, self._set_reduction)
+        Experiment.__init__(self, parser, event_handlers={
+                Event.MODE: self._handle_mode_event,
+                Event.REDUCTION: self._set_reduction,
+                Event.PARAMETER: self._handle_parameter_event,
+                })
         self.reduction = None
         self._velocity_integrator = LeakyIntegrator()
         self._mode = self.args.mode
@@ -107,7 +109,6 @@ class DimensionalityReductionExperiment(Experiment):
                     self.navigator.set_preferred_location(self.preferred_location)
                 self._improviser_params = ImproviserParameters()
                 self._improviser_params.set_values_from_args(self.args)
-                self.add_event_handler(Event.PARAMETER, self._handle_parameter_event)
                 self._improviser = Improviser(
                     self, self._improviser_params,
                     on_changed_path=lambda: \
@@ -124,7 +125,9 @@ class DimensionalityReductionExperiment(Experiment):
         app.setStyleSheet(open("dimensionality_reduction/ui/stylesheet.qss").read())
         app.setWindowIcon(QtGui.QIcon("ui/icon.png"))
         window = self._create_ui_window(client)
-        client.connect()
+        window.start()
+        if client:
+            client.connect()
         window.show()
         app.exec_()
 

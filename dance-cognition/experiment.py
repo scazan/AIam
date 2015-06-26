@@ -85,14 +85,23 @@ class Experiment(EventListener):
         parser.add_argument("--backend-host", default="localhost")
         parser.add_argument("--websockets", action="store_true",
                             help="Force websockets support (enabled automatically by --backend-only)")
+        parser.add_argument("--no-websockets", action="store_true",
+                            help="Force running without websockets support (e.g when combing --ui-only and --event-log-source)")
         parser.add_argument("--show-fps", action="store_true")
         parser.add_argument("--output-receiver-host")
         parser.add_argument("--output-receiver-port", type=int, default=10000)
         parser.add_argument("--output-receiver-type", choices=["bvh", "world"], default="bvh")
 
-    def __init__(self, parser):
-        EventListener.__init__(self)
-        self._add_event_handlers()
+    def __init__(self, parser, event_handlers={}):
+        event_handlers.update({
+                Event.START: self._start,
+                Event.STOP: self._stop,
+                Event.START_EXPORT_BVH: self._start_export_bvh,
+                Event.STOP_EXPORT_BVH: self._stop_export_bvh,
+                Event.SET_CURSOR: self.update_cursor,
+                Event.PROCEED_TO_NEXT_FRAME: self._proceed_to_next_frame,
+                })
+        EventListener.__init__(self, handlers=event_handlers)
 
         args, _remaining_args = parser.parse_known_args()
         if args.profile:
@@ -151,14 +160,6 @@ class Experiment(EventListener):
         if handler in self._ui_handlers:
             self._ui_handlers.remove(handler)
 
-    def _add_event_handlers(self):
-        self.add_event_handler(Event.START, self._start)
-        self.add_event_handler(Event.STOP, self._stop)
-        self.add_event_handler(Event.START_EXPORT_BVH, self._start_export_bvh)
-        self.add_event_handler(Event.STOP_EXPORT_BVH, self._stop_export_bvh)
-        self.add_event_handler(Event.SET_CURSOR, self.update_cursor)
-        self.add_event_handler(Event.PROCEED_TO_NEXT_FRAME, self._proceed_to_next_frame)
-
     def update_cursor(self, event):
         self.entity.set_cursor(event.content)
 
@@ -188,7 +189,10 @@ class Experiment(EventListener):
             self._set_up_timed_refresh()
             self._server.start()
         elif run_ui:
-            client = WebsocketClient(self.args.backend_host)
+            if self.args.no_websockets:
+                client = None
+            else:
+                client = WebsocketClient(self.args.backend_host)
             self.run_ui(client)
 
     def _start(self, event):
