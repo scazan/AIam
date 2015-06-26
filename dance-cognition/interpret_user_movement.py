@@ -123,7 +123,6 @@ class UserMovementInterpreter:
             if os.path.exists(log_target):
                 raise Exception("log target %r already exists" % log_target)
             self._log_target_file = open(log_target, "w")
-            self._log_start_time = None
         else:
             self._writing_to_log = False
 
