@@ -15,7 +15,7 @@ public:
   Tracker();
   virtual ~Tracker();
 
-  virtual openni::Status init();
+  virtual openni::Status init(int argc, char **argv);
   virtual openni::Status mainLoop();
 
 private:
@@ -32,6 +32,8 @@ private:
   void sendState(const nite::UserId& userId, const char *state);
 
   openni::Device device;
+  openni::Recorder recorder;
+  openni::VideoStream depthStream;
   nite::UserTracker* userTracker;
   nite::UserTrackerFrameRef userTrackerFrame;
   std::map<nite::UserId, nite::SkeletonState> previousStates;

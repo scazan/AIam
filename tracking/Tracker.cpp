@@ -17,7 +17,9 @@ Tracker::~Tracker() {
   openni::OpenNI::shutdown();
 }
 
-openni::Status Tracker::init() {
+openni::Status Tracker::init(int argc, char **argv) {
+  const char *recordingFilename = NULL;
+
   openni::Status status = openni::OpenNI::initialize();
   if(status != openni::STATUS_OK) {
     printf("Failed to initialize OpenNI\n%s\n", openni::OpenNI::getExtendedError());
@@ -25,10 +27,52 @@ openni::Status Tracker::init() {
   }
 
   const char* deviceUri = openni::ANY_DEVICE;
+  for (int i = 1; i < argc-1; ++i) {
+    if (strcmp(argv[i], "-device") == 0) {
+      deviceUri = argv[++i];
+      break;
+    }
+
+    else if(strcmp(argv[i], "-record") == 0) {
+      recordingFilename = argv[++i];
+      break;
+    }
+  }
+
   status = device.open(deviceUri);
   if(status != openni::STATUS_OK) {
     printf("Failed to open device\n%s\n", openni::OpenNI::getExtendedError());
     return status;
+  }
+
+  if(recordingFilename != NULL) {
+    if(access(recordingFilename, F_OK) == 0) {
+      printf("file '%s' already exists\n", recordingFilename);
+      return openni::STATUS_ERROR;
+    }
+
+    status = depthStream.create(device, openni::SENSOR_DEPTH);
+    if (status == openni::STATUS_OK) {
+      openni::VideoMode depthMode = depthStream.getVideoMode();
+      depthMode.setFps(30);
+      depthMode.setResolution(640, 480);
+      depthMode.setPixelFormat(openni::PIXEL_FORMAT_DEPTH_1_MM);
+      status = depthStream.setVideoMode(depthMode); 
+      if(status == openni::STATUS_OK){
+	status = depthStream.start();
+      }
+      if (status != openni::STATUS_OK) {
+	printf("Couldn't start depth stream:\n%s\n", openni::OpenNI::getExtendedError());
+	depthStream.destroy();
+      }
+    }
+    else {
+      printf("Couldn't find depth stream:\n%s\n", openni::OpenNI::getExtendedError());
+    }
+
+    recorder.create(recordingFilename);
+    recorder.attach(depthStream);
+    recorder.start();
   }
 
   nite::NiTE::initialize();
