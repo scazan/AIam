@@ -83,6 +83,7 @@ void SampleViewer::Finalize()
 openni::Status SampleViewer::Init(int argc, char **argv)
 {
 	m_pTexMap = NULL;
+	recordingFilename = NULL;
 
 	openni::Status rc = openni::OpenNI::initialize();
 	if (rc != openni::STATUS_OK)
@@ -96,23 +97,59 @@ openni::Status SampleViewer::Init(int argc, char **argv)
 	{
 		if (strcmp(argv[i], "-device") == 0)
 		{
-			deviceUri = argv[i+1];
+			deviceUri = argv[++i];
+			break;
+		}
+
+		else if(strcmp(argv[i], "-record") == 0)
+		{
+			recordingFilename = argv[++i];
 			break;
 		}
 	}
 
 	rc = m_device.open(deviceUri);
-	if (rc != openni::STATUS_OK)
-	{
+	if (rc == openni::STATUS_OK)
+	  printf("Opened device %s\n", deviceUri);
+	else {
 		printf("Failed to open device\n%s\n", openni::OpenNI::getExtendedError());
 		return rc;
+	}
+
+	if(recordingFilename != NULL) {
+	  rc = depthStream.create(m_device, openni::SENSOR_DEPTH);
+	  if (rc == openni::STATUS_OK)
+	    {
+	      openni::VideoMode depthMode = depthStream.getVideoMode();
+	      depthMode.setFps(30);
+	      depthMode.setResolution(640,480);
+	      depthMode.setPixelFormat(openni::PIXEL_FORMAT_DEPTH_1_MM);
+	      rc = depthStream.setVideoMode(depthMode); 
+	      if(rc == openni::STATUS_OK){
+	      	rc = depthStream.start();
+	      }
+	      if (rc != openni::STATUS_OK)
+	      	{
+	      	  printf("Couldn't start depth stream:\n%s\n", openni::OpenNI::getExtendedError());
+	      	  depthStream.destroy();
+	      	}
+	    }
+	  else
+	    {
+	      printf("Couldn't find depth stream:\n%s\n", openni::OpenNI::getExtendedError());
+	    }
+
+	  recorder.create(recordingFilename);
+	  recorder.attach(depthStream);
+	  recorder.start();
 	}
 
 	nite::NiTE::initialize();
 
 	if (m_pUserTracker->create(&m_device) != nite::STATUS_OK)
 	{
-		return openni::STATUS_ERROR;
+	  printf("failed to create user tracker\n");
+	  return openni::STATUS_ERROR;
 	}
 
 
@@ -342,7 +379,7 @@ void SampleViewer::Display()
 	nite::Status rc = m_pUserTracker->readFrame(&userTrackerFrame);
 	if (rc != nite::STATUS_OK)
 	{
-		printf("GetNextData failed\n");
+		printf("readFrame failed\n");
 		return;
 	}
 

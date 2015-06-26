@@ -48,6 +48,9 @@ private:
 	unsigned int		m_nTexMapY;
 
 	openni::Device		m_device;
+	openni::Recorder recorder;
+	const char* recordingFilename;
+	openni::VideoStream depthStream;
 	nite::UserTracker* m_pUserTracker;
 
 	nite::UserId m_poseUser;
