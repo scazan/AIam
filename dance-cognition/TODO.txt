@@ -12,6 +12,7 @@ reduce interaction latency
   abort current path when parameters change a lot?
 
 investigate adding pelvis
+  torso moves much less than hands, some kind of joint-specific weighting can compensate for this
 
 prevent floor from disappearing when avatar moves a lot
 
