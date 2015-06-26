@@ -382,6 +382,7 @@ class TrackedUsersViewer(Window):
         self.show_field_of_view_action = QtGui.QAction('Show field of view', self)
         self.show_field_of_view_action.setCheckable(True)
         self.show_field_of_view_action.setShortcut("Ctrl+p")
+        self.show_field_of_view_action.triggered.connect(self._scene.updateGL)
         self._view_menu.addAction(self.show_field_of_view_action)
 
     def _add_fullscreen_action(self):
