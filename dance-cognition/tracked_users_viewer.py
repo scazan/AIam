@@ -4,11 +4,9 @@ from OpenGL.GLU import *
 from PyQt4 import QtCore, QtGui
 import math
 import collections
-import numpy
 from vector import Vector3d
 from ui.scene import Scene
 from ui.window import Window
-from transformations import rotation_matrix
 text_renderer_module = __import__("text_renderer")
 
 CAMERA_Y_SPEED = 1
@@ -36,7 +34,6 @@ class TrackedUsersScene(Scene):
         self._text_renderer_class = getattr(text_renderer_module, "GlutTextRenderer")
         self._dragging_tracker_y_position = False
         self._dragging_tracker_pitch = False
-        self._tracker_y_position, self._tracker_pitch = map(float, parent.args.tracker.split(","))
 
     def initializeGL(self):
         glClearColor(1.0, 1.0, 1.0, 0.0)
@@ -67,11 +64,9 @@ class TrackedUsersScene(Scene):
         if self.parent().show_field_of_view_action.isChecked():
             self._draw_field_of_view_boundary()
             self._draw_center_position()
+            self._draw_active_area()
 
         self._selected_user = self.parent().interpreter.get_selected_user()
-
-        self._tracker_rotation_matrix = rotation_matrix(
-            math.radians(self._tracker_pitch), [1, 0, 0])
 
         for user in self.parent().interpreter.get_users():
             self._draw_user(user)
@@ -79,33 +74,36 @@ class TrackedUsersScene(Scene):
         if self.parent().show_positions_action.isChecked():
             self._print_positions()
 
-    def _draw_field_of_view_boundary(self, resolution=50):
-        y = self.parent().floor_y
+    def _draw_field_of_view_boundary(self):
         radius = ASSUMED_VIEW_DISTANCE
         center_x = 0
         center_z = 0
 
         glColor3f(0, 0.5, 0)
+        self._draw_circle_on_floor(center_x, center_z, radius,
+                                   from_angle=math.pi/4, angular_size=math.pi/2,
+                                   as_segment=True)
+
+    def _draw_circle_on_floor(self, center_x, center_z, radius,
+                              from_angle=0, angular_size=math.pi*2,
+                              as_segment=False,
+                              resolution=50):
+        y = self.parent().floor_y
         glBegin(GL_LINE_STRIP)
-        glVertex3f(center_x, y, center_z)
+
+        if as_segment:
+            glVertex3f(center_x, y, center_z)
 
         for i in range(resolution):
-            angle = math.pi/4 + math.pi / 2 * float(i) / (resolution-1)
+            angle = from_angle + angular_size * float(i) / (resolution-1)
             x = center_x + radius * math.cos(angle)
             z = center_z + radius * math.sin(angle)
             glVertex3f(x, y, z)
 
-        glVertex3f(center_x, y, center_z)
-        glEnd()
+        if as_segment:
+            glVertex3f(center_x, y, center_z)
 
-    def _adjust_tracked_position(self, position):
-        unadjusted_vector = [position.x, position.y, position.z, 1]
-        rotated_vector = numpy.dot(self._tracker_rotation_matrix, unadjusted_vector)
-        adjusted_vector = Vector3d(
-            rotated_vector[0],
-            rotated_vector[1] + self._tracker_y_position,
-            rotated_vector[2])
-        return adjusted_vector
+        glEnd()
 
     def _draw_user(self, user):
         self._draw_label(user)
@@ -135,13 +133,13 @@ class TrackedUsersScene(Scene):
         self._draw_limb(user, "right_knee", "right_foot")
 
     def _draw_label(self, user):
-        head_position = self._adjust_tracked_position(user.get_joint("head").get_position())
+        head_position = user.get_joint("head").get_position()
         glColor3f(0, 0, 0)
         position = head_position + Vector3d(0, 140, 0)
         self._draw_text(str(user.get_id()), 100, *position, h_align="center")
 
     def _draw_activity(self, user):
-        head_position = self._adjust_tracked_position(user.get_joint("head").get_position())
+        head_position = user.get_joint("head").get_position()
         position = head_position + Vector3d(150, 140, 0)
         activity = user.get_activity()
 
@@ -169,8 +167,8 @@ class TrackedUsersScene(Scene):
 
     def _draw_limb(self, user, name1, name2):
         vertices = self._split_vertices_at_floor(
-            self._adjust_tracked_position(user.get_joint(name1).get_position()),
-            self._adjust_tracked_position(user.get_joint(name2).get_position()))
+            user.get_joint(name1).get_position(),
+            user.get_joint(name2).get_position())
 
         confidence = min([user.get_joint(name1).get_confidence(),
                           user.get_joint(name2).get_confidence()])
@@ -240,8 +238,8 @@ class TrackedUsersScene(Scene):
     def _draw_center_position(self):
         glLineWidth(1)
         glColor3f(0, 0.5, 0)
-        x = self.parent().interpreter.center_x
-        z = self.parent().interpreter.center_z
+        x = self.parent().interpreter.active_area_center_x
+        z = self.parent().interpreter.active_area_center_z
         y = self.parent().floor_y
         x1 = x - CENTER_POSITION_SYMBOL_SIZE/2
         x2 = x + CENTER_POSITION_SYMBOL_SIZE/2
@@ -253,7 +251,13 @@ class TrackedUsersScene(Scene):
         glVertex3f(x2, y, z1)
         glVertex3f(x1, y, z2)
         glEnd()
-        
+
+    def _draw_active_area(self):
+        self._draw_circle_on_floor(
+            center_x=self.parent().interpreter.active_area_center_x,
+            center_z=self.parent().interpreter.active_area_center_z,
+            radius=self.parent().interpreter.active_area_radius)
+
     def _print_positions(self):
         for user in self.parent().interpreter.get_users():
             torso_x, _, torso_z = user.get_joint("torso").get_position()
@@ -275,11 +279,12 @@ class TrackedUsersScene(Scene):
         x = event.x()
         y = event.y()
         if self._dragging_tracker_pitch:
-            self._tracker_pitch += TRACKER_PITCH_SPEED * (y - self._drag_y_previous)
+            self.parent().interpreter.tracker_pitch += TRACKER_PITCH_SPEED * (y - self._drag_y_previous)
             self._drag_y_previous = y
             self.updateGL()
         elif self._dragging_tracker_y_position:
-            self._tracker_y_position += TRACKER_Y_POSITION_SPEED * (y - self._drag_y_previous)
+            self.parent().interpreter.tracker_y_position += TRACKER_Y_POSITION_SPEED * (
+                y - self._drag_y_previous)
             self._drag_y_previous = y
             self.updateGL()
         else:
@@ -291,7 +296,9 @@ class TrackedUsersScene(Scene):
         Scene.mouseReleaseEvent(self, event)
 
     def print_tracker_settings(self):
-        print "%.3f,%.3f" % (self._tracker_y_position, self._tracker_pitch)
+        print "%.3f,%.3f" % (
+            self.parent().interpreter.tracker_y_position,
+            self.parent().interpreter.tracker_pitch)
 
 class LogWidget(QtGui.QTextEdit):
     def __init__(self, *args, **kwargs):
@@ -340,7 +347,6 @@ class TrackedUsersViewer(Window):
         Window.add_parser_arguments(parser)
         parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
                             default="59.964,-1578.000,2562.016,-188.500,16.000")
-        parser.add_argument("--tracker", help="posY,pitch", default="0,0")
         parser.add_argument("--floor-y", type=float, default=0)
 
     def _create_menu(self):

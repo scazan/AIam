@@ -4,6 +4,8 @@ from argparse import ArgumentParser
 from PyQt4 import QtGui
 import cPickle
 import threading
+import math
+import numpy
 
 import sys
 import os
@@ -14,6 +16,7 @@ from event_listener import EventListener
 from event import Event
 from vector import Vector3d
 from tracked_users_viewer import TrackedUsersViewer
+from transformations import rotation_matrix
 
 ACTIVITY_THRESHOLD = 5
 ACTIVITY_CEILING = 80
@@ -35,14 +38,15 @@ OSC_PORT = 15002
 WEBSOCKET_HOST = "localhost"
 
 class Joint:
-    def __init__(self):
+    def __init__(self, interpreter):
+        self._interpreter = interpreter
         self._previous_position = None
         self._buffer_size = int(JOINT_SMOOTHING_DURATION * FPS)
         self._activity_buffer = collections.deque(
             [0] * self._buffer_size, maxlen=self._buffer_size)
 
     def get_position(self):
-        return self._previous_position
+        return self._interpreter.adjust_tracked_position(self._previous_position)
 
     def get_confidence(self):
         return self._confidence
@@ -71,7 +75,7 @@ class User:
 
     def handle_joint_data(self, joint_name, x, y, z, confidence):
         if joint_name not in self._joints:
-            self._joints[joint_name] = Joint()
+            self._joints[joint_name] = Joint(self._interpreter)
         joint = self._joints[joint_name]
         joint.set_position(x, y, z)
         joint.set_confidence(confidence)
@@ -108,7 +112,10 @@ class UserMovementInterpreter:
         self._response_buffer = []
         self._selected_user = None
         self.activity_ceiling = ACTIVITY_CEILING
-        self.center_x, self.center_z = [float(s) for s in args.center_position.split(",")]
+        self.active_area_center_x, self.active_area_center_z = [
+            float(s) for s in args.active_area_center.split(",")]
+        self.active_area_radius = args.active_area_radius
+        self.tracker_y_position, self.tracker_pitch = map(float, args.tracker.split(","))
 
         if log_source:
             self._read_log(log_source)
@@ -155,6 +162,9 @@ class UserMovementInterpreter:
         self._frame["states"].append((user_id, state))
 
     def _process_frame(self):
+        self._tracker_rotation_matrix = rotation_matrix(
+            math.radians(self.tracker_pitch), [1, 0, 0])
+
         for values in self._frame["states"]:
             self._process_state(*values)
         for values in self._frame["joint_data"]:
@@ -175,36 +185,59 @@ class UserMovementInterpreter:
             except KeyError:
                 pass
 
+    def adjust_tracked_position(self, position):
+        unadjusted_vector = [position.x, position.y, position.z, 1]
+        rotated_vector = numpy.dot(self._tracker_rotation_matrix, unadjusted_vector)
+        adjusted_vector = Vector3d(
+            rotated_vector[0],
+            rotated_vector[1] + self.tracker_y_position,
+            rotated_vector[2])
+        return adjusted_vector
+
     def get_selected_user(self):
         return self._selected_user
 
     def user_has_new_information(self, user):
         self._select_user()
-        if self._send_interpretations and self._selected_user is not None:
+        if self._send_interpretations:
             self._add_interpretation_to_response_buffer()
             self._send_interpretation_from_response_buffer()
 
     def _select_user(self):
-        users = self.get_users()
-        if len(users) > 0:
+        users_within_active_area = [
+            user for user in self.get_users()
+            if self._is_within_active_area(user)]
+        if len(users_within_active_area) > 0:
             self._selected_user = min(
-                users, key=lambda user: self._distance_to_center(user))
+                users_within_active_area,
+                key=lambda user: self._distance_to_center(user))
+        else:
+            self._selected_user = None
+
+    def _is_within_active_area(self, user):
+        return self._distance_to_center(user) < self.active_area_radius
 
     def _distance_to_center(self, user):
         torso_x, torso_y, torso_z = user.get_joint("torso").get_position()
-        dx = torso_x - self.center_x
-        dz = torso_z - self.center_z
-        return dx*dx + dz*dz
+        dx = torso_x - self.active_area_center_x
+        dz = torso_z - self.active_area_center_z
+        return math.sqrt(dx*dx + dz*dz)
 
     def _add_interpretation_to_response_buffer(self):
-        relative_activity = max(0, self._selected_user.get_activity() - ACTIVITY_THRESHOLD) / \
-            (self.activity_ceiling - ACTIVITY_THRESHOLD)
+        relative_activity = self._get_relative_activity()
         velocity = MIN_VELOCITY + relative_activity * (MAX_VELOCITY - MIN_VELOCITY)
         novelty = MIN_NOVELTY + relative_activity * (MAX_NOVELTY - MIN_NOVELTY)
         extension = MIN_EXTENSION + relative_activity * (MAX_EXTENSION - MIN_EXTENSION)
         location_preference = MIN_LOCATION_PREFERENCE + (1-relative_activity) \
             * (MAX_LOCATION_PREFERENCE - MIN_LOCATION_PREFERENCE)
         self._response_buffer.append((velocity, novelty, extension, location_preference))
+
+    def _get_relative_activity(self):
+        if self._selected_user is None:
+            return 0
+        else:
+            return max(0, self._selected_user.get_activity() - ACTIVITY_THRESHOLD) / \
+                (self.activity_ceiling - ACTIVITY_THRESHOLD)
 
     def _send_interpretation_from_response_buffer(self):
         while len(self._response_buffer) >= self._response_buffer_size:
@@ -260,7 +293,9 @@ class UserMovementInterpreter:
 
 parser = ArgumentParser()
 TrackedUsersViewer.add_parser_arguments(parser)
-parser.add_argument("--center-position", default="0,3000")
+parser.add_argument("--tracker", help="posY,pitch", default="0,0")
+parser.add_argument("--active-area-center", default="0,2500")
+parser.add_argument("--active-area-radius", type=float, default=1500)
 parser.add_argument("--with-viewer", action="store_true")
 parser.add_argument("--without-sending", action="store_true")
 parser.add_argument("--log-source")
