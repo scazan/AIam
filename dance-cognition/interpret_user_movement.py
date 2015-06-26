@@ -29,6 +29,7 @@ RESPONSE_TIME = 0
 JOINT_SMOOTHING_DURATION = 1.0
 FPS = 30.0
 NUM_JOINTS = 15
+SELECTED_JOINTS = ["left_hand", "right_hand"]
 
 OSC_PORT = 15002
 WEBSOCKET_HOST = "localhost"
@@ -80,8 +81,10 @@ class User:
             self._num_updated_joints = 0
             self._num_received_frames += 1
             if self._num_received_frames > 1:
-                self._activity = sum([joint.get_activity() for joint in self._joints.values()]) / \
-                    len(self._joints)
+                self._activity = sum([
+                        self.get_joint(joint_name).get_activity()
+                        for joint_name in SELECTED_JOINTS]) / \
+                    len(SELECTED_JOINTS)
                 self._interpreter.user_has_new_information(self._user_id)
 
     def get_activity(self):
