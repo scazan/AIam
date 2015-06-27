@@ -16,8 +16,11 @@ investigate adding pelvis
 
 prevent floor from disappearing when avatar moves a lot
 
-protection against hypothetical runtime exception in interpolation of improvised path (see plot_observations.py)
+investigate why the pose mapping behaves differently Alex' two PCs with ubuntu (12.04 vs 14.04). right now different preferred locations need to be configured.
+  possible clue: valencia_quaternion_7d_friction.data has different file sizes
+  different numpy versions? (sklearn already excluded, since both run 0.14 now)
 
+protection against hypothetical runtime exception in interpolation of improvised path (see plot_observations.py)
 
 
 perhaps training data for BVHs should use all motion frames by default, rather than sampling the BVH with a mandatory frame rate
