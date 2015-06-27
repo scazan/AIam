@@ -268,6 +268,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         normalized_reduction = source_tab.get_normalized_reduction()
         reduction = self.parent().student.unnormalize_reduction(normalized_reduction)
         self.parent().client.send_event(Event(Event.REDUCTION, reduction))
+        self.parent().reduction = reduction
         for n in range(self._reduction_tabs.count()):
             tab = self._reduction_tabs.widget(n)
             if tab != source_tab:

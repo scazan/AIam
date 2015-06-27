@@ -287,7 +287,7 @@ class Improviser:
     def _departure(self):
         if self.experiment.reduction is None:
             if self.experiment.args.preferred_location:
-                unnormalized_departure = self.experiment.preferred_location
+                return self.experiment.preferred_location
             else:
                 unnormalized_departure = self._get_stimulus()
         else:
