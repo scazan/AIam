@@ -1,15 +1,11 @@
-tracking:
-  dealing with multiple users
-  remove/reduce joint smoothing (and add support for toggle to display with or without smoothing)
-    or replace with nite::UserTracker::setSkeletonSmoothingFactor?
-  consider confidence?
-
 ability to replay entire interaction (tracking + improv/rendering)
   log improv w timestamps?
   or perhaps all events used by renderer?
 
 reduce interaction latency
   abort current path when parameters change a lot?
+  remove/reduce joint smoothing? (and add support for viewing with or without smoothing)
+    and/or replace with nite::UserTracker::setSkeletonSmoothingFactor?
 
 investigate adding pelvis
   torso moves much less than hands, some kind of joint-specific weighting can compensate for this
