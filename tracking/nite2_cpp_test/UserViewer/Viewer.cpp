@@ -12,6 +12,8 @@
 #endif
 
 #include "Viewer.h"
+#include <sys/time.h>
+#include <stdarg.h>
 
 #if (ONI_PLATFORM == ONI_PLATFORM_MACOSX)
         #include <GLUT/glut.h>
@@ -42,15 +44,37 @@ bool g_drawFrameId = false;
 
 int g_nXRes = 0, g_nYRes = 0;
 
+void log(const char *format, ...) {
+  va_list args;
+  va_start(args, format);
+  vfprintf(stdout, format, args);
+  va_end(args);
+  fflush(stdout);
+}
+
+#define checkGlErrors() _checkGlErrors(__LINE__)
+
+int _checkGlErrors(int line) {
+  GLenum err;
+  int numErrors = 0;
+  while ((err = glGetError()) != GL_NO_ERROR) {
+    printf("OpenGL error at line %d: %s\n", line, gluErrorString(err));
+    numErrors++;
+  }
+  return numErrors;
+}
+
 // time to hold in pose to exit program. In milliseconds.
 const int g_poseTimeoutToExit = 2000;
 
 void SampleViewer::glutIdle()
 {
+  log("glutIdle\n");
 	glutPostRedisplay();
 }
 void SampleViewer::glutDisplay()
 {
+  log("glutDisplay\n");
 	SampleViewer::ms_self->Display();
 }
 void SampleViewer::glutKeyboard(unsigned char key, int x, int y)
@@ -88,7 +112,7 @@ openni::Status SampleViewer::Init(int argc, char **argv)
 	openni::Status rc = openni::OpenNI::initialize();
 	if (rc != openni::STATUS_OK)
 	{
-		printf("Failed to initialize OpenNI\n%s\n", openni::OpenNI::getExtendedError());
+		log("Failed to initialize OpenNI\n%s\n", openni::OpenNI::getExtendedError());
 		return rc;
 	}
 
@@ -110,9 +134,9 @@ openni::Status SampleViewer::Init(int argc, char **argv)
 
 	rc = m_device.open(deviceUri);
 	if (rc == openni::STATUS_OK)
-	  printf("Opened device %s\n", deviceUri);
+	  log("Opened device %s\n", deviceUri);
 	else {
-		printf("Failed to open device\n%s\n", openni::OpenNI::getExtendedError());
+		log("Failed to open device\n%s\n", openni::OpenNI::getExtendedError());
 		return rc;
 	}
 
@@ -130,13 +154,13 @@ openni::Status SampleViewer::Init(int argc, char **argv)
 	      }
 	      if (rc != openni::STATUS_OK)
 	      	{
-	      	  printf("Couldn't start depth stream:\n%s\n", openni::OpenNI::getExtendedError());
+	      	  log("Couldn't start depth stream:\n%s\n", openni::OpenNI::getExtendedError());
 	      	  depthStream.destroy();
 	      	}
 	    }
 	  else
 	    {
-	      printf("Couldn't find depth stream:\n%s\n", openni::OpenNI::getExtendedError());
+	      log("Couldn't find depth stream:\n%s\n", openni::OpenNI::getExtendedError());
 	    }
 
 	  recorder.create(recordingFilename);
@@ -148,7 +172,7 @@ openni::Status SampleViewer::Init(int argc, char **argv)
 
 	if (m_pUserTracker->create(&m_device) != nite::STATUS_OK)
 	{
-	  printf("failed to create user tracker\n");
+	  log("failed to create user tracker\n");
 	  return openni::STATUS_ERROR;
 	}
 
@@ -158,6 +182,7 @@ openni::Status SampleViewer::Init(int argc, char **argv)
 }
 openni::Status SampleViewer::Run()	//Does not return
 {
+  previousDisplayTime = 0;
 	glutMainLoop();
 
 	return openni::STATUS_OK;
@@ -175,7 +200,7 @@ char g_generalMessage[100] = {0};
 
 #define USER_MESSAGE(msg) {\
 	sprintf(g_userStatusLabels[user.getId()], "%s", msg);\
-	printf("[%08" PRIu64 "] User #%d:\t%s\n", ts, user.getId(), msg);}
+	log("[%08" PRIu64 "] User #%d:\t%s\n", ts, user.getId(), msg);}
 
 void updateUserState(const nite::UserData& user, uint64_t ts)
 {
@@ -184,9 +209,9 @@ void updateUserState(const nite::UserData& user, uint64_t ts)
 		USER_MESSAGE("New");
 	}
 	else if (user.isVisible() && !g_visibleUsers[user.getId()])
-		printf("[%08" PRIu64 "] User #%d:\tVisible\n", ts, user.getId());
+		log("[%08" PRIu64 "] User #%d:\tVisible\n", ts, user.getId());
 	else if (!user.isVisible() && g_visibleUsers[user.getId()])
-		printf("[%08" PRIu64 "] User #%d:\tOut of Scene\n", ts, user.getId());
+		log("[%08" PRIu64 "] User #%d:\tOut of Scene\n", ts, user.getId());
 	else if (user.isLost())
 	{
 		USER_MESSAGE("Lost");
@@ -374,15 +399,26 @@ void DrawSkeleton(nite::UserTracker* pUserTracker, const nite::UserData& userDat
 
 void SampleViewer::Display()
 {
+  struct timeval tv;
+  uint64_t currentDisplayTime, timeDiff;
+  gettimeofday(&tv, NULL);
+  currentDisplayTime = (uint64_t) (tv.tv_sec * 1000000 + tv.tv_usec);
+  if(previousDisplayTime != 0) {
+    timeDiff = currentDisplayTime - previousDisplayTime;
+    log("time diff: %ld\n", timeDiff);
+  }
+  previousDisplayTime = currentDisplayTime;
+
 	nite::UserTrackerFrameRef userTrackerFrame;
 	openni::VideoFrameRef depthFrame;
 	nite::Status rc = m_pUserTracker->readFrame(&userTrackerFrame);
 	if (rc != nite::STATUS_OK)
 	{
-		printf("readFrame failed\n");
+		log("readFrame failed\n");
 		return;
 	}
 
+	log("getDepthFrame\n");
 	depthFrame = userTrackerFrame.getDepthFrame();
 
 	if (m_pTexMap == NULL)
@@ -393,6 +429,7 @@ void SampleViewer::Display()
 		m_pTexMap = new openni::RGB888Pixel[m_nTexMapX * m_nTexMapY];
 	}
 
+	log("getUserMap\n");
 	const nite::UserMap& userLabels = userTrackerFrame.getUserMap();
 
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -404,6 +441,7 @@ void SampleViewer::Display()
 
 	if (depthFrame.isValid() && g_drawDepth)
 	{
+	  log("calculateHistogram\n");
 		calculateHistogram(m_pDepthHist, MAX_DEPTH, depthFrame);
 	}
 
@@ -413,12 +451,14 @@ void SampleViewer::Display()
 	// check if we need to draw depth frame to texture
 	if (depthFrame.isValid() && g_drawDepth)
 	{
+	  log("draw frame to texture\n");
 		const nite::UserId* pLabels = userLabels.getPixels();
 
 		const openni::DepthPixel* pDepthRow = (const openni::DepthPixel*)depthFrame.getData();
 		openni::RGB888Pixel* pTexRow = m_pTexMap + depthFrame.getCropOriginY() * m_nTexMapX;
 		int rowSize = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
 
+		log("rowSize=%d height=%d width=%d\n", rowSize, depthFrame.getHeight(), depthFrame.getWidth());
 		for (int y = 0; y < depthFrame.getHeight(); ++y)
 		{
 			const openni::DepthPixel* pDepth = pDepthRow;
@@ -466,12 +506,19 @@ void SampleViewer::Display()
 			pDepthRow += rowSize;
 			pTexRow += m_nTexMapX;
 		}
+		log("drew frame to texture\n");
 	}
 
 	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
+	if(checkGlErrors() == 0) printf("NOT stack overflow\n");
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	checkGlErrors();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	checkGlErrors();
+	log("glTexImage2D\n");
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_nTexMapX, m_nTexMapY, 0, GL_RGB, GL_UNSIGNED_BYTE, m_pTexMap);
+	checkGlErrors();
+	log("glTexImage2D ok\n");
 
 	// Display the OpenGL texture map
 	glColor4f(1,1,1,1);
@@ -498,7 +545,11 @@ void SampleViewer::Display()
 	glEnd();
 	glDisable(GL_TEXTURE_2D);
 
+	log("getUsers\n");
 	const nite::Array<nite::UserData>& users = userTrackerFrame.getUsers();
+	// log("%08" PRIu64 "\n", userTrackerFrame.getTimestamp());
+
+	log("draw users\n");
 	for (int i = 0; i < users.getSize(); ++i)
 	{
 		const nite::UserData& user = users[i];
@@ -524,7 +575,7 @@ void SampleViewer::Display()
 				DrawBoundingBox(user);
 			}
 
-			if (users[i].getSkeleton().getState() == nite::SKELETON_TRACKED && g_drawSkeleton)
+			if (user.getSkeleton().getState() == nite::SKELETON_TRACKED && g_drawSkeleton)
 			{
 				DrawSkeleton(m_pUserTracker, user);
 			}
@@ -538,14 +589,14 @@ void SampleViewer::Display()
 			{
 				// Start timer
 				sprintf(g_generalMessage, "In exit pose. Keep it for %d second%s to exit\n", g_poseTimeoutToExit/1000, g_poseTimeoutToExit/1000 == 1 ? "" : "s");
-				printf("Counting down %d second to exit\n", g_poseTimeoutToExit/1000);
+				log("Counting down %d second to exit\n", g_poseTimeoutToExit/1000);
 				m_poseUser = user.getId();
 				m_poseTime = userTrackerFrame.getTimestamp();
 			}
 			else if (pose.isExited())
 			{
 				memset(g_generalMessage, 0, sizeof(g_generalMessage));
-				printf("Count-down interrupted\n");
+				log("Count-down interrupted\n");
 				m_poseTime = 0;
 				m_poseUser = 0;
 			}
@@ -554,7 +605,7 @@ void SampleViewer::Display()
 				// tick
 				if (userTrackerFrame.getTimestamp() - m_poseTime > g_poseTimeoutToExit * 1000)
 				{
-					printf("Count down complete. Exit...\n");
+					log("Count down complete. Exit...\n");
 					Finalize();
 					exit(2);
 				}
@@ -580,6 +631,7 @@ void SampleViewer::Display()
 	// Swap the OpenGL display buffers
 	glutSwapBuffers();
 
+	log("Display done\n");
 }
 
 void SampleViewer::OnKey(unsigned char key, int /*x*/, int /*y*/)

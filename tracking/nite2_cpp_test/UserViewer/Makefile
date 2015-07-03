@@ -12,10 +12,10 @@ SRC_FILES = *.cpp
 
 ifeq ("$(OSTYPE)","Darwin")
 	CFLAGS += -DMACOS
-	LDFLAGS += -framework OpenGL -framework GLUT
+	LDFLAGS += -framework OpenGL -framework GLUT GLU
 else
 	CFLAGS += -DUNIX -DGLX_GLXEXT_LEGACY
-	USED_LIBS += glut GL
+	USED_LIBS += glut GL GLU
 endif
 
 LIB_DIRS += $(OPENNI2_REDIST) $(NITE2_REDIST)

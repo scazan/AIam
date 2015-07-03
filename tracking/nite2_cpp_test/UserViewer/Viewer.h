@@ -55,6 +55,7 @@ private:
 
 	nite::UserId m_poseUser;
 	uint64_t m_poseTime;
+	uint64_t previousDisplayTime;
 };
 
 
