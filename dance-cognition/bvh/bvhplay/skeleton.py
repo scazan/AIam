@@ -22,7 +22,7 @@
 
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../libs")
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../../libs")
 
 from math import radians, cos, sin
 from cgkit.bvh import BVHReader
