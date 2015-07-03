@@ -25,6 +25,8 @@ parser.add_argument("--stroke-color", default="black")
 parser.add_argument("--stroke-dasharray")
 parser.add_argument("--plot-width", type=float, default=500)
 parser.add_argument("--plot-height", type=float, default=500)
+parser.add_argument("--point-size", type=float)
+parser.add_argument("--point-size-min", type=float, default=1.5)
 parser.add_argument("--plot-dimensions", help="e.g. 0,3 (x as 1st dimension and y as 4th)")
 parser.add_argument("--select-bvh")
 parser.add_argument("--interpolate", action="store_true")
@@ -197,26 +199,30 @@ class svgGenerator(Generator):
 
     def _generate_segment(self, segment):
         if len(self._dimensions) == 2:
-            self._generate_segment_2d(segment)
+            self._generate_path_2d(segment)
         elif len(self._dimensions) == 3:
-            self._generate_segment_3d(segment)
+            self._generate_path_3d(segment)
+            if self._args.point_size > 0:
+                self._generate_points_3d(segment)
 
-    def _generate_segment_2d(self, segment):
+    def _generate_path_2d(self, segment):
         path_attributes = 'style="stroke:%s;fill:none;stroke-width:%f;stroke-opacity:%f"' % (
             self._args.stroke_color,
             self._args.stroke_width,
             self._args.stroke_opacity)
         if self._args.stroke_dasharray:
             path_attributes += ' stroke-dasharray="%s"' % self._args.stroke_dasharray
-        self._write('<path %s d="M %s' % (path_attributes, self._path_coordinates(segment[0])))
+        self._write('<path %s d="M %s' % (
+                path_attributes,
+                self._whitespace_separated_path_coordinates(segment[0])))
         for observation in segment[1:]:
-            self._write(' L %s' % self._path_coordinates(observation))
+            self._write(' L %s' % self._whitespace_separated_path_coordinates(observation))
         self._write('" />\n')
 
-    def _generate_segment_3d(self, segment):
+    def _generate_path_3d(self, segment):
         previous_observation = segment[0]
         for observation in segment[1:]:
-            z = pow((1 - min(observation[2], 1)), .8)
+            z = self._depth_value(observation)
             stroke_width = max(self._args.stroke_width_min,
                                z * self._args.stroke_width)
             opacity = self._args.stroke_opacity * z
@@ -226,16 +232,33 @@ class svgGenerator(Generator):
                     self._args.stroke_color,
                     stroke_width,
                     opacity,
-                    self._path_coordinates(previous_observation),
-                    self._path_coordinates(observation)))
+                    self._whitespace_separated_path_coordinates(previous_observation),
+                    self._whitespace_separated_path_coordinates(observation)))
             previous_observation = observation
+
+    def _generate_points_3d(self, segment):
+        for observation in segment:
+            cx, cy = self._path_coordinates(observation)
+            z = self._depth_value(observation)
+            radius = max(self._args.point_size_min,
+                         z * self._args.point_size)
+            opacity = z
+            self._write('<circle cx="%f" cy="%f" r="%f" style="fill:%s;stroke:none;fill-opacity:%f" />' % (
+                    cx, cy, radius, self._args.stroke_color, opacity))
+
+    def _depth_value(self, observation):
+        return pow((1 - min(observation[2], 1)), .8)
+
+    def _whitespace_separated_path_coordinates(self, observation):
+        px, py = self._path_coordinates(observation)
+        return "%s %s" % (px, py)
 
     def _path_coordinates(self, observation):
         px = self._args.plot_width * (
             observation[self._dimensions[0]] - self._explored_min) / self._explored_range
         py = self._args.plot_height * (
             observation[self._dimensions[1]] - self._explored_min) / self._explored_range
-        return "%s %s" % (px, py)
+        return px, py
 
     def _generate_footer(self):
         self._write('</g>\n')
