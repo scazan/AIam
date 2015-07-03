@@ -628,6 +628,7 @@ void SampleViewer::Display()
 
 
 
+	glPopMatrix();
 	// Swap the OpenGL display buffers
 	glutSwapBuffers();
 
