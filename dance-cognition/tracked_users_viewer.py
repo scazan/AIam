@@ -4,7 +4,7 @@ from OpenGL.GLU import *
 from PyQt4 import QtCore, QtGui
 import math
 import collections
-from vector import Vector3d
+import numpy
 from ui.scene import Scene
 from ui.window import Window
 text_renderer_module = __import__("text_renderer")
@@ -135,12 +135,12 @@ class TrackedUsersScene(Scene):
     def _draw_label(self, user):
         head_position = user.get_joint("head").get_position()
         glColor3f(0, 0, 0)
-        position = head_position + Vector3d(0, 140, 0)
-        self._draw_text(str(user.get_id()), 100, *position, h_align="center")
+        position = head_position + [0, 140, 0]
+        self._draw_text(str(user.get_id()), 100, position[0], position[1], position[2], h_align="center")
 
     def _draw_activity(self, user):
         head_position = user.get_joint("head").get_position()
-        position = head_position + Vector3d(150, 140, 0)
+        position = head_position + [150, 140, 0]
         activity = user.get_activity()
 
         glColor3f(.8, .8, 1)
@@ -151,7 +151,11 @@ class TrackedUsersScene(Scene):
         self._draw_solid_cube(*position, sx=70, sz=70, sy=self._activity_as_height(activity))
 
         glColor3f(.5, .5, 1)
-        self._draw_text("%.1f" % activity, 100, *(position + Vector3d(0, -100, 0)), h_align="center")
+        self._draw_text("%.1f" % activity, 100,
+                        position[0],
+                        position[1] - 100,
+                        position[2],
+                        h_align="center")
 
     def _activity_as_height(self, activity):
         return activity * 3
@@ -191,27 +195,27 @@ class TrackedUsersScene(Scene):
         for n in range(len(vertices) - 1):
             vertex1 = vertices[n]
             vertex2 = vertices[n+1]
-            if vertex1.y > self.parent().floor_y and vertex2.y > self.parent().floor_y:
+            if vertex1[1] > self.parent().floor_y and vertex2[1] > self.parent().floor_y:
                 self._set_shadow_color_by_joint(user, confidence)
-                glVertex3f(vertex1.x, self.parent().floor_y, vertex1.z)
-                glVertex3f(vertex2.x, self.parent().floor_y, vertex2.z)
+                glVertex3f(*vertex1)
+                glVertex3f(*vertex2)
         glEnd()
 
     def _split_vertices_at_floor(self, vertex1, vertex2):
         floor_y = self.parent().floor_y
-        if (vertex1.y < floor_y < vertex2.y or
-            vertex1.y > floor_y > vertex2.y):
-            floor_x = vertex1.x + (vertex2.x - vertex1.x) / (vertex2.y - vertex1.y) * (floor_y - vertex1.y)
-            floor_z = vertex1.z + (vertex2.z - vertex1.z) / (vertex2.y - vertex1.y) * (floor_y - vertex1.y)
-            return [Vector3d(vertex1.x, vertex1.y, vertex1.z),
-                    Vector3d(floor_x, floor_y,   floor_z),
-                    Vector3d(vertex2.x, vertex2.y, vertex2.z)]
+        if (vertex1[1] < floor_y < vertex2[1] or
+            vertex1[1] > floor_y > vertex2[1]):
+            floor_x = vertex1[0] + (vertex2[0] - vertex1[0]) / (vertex2[1] - vertex1[1]) * (floor_y - vertex1[1])
+            floor_z = vertex1[2] + (vertex2[2] - vertex1[2]) / (vertex2[1] - vertex1[1]) * (floor_y - vertex1[1])
+            return [vertex1,
+                    numpy.array([floor_x, floor_y, floor_z]),
+                    vertex2]
         else:
             return [vertex1, vertex2]
 
     def _set_color_by_joint(self, user, confidence, vertex1, vertex2):
         a = 1 - (.8 - confidence * .8)
-        if vertex1.y <= self.parent().floor_y and vertex2.y <= self.parent().floor_y:
+        if vertex1[1] <= self.parent().floor_y and vertex2[1] <= self.parent().floor_y:
             r, g, b = SKELETON_COLOR_BELOW_FLOOR
         else:
             if user == self._selected_user:

@@ -1,14 +1,5 @@
 reduce high CPU usage when multiple users are tracked
 
-Traceback (most recent call last):
-  File "/home/alex/projects/AIam/dance-cognition/connectivity/osc_receiver.py", line 53, in _fire_callback_with_exception_handler
-    callback(path, args, types, src, user_data)
-  File "interpret_user_movement.py", line 319, in handle_joint_data
-    interpreter.handle_joint_data(*values)
-  File "interpret_user_movement.py", line 159, in handle_joint_data
-    self._frame["joint_data"].append((user_id, joint_name, x, y, z, confidence))
-TypeError: 'NoneType' object has no attribute '__getitem__'
-
 reduce interaction latency
   abort current path when parameters change a lot?
   remove/reduce joint smoothing? (and add support for viewing with or without smoothing)

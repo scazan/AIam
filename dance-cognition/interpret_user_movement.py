@@ -14,7 +14,6 @@ from osc_receiver import OscReceiver
 from websocket_client import WebsocketClient
 from event_listener import EventListener
 from event import Event
-from vector import Vector3d
 from tracked_users_viewer import TrackedUsersViewer
 from transformations import rotation_matrix
 
@@ -55,9 +54,9 @@ class Joint:
         return sum(self._activity_buffer) / self._buffer_size
 
     def set_position(self, x, y, z):
-        new_position = Vector3d(x, y, z)
+        new_position = numpy.array([x, y, z])
         if self._previous_position is not None:
-            movement = (new_position - self._previous_position).mag()
+            movement = numpy.linalg.norm(new_position - self._previous_position)
             self._activity_buffer.append(movement)
         self._previous_position = new_position
 
@@ -156,10 +155,12 @@ class UserMovementInterpreter:
                        "joint_data": []}
 
     def handle_joint_data(self, user_id, joint_name, x, y, z, confidence):
-        self._frame["joint_data"].append((user_id, joint_name, x, y, z, confidence))
+        if self._frame is not None:
+            self._frame["joint_data"].append((user_id, joint_name, x, y, z, confidence))
 
     def handle_state(self, user_id, state):
-        self._frame["states"].append((user_id, state))
+        if self._frame is not None:
+            self._frame["states"].append((user_id, state))
 
     def _process_frame(self):
         self._tracker_rotation_matrix = rotation_matrix(
@@ -186,12 +187,12 @@ class UserMovementInterpreter:
                 pass
 
     def adjust_tracked_position(self, position):
-        unadjusted_vector = [position.x, position.y, position.z, 1]
+        unadjusted_vector = [position[0], position[1], position[2], 1]
         rotated_vector = numpy.dot(self._tracker_rotation_matrix, unadjusted_vector)
-        adjusted_vector = Vector3d(
+        adjusted_vector = numpy.array([
             rotated_vector[0],
             rotated_vector[1] + self.tracker_y_position,
-            rotated_vector[2])
+            rotated_vector[2]])
         return adjusted_vector
 
     def get_selected_user(self):
