@@ -75,28 +75,40 @@ class User:
 
     def handle_joint_data(self, joint_name, x, y, z, confidence):
         if self._should_consider_joint(joint_name):
-            if joint_name not in self._joints:
-                self._joints[joint_name] = Joint(self._interpreter)
-            joint = self._joints[joint_name]
-            joint.set_position(x, y, z)
-            joint.set_confidence(confidence)
-            self._last_updated_joint = joint_name
-            self._num_updated_joints += 1
-            if self._num_updated_joints >= self._interpreter.num_considered_joints:
-                self._num_updated_joints = 0
-                self._num_received_frames += 1
-                if self._num_received_frames > 1:
-                    self._activity = sum([
-                            self.get_joint(joint_name).get_activity()
-                            for joint_name in JOINTS_DETERMNING_ACTIVITY]) / \
-                        len(JOINTS_DETERMNING_ACTIVITY)
-                    self._interpreter.user_has_new_information(self._user_id)
+            self._process_joint_data(joint_name, x, y, z, confidence)
 
     def _should_consider_joint(self, joint_name):
         if args.with_viewer:
             return True
         else:
             return joint_name in CONSIDERED_JOINTS
+
+    def _process_joint_data(self, joint_name, x, y, z, confidence):
+        self._ensure_joint_exists(joint_name)
+        joint = self._joints[joint_name]
+        joint.set_position(x, y, z)
+        joint.set_confidence(confidence)
+        self._last_updated_joint = joint_name
+        self._num_updated_joints += 1
+        if self._num_updated_joints >= self._interpreter.num_considered_joints:
+            self._process_frame()
+
+    def _ensure_joint_exists(self, joint_name):
+        if joint_name not in self._joints:
+            self._joints[joint_name] = Joint(self._interpreter)
+
+    def _process_frame(self):
+        self._num_updated_joints = 0
+        self._num_received_frames += 1
+        if self._num_received_frames > 1:
+            self._activity = self._measure_activity()
+            self._interpreter.user_has_new_information(self._user_id)
+
+    def _measure_activity(self):
+        return sum([
+            self.get_joint(joint_name).get_activity()
+            for joint_name in JOINTS_DETERMNING_ACTIVITY]) / \
+                len(JOINTS_DETERMNING_ACTIVITY)
 
     def get_activity(self):
         return self._activity
