@@ -72,6 +72,7 @@ class User:
         self._num_updated_joints = 0
         self._num_received_frames = 0
         self._activity = 0
+        self._distance_to_center = None
 
     def handle_joint_data(self, joint_name, x, y, z, confidence):
         if self._should_consider_joint(joint_name):
@@ -88,6 +89,8 @@ class User:
         joint = self._joints[joint_name]
         joint.set_position(x, y, z)
         joint.set_confidence(confidence)
+        if joint_name == "torso":
+            self._distance_to_center = None
         self._last_updated_joint = joint_name
         self._num_updated_joints += 1
         if self._num_updated_joints >= self._interpreter.num_considered_joints:
@@ -121,6 +124,17 @@ class User:
 
     def has_complete_joint_data(self):
         return len(self._joints) >= self._interpreter.num_considered_joints
+
+    def get_distance_to_center(self):
+        if self._distance_to_center is None:
+            self._distance_to_center = self._measure_distance_to_center()
+        return self._distance_to_center
+
+    def _measure_distance_to_center(self):
+        torso_x, torso_y, torso_z = self.get_joint("torso").get_position()
+        dx = torso_x - self._interpreter.active_area_center_x
+        dz = torso_z - self._interpreter.active_area_center_z
+        return math.sqrt(dx*dx + dz*dz)
 
 class UserMovementInterpreter:
     def __init__(self, send_interpretations=True, log_target=None, log_source=None):
@@ -242,18 +256,12 @@ class UserMovementInterpreter:
         if len(users_within_active_area) > 0:
             self._selected_user = min(
                 users_within_active_area,
-                key=lambda user: self._distance_to_center(user))
+                key=lambda user: user.get_distance_to_center())
         else:
             self._selected_user = None
 
     def _is_within_active_area(self, user):
-        return self._distance_to_center(user) < self.active_area_radius
-
-    def _distance_to_center(self, user):
-        torso_x, torso_y, torso_z = user.get_joint("torso").get_position()
-        dx = torso_x - self.active_area_center_x
-        dz = torso_z - self.active_area_center_z
-        return math.sqrt(dx*dx + dz*dz)
+        return user.get_distance_to_center() < self.active_area_radius
 
     def _add_interpretation_to_response_buffer(self):
         relative_activity = self._get_relative_activity()
