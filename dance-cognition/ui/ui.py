@@ -180,6 +180,7 @@ class MainWindow(Window, EventListener):
         parser.add_argument("--image-margin", type=int, default=0)
         parser.add_argument("--ui-event-log-target")
         parser.add_argument("--ui-event-log-source")
+        parser.add_argument("--show-fps", action="store_true")
 
     def __init__(self, client, entity, student, bvh_reader, scene_widget_class, toolbar_class, args,
                  event_handlers={}):

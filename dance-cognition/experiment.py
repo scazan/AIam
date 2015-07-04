@@ -87,7 +87,6 @@ class Experiment(EventListener):
                             help="Force websockets support (enabled automatically by --backend-only)")
         parser.add_argument("--no-websockets", action="store_true",
                             help="Force running without websockets support (e.g when combing --ui-only and --event-log-source)")
-        parser.add_argument("--show-fps", action="store_true")
         parser.add_argument("--output-receiver-host")
         parser.add_argument("--output-receiver-port", type=int, default=10000)
         parser.add_argument("--output-receiver-type", choices=["bvh", "world"], default="bvh")
