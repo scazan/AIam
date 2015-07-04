@@ -7,11 +7,11 @@
 
 #include "Viewer.h"
 
+SampleViewer sampleViewer("User Viewer");
+
 int main(int argc, char** argv)
 {
 	openni::Status rc = openni::STATUS_OK;
-
-	SampleViewer sampleViewer("User Viewer");
 
 	rc = sampleViewer.Init(argc, argv);
 	if (rc != openni::STATUS_OK)
