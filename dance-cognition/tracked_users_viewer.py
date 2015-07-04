@@ -390,6 +390,7 @@ class TrackedUsersViewer(Window):
         self.show_field_of_view_action.setShortcut("Ctrl+p")
         self.show_field_of_view_action.triggered.connect(self._scene.updateGL)
         self._view_menu.addAction(self.show_field_of_view_action)
+        self.show_field_of_view_action.toggle()
 
     def _add_fullscreen_action(self):
         self._fullscreen_action = QtGui.QAction('Fullscreen', self)
