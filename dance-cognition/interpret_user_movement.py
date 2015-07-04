@@ -30,8 +30,9 @@ MAX_LOCATION_PREFERENCE = 1.0
 RESPONSE_TIME = 0
 JOINT_SMOOTHING_DURATION = 1.0
 FPS = 30.0
-NUM_JOINTS = 15
-SELECTED_JOINTS = ["left_hand", "right_hand"]
+NUM_JOINTS_IN_SKELETON = 15
+JOINTS_DETERMNING_ACTIVITY = ["left_hand", "right_hand"]
+CONSIDERED_JOINTS = JOINTS_DETERMNING_ACTIVITY + ["torso"]
 
 OSC_PORT = 15002
 WEBSOCKET_HOST = "localhost"
@@ -73,22 +74,29 @@ class User:
         self._activity = 0
 
     def handle_joint_data(self, joint_name, x, y, z, confidence):
-        if joint_name not in self._joints:
-            self._joints[joint_name] = Joint(self._interpreter)
-        joint = self._joints[joint_name]
-        joint.set_position(x, y, z)
-        joint.set_confidence(confidence)
-        self._last_updated_joint = joint_name
-        self._num_updated_joints += 1
-        if self._num_updated_joints >= NUM_JOINTS:
-            self._num_updated_joints = 0
-            self._num_received_frames += 1
-            if self._num_received_frames > 1:
-                self._activity = sum([
-                        self.get_joint(joint_name).get_activity()
-                        for joint_name in SELECTED_JOINTS]) / \
-                    len(SELECTED_JOINTS)
-                self._interpreter.user_has_new_information(self._user_id)
+        if self._should_consider_joint(joint_name):
+            if joint_name not in self._joints:
+                self._joints[joint_name] = Joint(self._interpreter)
+            joint = self._joints[joint_name]
+            joint.set_position(x, y, z)
+            joint.set_confidence(confidence)
+            self._last_updated_joint = joint_name
+            self._num_updated_joints += 1
+            if self._num_updated_joints >= self._interpreter.num_considered_joints:
+                self._num_updated_joints = 0
+                self._num_received_frames += 1
+                if self._num_received_frames > 1:
+                    self._activity = sum([
+                            self.get_joint(joint_name).get_activity()
+                            for joint_name in JOINTS_DETERMNING_ACTIVITY]) / \
+                        len(JOINTS_DETERMNING_ACTIVITY)
+                    self._interpreter.user_has_new_information(self._user_id)
+
+    def _should_consider_joint(self, joint_name):
+        if args.with_viewer:
+            return True
+        else:
+            return joint_name in CONSIDERED_JOINTS
 
     def get_activity(self):
         return self._activity
@@ -100,7 +108,7 @@ class User:
         return self._joints[name]
 
     def has_complete_joint_data(self):
-        return len(self._joints) >= NUM_JOINTS
+        return len(self._joints) >= self._interpreter.num_considered_joints
 
 class UserMovementInterpreter:
     def __init__(self, send_interpretations=True, log_target=None, log_source=None):
@@ -132,6 +140,11 @@ class UserMovementInterpreter:
             self._log_target_file = open(log_target, "w")
         else:
             self._writing_to_log = False
+
+        if args.with_viewer:
+            self.num_considered_joints = NUM_JOINTS_IN_SKELETON
+        else:
+            self.num_considered_joints = len(CONSIDERED_JOINTS)
 
     def get_tracker_pitch(self):
         return self._tracker_pitch
