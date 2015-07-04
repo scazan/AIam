@@ -41,15 +41,18 @@ bool g_drawBoundingBox = false;
 bool g_drawBackground = true;
 bool g_drawDepth = true;
 bool g_drawFrameId = false;
+bool verbose = false;
 
 int g_nXRes = 0, g_nYRes = 0;
 
 void log(const char *format, ...) {
   va_list args;
-  va_start(args, format);
-  vfprintf(stdout, format, args);
-  va_end(args);
-  fflush(stdout);
+  if(verbose) {
+    va_start(args, format);
+    vfprintf(stdout, format, args);
+    va_end(args);
+    fflush(stdout);
+  }
 }
 
 #define checkGlErrors() _checkGlErrors(__LINE__)
@@ -117,31 +120,38 @@ openni::Status SampleViewer::Init(int argc, char **argv)
 	openni::Status rc = openni::OpenNI::initialize();
 	if (rc != openni::STATUS_OK)
 	{
-		log("Failed to initialize OpenNI\n%s\n", openni::OpenNI::getExtendedError());
+		printf("Failed to initialize OpenNI\n%s\n", openni::OpenNI::getExtendedError());
 		return rc;
 	}
 
 	const char* deviceUri = openni::ANY_DEVICE;
-	for (int i = 1; i < argc-1; ++i)
+	for (int i = 1; i < argc; ++i)
 	{
 		if (strcmp(argv[i], "-device") == 0)
 		{
 			deviceUri = argv[++i];
-			break;
 		}
 
 		else if(strcmp(argv[i], "-record") == 0)
 		{
 			recordingFilename = argv[++i];
-			break;
+		}
+
+		else if(strcmp(argv[i], "-verbose") == 0) {
+		  verbose = true;
+		}
+
+		else {
+		  printf("failed to parse argument: %s\n", argv[i]);
+		  return openni::STATUS_ERROR;
 		}
 	}
 
 	rc = m_device.open(deviceUri);
 	if (rc == openni::STATUS_OK)
-	  log("Opened device %s\n", deviceUri);
+	  printf("Opened device %s\n", deviceUri);
 	else {
-		log("Failed to open device\n%s\n", openni::OpenNI::getExtendedError());
+		printf("Failed to open device\n%s\n", openni::OpenNI::getExtendedError());
 		return rc;
 	}
 
@@ -159,13 +169,13 @@ openni::Status SampleViewer::Init(int argc, char **argv)
 	      }
 	      if (rc != openni::STATUS_OK)
 	      	{
-	      	  log("Couldn't start depth stream:\n%s\n", openni::OpenNI::getExtendedError());
+	      	  printf("Couldn't start depth stream:\n%s\n", openni::OpenNI::getExtendedError());
 	      	  depthStream.destroy();
 	      	}
 	    }
 	  else
 	    {
-	      log("Couldn't find depth stream:\n%s\n", openni::OpenNI::getExtendedError());
+	      printf("Couldn't find depth stream:\n%s\n", openni::OpenNI::getExtendedError());
 	    }
 
 	  recorder.create(recordingFilename);
@@ -177,7 +187,7 @@ openni::Status SampleViewer::Init(int argc, char **argv)
 
 	if (m_pUserTracker->create(&m_device) != nite::STATUS_OK)
 	{
-	  log("failed to create user tracker\n");
+	  printf("failed to create user tracker\n");
 	  return openni::STATUS_ERROR;
 	}
 
@@ -205,7 +215,7 @@ char g_generalMessage[100] = {0};
 
 #define USER_MESSAGE(msg) {\
 	sprintf(g_userStatusLabels[user.getId()], "%s", msg);\
-	log("[%08" PRIu64 "] User #%d:\t%s\n", ts, user.getId(), msg);}
+	printf("[%08" PRIu64 "] User #%d:\t%s\n", ts, user.getId(), msg);}
 
 void updateUserState(const nite::UserData& user, uint64_t ts)
 {
@@ -214,9 +224,9 @@ void updateUserState(const nite::UserData& user, uint64_t ts)
 		USER_MESSAGE("New");
 	}
 	else if (user.isVisible() && !g_visibleUsers[user.getId()])
-		log("[%08" PRIu64 "] User #%d:\tVisible\n", ts, user.getId());
+		printf("[%08" PRIu64 "] User #%d:\tVisible\n", ts, user.getId());
 	else if (!user.isVisible() && g_visibleUsers[user.getId()])
-		log("[%08" PRIu64 "] User #%d:\tOut of Scene\n", ts, user.getId());
+		printf("[%08" PRIu64 "] User #%d:\tOut of Scene\n", ts, user.getId());
 	else if (user.isLost())
 	{
 		USER_MESSAGE("Lost");
@@ -295,7 +305,7 @@ void SampleViewer::Display()
 	nite::Status rc = m_pUserTracker->readFrame(&userTrackerFrame);
 	if (rc != nite::STATUS_OK)
 	{
-		log("readFrame failed\n");
+		printf("readFrame failed\n");
 		return;
 	}
 
@@ -393,7 +403,7 @@ void SampleViewer::Display()
 	}
 
 	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
-	if(checkGlErrors() == 0) printf("NOT stack overflow\n");
+	checkGlErrors();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	checkGlErrors();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -432,7 +442,6 @@ void SampleViewer::Display()
 
 	log("getUsers\n");
 	const nite::Array<nite::UserData>& users = userTrackerFrame.getUsers();
-	// log("%08" PRIu64 "\n", userTrackerFrame.getTimestamp());
 
 	log("draw users\n");
 	for (int i = 0; i < users.getSize(); ++i)
@@ -474,14 +483,14 @@ void SampleViewer::Display()
 			{
 				// Start timer
 				sprintf(g_generalMessage, "In exit pose. Keep it for %d second%s to exit\n", g_poseTimeoutToExit/1000, g_poseTimeoutToExit/1000 == 1 ? "" : "s");
-				log("Counting down %d second to exit\n", g_poseTimeoutToExit/1000);
+				printf("Counting down %d second to exit\n", g_poseTimeoutToExit/1000);
 				m_poseUser = user.getId();
 				m_poseTime = userTrackerFrame.getTimestamp();
 			}
 			else if (pose.isExited())
 			{
 				memset(g_generalMessage, 0, sizeof(g_generalMessage));
-				log("Count-down interrupted\n");
+				printf("Count-down interrupted\n");
 				m_poseTime = 0;
 				m_poseUser = 0;
 			}
@@ -490,7 +499,7 @@ void SampleViewer::Display()
 				// tick
 				if (userTrackerFrame.getTimestamp() - m_poseTime > g_poseTimeoutToExit * 1000)
 				{
-					log("Count down complete. Exit...\n");
+					printf("Count down complete. Exit...\n");
 					Finalize();
 					exit(2);
 				}
