@@ -283,7 +283,9 @@ class TrackedUsersScene(Scene):
         x = event.x()
         y = event.y()
         if self._dragging_tracker_pitch:
-            self.parent().interpreter.tracker_pitch += TRACKER_PITCH_SPEED * (y - self._drag_y_previous)
+            self.parent().interpreter.set_tracker_pitch(
+                self.parent().interpreter.get_tracker_pitch() +
+                TRACKER_PITCH_SPEED * (y - self._drag_y_previous))
             self._drag_y_previous = y
             self.updateGL()
         elif self._dragging_tracker_y_position:
@@ -302,7 +304,7 @@ class TrackedUsersScene(Scene):
     def print_tracker_settings(self):
         print "%.3f,%.3f" % (
             self.parent().interpreter.tracker_y_position,
-            self.parent().interpreter.tracker_pitch)
+            self.parent().interpreter.get_tracker_pitch())
 
 class LogWidget(QtGui.QTextEdit):
     def __init__(self, *args, **kwargs):

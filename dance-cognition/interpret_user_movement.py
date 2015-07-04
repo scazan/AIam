@@ -114,7 +114,8 @@ class UserMovementInterpreter:
         self.active_area_center_x, self.active_area_center_z = [
             float(s) for s in args.active_area_center.split(",")]
         self.active_area_radius = args.active_area_radius
-        self.tracker_y_position, self.tracker_pitch = map(float, args.tracker.split(","))
+        self.tracker_y_position, tracker_pitch = map(float, args.tracker.split(","))
+        self.set_tracker_pitch(tracker_pitch)
 
         if log_source:
             self._read_log(log_source)
@@ -131,6 +132,14 @@ class UserMovementInterpreter:
             self._log_target_file = open(log_target, "w")
         else:
             self._writing_to_log = False
+
+    def get_tracker_pitch(self):
+        return self._tracker_pitch
+
+    def set_tracker_pitch(self, pitch):
+        self._tracker_pitch = pitch
+        self._tracker_rotation_matrix = rotation_matrix(
+            math.radians(self._tracker_pitch), [1, 0, 0])
 
     def _read_log(self, filename):
         print "reading log file %s..." % filename
@@ -163,9 +172,6 @@ class UserMovementInterpreter:
             self._frame["states"].append((user_id, state))
 
     def _process_frame(self):
-        self._tracker_rotation_matrix = rotation_matrix(
-            math.radians(self.tracker_pitch), [1, 0, 0])
-
         for values in self._frame["states"]:
             self._process_state(*values)
         for values in self._frame["joint_data"]:
