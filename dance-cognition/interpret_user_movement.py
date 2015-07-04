@@ -300,6 +300,7 @@ parser.add_argument("--with-viewer", action="store_true")
 parser.add_argument("--without-sending", action="store_true")
 parser.add_argument("--log-source")
 parser.add_argument("--log-target")
+parser.add_argument("--profile", action="store_true")
 args = parser.parse_args()
 
 interpreter = UserMovementInterpreter(
@@ -335,9 +336,19 @@ else:
     osc_receiver.add_method("/state", "is", handle_state)
     osc_receiver.start()
 
+if args.profile:
+    import yappi
+    yappi.start()
+
 if args.with_viewer:
     viewer.show()
     app.exec_()
 else:
-    while True:
-        time.sleep(1)
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        pass
+
+if args.profile:
+    yappi.get_func_stats().print_all()
