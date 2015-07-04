@@ -105,7 +105,6 @@ class User:
         self._num_received_frames += 1
         if self._num_received_frames > 1:
             self._activity = self._measure_activity()
-            self._interpreter.user_has_new_information(self._user_id)
 
     def _measure_activity(self):
         return sum([
@@ -218,6 +217,11 @@ class UserMovementInterpreter:
         if args.with_viewer:
             viewer.process_frame(self._frame)
 
+        self._select_user()
+        if self._send_interpretations:
+            self._add_interpretation_to_response_buffer()
+            self._send_interpretation_from_response_buffer()
+
     def _process_joint_data(self, user_id, joint_name, x, y, z, confidence):
         if user_id not in self._users:
             self._users[user_id] = User(user_id, self)
@@ -242,12 +246,6 @@ class UserMovementInterpreter:
 
     def get_selected_user(self):
         return self._selected_user
-
-    def user_has_new_information(self, user):
-        self._select_user()
-        if self._send_interpretations:
-            self._add_interpretation_to_response_buffer()
-            self._send_interpretation_from_response_buffer()
 
     def _select_user(self):
         users_within_active_area = [

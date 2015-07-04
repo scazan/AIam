@@ -1,5 +1,3 @@
-reduce high CPU usage when multiple users are tracked
-
 reduce interaction latency
   abort current path when parameters change a lot?
   remove/reduce joint smoothing? (and add support for viewing with or without smoothing)
