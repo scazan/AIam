@@ -109,6 +109,8 @@ SampleViewer::~SampleViewer()
 void SampleViewer::Finalize()
 {
   if(!finalized) {
+    if(recordingFilename != NULL)
+      recorder.stop();
     if(m_pUserTracker != NULL)
       delete m_pUserTracker;
     nite::NiTE::shutdown();
