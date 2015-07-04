@@ -7,6 +7,8 @@
 
 #include "Tracker.hpp"
 
+#define FPS 30
+
 Tracker::Tracker() {
   userTracker = new nite::UserTracker;
 }
@@ -19,6 +21,7 @@ Tracker::~Tracker() {
 
 openni::Status Tracker::init(int argc, char **argv) {
   const char *recordingFilename = NULL;
+  float startTimeMs = 0;
 
   openni::Status status = openni::OpenNI::initialize();
   if(status != openni::STATUS_OK) {
@@ -30,12 +33,19 @@ openni::Status Tracker::init(int argc, char **argv) {
   for (int i = 1; i < argc-1; ++i) {
     if (strcmp(argv[i], "-device") == 0) {
       deviceUri = argv[++i];
-      break;
     }
 
     else if(strcmp(argv[i], "-record") == 0) {
       recordingFilename = argv[++i];
-      break;
+    }
+
+    else if(strcmp(argv[i], "-start") == 0) {
+      startTimeMs = atof(argv[++i]);
+    }
+
+    else {
+      printf("failed to parse argument: %s\n", argv[i]);
+      return openni::STATUS_ERROR;
     }
   }
 
@@ -45,29 +55,29 @@ openni::Status Tracker::init(int argc, char **argv) {
     return status;
   }
 
-  if(recordingFilename != NULL) {
-    if(access(recordingFilename, F_OK) == 0) {
-      printf("file '%s' already exists\n", recordingFilename);
-      return openni::STATUS_ERROR;
-    }
-
-    status = depthStream.create(device, openni::SENSOR_DEPTH);
-    if (status == openni::STATUS_OK) {
-      openni::VideoMode depthMode = depthStream.getVideoMode();
-      depthMode.setFps(30);
-      depthMode.setResolution(640, 480);
-      depthMode.setPixelFormat(openni::PIXEL_FORMAT_DEPTH_1_MM);
-      status = depthStream.setVideoMode(depthMode); 
-      if(status == openni::STATUS_OK){
-	status = depthStream.start();
-      }
+  status = depthStream.create(device, openni::SENSOR_DEPTH);
+  if (status == openni::STATUS_OK) {
+    openni::VideoMode depthMode = depthStream.getVideoMode();
+    depthMode.setFps(FPS);
+    depthMode.setResolution(640, 480);
+    depthMode.setPixelFormat(openni::PIXEL_FORMAT_DEPTH_1_MM);
+    status = depthStream.setVideoMode(depthMode); 
+    if(status == openni::STATUS_OK){
+      status = depthStream.start();
       if (status != openni::STATUS_OK) {
 	printf("Couldn't start depth stream:\n%s\n", openni::OpenNI::getExtendedError());
 	depthStream.destroy();
       }
     }
-    else {
-      printf("Couldn't find depth stream:\n%s\n", openni::OpenNI::getExtendedError());
+  }
+  else {
+    printf("Couldn't find depth stream:\n%s\n", openni::OpenNI::getExtendedError());
+  }
+
+  if(recordingFilename != NULL) {
+    if(access(recordingFilename, F_OK) == 0) {
+      printf("file '%s' already exists\n", recordingFilename);
+      return openni::STATUS_ERROR;
     }
 
     recorder.create(recordingFilename);
@@ -79,6 +89,16 @@ openni::Status Tracker::init(int argc, char **argv) {
 
   if(userTracker->create(&device) != nite::STATUS_OK) {
     return openni::STATUS_ERROR;
+  }
+
+  if(startTimeMs > 0) {
+    startFrameIndex = (int) (startTimeMs * FPS / 1000);
+    printf("Total number of frames: %d\n", device.getPlaybackControl()->getNumberOfFrames(depthStream));
+    printf("Fast-forwarding to frame %d\n", startFrameIndex);
+    status = device.getPlaybackControl()->setSpeed(100.0);
+  }
+  else {
+    startFrameIndex = 0;
   }
 
   transmitSocket = new UdpTransmitSocket(IpEndpointName(OSC_HOST, OSC_PORT));
@@ -105,6 +125,12 @@ void Tracker::processFrame() {
 
   sendBeginFrame();
   sendStatesAndSkeletonData();
+
+  if(startFrameIndex > 0 && userTrackerFrame.getFrameIndex() >= startFrameIndex) {
+    printf("Stopping fast-forward after having reached frame %d\n", userTrackerFrame.getFrameIndex());
+    device.getPlaybackControl()->setSpeed(1.0);
+    startFrameIndex = 0;
+  }
 }
 
 void Tracker::sendBeginFrame() {

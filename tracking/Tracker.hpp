@@ -39,6 +39,7 @@ private:
   std::map<nite::UserId, nite::SkeletonState> previousStates;
   UdpTransmitSocket* transmitSocket;
   char oscBuffer[OSC_BUFFER_SIZE];
+  int startFrameIndex;
 };
 
 
