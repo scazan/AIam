@@ -383,6 +383,7 @@ class TrackedUsersViewer(Window):
         self._view_menu = self._menu_bar.addMenu("View")
         self._add_show_field_of_view_action()
         self._add_fullscreen_action()
+        self._add_auto_refresh_action()
 
     def _add_show_field_of_view_action(self):
         self.show_field_of_view_action = QtGui.QAction('Show field of view', self)
@@ -404,6 +405,13 @@ class TrackedUsersViewer(Window):
             self.enter_fullscreen()
         else:
             self.leave_fullscreen()
+
+    def _add_auto_refresh_action(self):
+        self.auto_refresh_action = QtGui.QAction('Auto refresh', self)
+        self.auto_refresh_action.setCheckable(True)
+        self.auto_refresh_action.setShortcut('r')
+        self._view_menu.addAction(self.auto_refresh_action)
+        self.auto_refresh_action.toggle()
 
     def _create_replay_menu(self):
         self._replay_menu = self._menu_bar.addMenu("Replay")
@@ -451,8 +459,9 @@ class TrackedUsersViewer(Window):
         return QtCore.QSize(640, 480)
 
     def process_frame(self, frame):
-        callback = lambda: self._process_frame_non_thread_safe(frame)
-        QtGui.QApplication.postEvent(self, CustomQtEvent(callback))
+        if self.auto_refresh_action.isChecked():
+            callback = lambda: self._process_frame_non_thread_safe(frame)
+            QtGui.QApplication.postEvent(self, CustomQtEvent(callback))
 
     def _process_frame_non_thread_safe(self, frame):
         for user_id, state in frame["states"]:
