@@ -23,7 +23,14 @@ public:
 
 protected:
 	virtual void Display();
+	void ResizedWindow(int width, int height);
 	virtual void DisplayPostDraw(){};	// Overload to draw over the screen image
+	void DrawStatusLabel(const nite::UserData& user);
+	void DrawCenterOfMass(const nite::UserData& user);
+	void DrawBoundingBox(const nite::UserData& user);
+	void DrawLimb(const nite::SkeletonJoint& joint1, const nite::SkeletonJoint& joint2, int color);
+	void DrawSkeleton(const nite::UserData& userData);
+
 
 	virtual void OnKey(unsigned char key, int x, int y);
 
@@ -38,6 +45,7 @@ private:
 
 	static SampleViewer* ms_self;
 	static void glutIdle();
+	static void glutReshape(int width, int height);
 	static void glutDisplay();
 	static void glutKeyboard(unsigned char key, int x, int y);
 
@@ -56,6 +64,7 @@ private:
 	nite::UserId m_poseUser;
 	uint64_t m_poseTime;
 	uint64_t previousDisplayTime;
+	int windowWidth, windowHeight;
 };
 
 

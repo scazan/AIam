@@ -72,6 +72,11 @@ void SampleViewer::glutIdle()
   log("glutIdle\n");
 	glutPostRedisplay();
 }
+
+void SampleViewer::glutReshape(int width, int height) {
+  SampleViewer::ms_self->ResizedWindow(width, height);
+}
+
 void SampleViewer::glutDisplay()
 {
   log("glutDisplay\n");
@@ -252,150 +257,26 @@ void glPrintString(void *font, const char *str)
 	{   
 		glutBitmapCharacter(font,*str++);
 	}   
+	checkGlErrors();
 }
 #endif
-void DrawStatusLabel(nite::UserTracker* pUserTracker, const nite::UserData& user)
-{
-	int color = user.getId() % colorCount;
-	glColor3f(1.0f - Colors[color][0], 1.0f - Colors[color][1], 1.0f - Colors[color][2]);
-
-	float x,y;
-	pUserTracker->convertJointCoordinatesToDepth(user.getCenterOfMass().x, user.getCenterOfMass().y, user.getCenterOfMass().z, &x, &y);
-	x *= GL_WIN_SIZE_X/(float)g_nXRes;
-	y *= GL_WIN_SIZE_Y/(float)g_nYRes;
-	char *msg = g_userStatusLabels[user.getId()];
-	glRasterPos2i(x-((strlen(msg)/2)*8),y);
-	glPrintString(GLUT_BITMAP_HELVETICA_18, msg);
-}
 void DrawFrameId(int frameId)
 {
 	char buffer[80] = "";
 	sprintf(buffer, "%d", frameId);
 	glColor3f(1.0f, 0.0f, 0.0f);
-	glRasterPos2i(20, 20);
+	glRasterPos2f(20.0/GL_WIN_SIZE_X, 20.0/GL_WIN_SIZE_Y);
 	glPrintString(GLUT_BITMAP_HELVETICA_18, buffer);
+	checkGlErrors();
 }
-void DrawCenterOfMass(nite::UserTracker* pUserTracker, const nite::UserData& user)
+
+
+void SampleViewer::ResizedWindow(int width, int height)
 {
-	glColor3f(1.0f, 1.0f, 1.0f);
-
-	float coordinates[3] = {0};
-
-	pUserTracker->convertJointCoordinatesToDepth(user.getCenterOfMass().x, user.getCenterOfMass().y, user.getCenterOfMass().z, &coordinates[0], &coordinates[1]);
-
-	coordinates[0] *= GL_WIN_SIZE_X/(float)g_nXRes;
-	coordinates[1] *= GL_WIN_SIZE_Y/(float)g_nYRes;
-	glPointSize(8);
-	glVertexPointer(3, GL_FLOAT, 0, coordinates);
-	glDrawArrays(GL_POINTS, 0, 1);
-
+  windowWidth = width;
+  windowHeight = height;
+  glViewport(0, 0, windowWidth, windowHeight);
 }
-void DrawBoundingBox(const nite::UserData& user)
-{
-	glColor3f(1.0f, 1.0f, 1.0f);
-
-	float coordinates[] =
-	{
-		user.getBoundingBox().max.x, user.getBoundingBox().max.y, 0,
-		user.getBoundingBox().max.x, user.getBoundingBox().min.y, 0,
-		user.getBoundingBox().min.x, user.getBoundingBox().min.y, 0,
-		user.getBoundingBox().min.x, user.getBoundingBox().max.y, 0,
-	};
-	coordinates[0]  *= GL_WIN_SIZE_X/(float)g_nXRes;
-	coordinates[1]  *= GL_WIN_SIZE_Y/(float)g_nYRes;
-	coordinates[3]  *= GL_WIN_SIZE_X/(float)g_nXRes;
-	coordinates[4]  *= GL_WIN_SIZE_Y/(float)g_nYRes;
-	coordinates[6]  *= GL_WIN_SIZE_X/(float)g_nXRes;
-	coordinates[7]  *= GL_WIN_SIZE_Y/(float)g_nYRes;
-	coordinates[9]  *= GL_WIN_SIZE_X/(float)g_nXRes;
-	coordinates[10] *= GL_WIN_SIZE_Y/(float)g_nYRes;
-
-	glPointSize(2);
-	glVertexPointer(3, GL_FLOAT, 0, coordinates);
-	glDrawArrays(GL_LINE_LOOP, 0, 4);
-
-}
-
-
-
-void DrawLimb(nite::UserTracker* pUserTracker, const nite::SkeletonJoint& joint1, const nite::SkeletonJoint& joint2, int color)
-{
-	float coordinates[6] = {0};
-	pUserTracker->convertJointCoordinatesToDepth(joint1.getPosition().x, joint1.getPosition().y, joint1.getPosition().z, &coordinates[0], &coordinates[1]);
-	pUserTracker->convertJointCoordinatesToDepth(joint2.getPosition().x, joint2.getPosition().y, joint2.getPosition().z, &coordinates[3], &coordinates[4]);
-
-	coordinates[0] *= GL_WIN_SIZE_X/(float)g_nXRes;
-	coordinates[1] *= GL_WIN_SIZE_Y/(float)g_nYRes;
-	coordinates[3] *= GL_WIN_SIZE_X/(float)g_nXRes;
-	coordinates[4] *= GL_WIN_SIZE_Y/(float)g_nYRes;
-
-	if (joint1.getPositionConfidence() == 1 && joint2.getPositionConfidence() == 1)
-	{
-		glColor3f(1.0f - Colors[color][0], 1.0f - Colors[color][1], 1.0f - Colors[color][2]);
-	}
-	else if (joint1.getPositionConfidence() < 0.5f || joint2.getPositionConfidence() < 0.5f)
-	{
-		return;
-	}
-	else
-	{
-		glColor3f(.5, .5, .5);
-	}
-	glPointSize(2);
-	glVertexPointer(3, GL_FLOAT, 0, coordinates);
-	glDrawArrays(GL_LINES, 0, 2);
-
-	glPointSize(10);
-	if (joint1.getPositionConfidence() == 1)
-	{
-		glColor3f(1.0f - Colors[color][0], 1.0f - Colors[color][1], 1.0f - Colors[color][2]);
-	}
-	else
-	{
-		glColor3f(.5, .5, .5);
-	}
-	glVertexPointer(3, GL_FLOAT, 0, coordinates);
-	glDrawArrays(GL_POINTS, 0, 1);
-
-	if (joint2.getPositionConfidence() == 1)
-	{
-		glColor3f(1.0f - Colors[color][0], 1.0f - Colors[color][1], 1.0f - Colors[color][2]);
-	}
-	else
-	{
-		glColor3f(.5, .5, .5);
-	}
-	glVertexPointer(3, GL_FLOAT, 0, coordinates+3);
-	glDrawArrays(GL_POINTS, 0, 1);
-}
-void DrawSkeleton(nite::UserTracker* pUserTracker, const nite::UserData& userData)
-{
-	DrawLimb(pUserTracker, userData.getSkeleton().getJoint(nite::JOINT_HEAD), userData.getSkeleton().getJoint(nite::JOINT_NECK), userData.getId() % colorCount);
-
-	DrawLimb(pUserTracker, userData.getSkeleton().getJoint(nite::JOINT_LEFT_SHOULDER), userData.getSkeleton().getJoint(nite::JOINT_LEFT_ELBOW), userData.getId() % colorCount);
-	DrawLimb(pUserTracker, userData.getSkeleton().getJoint(nite::JOINT_LEFT_ELBOW), userData.getSkeleton().getJoint(nite::JOINT_LEFT_HAND), userData.getId() % colorCount);
-
-	DrawLimb(pUserTracker, userData.getSkeleton().getJoint(nite::JOINT_RIGHT_SHOULDER), userData.getSkeleton().getJoint(nite::JOINT_RIGHT_ELBOW), userData.getId() % colorCount);
-	DrawLimb(pUserTracker, userData.getSkeleton().getJoint(nite::JOINT_RIGHT_ELBOW), userData.getSkeleton().getJoint(nite::JOINT_RIGHT_HAND), userData.getId() % colorCount);
-
-	DrawLimb(pUserTracker, userData.getSkeleton().getJoint(nite::JOINT_LEFT_SHOULDER), userData.getSkeleton().getJoint(nite::JOINT_RIGHT_SHOULDER), userData.getId() % colorCount);
-
-	DrawLimb(pUserTracker, userData.getSkeleton().getJoint(nite::JOINT_LEFT_SHOULDER), userData.getSkeleton().getJoint(nite::JOINT_TORSO), userData.getId() % colorCount);
-	DrawLimb(pUserTracker, userData.getSkeleton().getJoint(nite::JOINT_RIGHT_SHOULDER), userData.getSkeleton().getJoint(nite::JOINT_TORSO), userData.getId() % colorCount);
-
-	DrawLimb(pUserTracker, userData.getSkeleton().getJoint(nite::JOINT_TORSO), userData.getSkeleton().getJoint(nite::JOINT_LEFT_HIP), userData.getId() % colorCount);
-	DrawLimb(pUserTracker, userData.getSkeleton().getJoint(nite::JOINT_TORSO), userData.getSkeleton().getJoint(nite::JOINT_RIGHT_HIP), userData.getId() % colorCount);
-
-	DrawLimb(pUserTracker, userData.getSkeleton().getJoint(nite::JOINT_LEFT_HIP), userData.getSkeleton().getJoint(nite::JOINT_RIGHT_HIP), userData.getId() % colorCount);
-
-
-	DrawLimb(pUserTracker, userData.getSkeleton().getJoint(nite::JOINT_LEFT_HIP), userData.getSkeleton().getJoint(nite::JOINT_LEFT_KNEE), userData.getId() % colorCount);
-	DrawLimb(pUserTracker, userData.getSkeleton().getJoint(nite::JOINT_LEFT_KNEE), userData.getSkeleton().getJoint(nite::JOINT_LEFT_FOOT), userData.getId() % colorCount);
-
-	DrawLimb(pUserTracker, userData.getSkeleton().getJoint(nite::JOINT_RIGHT_HIP), userData.getSkeleton().getJoint(nite::JOINT_RIGHT_KNEE), userData.getId() % colorCount);
-	DrawLimb(pUserTracker, userData.getSkeleton().getJoint(nite::JOINT_RIGHT_KNEE), userData.getSkeleton().getJoint(nite::JOINT_RIGHT_FOOT), userData.getId() % colorCount);
-}
-
 
 void SampleViewer::Display()
 {
@@ -435,9 +316,11 @@ void SampleViewer::Display()
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
 	glLoadIdentity();
-	glOrtho(0, GL_WIN_SIZE_X, GL_WIN_SIZE_Y, 0, -1.0, 1.0);
+	glOrtho(0, 1.0, 1.0, 0, -1.0, 1.0);
+        glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	checkGlErrors();
 
 	if (depthFrame.isValid() && g_drawDepth)
 	{
@@ -524,6 +407,7 @@ void SampleViewer::Display()
 	glColor4f(1,1,1,1);
 
 	glEnable(GL_TEXTURE_2D);
+	checkGlErrors();
 	glBegin(GL_QUADS);
 
 	g_nXRes = depthFrame.getVideoMode().getResolutionX();
@@ -534,16 +418,17 @@ void SampleViewer::Display()
 	glVertex2f(0, 0);
 	// upper right
 	glTexCoord2f((float)g_nXRes/(float)m_nTexMapX, 0);
-	glVertex2f(GL_WIN_SIZE_X, 0);
+	glVertex2f(1, 0);
 	// bottom right
 	glTexCoord2f((float)g_nXRes/(float)m_nTexMapX, (float)g_nYRes/(float)m_nTexMapY);
-	glVertex2f(GL_WIN_SIZE_X, GL_WIN_SIZE_Y);
+	glVertex2f(1, 1);
 	// bottom left
 	glTexCoord2f(0, (float)g_nYRes/(float)m_nTexMapY);
-	glVertex2f(0, GL_WIN_SIZE_Y);
+	glVertex2f(0, 1);
 
 	glEnd();
 	glDisable(GL_TEXTURE_2D);
+	checkGlErrors();
 
 	log("getUsers\n");
 	const nite::Array<nite::UserData>& users = userTrackerFrame.getUsers();
@@ -564,11 +449,11 @@ void SampleViewer::Display()
 		{
 			if (g_drawStatusLabel)
 			{
-				DrawStatusLabel(m_pUserTracker, user);
+				DrawStatusLabel(user);
 			}
 			if (g_drawCenterOfMass)
 			{
-				DrawCenterOfMass(m_pUserTracker, user);
+				DrawCenterOfMass(user);
 			}
 			if (g_drawBoundingBox)
 			{
@@ -577,7 +462,7 @@ void SampleViewer::Display()
 
 			if (user.getSkeleton().getState() == nite::SKELETON_TRACKED && g_drawSkeleton)
 			{
-				DrawSkeleton(m_pUserTracker, user);
+				DrawSkeleton(user);
 			}
 		}
 
@@ -622,16 +507,16 @@ void SampleViewer::Display()
 	{
 		char *msg = g_generalMessage;
 		glColor3f(1.0f, 0.0f, 0.0f);
-		glRasterPos2i(100, 20);
+		glRasterPos2f(100.0/GL_WIN_SIZE_X, 20.0/GL_WIN_SIZE_Y);
 		glPrintString(GLUT_BITMAP_HELVETICA_18, msg);
 	}
-
 
 
 	glPopMatrix();
 	// Swap the OpenGL display buffers
 	glutSwapBuffers();
 
+	checkGlErrors();
 	log("Display done\n");
 }
 
@@ -694,9 +579,152 @@ openni::Status SampleViewer::InitOpenGL(int argc, char **argv)
 	return openni::STATUS_OK;
 
 }
+
 void SampleViewer::InitOpenGLHooks()
 {
 	glutKeyboardFunc(glutKeyboard);
 	glutDisplayFunc(glutDisplay);
 	glutIdleFunc(glutIdle);
+	glutReshapeFunc(glutReshape);
 }
+
+void SampleViewer::DrawStatusLabel(const nite::UserData& user)
+{
+	int color = user.getId() % colorCount;
+	glColor3f(1.0f - Colors[color][0], 1.0f - Colors[color][1], 1.0f - Colors[color][2]);
+
+	float x,y;
+	m_pUserTracker->convertJointCoordinatesToDepth(user.getCenterOfMass().x, user.getCenterOfMass().y, user.getCenterOfMass().z, &x, &y);
+	x /= (float)g_nXRes;
+	y /= (float)g_nYRes;
+	char *msg = g_userStatusLabels[user.getId()];
+	glRasterPos2f(x - float((strlen(msg)/2)*8)/g_nXRes, y);
+	glPrintString(GLUT_BITMAP_HELVETICA_18, msg);
+	checkGlErrors();
+}
+
+void SampleViewer::DrawCenterOfMass(const nite::UserData& user)
+{
+	glColor3f(1.0f, 1.0f, 1.0f);
+
+	float coordinates[3] = {0};
+
+	m_pUserTracker->convertJointCoordinatesToDepth(user.getCenterOfMass().x, user.getCenterOfMass().y, user.getCenterOfMass().z, &coordinates[0], &coordinates[1]);
+
+	coordinates[0] /= (float)g_nXRes;
+	coordinates[1] /= (float)g_nYRes;
+	glPointSize(8);
+	glVertexPointer(3, GL_FLOAT, 0, coordinates);
+	glDrawArrays(GL_POINTS, 0, 1);
+	checkGlErrors();
+
+}
+
+void SampleViewer::DrawBoundingBox(const nite::UserData& user)
+{
+	glColor3f(1.0f, 1.0f, 1.0f);
+
+	float coordinates[] =
+	{
+		user.getBoundingBox().max.x, user.getBoundingBox().max.y, 0,
+		user.getBoundingBox().max.x, user.getBoundingBox().min.y, 0,
+		user.getBoundingBox().min.x, user.getBoundingBox().min.y, 0,
+		user.getBoundingBox().min.x, user.getBoundingBox().max.y, 0,
+	};
+	coordinates[0]  /= (float)g_nXRes;
+	coordinates[1]  /= (float)g_nYRes;
+	coordinates[3]  /= (float)g_nXRes;
+	coordinates[4]  /= (float)g_nYRes;
+	coordinates[6]  /= (float)g_nXRes;
+	coordinates[7]  /= (float)g_nYRes;
+	coordinates[9]  /= (float)g_nXRes;
+	coordinates[10] /= (float)g_nYRes;
+
+	glPointSize(2);
+	glVertexPointer(3, GL_FLOAT, 0, coordinates);
+	glDrawArrays(GL_LINE_LOOP, 0, 4);
+	checkGlErrors();
+
+}
+
+void SampleViewer::DrawLimb(const nite::SkeletonJoint& joint1, const nite::SkeletonJoint& joint2, int color)
+{
+	float coordinates[6] = {0};
+	m_pUserTracker->convertJointCoordinatesToDepth(joint1.getPosition().x, joint1.getPosition().y, joint1.getPosition().z, &coordinates[0], &coordinates[1]);
+	m_pUserTracker->convertJointCoordinatesToDepth(joint2.getPosition().x, joint2.getPosition().y, joint2.getPosition().z, &coordinates[3], &coordinates[4]);
+
+	coordinates[0] /= (float)g_nXRes;
+	coordinates[1] /= (float)g_nYRes;
+	coordinates[3] /= (float)g_nXRes;
+	coordinates[4] /= (float)g_nYRes;
+
+	if (joint1.getPositionConfidence() == 1 && joint2.getPositionConfidence() == 1)
+	{
+		glColor3f(1.0f - Colors[color][0], 1.0f - Colors[color][1], 1.0f - Colors[color][2]);
+	}
+	else if (joint1.getPositionConfidence() < 0.5f || joint2.getPositionConfidence() < 0.5f)
+	{
+		return;
+	}
+	else
+	{
+		glColor3f(.5, .5, .5);
+	}
+	glPointSize(2);
+	glVertexPointer(3, GL_FLOAT, 0, coordinates);
+	glDrawArrays(GL_LINES, 0, 2);
+
+	glPointSize(10);
+	if (joint1.getPositionConfidence() == 1)
+	{
+		glColor3f(1.0f - Colors[color][0], 1.0f - Colors[color][1], 1.0f - Colors[color][2]);
+	}
+	else
+	{
+		glColor3f(.5, .5, .5);
+	}
+	glVertexPointer(3, GL_FLOAT, 0, coordinates);
+	glDrawArrays(GL_POINTS, 0, 1);
+
+	if (joint2.getPositionConfidence() == 1)
+	{
+		glColor3f(1.0f - Colors[color][0], 1.0f - Colors[color][1], 1.0f - Colors[color][2]);
+	}
+	else
+	{
+		glColor3f(.5, .5, .5);
+	}
+	glVertexPointer(3, GL_FLOAT, 0, coordinates+3);
+	glDrawArrays(GL_POINTS, 0, 1);
+	checkGlErrors();
+}
+
+void SampleViewer::DrawSkeleton(const nite::UserData& userData)
+{
+	DrawLimb(userData.getSkeleton().getJoint(nite::JOINT_HEAD), userData.getSkeleton().getJoint(nite::JOINT_NECK), userData.getId() % colorCount);
+
+	DrawLimb(userData.getSkeleton().getJoint(nite::JOINT_LEFT_SHOULDER), userData.getSkeleton().getJoint(nite::JOINT_LEFT_ELBOW), userData.getId() % colorCount);
+	DrawLimb(userData.getSkeleton().getJoint(nite::JOINT_LEFT_ELBOW), userData.getSkeleton().getJoint(nite::JOINT_LEFT_HAND), userData.getId() % colorCount);
+
+	DrawLimb(userData.getSkeleton().getJoint(nite::JOINT_RIGHT_SHOULDER), userData.getSkeleton().getJoint(nite::JOINT_RIGHT_ELBOW), userData.getId() % colorCount);
+	DrawLimb(userData.getSkeleton().getJoint(nite::JOINT_RIGHT_ELBOW), userData.getSkeleton().getJoint(nite::JOINT_RIGHT_HAND), userData.getId() % colorCount);
+
+	DrawLimb(userData.getSkeleton().getJoint(nite::JOINT_LEFT_SHOULDER), userData.getSkeleton().getJoint(nite::JOINT_RIGHT_SHOULDER), userData.getId() % colorCount);
+
+	DrawLimb(userData.getSkeleton().getJoint(nite::JOINT_LEFT_SHOULDER), userData.getSkeleton().getJoint(nite::JOINT_TORSO), userData.getId() % colorCount);
+	DrawLimb(userData.getSkeleton().getJoint(nite::JOINT_RIGHT_SHOULDER), userData.getSkeleton().getJoint(nite::JOINT_TORSO), userData.getId() % colorCount);
+
+	DrawLimb(userData.getSkeleton().getJoint(nite::JOINT_TORSO), userData.getSkeleton().getJoint(nite::JOINT_LEFT_HIP), userData.getId() % colorCount);
+	DrawLimb(userData.getSkeleton().getJoint(nite::JOINT_TORSO), userData.getSkeleton().getJoint(nite::JOINT_RIGHT_HIP), userData.getId() % colorCount);
+
+	DrawLimb(userData.getSkeleton().getJoint(nite::JOINT_LEFT_HIP), userData.getSkeleton().getJoint(nite::JOINT_RIGHT_HIP), userData.getId() % colorCount);
+
+
+	DrawLimb(userData.getSkeleton().getJoint(nite::JOINT_LEFT_HIP), userData.getSkeleton().getJoint(nite::JOINT_LEFT_KNEE), userData.getId() % colorCount);
+	DrawLimb(userData.getSkeleton().getJoint(nite::JOINT_LEFT_KNEE), userData.getSkeleton().getJoint(nite::JOINT_LEFT_FOOT), userData.getId() % colorCount);
+
+	DrawLimb(userData.getSkeleton().getJoint(nite::JOINT_RIGHT_HIP), userData.getSkeleton().getJoint(nite::JOINT_RIGHT_KNEE), userData.getId() % colorCount);
+	DrawLimb(userData.getSkeleton().getJoint(nite::JOINT_RIGHT_KNEE), userData.getSkeleton().getJoint(nite::JOINT_RIGHT_FOOT), userData.getId() % colorCount);
+	checkGlErrors();
+}
+
