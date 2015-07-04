@@ -95,6 +95,7 @@ SampleViewer::SampleViewer(const char* strSampleName) : m_poseUser(0)
 	ms_self = this;
 	strncpy(m_strSampleName, strSampleName, ONI_MAX_STR);
 	m_pUserTracker = NULL;
+	finalized = false;
 }
 SampleViewer::~SampleViewer()
 {
@@ -107,10 +108,13 @@ SampleViewer::~SampleViewer()
 
 void SampleViewer::Finalize()
 {
-  if(m_pUserTracker != NULL)
-    delete m_pUserTracker;
-  nite::NiTE::shutdown();
-  openni::OpenNI::shutdown();
+  if(!finalized) {
+    if(m_pUserTracker != NULL)
+      delete m_pUserTracker;
+    nite::NiTE::shutdown();
+    openni::OpenNI::shutdown();
+    finalized = true;
+  }
 }
 
 openni::Status SampleViewer::Init(int argc, char **argv)

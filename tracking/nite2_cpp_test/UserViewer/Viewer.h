@@ -65,6 +65,7 @@ private:
 	uint64_t m_poseTime;
 	uint64_t previousDisplayTime;
 	int windowWidth, windowHeight;
+	bool finalized;
 };
 
 
