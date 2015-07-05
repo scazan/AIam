@@ -3,8 +3,6 @@ reduce interaction latency
   remove/reduce joint smoothing? (and add support for viewing with or without smoothing)
     and/or replace with nite::UserTracker::setSkeletonSmoothingFactor?
 
-tracked_users_viewer should refresh screen automatically when dragging orientation or Y position
-
 behave more creatively when no user is present?
 
 ability to replay entire interaction (tracking + improv/rendering)

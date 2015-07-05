@@ -305,7 +305,8 @@ class TrackedUsersScene(Scene):
             self._drag_y_previous = y
             self.updateGL()
         else:
-            Scene.mouseMoveEvent(self, event)
+            if Scene.mouseMoveEvent(self, event):
+                self.updateGL()
 
     def mouseReleaseEvent(self, event):
         self._dragging_tracker_pitch = False
@@ -477,7 +478,8 @@ class TrackedUsersViewer(Window):
             if self._fullscreen_action.isChecked():
                 self._fullscreen_action.toggle()
         else:
-            self._scene.keyPressEvent(event)
+            if self._scene.keyPressEvent(event):
+                self._scene.updateGL()
             QtGui.QWidget.keyPressEvent(self, event)
 
     def sizeHint(self):
