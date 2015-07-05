@@ -34,6 +34,7 @@ class TrackedUsersScene(Scene):
         self._text_renderer_class = getattr(text_renderer_module, "GlutTextRenderer")
         self._dragging_tracker_y_position = False
         self._dragging_tracker_pitch = False
+        self.is_rendering = False
 
     def initializeGL(self):
         glClearColor(1.0, 1.0, 1.0, 0.0)
@@ -49,6 +50,8 @@ class TrackedUsersScene(Scene):
         glutInit(sys.argv)
 
     def paintGL(self):
+        self.is_rendering = True
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glLoadIdentity()
         self.configure_3d_projection(pixdx=-100, pixdy=0, fovy=40.0,
@@ -75,6 +78,8 @@ class TrackedUsersScene(Scene):
 
         if self.parent().show_positions_action.isChecked():
             self._print_positions()
+
+        self.is_rendering = False
 
     def _draw_field_of_view_boundary(self):
         radius = ASSUMED_VIEW_DISTANCE
@@ -479,15 +484,14 @@ class TrackedUsersViewer(Window):
         return QtCore.QSize(640, 480)
 
     def process_frame(self, frame):
-        callback = lambda: self._process_frame_non_thread_safe(frame)
-        QtGui.QApplication.postEvent(self, CustomQtEvent(callback))
-
-    def _process_frame_non_thread_safe(self, frame):
-        for user_id, state in frame["states"]:
+        self.frame = frame
+        QtGui.QApplication.postEvent(self, CustomQtEvent(self._update_log_widget))
+        if self.auto_refresh_action.isChecked() and not self._scene.is_rendering:
+            QtGui.QApplication.postEvent(self, CustomQtEvent(self._scene.updateGL))
+            
+    def _update_log_widget(self):
+        for user_id, state in self.frame["states"]:
             self._log_widget.append("%s %s\n" % (state, user_id))
-        if self.auto_refresh_action.isChecked():
-            self.frame = frame
-            self._scene.updateGL()
 
     def customEvent(self, custom_qt_event):
         custom_qt_event.callback()
