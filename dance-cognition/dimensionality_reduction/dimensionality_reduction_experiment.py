@@ -39,6 +39,7 @@ class DimensionalityReductionExperiment(Experiment):
                 Event.MODE: self._handle_mode_event,
                 Event.REDUCTION: self._set_reduction,
                 Event.PARAMETER: self._handle_parameter_event,
+                Event.ABORT_PATH: self._abort_path,
                 })
         self.reduction = None
         self._velocity_integrator = LeakyIntegrator()
@@ -114,6 +115,9 @@ class DimensionalityReductionExperiment(Experiment):
                     on_changed_path=lambda: \
                         self.send_event_to_ui(Event(Event.IMPROVISER_PATH, self._improviser.path())))
             self.run_backend_and_or_ui()
+
+    def _abort_path(self, event):
+        self._improviser.select_next_move()
 
     def add_ui_parser_arguments(self, parser):
         from ui.dimensionality_reduction_ui import DimensionalityReductionMainWindow
@@ -270,7 +274,7 @@ class Improviser:
         self._path_follower = None
         self._on_changed_path = on_changed_path
 
-    def _select_next_move(self):
+    def select_next_move(self):
         path_segments = self._generate_path()
         self._path = self._interpolate_path(path_segments)
         self._path_follower = self._create_path_follower(self._path)
@@ -310,9 +314,9 @@ class Improviser:
 
     def proceed(self, time_increment):
         if self._path_follower is None:
-            self._select_next_move()
+            self.select_next_move()
         if self._path_follower.reached_destination():
-            self._select_next_move()
+            self.select_next_move()
         self._path_follower.proceed(time_increment * self.params.velocity)
 
     def current_position(self):

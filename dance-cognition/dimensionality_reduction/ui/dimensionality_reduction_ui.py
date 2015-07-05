@@ -30,6 +30,7 @@ class DimensionalityReductionMainWindow(MainWindow):
             False, 'F1')
         self._reduction_plot = None
         self._add_show_reduction_action()
+        self._create_improvisation_menu()
         if self.args.html5_toolbar:
             self._add_html5_toolbar()
 
@@ -40,6 +41,16 @@ class DimensionalityReductionMainWindow(MainWindow):
         action = QtGui.QAction('Show normalized reduction', self)
         action.triggered.connect(self._show_normalized_reduction)
         self._main_menu.addAction(action)
+
+    def _create_improvisation_menu(self):
+        self._improvisation_menu = self._menu_bar.addMenu("Improvisation")
+        self._add_abort_path_action()
+
+    def _add_abort_path_action(self):
+        action = QtGui.QAction('Abort path', self)
+        action.setShortcut('F12')
+        action.triggered.connect(lambda: self.client.send_event(Event(Event.ABORT_PATH)))
+        self._improvisation_menu.addAction(action)
 
     def _show_normalized_reduction(self):
         normalized_reduction = self.student.normalize_reduction(self.reduction)
