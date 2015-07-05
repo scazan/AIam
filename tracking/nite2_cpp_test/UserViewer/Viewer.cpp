@@ -109,7 +109,7 @@ SampleViewer::~SampleViewer()
 void SampleViewer::Finalize()
 {
   if(!finalized) {
-    if(recordingFilename != NULL)
+    if(recordingFilename != NULL && startedRecording)
       recorder.stop();
     if(m_pUserTracker != NULL)
       delete m_pUserTracker;
@@ -123,6 +123,8 @@ openni::Status SampleViewer::Init(int argc, char **argv)
 {
 	m_pTexMap = NULL;
 	recordingFilename = NULL;
+	delayRecordingUntilSeen = false;
+	recordingEnabled = false;
 
 	openni::Status rc = openni::OpenNI::initialize();
 	if (rc != openni::STATUS_OK)
@@ -141,7 +143,13 @@ openni::Status SampleViewer::Init(int argc, char **argv)
 
 		else if(strcmp(argv[i], "-record") == 0)
 		{
-			recordingFilename = argv[++i];
+		  recordingFilename = argv[++i];
+		  recordingEnabled = true;
+		}
+
+		else if(strcmp(argv[i], "-delay-recording-until-seen") == 0)
+		{
+		  delayRecordingUntilSeen = true;
 		}
 
 		else if(strcmp(argv[i], "-verbose") == 0) {
@@ -162,7 +170,7 @@ openni::Status SampleViewer::Init(int argc, char **argv)
 		return rc;
 	}
 
-	if(recordingFilename != NULL) {
+	if(recordingEnabled) {
 	  rc = depthStream.create(m_device, openni::SENSOR_DEPTH);
 	  if (rc == openni::STATUS_OK)
 	    {
@@ -185,9 +193,11 @@ openni::Status SampleViewer::Init(int argc, char **argv)
 	      printf("Couldn't find depth stream:\n%s\n", openni::OpenNI::getExtendedError());
 	    }
 
+	  startedRecording = false;
 	  recorder.create(recordingFilename);
 	  recorder.attach(depthStream);
-	  recorder.start();
+	  if(!delayRecordingUntilSeen)
+	    startRecording();
 	}
 
 	nite::NiTE::initialize();
@@ -202,6 +212,13 @@ openni::Status SampleViewer::Init(int argc, char **argv)
 	return InitOpenGL(argc, argv);
 
 }
+
+void SampleViewer::startRecording() {
+  printf("started recording\n");
+  recorder.start();
+  startedRecording = true;
+}
+
 openni::Status SampleViewer::Run()	//Does not return
 {
   previousDisplayTime = 0;
@@ -224,11 +241,13 @@ char g_generalMessage[100] = {0};
 	sprintf(g_userStatusLabels[user.getId()], "%s", msg);\
 	printf("[%08" PRIu64 "] User #%d:\t%s\n", ts, user.getId(), msg);}
 
-void updateUserState(const nite::UserData& user, uint64_t ts)
+void SampleViewer::updateUserState(const nite::UserData& user, uint64_t ts)
 {
 	if (user.isNew())
 	{
 		USER_MESSAGE("New");
+		if(recordingEnabled && delayRecordingUntilSeen && !startedRecording)
+		  startRecording();
 	}
 	else if (user.isVisible() && !g_visibleUsers[user.getId()])
 		printf("[%08" PRIu64 "] User #%d:\tVisible\n", ts, user.getId());

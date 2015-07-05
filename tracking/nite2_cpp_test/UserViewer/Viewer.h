@@ -48,6 +48,8 @@ private:
 	static void glutReshape(int width, int height);
 	static void glutDisplay();
 	static void glutKeyboard(unsigned char key, int x, int y);
+	void updateUserState(const nite::UserData& user, uint64_t ts);
+	void startRecording();
 
 	float				m_pDepthHist[MAX_DEPTH];
 	char			m_strSampleName[ONI_MAX_STR];
@@ -66,6 +68,9 @@ private:
 	uint64_t previousDisplayTime;
 	int windowWidth, windowHeight;
 	bool finalized;
+	bool recordingEnabled;
+	bool delayRecordingUntilSeen;
+	bool startedRecording;
 };
 
 
