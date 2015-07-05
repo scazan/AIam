@@ -30,6 +30,11 @@ private:
 		    const char *jointName);
   void sendStateIfChanged(const nite::UserData&);
   void sendState(const nite::UserId& userId, const char *state);
+  void setSpeed();
+  void stopSeeking();
+  void disableFastForward();
+  void enableFastForward();
+  bool isCalibrating();
 
   openni::Device device;
   openni::Recorder recorder;
@@ -39,6 +44,8 @@ private:
   std::map<nite::UserId, nite::SkeletonState> previousStates;
   UdpTransmitSocket* transmitSocket;
   char oscBuffer[OSC_BUFFER_SIZE];
+  bool seekingInRecording;
+  bool fastForwarding;
   int startFrameIndex;
 };
 

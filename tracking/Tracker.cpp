@@ -95,10 +95,11 @@ openni::Status Tracker::init(int argc, char **argv) {
     startFrameIndex = (int) (startTimeMs * FPS / 1000);
     printf("Total number of frames: %d\n", device.getPlaybackControl()->getNumberOfFrames(depthStream));
     printf("Fast-forwarding to frame %d\n", startFrameIndex);
-    status = device.getPlaybackControl()->setSpeed(100.0);
+    seekingInRecording = true;
+    fastForwarding = false;
   }
   else {
-    startFrameIndex = 0;
+    seekingInRecording = false;
   }
 
   transmitSocket = new UdpTransmitSocket(IpEndpointName(OSC_HOST, OSC_PORT));
@@ -116,6 +117,9 @@ openni::Status Tracker::mainLoop() {
 }
 
 void Tracker::processFrame() {
+  if(seekingInRecording)
+    setSpeed();
+
   openni::VideoFrameRef depthFrame;
   nite::Status status = userTracker->readFrame(&userTrackerFrame);
   if(status != nite::STATUS_OK) {
@@ -125,12 +129,53 @@ void Tracker::processFrame() {
 
   sendBeginFrame();
   sendStatesAndSkeletonData();
+}
 
-  if(startFrameIndex > 0 && userTrackerFrame.getFrameIndex() >= startFrameIndex) {
-    printf("Stopping fast-forward after having reached frame %d\n", userTrackerFrame.getFrameIndex());
-    device.getPlaybackControl()->setSpeed(1.0);
-    startFrameIndex = 0;
+void Tracker::setSpeed() {
+  if(seekingInRecording) {
+    bool calibrating = isCalibrating();
+    if(fastForwarding) {
+      if(userTrackerFrame.getFrameIndex() >= startFrameIndex)
+	stopSeeking();
+      else if(calibrating)
+	disableFastForward();
+    }
+    else if(!fastForwarding && !calibrating)
+      enableFastForward();
   }
+}
+
+bool Tracker::isCalibrating() {
+  const nite::Array<nite::UserData>& users = userTrackerFrame.getUsers();
+  for(int i = 0; i < users.getSize(); ++i) {
+    const nite::UserData& userData = users[i];
+    nite::SkeletonState state = userData.getSkeleton().getState();
+    if(state == nite::SKELETON_CALIBRATING)
+      return true;
+  }
+  return false;
+}
+
+void Tracker::stopSeeking() {
+  printf("Stopping fast-forward after having reached frame %d\n", userTrackerFrame.getFrameIndex());
+  disableFastForward();
+  seekingInRecording = false;
+}
+
+void Tracker::disableFastForward() {
+  printf("resuming normal speed\n");
+  openni::Status status = device.getPlaybackControl()->setSpeed(1.0);
+  if(status != openni::STATUS_OK)
+    printf("setSpeed failed\n");
+  fastForwarding = false;
+}
+
+void Tracker::enableFastForward() {
+  printf("fast-forwarding\n");
+  openni::Status status = device.getPlaybackControl()->setSpeed(100.0);
+  if(status != openni::STATUS_OK)
+    printf("setSpeed failed\n");
+  fastForwarding = true;
 }
 
 void Tracker::sendBeginFrame() {
