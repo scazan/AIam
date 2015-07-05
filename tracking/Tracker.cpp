@@ -22,6 +22,7 @@ Tracker::~Tracker() {
 openni::Status Tracker::init(int argc, char **argv) {
   const char *recordingFilename = NULL;
   float startTimeSecs = 0;
+  bool overrideSmoothingFactor = false;
   float smoothingFactor = 0;
 
   openni::Status status = openni::OpenNI::initialize();
@@ -45,6 +46,7 @@ openni::Status Tracker::init(int argc, char **argv) {
     }
 
     else if(strcmp(argv[i], "-smooth") == 0) {
+      overrideSmoothingFactor = true;
       smoothingFactor = atof(argv[++i]);
     }
 
@@ -96,13 +98,15 @@ openni::Status Tracker::init(int argc, char **argv) {
     return openni::STATUS_ERROR;
   }
 
-  float defaultSmoothingFactor = userTracker->getSkeletonSmoothingFactor();
-  if(userTracker->setSkeletonSmoothingFactor(smoothingFactor) == nite::STATUS_OK)
-    printf("Skeleton smoothing factor was set to %f (default is %f)\n",
-	   smoothingFactor, defaultSmoothingFactor);
-  else
-    printf("Failed to set smoothing factor to %f (default is %f)\n",
-	   smoothingFactor, defaultSmoothingFactor);
+  if(overrideSmoothingFactor) {
+    float defaultSmoothingFactor = userTracker->getSkeletonSmoothingFactor();
+    if(userTracker->setSkeletonSmoothingFactor(smoothingFactor) == nite::STATUS_OK)
+      printf("Skeleton smoothing factor was set to %f (default is %f)\n",
+	     smoothingFactor, defaultSmoothingFactor);
+    else
+      printf("Failed to set smoothing factor to %f (default is %f)\n",
+	     smoothingFactor, defaultSmoothingFactor);
+  }
 
   if(startTimeSecs > 0) {
     startFrameIndex = (int) (startTimeSecs * FPS);
