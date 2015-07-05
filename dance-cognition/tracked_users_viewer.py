@@ -115,6 +115,7 @@ class TrackedUsersScene(Scene):
     def _draw_user(self, user):
         self._draw_label(user)
         self._draw_intensity(user)
+        self._draw_acceleration(user)
         self._draw_skeleton(user)
 
     def _draw_skeleton(self, user):
@@ -170,6 +171,29 @@ class TrackedUsersScene(Scene):
 
     def _intensity_as_height(self, intensity):
         return intensity * 3
+
+    def _draw_acceleration(self, user):
+        head_position = user.get_joint("head").get_position()
+        position = head_position + [-150, 140, 0]
+        acceleration = user.get_acceleration()
+
+        glColor3f(.1, .8, .8)
+        self._draw_solid_cube(*position, sx=70, sz=70, sy=self._acceleration_as_height(
+                self.parent().interpreter.acceleration_ceiling))
+
+        glColor3f(.1, .5, 5)
+        self._draw_solid_cube(*position, sx=70, sz=70, sy=self._acceleration_as_height(acceleration))
+
+        glColor3f(.1, .5, 5)
+        self._draw_text("%.1f" % acceleration, size=100,
+                        x=position[0],
+                        y=position[1] - 100,
+                        z=position[2],
+                        h_align="center",
+                        three_d=True)
+
+    def _acceleration_as_height(self, acceleration):
+        return acceleration * 2
 
     def _draw_solid_cube(self, x, y, z, sx, sy, sz, y_align_bottom=True):
         if y_align_bottom:
