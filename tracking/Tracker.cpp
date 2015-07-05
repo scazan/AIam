@@ -21,7 +21,7 @@ Tracker::~Tracker() {
 
 openni::Status Tracker::init(int argc, char **argv) {
   const char *recordingFilename = NULL;
-  float startTimeMs = 0;
+  float startTimeSecs = 0;
 
   openni::Status status = openni::OpenNI::initialize();
   if(status != openni::STATUS_OK) {
@@ -40,7 +40,7 @@ openni::Status Tracker::init(int argc, char **argv) {
     }
 
     else if(strcmp(argv[i], "-start") == 0) {
-      startTimeMs = atof(argv[++i]);
+      startTimeSecs = atof(argv[++i]);
     }
 
     else {
@@ -91,8 +91,8 @@ openni::Status Tracker::init(int argc, char **argv) {
     return openni::STATUS_ERROR;
   }
 
-  if(startTimeMs > 0) {
-    startFrameIndex = (int) (startTimeMs * FPS / 1000);
+  if(startTimeSecs > 0) {
+    startFrameIndex = (int) (startTimeSecs * FPS);
     printf("Total number of frames: %d\n", device.getPlaybackControl()->getNumberOfFrames(depthStream));
     printf("Fast-forwarding to frame %d\n", startFrameIndex);
     seekingInRecording = true;

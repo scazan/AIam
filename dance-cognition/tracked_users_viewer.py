@@ -316,7 +316,7 @@ class TrackedUsersScene(Scene):
         if self.parent().frame:
             glColor4f(0, 0, 0, .5)
             self._draw_text(
-                "%.1f" % self.parent().frame["timestamp"],
+                "%.1f" % (self.parent().frame["timestamp"] / 1000),
                 size=10, x=5, y=5, z=0)
 
 class LogWidget(QtGui.QTextEdit):
