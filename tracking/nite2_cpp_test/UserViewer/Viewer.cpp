@@ -94,8 +94,8 @@ SampleViewer::SampleViewer(const char* strSampleName) : m_poseUser(0)
 {
 	ms_self = this;
 	strncpy(m_strSampleName, strSampleName, ONI_MAX_STR);
-	m_pUserTracker = NULL;
 	finalized = false;
+	m_pUserTracker = new nite::UserTracker;
 }
 SampleViewer::~SampleViewer()
 {
@@ -158,8 +158,8 @@ openni::Status SampleViewer::Init(int argc, char **argv)
 	if (rc == openni::STATUS_OK)
 	  printf("Opened device %s\n", deviceUri);
 	else {
-	  printf("Failed to open device\n%s\n", openni::OpenNI::getExtendedError());
-	  return rc;
+		printf("Failed to open device\n%s\n", openni::OpenNI::getExtendedError());
+		return rc;
 	}
 
 	if(recordingFilename != NULL) {
@@ -191,6 +191,13 @@ openni::Status SampleViewer::Init(int argc, char **argv)
 	}
 
 	nite::NiTE::initialize();
+
+	if (m_pUserTracker->create(&m_device) != nite::STATUS_OK)
+	{
+	  printf("failed to create user tracker\n");
+	  return openni::STATUS_ERROR;
+	}
+
 
 	return InitOpenGL(argc, argv);
 
@@ -299,15 +306,6 @@ void SampleViewer::Display()
     log("time diff: %ld\n", timeDiff);
   }
   previousDisplayTime = currentDisplayTime;
-
-  if(m_pUserTracker == NULL) {
-    m_pUserTracker = new nite::UserTracker;
-    if (m_pUserTracker->create(&m_device) != nite::STATUS_OK)
-      {
-	printf("failed to create user tracker\n");
-	return;
-      }
-  }
 
 	nite::UserTrackerFrameRef userTrackerFrame;
 	openni::VideoFrameRef depthFrame;
