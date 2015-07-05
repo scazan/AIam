@@ -100,9 +100,8 @@ class User:
             self._joints[joint_name] = Joint(self._interpreter)
 
     def _process_frame(self):
+        self._intensity = self._measure_intensity()
         self._num_updated_joints = 0
-        if self.has_complete_joint_data():
-            self._intensity = self._measure_intensity()
 
     def _measure_intensity(self):
         return sum([
