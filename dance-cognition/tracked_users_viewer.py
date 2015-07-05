@@ -107,7 +107,7 @@ class TrackedUsersScene(Scene):
 
     def _draw_user(self, user):
         self._draw_label(user)
-        self._draw_activity(user)
+        self._draw_intensity(user)
         self._draw_skeleton(user)
 
     def _draw_skeleton(self, user):
@@ -138,27 +138,27 @@ class TrackedUsersScene(Scene):
         position = head_position + [0, 140, 0]
         self._draw_text(str(user.get_id()), 100, position[0], position[1], position[2], h_align="center")
 
-    def _draw_activity(self, user):
+    def _draw_intensity(self, user):
         head_position = user.get_joint("head").get_position()
         position = head_position + [150, 140, 0]
-        activity = user.get_activity()
+        intensity = user.get_intensity()
 
         glColor3f(.8, .8, 1)
-        self._draw_solid_cube(*position, sx=70, sz=70, sy=self._activity_as_height(
-                self.parent().interpreter.activity_ceiling))
+        self._draw_solid_cube(*position, sx=70, sz=70, sy=self._intensity_as_height(
+                self.parent().interpreter.intensity_ceiling))
 
         glColor3f(.5, .5, 1)
-        self._draw_solid_cube(*position, sx=70, sz=70, sy=self._activity_as_height(activity))
+        self._draw_solid_cube(*position, sx=70, sz=70, sy=self._intensity_as_height(intensity))
 
         glColor3f(.5, .5, 1)
-        self._draw_text("%.1f" % activity, 100,
+        self._draw_text("%.1f" % intensity, 100,
                         position[0],
                         position[1] - 100,
                         position[2],
                         h_align="center")
 
-    def _activity_as_height(self, activity):
-        return activity * 3
+    def _intensity_as_height(self, intensity):
+        return intensity * 3
 
     def _draw_solid_cube(self, x, y, z, sx, sy, sz, y_align_bottom=True):
         if y_align_bottom:

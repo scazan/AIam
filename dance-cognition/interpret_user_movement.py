@@ -17,8 +17,8 @@ from event import Event
 from tracked_users_viewer import TrackedUsersViewer
 from transformations import rotation_matrix
 
-ACTIVITY_THRESHOLD = 5
-ACTIVITY_CEILING = 80
+INTENSITY_THRESHOLD = 5
+INTENSITY_CEILING = 80
 MIN_VELOCITY = 0.3
 MAX_VELOCITY = 1.0
 MIN_NOVELTY = 0.03
@@ -31,8 +31,8 @@ RESPONSE_TIME = 0
 JOINT_SMOOTHING_DURATION = 1.0
 FPS = 30.0
 NUM_JOINTS_IN_SKELETON = 15
-JOINTS_DETERMNING_ACTIVITY = ["left_hand", "right_hand"]
-CONSIDERED_JOINTS = JOINTS_DETERMNING_ACTIVITY + ["torso"]
+JOINTS_DETERMNING_INTENSITY = ["left_hand", "right_hand"]
+CONSIDERED_JOINTS = JOINTS_DETERMNING_INTENSITY + ["torso"]
 
 OSC_PORT = 15002
 WEBSOCKET_HOST = "localhost"
@@ -42,7 +42,7 @@ class Joint:
         self._interpreter = interpreter
         self._previous_position = None
         self._buffer_size = int(JOINT_SMOOTHING_DURATION * FPS)
-        self._activity_buffer = collections.deque(
+        self._intensity_buffer = collections.deque(
             [0] * self._buffer_size, maxlen=self._buffer_size)
 
     def get_position(self):
@@ -51,14 +51,14 @@ class Joint:
     def get_confidence(self):
         return self._confidence
 
-    def get_activity(self):
-        return sum(self._activity_buffer) / self._buffer_size
+    def get_intensity(self):
+        return sum(self._intensity_buffer) / self._buffer_size
 
     def set_position(self, x, y, z):
         new_position = numpy.array([x, y, z])
         if self._previous_position is not None:
             movement = numpy.linalg.norm(new_position - self._previous_position)
-            self._activity_buffer.append(movement)
+            self._intensity_buffer.append(movement)
         self._previous_position = new_position
 
     def set_confidence(self, confidence):
@@ -71,7 +71,7 @@ class User:
         self._joints = {}
         self._num_updated_joints = 0
         self._num_received_frames = 0
-        self._activity = 0
+        self._intensity = 0
         self._distance_to_center = None
 
     def handle_joint_data(self, joint_name, x, y, z, confidence):
@@ -104,16 +104,16 @@ class User:
         self._num_updated_joints = 0
         self._num_received_frames += 1
         if self._num_received_frames > 1:
-            self._activity = self._measure_activity()
+            self._intensity = self._measure_intensity()
 
-    def _measure_activity(self):
+    def _measure_intensity(self):
         return sum([
-            self.get_joint(joint_name).get_activity()
-            for joint_name in JOINTS_DETERMNING_ACTIVITY]) / \
-                len(JOINTS_DETERMNING_ACTIVITY)
+            self.get_joint(joint_name).get_intensity()
+            for joint_name in JOINTS_DETERMNING_INTENSITY]) / \
+                len(JOINTS_DETERMNING_INTENSITY)
 
-    def get_activity(self):
-        return self._activity
+    def get_intensity(self):
+        return self._intensity
     
     def get_id(self):
         return self._user_id
@@ -143,7 +143,7 @@ class UserMovementInterpreter:
         self._response_buffer_size = max(1, int(RESPONSE_TIME * FPS))
         self._response_buffer = []
         self._selected_user = None
-        self.activity_ceiling = ACTIVITY_CEILING
+        self.intensity_ceiling = INTENSITY_CEILING
         self.active_area_center_x, self.active_area_center_z = [
             float(s) for s in args.active_area_center.split(",")]
         self.active_area_radius = args.active_area_radius
@@ -262,20 +262,20 @@ class UserMovementInterpreter:
         return user.get_distance_to_center() < self.active_area_radius
 
     def _add_interpretation_to_response_buffer(self):
-        relative_activity = self._get_relative_activity()
-        velocity = MIN_VELOCITY + relative_activity * (MAX_VELOCITY - MIN_VELOCITY)
-        novelty = MIN_NOVELTY + relative_activity * (MAX_NOVELTY - MIN_NOVELTY)
-        extension = MIN_EXTENSION + relative_activity * (MAX_EXTENSION - MIN_EXTENSION)
-        location_preference = MIN_LOCATION_PREFERENCE + (1-relative_activity) \
+        relative_intensity = self._get_relative_intensity()
+        velocity = MIN_VELOCITY + relative_intensity * (MAX_VELOCITY - MIN_VELOCITY)
+        novelty = MIN_NOVELTY + relative_intensity * (MAX_NOVELTY - MIN_NOVELTY)
+        extension = MIN_EXTENSION + relative_intensity * (MAX_EXTENSION - MIN_EXTENSION)
+        location_preference = MIN_LOCATION_PREFERENCE + (1-relative_intensity) \
             * (MAX_LOCATION_PREFERENCE - MIN_LOCATION_PREFERENCE)
         self._response_buffer.append((velocity, novelty, extension, location_preference))
 
-    def _get_relative_activity(self):
+    def _get_relative_intensity(self):
         if self._selected_user is None:
             return 0
         else:
-            return max(0, self._selected_user.get_activity() - ACTIVITY_THRESHOLD) / \
-                (self.activity_ceiling - ACTIVITY_THRESHOLD)
+            return max(0, self._selected_user.get_intensity() - INTENSITY_THRESHOLD) / \
+                (self.intensity_ceiling - INTENSITY_THRESHOLD)
 
     def _send_interpretation_from_response_buffer(self):
         while len(self._response_buffer) >= self._response_buffer_size:
