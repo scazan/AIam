@@ -5,6 +5,8 @@ reduce interaction latency
 
 behave more creatively when no user is present?
 
+tracker: don't create depth stream if not recording to or playing back from ONI file
+
 ability to replay entire interaction (tracking + improv/rendering)
   log improv w timestamps?
   or perhaps all events used by renderer?
