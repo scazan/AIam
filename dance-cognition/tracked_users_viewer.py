@@ -479,15 +479,15 @@ class TrackedUsersViewer(Window):
         return QtCore.QSize(640, 480)
 
     def process_frame(self, frame):
-        if self.auto_refresh_action.isChecked():
-            callback = lambda: self._process_frame_non_thread_safe(frame)
-            QtGui.QApplication.postEvent(self, CustomQtEvent(callback))
+        callback = lambda: self._process_frame_non_thread_safe(frame)
+        QtGui.QApplication.postEvent(self, CustomQtEvent(callback))
 
     def _process_frame_non_thread_safe(self, frame):
-        self.frame = frame
         for user_id, state in frame["states"]:
             self._log_widget.append("%s %s\n" % (state, user_id))
-        self._scene.updateGL()
+        if self.auto_refresh_action.isChecked():
+            self.frame = frame
+            self._scene.updateGL()
 
     def customEvent(self, custom_qt_event):
         custom_qt_event.callback()
