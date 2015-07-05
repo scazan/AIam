@@ -70,7 +70,6 @@ class User:
         self._interpreter = interpreter
         self._joints = {}
         self._num_updated_joints = 0
-        self._num_received_frames = 0
         self._intensity = 0
         self._distance_to_center = None
 
@@ -102,8 +101,7 @@ class User:
 
     def _process_frame(self):
         self._num_updated_joints = 0
-        self._num_received_frames += 1
-        if self._num_received_frames > 1:
+        if self.has_complete_joint_data():
             self._intensity = self._measure_intensity()
 
     def _measure_intensity(self):
