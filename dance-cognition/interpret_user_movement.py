@@ -19,8 +19,6 @@ from transformations import rotation_matrix
 
 INTENSITY_THRESHOLD = 5
 INTENSITY_CEILING = 80
-ACCELERATION_THRESHOLD = 5
-ACCELERATION_CEILING = 80
 MIN_VELOCITY = 0.3
 MAX_VELOCITY = 1.0
 MIN_NOVELTY = 0.03
@@ -30,16 +28,11 @@ MAX_EXTENSION = 2.0
 MIN_LOCATION_PREFERENCE = 0.0
 MAX_LOCATION_PREFERENCE = 1.0
 RESPONSE_TIME = 0
-INTENSITY_SMOOTHING_DURATION = 1.0
-ACCELERATION_SMOOTHING_DURATION = 0
+JOINT_SMOOTHING_DURATION = 1.0
 FPS = 30.0
 NUM_JOINTS_IN_SKELETON = 15
 JOINTS_DETERMNING_INTENSITY = ["left_hand", "right_hand"]
-JOINTS_DETERMNING_ACCELERATION = ["left_elbow", "right_elbow"]
-CONSIDERED_JOINTS = set(
-    JOINTS_DETERMNING_INTENSITY +
-    JOINTS_DETERMNING_ACCELERATION +
-    ["torso"])
+CONSIDERED_JOINTS = JOINTS_DETERMNING_INTENSITY + ["torso"]
 
 OSC_PORT = 15002
 WEBSOCKET_HOST = "localhost"
@@ -48,15 +41,9 @@ class Joint:
     def __init__(self, interpreter):
         self._interpreter = interpreter
         self._previous_position = None
-        self._previous_velocity = None
-
-        self._intensity_buffer_size = max(int(INTENSITY_SMOOTHING_DURATION * FPS), 1)
+        self._buffer_size = int(JOINT_SMOOTHING_DURATION * FPS)
         self._intensity_buffer = collections.deque(
-            [0] * self._intensity_buffer_size, maxlen=self._intensity_buffer_size)
-
-        self._acceleration_buffer_size = max(int(ACCELERATION_SMOOTHING_DURATION * FPS), 1)
-        self._acceleration_buffer = collections.deque(
-            [0] * self._acceleration_buffer_size, maxlen=self._acceleration_buffer_size)
+            [0] * self._buffer_size, maxlen=self._buffer_size)
 
     def get_position(self):
         return self._interpreter.adjust_tracked_position(self._previous_position)
@@ -65,20 +52,13 @@ class Joint:
         return self._confidence
 
     def get_intensity(self):
-        return sum(self._intensity_buffer) / self._intensity_buffer_size
-
-    def get_acceleration(self):
-        return sum(self._acceleration_buffer) / self._acceleration_buffer_size
+        return sum(self._intensity_buffer) / self._buffer_size
 
     def set_position(self, x, y, z):
         new_position = numpy.array([x, y, z])
         if self._previous_position is not None:
-            new_velocity = new_position - self._previous_position
-            self._intensity_buffer.append(numpy.linalg.norm(new_velocity))
-            if self._previous_velocity is not None:
-                acceleration = numpy.linalg.norm(new_velocity - self._previous_velocity)
-                self._acceleration_buffer.append(acceleration)
-            self._previous_velocity = new_velocity
+            movement = numpy.linalg.norm(new_position - self._previous_position)
+            self._intensity_buffer.append(movement)
         self._previous_position = new_position
 
     def set_confidence(self, confidence):
@@ -91,7 +71,6 @@ class User:
         self._joints = {}
         self._num_updated_joints = 0
         self._intensity = 0
-        self._acceleration = None
         self._distance_to_center = None
 
     def handle_joint_data(self, joint_name, x, y, z, confidence):
@@ -122,7 +101,6 @@ class User:
 
     def _process_frame(self):
         self._intensity = self._measure_intensity()
-        self._acceleration = None
         self._num_updated_joints = 0
 
     def _measure_intensity(self):
@@ -131,19 +109,8 @@ class User:
             for joint_name in JOINTS_DETERMNING_INTENSITY]) / \
                 len(JOINTS_DETERMNING_INTENSITY)
 
-    def _measure_acceleration(self):
-        return sum([
-            self.get_joint(joint_name).get_acceleration()
-            for joint_name in JOINTS_DETERMNING_ACCELERATION]) / \
-                len(JOINTS_DETERMNING_ACCELERATION)
-
     def get_intensity(self):
         return self._intensity
-
-    def get_acceleration(self):
-        if self._acceleration is None:
-            self._acceleration = self._measure_acceleration()
-        return self._acceleration
     
     def get_id(self):
         return self._user_id
@@ -174,7 +141,6 @@ class UserMovementInterpreter:
         self._response_buffer = []
         self._selected_user = None
         self.intensity_ceiling = INTENSITY_CEILING
-        self.acceleration_ceiling = ACCELERATION_CEILING
         self.active_area_center_x, self.active_area_center_z = [
             float(s) for s in args.active_area_center.split(",")]
         self.active_area_radius = args.active_area_radius
