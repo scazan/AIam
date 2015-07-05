@@ -77,7 +77,7 @@ class BvhScene(Scene):
             self._parent.client.send_event(Event(Event.PROCEED_TO_NEXT_FRAME))
 
     def _render_image(self):
-        self.configure_2d_projection()
+        self.configure_2d_projection(0.0, self.width, self.height, 0.0)
         glColor4f(1, 1, 1, 1)
         glEnable(GL_TEXTURE_2D)
         glPushMatrix()
@@ -121,12 +121,6 @@ class BvhScene(Scene):
         glLineWidth(1.0)
         glColor4f(*self._parent.color_scheme["unit_cube"])
         glutWireCube(2.0)
-
-    def configure_2d_projection(self):
-        glMatrixMode(GL_PROJECTION)
-        glLoadIdentity()
-        glOrtho(0.0, self.width, self.height, 0.0, -1.0, 1.0)
-        glMatrixMode(GL_MODELVIEW)
 
     def centralize_output(self):
         pass

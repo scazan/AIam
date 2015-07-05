@@ -64,6 +64,13 @@ class Scene(QtOpenGL.QGLWidget):
         translate_z = self._camera_position[2] + camera_translation[1]
         glTranslatef(translate_x, translate_y, translate_z)
 
+    def configure_2d_projection(self, left, right, bottom, top):
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        glOrtho(left, right, bottom, top, -1.0, 1.0)
+        glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
+
     def camera_translation(self):
         return [0, 0]
 

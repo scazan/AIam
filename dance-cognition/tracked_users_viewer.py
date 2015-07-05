@@ -51,7 +51,6 @@ class TrackedUsersScene(Scene):
     def paintGL(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glLoadIdentity()
-        glTranslatef(self.margin, self.margin, 0)
         self.configure_3d_projection(pixdx=-100, pixdy=0, fovy=40.0,
                                      near=PROJECTION_NEAR, far=PROJECTION_FAR)
 
@@ -70,6 +69,9 @@ class TrackedUsersScene(Scene):
 
         for user in self.parent().interpreter.get_users():
             self._draw_user(user)
+
+        self.configure_2d_projection(0.0, self.width, 0.0, self.height)
+        self._render_frame_timestamp()
 
         if self.parent().show_positions_action.isChecked():
             self._print_positions()
@@ -136,7 +138,10 @@ class TrackedUsersScene(Scene):
         head_position = user.get_joint("head").get_position()
         glColor3f(0, 0, 0)
         position = head_position + [0, 140, 0]
-        self._draw_text(str(user.get_id()), 100, position[0], position[1], position[2], h_align="center")
+        self._draw_text(str(user.get_id()), size=100,
+                        x=position[0], y=position[1], z=position[2],
+                        h_align="center",
+                        three_d=True)
 
     def _draw_intensity(self, user):
         head_position = user.get_joint("head").get_position()
@@ -151,11 +156,12 @@ class TrackedUsersScene(Scene):
         self._draw_solid_cube(*position, sx=70, sz=70, sy=self._intensity_as_height(intensity))
 
         glColor3f(.5, .5, 1)
-        self._draw_text("%.1f" % intensity, 100,
-                        position[0],
-                        position[1] - 100,
-                        position[2],
-                        h_align="center")
+        self._draw_text("%.1f" % intensity, size=100,
+                        x=position[0],
+                        y=position[1] - 100,
+                        z=position[2],
+                        h_align="center",
+                        three_d=True)
 
     def _intensity_as_height(self, intensity):
         return intensity * 3
@@ -233,8 +239,8 @@ class TrackedUsersScene(Scene):
         glColor4f(r, g, b, a)
 
     def _draw_text(self, text, size, x, y, z, font=GLUT_STROKE_ROMAN, spacing=None,
-                  v_align="left", h_align="top"):
-        self._text_renderer(text, size, font).render(x, y, z, v_align, h_align)
+                  v_align="left", h_align="top", three_d=False):
+        self._text_renderer(text, size, font).render(x, y, z, v_align, h_align, three_d)
 
     def _text_renderer(self, text, size, font):
         return self._text_renderer_class(self, text, size, font)
@@ -306,6 +312,13 @@ class TrackedUsersScene(Scene):
             self.parent().interpreter.tracker_y_position,
             self.parent().interpreter.get_tracker_pitch())
 
+    def _render_frame_timestamp(self):
+        if self.parent().frame:
+            glColor4f(0, 0, 0, .5)
+            self._draw_text(
+                "%.1f" % self.parent().frame["timestamp"],
+                size=10, x=5, y=5, z=0)
+
 class LogWidget(QtGui.QTextEdit):
     def __init__(self, *args, **kwargs):
         QtGui.QTextEdit.__init__(self, *args, **kwargs)
@@ -325,6 +338,7 @@ class TrackedUsersViewer(Window):
         self.args = args
         self._enable_log_replay = enable_log_replay
         self.interpreter = interpreter
+        self.frame = None
         self.floor_y = args.floor_y
         self._layout = QtGui.QVBoxLayout()
         self._layout.setSpacing(0)
@@ -470,6 +484,7 @@ class TrackedUsersViewer(Window):
             QtGui.QApplication.postEvent(self, CustomQtEvent(callback))
 
     def _process_frame_non_thread_safe(self, frame):
+        self.frame = frame
         for user_id, state in frame["states"]:
             self._log_widget.append("%s %s\n" % (state, user_id))
         self._scene.updateGL()

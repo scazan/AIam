@@ -14,12 +14,13 @@ class TextRenderer:
         self.spacing = spacing
         self.scale = 1
 
-    def render(self, x, y, z, v_align="bottom", h_align="left"):
+    def render(self, x, y, z, v_align="bottom", h_align="left", three_d=False):
         width, height = self.get_size()
         glPushMatrix()
         glTranslatef(x, y, z)
-        glRotatef(-self.window._camera_x_orientation, 1.0, 0.0, 0.0)
-        glRotatef(-self.window._camera_y_orientation, 0.0, 1.0, 0.0)
+        if three_d:
+            glRotatef(-self.window._camera_x_orientation, 1.0, 0.0, 0.0)
+            glRotatef(-self.window._camera_y_orientation, 0.0, 1.0, 0.0)
         glScalef(self.scale, self.scale, self.scale)
 
         if h_align == "right":
