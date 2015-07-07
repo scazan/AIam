@@ -17,7 +17,14 @@ from event import Event
 from tracked_users_viewer import TrackedUsersViewer
 from transformations import rotation_matrix
 
-IDLE_PARAMETERS = {
+SOLO_PARAMETERS = {
+    "velocity": 0.4,
+    "novelty": 0.3,
+    "extension": 0.7,
+    "location_preference": 0.5,
+}
+
+PASSIVE_PARAMETERS = {
     "velocity": 0.3,
     "novelty": 0.03,
     "extension": 0.02,
@@ -39,6 +46,8 @@ FPS = 30.0
 NUM_JOINTS_IN_SKELETON = 15
 JOINTS_DETERMNING_INTENSITY = ["left_hand", "right_hand"]
 CONSIDERED_JOINTS = JOINTS_DETERMNING_INTENSITY + ["torso"]
+WAITING_TIME_UNTIL_SOLO = 20
+SOLO_DURATION = 10
 
 OSC_PORT = 15002
 WEBSOCKET_HOST = "localhost"
@@ -140,6 +149,7 @@ class User:
 
 class UserMovementInterpreter:
     WAITING = "waiting"
+    SOLO = "solo"
     ADAPTING_TO_USER = "adapting to user"
 
     def __init__(self, send_interpretations=True, log_target=None, log_source=None):
@@ -179,7 +189,11 @@ class UserMovementInterpreter:
         self._users = {}
         self._response_buffer = []
         self._selected_user = None
-        self._system_state = self.WAITING
+        self._set_system_state(self.WAITING)
+
+    def _set_system_state(self, state):
+        self._system_state = state
+        self._system_state_start_time = time.time()
 
     def get_system_state(self):
         return self._system_state
@@ -279,17 +293,38 @@ class UserMovementInterpreter:
 
     def _update_system_state(self):
         if self._selected_user is None:
-            self._system_state = self.WAITING
+            self._update_system_state_with_absent_user()
         else:
-            self._system_state = self.ADAPTING_TO_USER
+            self._set_system_state(self.ADAPTING_TO_USER)
+
+    def _update_system_state_with_absent_user(self):
+        if self._system_state == self.WAITING:
+            if self._waited_long_enough():
+                self._set_system_state(self.SOLO)
+        elif self._system_state == self.SOLO:
+            if self._soloed_long_enough():
+                self._set_system_state(self.WAITING)
+        elif self._system_state == self.ADAPTING_TO_USER:
+            self._set_system_state(self.WAITING)
+
+    def _waited_long_enough(self):
+        return self._current_system_state_duration() > WAITING_TIME_UNTIL_SOLO
+
+    def _soloed_long_enough(self):
+        return self._current_system_state_duration() > SOLO_DURATION
+
+    def _current_system_state_duration(self):
+        return time.time() - self._system_state_start_time
 
     def _select_parameters_in_system_state(self):
         if self._system_state == self.WAITING:
-            return IDLE_PARAMETERS
+            return PASSIVE_PARAMETERS
+        elif self._system_state == self.SOLO:
+            return SOLO_PARAMETERS
         elif self._system_state == self.ADAPTING_TO_USER:
             relative_intensity = self._get_relative_intensity()
             return self._interpolate_parameters(
-                IDLE_PARAMETERS, INTENSE_PARAMETERS, relative_intensity)
+                PASSIVE_PARAMETERS, INTENSE_PARAMETERS, relative_intensity)
 
     def _add_interpretation_to_response_buffer(self, parameters):
         self._response_buffer.append(parameters)
