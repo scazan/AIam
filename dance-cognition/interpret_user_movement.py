@@ -139,6 +139,9 @@ class User:
         return math.sqrt(dx*dx + dz*dz)
 
 class UserMovementInterpreter:
+    WAITING = "waiting"
+    ADAPTING_TO_USER = "adapting to user"
+
     def __init__(self, send_interpretations=True, log_target=None, log_source=None):
         self._send_interpretations = send_interpretations
         self._response_buffer_size = max(1, int(RESPONSE_TIME * FPS))
@@ -176,6 +179,10 @@ class UserMovementInterpreter:
         self._users = {}
         self._response_buffer = []
         self._selected_user = None
+        self._system_state = self.WAITING
+
+    def get_system_state(self):
+        return self._system_state
 
     def get_tracker_pitch(self):
         return self._tracker_pitch
@@ -204,29 +211,32 @@ class UserMovementInterpreter:
             if self._writing_to_log:
                 self._log_frame()
         self._frame = {"timestamp": timestamp,
-                       "states": [],
+                       "user_states": [],
                        "joint_data": []}
 
     def handle_joint_data(self, user_id, joint_name, x, y, z, confidence):
         if self._frame is not None:
             self._frame["joint_data"].append((user_id, joint_name, x, y, z, confidence))
 
-    def handle_state(self, user_id, state):
+    def handle_user_state(self, user_id, state):
         if self._frame is not None:
-            self._frame["states"].append((user_id, state))
+            self._frame["user_states"].append((user_id, state))
 
     def _process_frame(self):
-        for values in self._frame["states"]:
-            self._process_state(*values)
+        for values in self._frame["user_states"]:
+            self._process_user_state(*values)
         for values in self._frame["joint_data"]:
             self._process_joint_data(*values)
-        if args.with_viewer:
-            viewer.process_frame(self._frame)
 
         self._select_user()
         if self._send_interpretations:
-            self._add_interpretation_to_response_buffer()
+            self._update_system_state()
+            parameters = self._select_parameters_in_system_state()
+            self._add_interpretation_to_response_buffer(parameters)
             self._send_interpretation_from_response_buffer()
+
+        if args.with_viewer:
+            viewer.process_frame(self._frame)
 
     def _process_joint_data(self, user_id, joint_name, x, y, z, confidence):
         if user_id not in self._users:
@@ -234,7 +244,7 @@ class UserMovementInterpreter:
         user = self._users[user_id]
         user.handle_joint_data(joint_name, x, y, z, confidence)
 
-    def _process_state(self, user_id, state):
+    def _process_user_state(self, user_id, state):
         if state == "lost":
             try:
                 del self._users[user_id]
@@ -267,9 +277,21 @@ class UserMovementInterpreter:
     def _is_within_active_area(self, user):
         return user.get_distance_to_center() < self.active_area_radius
 
-    def _add_interpretation_to_response_buffer(self):
-        relative_intensity = self._get_relative_intensity()
-        parameters = self._interpolate_parameters(IDLE_PARAMETERS, INTENSE_PARAMETERS, relative_intensity)
+    def _update_system_state(self):
+        if self._selected_user is None:
+            self._system_state = self.WAITING
+        else:
+            self._system_state = self.ADAPTING_TO_USER
+
+    def _select_parameters_in_system_state(self):
+        if self._system_state == self.WAITING:
+            return IDLE_PARAMETERS
+        elif self._system_state == self.ADAPTING_TO_USER:
+            relative_intensity = self._get_relative_intensity()
+            return self._interpolate_parameters(
+                IDLE_PARAMETERS, INTENSE_PARAMETERS, relative_intensity)
+
+    def _add_interpretation_to_response_buffer(self, parameters):
         self._response_buffer.append(parameters)
 
     def _interpolate_parameters(self, low_parameters, high_parameters, interpolation_value):
@@ -282,11 +304,8 @@ class UserMovementInterpreter:
         return result
 
     def _get_relative_intensity(self):
-        if self._selected_user is None:
-            return 0
-        else:
-            return max(0, self._selected_user.get_intensity() - INTENSITY_THRESHOLD) / \
-                (self.intensity_ceiling - INTENSITY_THRESHOLD)
+        return max(0, self._selected_user.get_intensity() - INTENSITY_THRESHOLD) / \
+            (self.intensity_ceiling - INTENSITY_THRESHOLD)
 
     def _send_interpretation_from_response_buffer(self):
         while len(self._response_buffer) >= self._response_buffer_size:
@@ -360,8 +379,8 @@ def handle_begin_frame(path, values, types, src, user_data):
 def handle_joint_data(path, values, types, src, user_data):
     interpreter.handle_joint_data(*values)
 
-def handle_state(path, values, types, src, user_data):
-    interpreter.handle_state(*values)
+def handle_user_state(path, values, types, src, user_data):
+    interpreter.handle_user_state(*values)
 
 if not args.without_sending:
     websocket_client = WebsocketClient(WEBSOCKET_HOST)
@@ -375,7 +394,7 @@ else:
     osc_receiver.add_method("/begin_session", "", handle_begin_session)
     osc_receiver.add_method("/begin_frame", "f", handle_begin_frame)
     osc_receiver.add_method("/joint", "isffff", handle_joint_data)
-    osc_receiver.add_method("/state", "is", handle_state)
+    osc_receiver.add_method("/state", "is", handle_user_state)
     osc_receiver.start()
 
 if args.profile:
