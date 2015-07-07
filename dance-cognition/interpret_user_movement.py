@@ -17,16 +17,22 @@ from event import Event
 from tracked_users_viewer import TrackedUsersViewer
 from transformations import rotation_matrix
 
+IDLE_PARAMETERS = {
+    "velocity": 0.3,
+    "novelty": 0.03,
+    "extension": 0.02,
+    "location_preference": 1.0,
+}
+
+INTENSE_PARAMETERS = {
+    "velocity": 1.0,
+    "novelty": 1.0,
+    "extension": 2.0,
+    "location_preference": 0.0,
+}
+
 INTENSITY_THRESHOLD = 5
 INTENSITY_CEILING = 80
-MIN_VELOCITY = 0.3
-MAX_VELOCITY = 1.0
-MIN_NOVELTY = 0.03
-MAX_NOVELTY = 1.0
-MIN_EXTENSION = 0.02
-MAX_EXTENSION = 2.0
-MIN_LOCATION_PREFERENCE = 0.0
-MAX_LOCATION_PREFERENCE = 1.0
 RESPONSE_TIME = 0
 JOINT_SMOOTHING_DURATION = 1.0
 FPS = 30.0
@@ -263,12 +269,17 @@ class UserMovementInterpreter:
 
     def _add_interpretation_to_response_buffer(self):
         relative_intensity = self._get_relative_intensity()
-        velocity = MIN_VELOCITY + relative_intensity * (MAX_VELOCITY - MIN_VELOCITY)
-        novelty = MIN_NOVELTY + relative_intensity * (MAX_NOVELTY - MIN_NOVELTY)
-        extension = MIN_EXTENSION + relative_intensity * (MAX_EXTENSION - MIN_EXTENSION)
-        location_preference = MIN_LOCATION_PREFERENCE + (1-relative_intensity) \
-            * (MAX_LOCATION_PREFERENCE - MIN_LOCATION_PREFERENCE)
-        self._response_buffer.append((velocity, novelty, extension, location_preference))
+        parameters = self._interpolate_parameters(IDLE_PARAMETERS, INTENSE_PARAMETERS, relative_intensity)
+        self._response_buffer.append(parameters)
+
+    def _interpolate_parameters(self, low_parameters, high_parameters, interpolation_value):
+        result = {}
+        for name in ["velocity", "novelty", "extension", "location_preference"]:
+            low_value = low_parameters[name]
+            high_value = high_parameters[name]
+            value = low_value + (high_value - low_value) * interpolation_value
+            result[name] = value
+        return result
 
     def _get_relative_intensity(self):
         if self._selected_user is None:
@@ -279,23 +290,12 @@ class UserMovementInterpreter:
 
     def _send_interpretation_from_response_buffer(self):
         while len(self._response_buffer) >= self._response_buffer_size:
-            velocity, novelty, extension, location_preference = self._response_buffer.pop(0)
-            websocket_client.send_event(
-                Event(Event.PARAMETER,
-                      {"name": "velocity",
-                       "value": velocity}))
-            websocket_client.send_event(
-                Event(Event.PARAMETER,
-                      {"name": "novelty",
-                       "value": novelty}))
-            websocket_client.send_event(
-                Event(Event.PARAMETER,
-                      {"name": "extension",
-                       "value": extension}))
-            websocket_client.send_event(
-                Event(Event.PARAMETER,
-                      {"name": "location_preference",
-                       "value": location_preference}))
+            parameters = self._response_buffer.pop(0)
+            for name, value in parameters.iteritems():
+                websocket_client.send_event(
+                    Event(Event.PARAMETER,
+                          {"name": name,
+                           "value": value}))
 
     def get_users(self):
         return [user for user in self._users.values()
