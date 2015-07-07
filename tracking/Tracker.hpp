@@ -20,6 +20,7 @@ public:
 
 private:
   void processFrame();
+  void sendBeginSession();
   void sendBeginFrame();
   void sendStatesAndSkeletonData();
   void sendSkeletonData(const nite::UserData&);
@@ -35,6 +36,7 @@ private:
   void disableFastForward();
   void enableFastForward();
   bool isCalibratingOrTracking();
+  float getTimestamp();
 
   openni::Device device;
   openni::Recorder recorder;

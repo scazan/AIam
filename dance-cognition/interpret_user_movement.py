@@ -135,17 +135,14 @@ class User:
 class UserMovementInterpreter:
     def __init__(self, send_interpretations=True, log_target=None, log_source=None):
         self._send_interpretations = send_interpretations
-        self._frame = None
-        self._users = {}
         self._response_buffer_size = max(1, int(RESPONSE_TIME * FPS))
-        self._response_buffer = []
-        self._selected_user = None
         self.intensity_ceiling = INTENSITY_CEILING
         self.active_area_center_x, self.active_area_center_z = [
             float(s) for s in args.active_area_center.split(",")]
         self.active_area_radius = args.active_area_radius
         self.tracker_y_position, tracker_pitch = map(float, args.tracker.split(","))
         self.set_tracker_pitch(tracker_pitch)
+        self.reset()
 
         if log_source:
             self._read_log(log_source)
@@ -167,6 +164,12 @@ class UserMovementInterpreter:
             self.num_considered_joints = NUM_JOINTS_IN_SKELETON
         else:
             self.num_considered_joints = len(CONSIDERED_JOINTS)
+
+    def reset(self):
+        self._frame = None
+        self._users = {}
+        self._response_buffer = []
+        self._selected_user = None
 
     def get_tracker_pitch(self):
         return self._tracker_pitch
@@ -348,6 +351,9 @@ if args.with_viewer:
     viewer = TrackedUsersViewer(interpreter, args,
                                 enable_log_replay=args.log_source)
 
+def handle_begin_session(path, values, types, src, user_data):
+    interpreter.reset()
+
 def handle_begin_frame(path, values, types, src, user_data):
     interpreter.handle_begin_frame(*values)
 
@@ -366,6 +372,7 @@ if args.log_source:
     interpreter.process_log_in_new_thread()
 else:
     osc_receiver = OscReceiver(OSC_PORT)
+    osc_receiver.add_method("/begin_session", "", handle_begin_session)
     osc_receiver.add_method("/begin_frame", "f", handle_begin_frame)
     osc_receiver.add_method("/joint", "isffff", handle_joint_data)
     osc_receiver.add_method("/state", "is", handle_state)

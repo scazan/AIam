@@ -127,6 +127,7 @@ openni::Status Tracker::init(int argc, char **argv) {
   transmitSocket = new UdpTransmitSocket(IpEndpointName(OSC_HOST, OSC_PORT));
 
   printf("User tracking initialized\n");
+  sendBeginSession();
 
   return openni::STATUS_OK;
 }
@@ -201,14 +202,27 @@ void Tracker::enableFastForward() {
   fastForwarding = true;
 }
 
-void Tracker::sendBeginFrame() {
+void Tracker::sendBeginSession() {
   osc::OutboundPacketStream stream(oscBuffer, OSC_BUFFER_SIZE);
-  float timestampMilliSeconds = (float) userTrackerFrame.getTimestamp() / 1000;
   stream << osc::BeginBundleImmediate
-	 << osc::BeginMessage("/begin_frame") << timestampMilliSeconds
+	 << osc::BeginMessage("/begin_session")
 	 << osc::EndMessage
 	 << osc::EndBundle;
   transmitSocket->Send(stream.Data(), stream.Size());
+}
+
+void Tracker::sendBeginFrame() {
+  osc::OutboundPacketStream stream(oscBuffer, OSC_BUFFER_SIZE);
+  stream << osc::BeginBundleImmediate
+	 << osc::BeginMessage("/begin_frame") << getTimestamp()
+	 << osc::EndMessage
+	 << osc::EndBundle;
+  transmitSocket->Send(stream.Data(), stream.Size());
+}
+
+float Tracker::getTimestamp() {
+  float timestampMilliSeconds = (float) userTrackerFrame.getTimestamp() / 1000;
+  return timestampMilliSeconds;
 }
 
 void Tracker::sendStatesAndSkeletonData() {
