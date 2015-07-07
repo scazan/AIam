@@ -25,6 +25,11 @@ investigate why the pose mapping behaves differently Alex' two PCs with ubuntu (
 protection against hypothetical runtime exception in interpolation of improvised path (see plot_observations.py)
 
 
+can happen when UI is closed (?)
+  File "/home/alex/projects/AIam/dance-cognition/experiment.py", line 249, in send_event_to_ui
+    for ui_handler in self._ui_handlers:
+RuntimeError: Set changed size during iteration
+
 perhaps training data for BVHs should use all motion frames by default, rather than sampling the BVH with a mandatory frame rate
   see similar issue in plot_observations.py
 
