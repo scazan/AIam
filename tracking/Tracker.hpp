@@ -34,7 +34,7 @@ private:
   void stopSeeking();
   void disableFastForward();
   void enableFastForward();
-  bool isCalibrating();
+  bool isCalibratingOrTracking();
 
   openni::Device device;
   openni::Recorder recorder;
@@ -46,6 +46,7 @@ private:
   char oscBuffer[OSC_BUFFER_SIZE];
   bool seekingInRecording;
   bool fastForwarding;
+  bool skipEmptySegments;
   int startFrameIndex;
 };
 

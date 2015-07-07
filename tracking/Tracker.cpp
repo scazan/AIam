@@ -24,6 +24,8 @@ openni::Status Tracker::init(int argc, char **argv) {
   float startTimeSecs = 0;
   bool overrideSmoothingFactor = false;
   float smoothingFactor = 0;
+  skipEmptySegments = false;
+  fastForwarding = false;
 
   openni::Status status = openni::OpenNI::initialize();
   if(status != openni::STATUS_OK) {
@@ -32,7 +34,7 @@ openni::Status Tracker::init(int argc, char **argv) {
   }
 
   const char* deviceUri = openni::ANY_DEVICE;
-  for (int i = 1; i < argc-1; ++i) {
+  for (int i = 1; i < argc; ++i) {
     if (strcmp(argv[i], "-device") == 0) {
       deviceUri = argv[++i];
     }
@@ -43,6 +45,10 @@ openni::Status Tracker::init(int argc, char **argv) {
 
     else if(strcmp(argv[i], "-start") == 0) {
       startTimeSecs = atof(argv[++i]);
+    }
+
+    else if(strcmp(argv[i], "-skip") == 0) {
+      skipEmptySegments = true;
     }
 
     else if(strcmp(argv[i], "-smooth") == 0) {
@@ -113,7 +119,6 @@ openni::Status Tracker::init(int argc, char **argv) {
     printf("Total number of frames: %d\n", device.getPlaybackControl()->getNumberOfFrames(depthStream));
     printf("Fast-forwarding to frame %d\n", startFrameIndex);
     seekingInRecording = true;
-    fastForwarding = false;
   }
   else {
     seekingInRecording = false;
@@ -134,8 +139,7 @@ openni::Status Tracker::mainLoop() {
 }
 
 void Tracker::processFrame() {
-  if(seekingInRecording)
-    setSpeed();
+  setSpeed();
 
   openni::VideoFrameRef depthFrame;
   nite::Status status = userTracker->readFrame(&userTrackerFrame);
@@ -150,24 +154,26 @@ void Tracker::processFrame() {
 
 void Tracker::setSpeed() {
   if(seekingInRecording) {
-    bool calibrating = isCalibrating();
-    if(fastForwarding) {
-      if(userTrackerFrame.getFrameIndex() >= startFrameIndex)
-	stopSeeking();
-      else if(calibrating)
-	disableFastForward();
-    }
-    else if(!fastForwarding && !calibrating)
+    if(fastForwarding && userTrackerFrame.getFrameIndex() >= startFrameIndex)
+      stopSeeking();
+    else if(!fastForwarding)
+      enableFastForward();
+  }
+  else if(skipEmptySegments) {
+    bool calibratingOrTracking = isCalibratingOrTracking();
+    if(fastForwarding && calibratingOrTracking)
+      disableFastForward();
+    else if(!fastForwarding && !calibratingOrTracking)
       enableFastForward();
   }
 }
 
-bool Tracker::isCalibrating() {
+bool Tracker::isCalibratingOrTracking() {
   const nite::Array<nite::UserData>& users = userTrackerFrame.getUsers();
   for(int i = 0; i < users.getSize(); ++i) {
     const nite::UserData& userData = users[i];
     nite::SkeletonState state = userData.getSkeleton().getState();
-    if(state == nite::SKELETON_CALIBRATING)
+    if(state == nite::SKELETON_CALIBRATING || state == nite::SKELETON_TRACKED)
       return true;
   }
   return false;
