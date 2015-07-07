@@ -19,8 +19,6 @@ from transformations import rotation_matrix
 
 INTENSITY_THRESHOLD = 5
 INTENSITY_CEILING = 80
-ACTION_INTENSITY_THRESHOLD = 30
-DETECTED_ACTION_POST_INHIBITION_MS = 1000
 MIN_VELOCITY = 0.3
 MAX_VELOCITY = 1.0
 MIN_NOVELTY = 0.03
@@ -66,30 +64,6 @@ class Joint:
     def set_confidence(self, confidence):
         self._confidence = confidence
 
-class ActionDetector:
-    IDLE = "IDLE"
-    FIRING = "FIRING"
-    POST_INHIBITION = "POST_INHIBITION"
-
-    def __init__(self, condition, callback):
-        self._condition = condition
-        self._callback = callback
-        self._state = self.IDLE
-
-    def process(self, timestamp):
-        if self._state == self.IDLE:
-            if self._condition():
-                self._callback()
-                self._state = self.FIRING
-        elif self._state == self.FIRING:
-            if not self._condition():
-                self._state = self.POST_INHIBITION
-                self._post_inhibition_start_time = timestamp
-        elif self._state == self.POST_INHIBITION:
-            state_duration = timestamp - self._post_inhibition_start_time
-            if state_duration > DETECTED_ACTION_POST_INHIBITION_MS:
-                self._state = self.IDLE
-
 class User:
     def __init__(self, user_id, interpreter):
         self._user_id = user_id
@@ -98,9 +72,6 @@ class User:
         self._num_updated_joints = 0
         self._intensity = 0
         self._distance_to_center = None
-        self._action_detector = ActionDetector(
-            condition=self._intensity_is_above_action_threshold,
-            callback=lambda: self._interpreter.action_detected(self))
 
     def handle_joint_data(self, joint_name, x, y, z, confidence):
         if self._should_consider_joint(joint_name):
@@ -131,7 +102,6 @@ class User:
     def _process_frame(self):
         self._intensity = self._measure_intensity()
         self._num_updated_joints = 0
-        self._action_detector.process(self._interpreter.timestamp)
 
     def _measure_intensity(self):
         return sum([
@@ -161,9 +131,6 @@ class User:
         dx = torso_x - self._interpreter.active_area_center_x
         dz = torso_z - self._interpreter.active_area_center_z
         return math.sqrt(dx*dx + dz*dz)
-
-    def _intensity_is_above_action_threshold(self):
-        return self.get_intensity() > ACTION_INTENSITY_THRESHOLD
 
 class UserMovementInterpreter:
     def __init__(self, send_interpretations=True, log_target=None, log_source=None):
@@ -240,7 +207,6 @@ class UserMovementInterpreter:
             self._frame["states"].append((user_id, state))
 
     def _process_frame(self):
-        self.timestamp = self._frame["timestamp"]
         for values in self._frame["states"]:
             self._process_state(*values)
         for values in self._frame["joint_data"]:
@@ -358,12 +324,6 @@ class UserMovementInterpreter:
             sleep_duration = min(t - self._current_log_time, max_sleep_duration)
             time.sleep(sleep_duration)
             self._current_log_time += sleep_duration * self.log_replay_speed
-
-    def action_detected(self, user):
-        if user == self._selected_user and self._send_interpretations:
-            websocket_client.send_event(Event(Event.ABORT_PATH))
-        if args.with_viewer:
-            viewer.action_detected(user)
         
 
 parser = ArgumentParser()
