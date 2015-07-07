@@ -5,6 +5,7 @@ from PyQt4 import QtCore, QtGui
 import math
 import collections
 import numpy
+import time
 from ui.scene import Scene
 from ui.window import Window
 text_renderer_module = __import__("text_renderer")
@@ -24,6 +25,7 @@ CENTER_POSITION_SYMBOL_SIZE = 200
 TRACKER_PITCH_SPEED = .1
 TRACKER_Y_POSITION_SPEED = .5
 ASSUMED_VIEW_DISTANCE = 5000
+DETECTED_ACTION_DURATION = 2
 
 class TrackedUsersScene(Scene):
     def __init__(self, parent):
@@ -116,6 +118,7 @@ class TrackedUsersScene(Scene):
         self._draw_label(user)
         self._draw_intensity(user)
         self._draw_skeleton(user)
+        self._potentially_visualize_detected_action(user)
 
     def _draw_skeleton(self, user):
         if user == self._selected_user:
@@ -325,6 +328,23 @@ class TrackedUsersScene(Scene):
                 "%.1f" % (self.parent().frame["timestamp"] / 1000),
                 size=10, x=5, y=5, z=0)
 
+    def _potentially_visualize_detected_action(self, user):
+        if hasattr(user, "showing_detected_action"):
+            elapsed_time = time.time() - user.detected_action_start_time
+            if elapsed_time < DETECTED_ACTION_DURATION:
+                self._visualize_detected_action(user, elapsed_time)
+            else:
+                delattr(user, "showing_detected_action")
+
+    def _visualize_detected_action(self, user, elapsed_time):
+        head_position = user.get_joint("head").get_position()
+        glColor3f(1, 0, 0)
+        position = head_position + [0, 260, 0]
+        glPointSize(10 * pow(1 - elapsed_time / DETECTED_ACTION_DURATION, 5))
+        glBegin(GL_POINTS)
+        glVertex3f(*position)
+        glEnd()
+
 class LogWidget(QtGui.QTextEdit):
     def __init__(self, *args, **kwargs):
         QtGui.QTextEdit.__init__(self, *args, **kwargs)
@@ -497,6 +517,10 @@ class TrackedUsersViewer(Window):
 
     def customEvent(self, custom_qt_event):
         custom_qt_event.callback()
+
+    def action_detected(self, user):
+        user.showing_detected_action = True
+        user.detected_action_start_time = time.time()
 
 class CustomQtEvent(QtCore.QEvent):
     EVENT_TYPE = QtCore.QEvent.Type(QtCore.QEvent.registerEventType())
