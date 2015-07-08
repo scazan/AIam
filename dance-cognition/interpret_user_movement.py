@@ -40,7 +40,6 @@ INTENSE_PARAMETERS = {
 
 INTENSITY_THRESHOLD = 5
 INTENSITY_CEILING = 80
-RESPONSE_TIME = 0
 JOINT_SMOOTHING_DURATION = 1.0
 FPS = 30.0
 NUM_JOINTS_IN_SKELETON = 15
@@ -151,7 +150,6 @@ class UserMovementInterpreter:
 
     def __init__(self, send_interpretations=True, log_target=None, log_source=None):
         self._send_interpretations = send_interpretations
-        self._response_buffer_size = max(1, int(RESPONSE_TIME * FPS))
         self.intensity_ceiling = INTENSITY_CEILING
         self.active_area_center_x, self.active_area_center_z = [
             float(s) for s in args.active_area_center.split(",")]
@@ -184,7 +182,6 @@ class UserMovementInterpreter:
     def reset(self):
         self._frame = None
         self._users = {}
-        self._response_buffer = []
         self._selected_user = None
         self._system_state = self.WAITING
 
@@ -239,8 +236,7 @@ class UserMovementInterpreter:
         if self._send_interpretations:
             self._update_system_state()
             parameters = self._select_parameters_in_system_state()
-            self._add_interpretation_to_response_buffer(parameters)
-            self._send_interpretation_from_response_buffer()
+            self._send_parameters(parameters)
 
         if args.with_viewer:
             viewer.process_frame(self._frame)
@@ -298,9 +294,6 @@ class UserMovementInterpreter:
             return self._interpolate_parameters(
                 PASSIVE_PARAMETERS, INTENSE_PARAMETERS, relative_intensity)
 
-    def _add_interpretation_to_response_buffer(self, parameters):
-        self._response_buffer.append(parameters)
-
     def _interpolate_parameters(self, low_parameters, high_parameters, interpolation_value):
         result = {}
         for name in ["velocity", "novelty", "extension", "location_preference"]:
@@ -314,14 +307,12 @@ class UserMovementInterpreter:
         return max(0, self._selected_user.get_intensity() - INTENSITY_THRESHOLD) / \
             (self.intensity_ceiling - INTENSITY_THRESHOLD)
 
-    def _send_interpretation_from_response_buffer(self):
-        while len(self._response_buffer) >= self._response_buffer_size:
-            parameters = self._response_buffer.pop(0)
-            for name, value in parameters.iteritems():
-                websocket_client.send_event(
-                    Event(Event.PARAMETER,
-                          {"name": name,
-                           "value": value}))
+    def _send_parameters(self, parameters):
+        for name, value in parameters.iteritems():
+            websocket_client.send_event(
+                Event(Event.PARAMETER,
+                      {"name": name,
+                       "value": value}))
 
     def get_users(self):
         return [user for user in self._users.values()
