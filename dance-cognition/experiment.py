@@ -150,14 +150,17 @@ class Experiment(EventListener):
         self.stopwatch = Stopwatch()
         self._frame_count = 0
         self._ui_handlers = set()
+        self._ui_handlers_lock = threading.Lock()
         self._exporting_output = False
 
     def ui_connected(self, handler):
-        self._ui_handlers.add(handler)
+        with self._ui_handlers_lock:
+            self._ui_handlers.add(handler)
 
     def ui_disconnected(self, handler):
-        if handler in self._ui_handlers:
-            self._ui_handlers.remove(handler)
+        with self._ui_handlers_lock:
+            if handler in self._ui_handlers:
+                self._ui_handlers.remove(handler)
 
     def update_cursor(self, event):
         self.entity.set_cursor(event.content)
@@ -246,9 +249,10 @@ class Experiment(EventListener):
         self.send_event_to_ui(Event(Event.OUTPUT, self.processed_output))
 
     def send_event_to_ui(self, event):
-        for ui_handler in self._ui_handlers:
-            if event.source is None or event.source != ui_handler:
-                ui_handler.send_event(event)
+        with self._ui_handlers_lock:
+            for ui_handler in self._ui_handlers:
+                if event.source is None or event.source != ui_handler:
+                    ui_handler.send_event(event)
 
     def current_time(self):
         return self.stopwatch.get_elapsed_time()
