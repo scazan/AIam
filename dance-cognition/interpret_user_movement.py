@@ -184,6 +184,7 @@ class UserMovementInterpreter:
         self._users = {}
         self._selected_user = None
         self._system_state = self.WAITING
+        self._previous_system_state = None
 
     def get_system_state(self):
         return self._system_state
@@ -233,10 +234,18 @@ class UserMovementInterpreter:
             self._process_joint_data(*values)
 
         self._select_user()
+        system_state_changed = self._update_system_state()
+
         if self._send_interpretations:
-            self._update_system_state()
             parameters = self._select_parameters_in_system_state()
             self._send_parameters(parameters)
+
+        if system_state_changed:
+            if self._send_interpretations:
+                websocket_client.send_event(Event(Event.ABORT_PATH))
+            if args.with_viewer:
+                viewer.log(self._frame["timestamp"], "aborting path")
+                viewer.log(self._frame["timestamp"], self._system_state)
 
         if args.with_viewer:
             viewer.process_frame(self._frame)
@@ -281,10 +290,12 @@ class UserMovementInterpreter:
         return user.get_distance_to_center() < self.active_area_radius
 
     def _update_system_state(self):
+        self._previous_system_state = self._system_state
         if self._selected_user is None:
             self._system_state = self.WAITING
         else:
             self._system_state = self.ADAPTING_TO_USER
+        return self._system_state != self._previous_system_state
 
     def _select_parameters_in_system_state(self):
         if self._system_state == self.WAITING:

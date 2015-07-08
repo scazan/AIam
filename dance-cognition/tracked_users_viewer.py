@@ -495,13 +495,20 @@ class TrackedUsersViewer(Window):
 
     def process_frame(self, frame):
         self.frame = frame
-        QtGui.QApplication.postEvent(self, CustomQtEvent(self._update_log_widget))
+        self._update_log_widget()
         if self.auto_refresh_action.isChecked() and not self._scene.is_rendering:
             QtGui.QApplication.postEvent(self, CustomQtEvent(self._scene.updateGL))
             
     def _update_log_widget(self):
         for user_id, state in self.frame["user_states"]:
-            self._log_widget.append("%s %s\n" % (state, user_id))
+            self.log(self.frame["timestamp"], "%s %s" % (state, user_id))
+
+    def log(self, timestamp_ms, message):
+        QtGui.QApplication.postEvent(self, CustomQtEvent(lambda: self._log(
+            timestamp_ms, message)))
+
+    def _log(self, timestamp_ms, message):
+        self._log_widget.append("%.1f %s\n" % (timestamp_ms / 1000, message))
 
     def customEvent(self, custom_qt_event):
         custom_qt_event.callback()
