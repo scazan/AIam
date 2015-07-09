@@ -209,8 +209,8 @@ class TrackedUsersScene(Scene):
             vertex2 = vertices[n+1]
             if vertex1[1] > self.parent().floor_y and vertex2[1] > self.parent().floor_y:
                 self._set_shadow_color_by_joint(user, confidence)
-                glVertex3f(*vertex1)
-                glVertex3f(*vertex2)
+                glVertex3f(vertex1[0], self.parent().floor_y, vertex1[2])
+                glVertex3f(vertex2[0], self.parent().floor_y, vertex2[2])
         glEnd()
 
     def _split_vertices_at_floor(self, vertex1, vertex2):
