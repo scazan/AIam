@@ -52,6 +52,8 @@ private:
 	void startRecording();
 	void updateTextureMap();
 	void drawTextureMap();
+	void drawTextureMapAsTexture();
+	void drawTextureMapAsPoints();
 
 	float				m_pDepthHist[MAX_DEPTH];
 	char			m_strSampleName[ONI_MAX_STR];
@@ -66,6 +68,7 @@ private:
 	nite::UserTracker* m_pUserTracker;
 	nite::UserTrackerFrameRef userTrackerFrame;
 	openni::VideoFrameRef depthFrame;
+	bool depthAsPoints;
 
 	nite::UserId m_poseUser;
 	uint64_t m_poseTime;

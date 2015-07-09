@@ -125,6 +125,7 @@ openni::Status SampleViewer::Init(int argc, char **argv)
 	recordingFilename = NULL;
 	delayRecordingUntilSeen = false;
 	recordingEnabled = false;
+	depthAsPoints = false;
 
 	openni::Status rc = openni::OpenNI::initialize();
 	if (rc != openni::STATUS_OK)
@@ -154,6 +155,10 @@ openni::Status SampleViewer::Init(int argc, char **argv)
 
 		else if(strcmp(argv[i], "-verbose") == 0) {
 		  verbose = true;
+		}
+
+		else if(strcmp(argv[i], "-depth-as-points") == 0) {
+		  depthAsPoints = true;
 		}
 
 		else {
@@ -523,6 +528,13 @@ void SampleViewer::updateTextureMap() {
 }
 
 void SampleViewer::drawTextureMap() {
+  if(depthAsPoints)
+    drawTextureMapAsPoints();
+  else
+    drawTextureMapAsTexture();
+}
+
+void SampleViewer::drawTextureMapAsTexture() {
   glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
   checkGlErrors();
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -556,6 +568,34 @@ void SampleViewer::drawTextureMap() {
 
   glEnd();
   glDisable(GL_TEXTURE_2D);
+  checkGlErrors();
+}
+
+void SampleViewer::drawTextureMapAsPoints() {
+  float ratioX = (float)g_nXRes/(float)m_nTexMapX;
+  float ratioY = (float)g_nYRes/(float)m_nTexMapY;
+
+  glPointSize(1.0);
+  glBegin(GL_POINTS);
+
+  openni::RGB888Pixel* pTexRow = m_pTexMap;
+  float vx, vy;
+  for(unsigned int y = 0; y < m_nTexMapY; y++) {
+    openni::RGB888Pixel* pTex = pTexRow;
+    vy = (float) y / m_nTexMapY / ratioY;
+    for(unsigned int x = 0; x < m_nTexMapX; x++) {
+      glColor4f((float)pTex->r / 255,
+      		(float)pTex->g / 255,
+      		(float)pTex->b / 255,
+      		1);
+      vx = (float) x / m_nTexMapX / ratioX;
+      glVertex2f(vx, vy);
+      pTex++;
+    }
+    pTexRow += m_nTexMapX;
+  }
+
+  glEnd();
   checkGlErrors();
 }
 
