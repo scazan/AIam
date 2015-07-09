@@ -9,6 +9,8 @@
 
 #define FPS 30
 
+extern bool verbose;
+
 Tracker::Tracker() {
   userTracker = new nite::UserTracker;
 }
@@ -26,6 +28,8 @@ openni::Status Tracker::init(int argc, char **argv) {
   float smoothingFactor = 0;
   skipEmptySegments = false;
   fastForwarding = false;
+  viewerEnabled = false;
+  depthAsPoints = false;
 
   openni::Status status = openni::OpenNI::initialize();
   if(status != openni::STATUS_OK) {
@@ -54,6 +58,18 @@ openni::Status Tracker::init(int argc, char **argv) {
     else if(strcmp(argv[i], "-smooth") == 0) {
       overrideSmoothingFactor = true;
       smoothingFactor = atof(argv[++i]);
+    }
+
+    else if(strcmp(argv[i], "-with-viewer") == 0) {
+      viewerEnabled = true;
+    }
+
+    else if(strcmp(argv[i], "-verbose") == 0) {
+      verbose = true;
+    }
+
+    else if(strcmp(argv[i], "-depth-as-points") == 0) {
+      depthAsPoints = true;
     }
 
     else {
@@ -129,12 +145,23 @@ openni::Status Tracker::init(int argc, char **argv) {
   printf("User tracking initialized\n");
   sendBeginSession();
 
+  if(viewerEnabled) {
+    viewer = new TrackerViewer(this);
+    viewer->depthAsPoints = depthAsPoints;
+    viewer->Init(argc, argv);
+  }
+
   return openni::STATUS_OK;
 }
 
 openni::Status Tracker::mainLoop() {
-  while(true) {
-    processFrame();
+  if(viewerEnabled) {
+    viewer->Run();
+  }
+  else {
+    while(true) {
+      processFrame();
+    }
   }
   return openni::STATUS_OK;
 }
@@ -142,7 +169,6 @@ openni::Status Tracker::mainLoop() {
 void Tracker::processFrame() {
   setSpeed();
 
-  openni::VideoFrameRef depthFrame;
   nite::Status status = userTracker->readFrame(&userTrackerFrame);
   if(status != nite::STATUS_OK) {
     printf("GetNextData failed\n");
@@ -328,4 +354,21 @@ void Tracker::sendState(const nite::UserId& userId, const char *state) {
 	 << osc::EndMessage
 	 << osc::EndBundle;
   transmitSocket->Send(stream.Data(), stream.Size());
+}
+
+
+TrackerViewer::TrackerViewer(Tracker *_tracker) : Viewer() {
+  tracker = _tracker;
+}
+
+void TrackerViewer::processFrame() {
+  tracker->processFrame();
+}
+
+nite::UserTracker *TrackerViewer::getUserTracker() {
+  return tracker->getUserTracker();
+}
+
+nite::UserTrackerFrameRef TrackerViewer::getUserTrackerFrame() {
+  return tracker->getUserTrackerFrame();
 }

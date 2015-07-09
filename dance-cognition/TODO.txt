@@ -5,8 +5,6 @@ reduce interaction latency
 behave more creatively when no user is present
   solution added, needs to be tested with real users
 
-merge tracker and UserViewer
-
 tracker: don't create depth stream if not recording to or playing back from ONI file
 
 ability to replay entire interaction (tracking + improv/rendering)
