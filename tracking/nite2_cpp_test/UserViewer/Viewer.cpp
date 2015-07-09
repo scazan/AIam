@@ -326,8 +326,6 @@ void SampleViewer::Display()
   }
   previousDisplayTime = currentDisplayTime;
 
-	nite::UserTrackerFrameRef userTrackerFrame;
-	openni::VideoFrameRef depthFrame;
 	nite::Status rc = m_pUserTracker->readFrame(&userTrackerFrame);
 	if (rc != nite::STATUS_OK)
 	{
@@ -346,9 +344,6 @@ void SampleViewer::Display()
 		m_pTexMap = new openni::RGB888Pixel[m_nTexMapX * m_nTexMapY];
 	}
 
-	log("getUserMap\n");
-	const nite::UserMap& userLabels = userTrackerFrame.getUserMap();
-
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glMatrixMode(GL_PROJECTION);
@@ -361,73 +356,10 @@ void SampleViewer::Display()
 	if (depthFrame.isValid() && g_drawDepth)
 	{
 	  log("calculateHistogram\n");
-		calculateHistogram(m_pDepthHist, MAX_DEPTH, depthFrame);
+	  calculateHistogram(m_pDepthHist, MAX_DEPTH, depthFrame);
 	}
 
-	memset(m_pTexMap, 0, m_nTexMapX*m_nTexMapY*sizeof(openni::RGB888Pixel));
-
-	float factor[3] = {1, 1, 1};
-	// check if we need to draw depth frame to texture
-	if (depthFrame.isValid() && g_drawDepth)
-	{
-	  log("draw frame to texture\n");
-		const nite::UserId* pLabels = userLabels.getPixels();
-
-		const openni::DepthPixel* pDepthRow = (const openni::DepthPixel*)depthFrame.getData();
-		openni::RGB888Pixel* pTexRow = m_pTexMap + depthFrame.getCropOriginY() * m_nTexMapX;
-		int rowSize = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
-
-		log("rowSize=%d height=%d width=%d\n", rowSize, depthFrame.getHeight(), depthFrame.getWidth());
-		for (int y = 0; y < depthFrame.getHeight(); ++y)
-		{
-			const openni::DepthPixel* pDepth = pDepthRow;
-			openni::RGB888Pixel* pTex = pTexRow + depthFrame.getCropOriginX();
-
-			for (int x = 0; x < depthFrame.getWidth(); ++x, ++pDepth, ++pTex, ++pLabels)
-			{
-				if (*pDepth != 0)
-				{
-					if (*pLabels == 0)
-					{
-						if (!g_drawBackground)
-						{
-							factor[0] = factor[1] = factor[2] = 0;
-
-						}
-						else
-						{
-							factor[0] = Colors[colorCount][0];
-							factor[1] = Colors[colorCount][1];
-							factor[2] = Colors[colorCount][2];
-						}
-					}
-					else
-					{
-						factor[0] = Colors[*pLabels % colorCount][0];
-						factor[1] = Colors[*pLabels % colorCount][1];
-						factor[2] = Colors[*pLabels % colorCount][2];
-					}
-//					// Add debug lines - every 10cm
-// 					else if ((*pDepth / 10) % 10 == 0)
-// 					{
-// 						factor[0] = factor[2] = 0;
-// 					}
-
-					int nHistValue = m_pDepthHist[*pDepth];
-					pTex->r = nHistValue*factor[0];
-					pTex->g = nHistValue*factor[1];
-					pTex->b = nHistValue*factor[2];
-
-					factor[0] = factor[1] = factor[2] = 1;
-				}
-			}
-
-			pDepthRow += rowSize;
-			pTexRow += m_nTexMapX;
-		}
-		log("drew frame to texture\n");
-	}
-
+	updateTextureMap();
 	g_nXRes = depthFrame.getVideoMode().getResolutionX();
 	g_nYRes = depthFrame.getVideoMode().getResolutionY();
 	drawTextureMap();
@@ -519,6 +451,75 @@ void SampleViewer::Display()
 
 	checkGlErrors();
 	log("Display done\n");
+}
+
+void SampleViewer::updateTextureMap() {
+  memset(m_pTexMap, 0, m_nTexMapX*m_nTexMapY*sizeof(openni::RGB888Pixel));
+
+  float factor[3] = {1, 1, 1};
+  // check if we need to draw depth frame to texture
+  if (depthFrame.isValid() && g_drawDepth)
+    {
+      log("getUserMap\n");
+      const nite::UserMap& userLabels = userTrackerFrame.getUserMap();
+
+      log("draw frame to texture\n");
+      const nite::UserId* pLabels = userLabels.getPixels();
+
+      const openni::DepthPixel* pDepthRow = (const openni::DepthPixel*)depthFrame.getData();
+      openni::RGB888Pixel* pTexRow = m_pTexMap + depthFrame.getCropOriginY() * m_nTexMapX;
+      int rowSize = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
+
+      log("rowSize=%d height=%d width=%d\n", rowSize, depthFrame.getHeight(), depthFrame.getWidth());
+      for (int y = 0; y < depthFrame.getHeight(); ++y)
+	{
+	  const openni::DepthPixel* pDepth = pDepthRow;
+	  openni::RGB888Pixel* pTex = pTexRow + depthFrame.getCropOriginX();
+
+	  for (int x = 0; x < depthFrame.getWidth(); ++x, ++pDepth, ++pTex, ++pLabels)
+	    {
+	      if (*pDepth != 0)
+		{
+		  if (*pLabels == 0)
+		    {
+		      if (!g_drawBackground)
+			{
+			  factor[0] = factor[1] = factor[2] = 0;
+
+			}
+		      else
+			{
+			  factor[0] = Colors[colorCount][0];
+			  factor[1] = Colors[colorCount][1];
+			  factor[2] = Colors[colorCount][2];
+			}
+		    }
+		  else
+		    {
+		      factor[0] = Colors[*pLabels % colorCount][0];
+		      factor[1] = Colors[*pLabels % colorCount][1];
+		      factor[2] = Colors[*pLabels % colorCount][2];
+		    }
+		  //					// Add debug lines - every 10cm
+		  // 					else if ((*pDepth / 10) % 10 == 0)
+		  // 					{
+		  // 						factor[0] = factor[2] = 0;
+		  // 					}
+
+		  int nHistValue = m_pDepthHist[*pDepth];
+		  pTex->r = nHistValue*factor[0];
+		  pTex->g = nHistValue*factor[1];
+		  pTex->b = nHistValue*factor[2];
+
+		  factor[0] = factor[1] = factor[2] = 1;
+		}
+	    }
+
+	  pDepthRow += rowSize;
+	  pTexRow += m_nTexMapX;
+	}
+      log("drew frame to texture\n");
+    }
 }
 
 void SampleViewer::drawTextureMap() {
