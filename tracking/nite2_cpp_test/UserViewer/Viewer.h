@@ -50,6 +50,7 @@ private:
 	static void glutKeyboard(unsigned char key, int x, int y);
 	void updateUserState(const nite::UserData& user, uint64_t ts);
 	void startRecording();
+	void drawTextureMap();
 
 	float				m_pDepthHist[MAX_DEPTH];
 	char			m_strSampleName[ONI_MAX_STR];

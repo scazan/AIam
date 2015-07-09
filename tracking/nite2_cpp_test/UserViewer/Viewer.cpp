@@ -428,43 +428,9 @@ void SampleViewer::Display()
 		log("drew frame to texture\n");
 	}
 
-	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
-	checkGlErrors();
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	checkGlErrors();
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	checkGlErrors();
-	log("glTexImage2D\n");
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_nTexMapX, m_nTexMapY, 0, GL_RGB, GL_UNSIGNED_BYTE, m_pTexMap);
-	checkGlErrors();
-	log("glTexImage2D ok\n");
-
-	// Display the OpenGL texture map
-	glColor4f(1,1,1,1);
-
-	glEnable(GL_TEXTURE_2D);
-	checkGlErrors();
-	glBegin(GL_QUADS);
-
 	g_nXRes = depthFrame.getVideoMode().getResolutionX();
 	g_nYRes = depthFrame.getVideoMode().getResolutionY();
-
-	// upper left
-	glTexCoord2f(0, 0);
-	glVertex2f(0, 0);
-	// upper right
-	glTexCoord2f((float)g_nXRes/(float)m_nTexMapX, 0);
-	glVertex2f(1, 0);
-	// bottom right
-	glTexCoord2f((float)g_nXRes/(float)m_nTexMapX, (float)g_nYRes/(float)m_nTexMapY);
-	glVertex2f(1, 1);
-	// bottom left
-	glTexCoord2f(0, (float)g_nYRes/(float)m_nTexMapY);
-	glVertex2f(0, 1);
-
-	glEnd();
-	glDisable(GL_TEXTURE_2D);
-	checkGlErrors();
+	drawTextureMap();
 
 	log("getUsers\n");
 	const nite::Array<nite::UserData>& users = userTrackerFrame.getUsers();
@@ -553,6 +519,43 @@ void SampleViewer::Display()
 
 	checkGlErrors();
 	log("Display done\n");
+}
+
+void SampleViewer::drawTextureMap() {
+  glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
+  checkGlErrors();
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  checkGlErrors();
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  checkGlErrors();
+  log("glTexImage2D\n");
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_nTexMapX, m_nTexMapY, 0, GL_RGB, GL_UNSIGNED_BYTE, m_pTexMap);
+  checkGlErrors();
+  log("glTexImage2D ok\n");
+
+  // Display the OpenGL texture map
+  glColor4f(1,1,1,1);
+
+  glEnable(GL_TEXTURE_2D);
+  checkGlErrors();
+  glBegin(GL_QUADS);
+
+  // upper left
+  glTexCoord2f(0, 0);
+  glVertex2f(0, 0);
+  // upper right
+  glTexCoord2f((float)g_nXRes/(float)m_nTexMapX, 0);
+  glVertex2f(1, 0);
+  // bottom right
+  glTexCoord2f((float)g_nXRes/(float)m_nTexMapX, (float)g_nYRes/(float)m_nTexMapY);
+  glVertex2f(1, 1);
+  // bottom left
+  glTexCoord2f(0, (float)g_nYRes/(float)m_nTexMapY);
+  glVertex2f(0, 1);
+
+  glEnd();
+  glDisable(GL_TEXTURE_2D);
+  checkGlErrors();
 }
 
 void SampleViewer::OnKey(unsigned char key, int /*x*/, int /*y*/)
