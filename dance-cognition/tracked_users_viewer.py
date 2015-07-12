@@ -75,6 +75,7 @@ class TrackedUsersScene(Scene):
 
         self.configure_2d_projection(0.0, self.width, 0.0, self.height)
         self._render_frame_timestamp()
+        self._render_system_state()
 
         if self.parent().show_positions_action.isChecked():
             self._print_positions()
@@ -325,6 +326,13 @@ class TrackedUsersScene(Scene):
                 "%.1f" % (self.parent().frame["timestamp"] / 1000),
                 size=10, x=5, y=5, z=0)
 
+    def _render_system_state(self):
+        if self.parent().frame:
+            glColor4f(0, .5, 0, .5)
+            self._draw_text(
+                self.parent().interpreter.get_system_state(),
+                size=14, x=5, y=20, z=0)
+
 class LogWidget(QtGui.QTextEdit):
     def __init__(self, *args, **kwargs):
         QtGui.QTextEdit.__init__(self, *args, **kwargs)
@@ -487,13 +495,20 @@ class TrackedUsersViewer(Window):
 
     def process_frame(self, frame):
         self.frame = frame
-        QtGui.QApplication.postEvent(self, CustomQtEvent(self._update_log_widget))
+        self._update_log_widget()
         if self.auto_refresh_action.isChecked() and not self._scene.is_rendering:
             QtGui.QApplication.postEvent(self, CustomQtEvent(self._scene.updateGL))
             
     def _update_log_widget(self):
-        for user_id, state in self.frame["states"]:
-            self._log_widget.append("%s %s\n" % (state, user_id))
+        for user_id, state in self.frame["user_states"]:
+            self.log(self.frame["timestamp"], "%s %s" % (state, user_id))
+
+    def log(self, timestamp_ms, message):
+        QtGui.QApplication.postEvent(self, CustomQtEvent(lambda: self._log(
+            timestamp_ms, message)))
+
+    def _log(self, timestamp_ms, message):
+        self._log_widget.append("%.1f %s\n" % (timestamp_ms / 1000, message))
 
     def customEvent(self, custom_qt_event):
         custom_qt_event.callback()

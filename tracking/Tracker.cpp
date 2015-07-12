@@ -9,6 +9,8 @@
 
 #define FPS 30
 
+extern bool verbose;
+
 Tracker::Tracker() {
   userTracker = new nite::UserTracker;
 }
@@ -24,6 +26,10 @@ openni::Status Tracker::init(int argc, char **argv) {
   float startTimeSecs = 0;
   bool overrideSmoothingFactor = false;
   float smoothingFactor = 0;
+  skipEmptySegments = false;
+  fastForwarding = false;
+  viewerEnabled = false;
+  depthAsPoints = false;
 
   openni::Status status = openni::OpenNI::initialize();
   if(status != openni::STATUS_OK) {
@@ -32,7 +38,7 @@ openni::Status Tracker::init(int argc, char **argv) {
   }
 
   const char* deviceUri = openni::ANY_DEVICE;
-  for (int i = 1; i < argc-1; ++i) {
+  for (int i = 1; i < argc; ++i) {
     if (strcmp(argv[i], "-device") == 0) {
       deviceUri = argv[++i];
     }
@@ -45,9 +51,25 @@ openni::Status Tracker::init(int argc, char **argv) {
       startTimeSecs = atof(argv[++i]);
     }
 
+    else if(strcmp(argv[i], "-skip") == 0) {
+      skipEmptySegments = true;
+    }
+
     else if(strcmp(argv[i], "-smooth") == 0) {
       overrideSmoothingFactor = true;
       smoothingFactor = atof(argv[++i]);
+    }
+
+    else if(strcmp(argv[i], "-with-viewer") == 0) {
+      viewerEnabled = true;
+    }
+
+    else if(strcmp(argv[i], "-verbose") == 0) {
+      verbose = true;
+    }
+
+    else if(strcmp(argv[i], "-depth-as-points") == 0) {
+      depthAsPoints = true;
     }
 
     else {
@@ -113,7 +135,6 @@ openni::Status Tracker::init(int argc, char **argv) {
     printf("Total number of frames: %d\n", device.getPlaybackControl()->getNumberOfFrames(depthStream));
     printf("Fast-forwarding to frame %d\n", startFrameIndex);
     seekingInRecording = true;
-    fastForwarding = false;
   }
   else {
     seekingInRecording = false;
@@ -122,22 +143,32 @@ openni::Status Tracker::init(int argc, char **argv) {
   transmitSocket = new UdpTransmitSocket(IpEndpointName(OSC_HOST, OSC_PORT));
 
   printf("User tracking initialized\n");
+  sendBeginSession();
+
+  if(viewerEnabled) {
+    viewer = new TrackerViewer(this);
+    viewer->depthAsPoints = depthAsPoints;
+    viewer->Init(argc, argv);
+  }
 
   return openni::STATUS_OK;
 }
 
 openni::Status Tracker::mainLoop() {
-  while(true) {
-    processFrame();
+  if(viewerEnabled) {
+    viewer->Run();
+  }
+  else {
+    while(true) {
+      processFrame();
+    }
   }
   return openni::STATUS_OK;
 }
 
 void Tracker::processFrame() {
-  if(seekingInRecording)
-    setSpeed();
+  setSpeed();
 
-  openni::VideoFrameRef depthFrame;
   nite::Status status = userTracker->readFrame(&userTrackerFrame);
   if(status != nite::STATUS_OK) {
     printf("GetNextData failed\n");
@@ -150,24 +181,26 @@ void Tracker::processFrame() {
 
 void Tracker::setSpeed() {
   if(seekingInRecording) {
-    bool calibrating = isCalibrating();
-    if(fastForwarding) {
-      if(userTrackerFrame.getFrameIndex() >= startFrameIndex)
-	stopSeeking();
-      else if(calibrating)
-	disableFastForward();
-    }
-    else if(!fastForwarding && !calibrating)
+    if(fastForwarding && userTrackerFrame.getFrameIndex() >= startFrameIndex)
+      stopSeeking();
+    else if(!fastForwarding)
+      enableFastForward();
+  }
+  else if(skipEmptySegments) {
+    bool calibratingOrTracking = isCalibratingOrTracking();
+    if(fastForwarding && calibratingOrTracking)
+      disableFastForward();
+    else if(!fastForwarding && !calibratingOrTracking)
       enableFastForward();
   }
 }
 
-bool Tracker::isCalibrating() {
+bool Tracker::isCalibratingOrTracking() {
   const nite::Array<nite::UserData>& users = userTrackerFrame.getUsers();
   for(int i = 0; i < users.getSize(); ++i) {
     const nite::UserData& userData = users[i];
     nite::SkeletonState state = userData.getSkeleton().getState();
-    if(state == nite::SKELETON_CALIBRATING)
+    if(state == nite::SKELETON_CALIBRATING || state == nite::SKELETON_TRACKED)
       return true;
   }
   return false;
@@ -195,14 +228,27 @@ void Tracker::enableFastForward() {
   fastForwarding = true;
 }
 
-void Tracker::sendBeginFrame() {
+void Tracker::sendBeginSession() {
   osc::OutboundPacketStream stream(oscBuffer, OSC_BUFFER_SIZE);
-  float timestampMilliSeconds = (float) userTrackerFrame.getTimestamp() / 1000;
   stream << osc::BeginBundleImmediate
-	 << osc::BeginMessage("/begin_frame") << timestampMilliSeconds
+	 << osc::BeginMessage("/begin_session")
 	 << osc::EndMessage
 	 << osc::EndBundle;
   transmitSocket->Send(stream.Data(), stream.Size());
+}
+
+void Tracker::sendBeginFrame() {
+  osc::OutboundPacketStream stream(oscBuffer, OSC_BUFFER_SIZE);
+  stream << osc::BeginBundleImmediate
+	 << osc::BeginMessage("/begin_frame") << getTimestamp()
+	 << osc::EndMessage
+	 << osc::EndBundle;
+  transmitSocket->Send(stream.Data(), stream.Size());
+}
+
+float Tracker::getTimestamp() {
+  float timestampMilliSeconds = (float) userTrackerFrame.getTimestamp() / 1000;
+  return timestampMilliSeconds;
 }
 
 void Tracker::sendStatesAndSkeletonData() {
@@ -308,4 +354,21 @@ void Tracker::sendState(const nite::UserId& userId, const char *state) {
 	 << osc::EndMessage
 	 << osc::EndBundle;
   transmitSocket->Send(stream.Data(), stream.Size());
+}
+
+
+TrackerViewer::TrackerViewer(Tracker *_tracker) : Viewer() {
+  tracker = _tracker;
+}
+
+void TrackerViewer::processFrame() {
+  tracker->processFrame();
+}
+
+nite::UserTracker *TrackerViewer::getUserTracker() {
+  return tracker->getUserTracker();
+}
+
+nite::UserTrackerFrameRef TrackerViewer::getUserTrackerFrame() {
+  return tracker->getUserTrackerFrame();
 }

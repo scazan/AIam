@@ -17,17 +17,29 @@ from event import Event
 from tracked_users_viewer import TrackedUsersViewer
 from transformations import rotation_matrix
 
+WAITING_PARAMETERS = {
+    "velocity": 0.6,
+    "novelty": 0.3,
+    "extension": 1.0,
+    "location_preference": 0.5,
+}
+
+PASSIVE_PARAMETERS = {
+    "velocity": 0.3,
+    "novelty": 0.03,
+    "extension": 0.02,
+    "location_preference": 1.0,
+}
+
+INTENSE_PARAMETERS = {
+    "velocity": 1.0,
+    "novelty": 1.0,
+    "extension": 2.0,
+    "location_preference": 0.0,
+}
+
 INTENSITY_THRESHOLD = 5
 INTENSITY_CEILING = 80
-MIN_VELOCITY = 0.3
-MAX_VELOCITY = 1.0
-MIN_NOVELTY = 0.03
-MAX_NOVELTY = 1.0
-MIN_EXTENSION = 0.02
-MAX_EXTENSION = 2.0
-MIN_LOCATION_PREFERENCE = 0.0
-MAX_LOCATION_PREFERENCE = 1.0
-RESPONSE_TIME = 0
 JOINT_SMOOTHING_DURATION = 1.0
 FPS = 30.0
 NUM_JOINTS_IN_SKELETON = 15
@@ -133,19 +145,18 @@ class User:
         return math.sqrt(dx*dx + dz*dz)
 
 class UserMovementInterpreter:
+    WAITING = "waiting"
+    ADAPTING_TO_USER = "adapting to user"
+
     def __init__(self, send_interpretations=True, log_target=None, log_source=None):
         self._send_interpretations = send_interpretations
-        self._frame = None
-        self._users = {}
-        self._response_buffer_size = max(1, int(RESPONSE_TIME * FPS))
-        self._response_buffer = []
-        self._selected_user = None
         self.intensity_ceiling = INTENSITY_CEILING
         self.active_area_center_x, self.active_area_center_z = [
             float(s) for s in args.active_area_center.split(",")]
         self.active_area_radius = args.active_area_radius
         self.tracker_y_position, tracker_pitch = map(float, args.tracker.split(","))
         self.set_tracker_pitch(tracker_pitch)
+        self.reset()
 
         if log_source:
             self._read_log(log_source)
@@ -167,6 +178,16 @@ class UserMovementInterpreter:
             self.num_considered_joints = NUM_JOINTS_IN_SKELETON
         else:
             self.num_considered_joints = len(CONSIDERED_JOINTS)
+
+    def reset(self):
+        self._frame = None
+        self._users = {}
+        self._selected_user = None
+        self._system_state = self.WAITING
+        self._previous_system_state = None
+
+    def get_system_state(self):
+        return self._system_state
 
     def get_tracker_pitch(self):
         return self._tracker_pitch
@@ -195,29 +216,39 @@ class UserMovementInterpreter:
             if self._writing_to_log:
                 self._log_frame()
         self._frame = {"timestamp": timestamp,
-                       "states": [],
+                       "user_states": [],
                        "joint_data": []}
 
     def handle_joint_data(self, user_id, joint_name, x, y, z, confidence):
         if self._frame is not None:
             self._frame["joint_data"].append((user_id, joint_name, x, y, z, confidence))
 
-    def handle_state(self, user_id, state):
+    def handle_user_state(self, user_id, state):
         if self._frame is not None:
-            self._frame["states"].append((user_id, state))
+            self._frame["user_states"].append((user_id, state))
 
     def _process_frame(self):
-        for values in self._frame["states"]:
-            self._process_state(*values)
+        for values in self._frame["user_states"]:
+            self._process_user_state(*values)
         for values in self._frame["joint_data"]:
             self._process_joint_data(*values)
-        if args.with_viewer:
-            viewer.process_frame(self._frame)
 
         self._select_user()
+        system_state_changed = self._update_system_state()
+
         if self._send_interpretations:
-            self._add_interpretation_to_response_buffer()
-            self._send_interpretation_from_response_buffer()
+            parameters = self._select_parameters_in_system_state()
+            self._send_parameters(parameters)
+
+        if system_state_changed:
+            if self._send_interpretations:
+                websocket_client.send_event(Event(Event.ABORT_PATH))
+            if args.with_viewer:
+                viewer.log(self._frame["timestamp"], "aborting path")
+                viewer.log(self._frame["timestamp"], self._system_state)
+
+        if args.with_viewer:
+            viewer.process_frame(self._frame)
 
     def _process_joint_data(self, user_id, joint_name, x, y, z, confidence):
         if user_id not in self._users:
@@ -225,7 +256,7 @@ class UserMovementInterpreter:
         user = self._users[user_id]
         user.handle_joint_data(joint_name, x, y, z, confidence)
 
-    def _process_state(self, user_id, state):
+    def _process_user_state(self, user_id, state):
         if state == "lost":
             try:
                 del self._users[user_id]
@@ -258,41 +289,41 @@ class UserMovementInterpreter:
     def _is_within_active_area(self, user):
         return user.get_distance_to_center() < self.active_area_radius
 
-    def _add_interpretation_to_response_buffer(self):
-        relative_intensity = self._get_relative_intensity()
-        velocity = MIN_VELOCITY + relative_intensity * (MAX_VELOCITY - MIN_VELOCITY)
-        novelty = MIN_NOVELTY + relative_intensity * (MAX_NOVELTY - MIN_NOVELTY)
-        extension = MIN_EXTENSION + relative_intensity * (MAX_EXTENSION - MIN_EXTENSION)
-        location_preference = MIN_LOCATION_PREFERENCE + (1-relative_intensity) \
-            * (MAX_LOCATION_PREFERENCE - MIN_LOCATION_PREFERENCE)
-        self._response_buffer.append((velocity, novelty, extension, location_preference))
+    def _update_system_state(self):
+        self._previous_system_state = self._system_state
+        if self._selected_user is None:
+            self._system_state = self.WAITING
+        else:
+            self._system_state = self.ADAPTING_TO_USER
+        return self._system_state != self._previous_system_state
+
+    def _select_parameters_in_system_state(self):
+        if self._system_state == self.WAITING:
+            return WAITING_PARAMETERS
+        elif self._system_state == self.ADAPTING_TO_USER:
+            relative_intensity = self._get_relative_intensity()
+            return self._interpolate_parameters(
+                PASSIVE_PARAMETERS, INTENSE_PARAMETERS, relative_intensity)
+
+    def _interpolate_parameters(self, low_parameters, high_parameters, interpolation_value):
+        result = {}
+        for name in ["velocity", "novelty", "extension", "location_preference"]:
+            low_value = low_parameters[name]
+            high_value = high_parameters[name]
+            value = low_value + (high_value - low_value) * interpolation_value
+            result[name] = value
+        return result
 
     def _get_relative_intensity(self):
-        if self._selected_user is None:
-            return 0
-        else:
-            return max(0, self._selected_user.get_intensity() - INTENSITY_THRESHOLD) / \
-                (self.intensity_ceiling - INTENSITY_THRESHOLD)
+        return max(0, self._selected_user.get_intensity() - INTENSITY_THRESHOLD) / \
+            (self.intensity_ceiling - INTENSITY_THRESHOLD)
 
-    def _send_interpretation_from_response_buffer(self):
-        while len(self._response_buffer) >= self._response_buffer_size:
-            velocity, novelty, extension, location_preference = self._response_buffer.pop(0)
+    def _send_parameters(self, parameters):
+        for name, value in parameters.iteritems():
             websocket_client.send_event(
                 Event(Event.PARAMETER,
-                      {"name": "velocity",
-                       "value": velocity}))
-            websocket_client.send_event(
-                Event(Event.PARAMETER,
-                      {"name": "novelty",
-                       "value": novelty}))
-            websocket_client.send_event(
-                Event(Event.PARAMETER,
-                      {"name": "extension",
-                       "value": extension}))
-            websocket_client.send_event(
-                Event(Event.PARAMETER,
-                      {"name": "location_preference",
-                       "value": location_preference}))
+                      {"name": name,
+                       "value": value}))
 
     def get_users(self):
         return [user for user in self._users.values()
@@ -348,14 +379,17 @@ if args.with_viewer:
     viewer = TrackedUsersViewer(interpreter, args,
                                 enable_log_replay=args.log_source)
 
+def handle_begin_session(path, values, types, src, user_data):
+    interpreter.reset()
+
 def handle_begin_frame(path, values, types, src, user_data):
     interpreter.handle_begin_frame(*values)
 
 def handle_joint_data(path, values, types, src, user_data):
     interpreter.handle_joint_data(*values)
 
-def handle_state(path, values, types, src, user_data):
-    interpreter.handle_state(*values)
+def handle_user_state(path, values, types, src, user_data):
+    interpreter.handle_user_state(*values)
 
 if not args.without_sending:
     websocket_client = WebsocketClient(WEBSOCKET_HOST)
@@ -366,9 +400,10 @@ if args.log_source:
     interpreter.process_log_in_new_thread()
 else:
     osc_receiver = OscReceiver(OSC_PORT)
+    osc_receiver.add_method("/begin_session", "", handle_begin_session)
     osc_receiver.add_method("/begin_frame", "f", handle_begin_frame)
     osc_receiver.add_method("/joint", "isffff", handle_joint_data)
-    osc_receiver.add_method("/state", "is", handle_state)
+    osc_receiver.add_method("/state", "is", handle_user_state)
     osc_receiver.start()
 
 if args.profile:

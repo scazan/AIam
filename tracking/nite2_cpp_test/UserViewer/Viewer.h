@@ -50,6 +50,10 @@ private:
 	static void glutKeyboard(unsigned char key, int x, int y);
 	void updateUserState(const nite::UserData& user, uint64_t ts);
 	void startRecording();
+	void updateTextureMap();
+	void drawTextureMap();
+	void drawTextureMapAsTexture();
+	void drawTextureMapAsPoints();
 
 	float				m_pDepthHist[MAX_DEPTH];
 	char			m_strSampleName[ONI_MAX_STR];
@@ -62,6 +66,9 @@ private:
 	const char* recordingFilename;
 	openni::VideoStream depthStream;
 	nite::UserTracker* m_pUserTracker;
+	nite::UserTrackerFrameRef userTrackerFrame;
+	openni::VideoFrameRef depthFrame;
+	bool depthAsPoints;
 
 	nite::UserId m_poseUser;
 	uint64_t m_poseTime;

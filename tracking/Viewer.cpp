@@ -1,9 +1,3 @@
-/*******************************************************************************
-*                                                                              *
-*   PrimeSense NiTE 2.0 - User Viewer Sample                                   *
-*   Copyright (C) 2012 PrimeSense Ltd.                                         *
-*                                                                              *
-*******************************************************************************/
 #if (defined _WIN32)
 #define PRIu64 "llu"
 #else
@@ -11,7 +5,7 @@
 #include <inttypes.h>
 #endif
 
-#include "Viewer.h"
+#include "Viewer.hpp"
 #include <sys/time.h>
 #include <stdarg.h>
 
@@ -20,8 +14,6 @@
 #else
         #include <GL/glut.h>
 #endif
-
-#include "NiteSampleUtilities.h"
 
 #define GL_WIN_SIZE_X	1280
 #define GL_WIN_SIZE_Y	1024
@@ -32,7 +24,7 @@
 #define MIN_NUM_CHUNKS(data_size, chunk_size)	((((data_size)-1) / (chunk_size) + 1))
 #define MIN_CHUNKS_SIZE(data_size, chunk_size)	(MIN_NUM_CHUNKS(data_size, chunk_size) * (chunk_size))
 
-SampleViewer* SampleViewer::ms_self = NULL;
+Viewer* Viewer::ms_self = NULL;
 
 bool g_drawSkeleton = true;
 bool g_drawCenterOfMass = false;
@@ -70,161 +62,78 @@ int _checkGlErrors(int line) {
 // time to hold in pose to exit program. In milliseconds.
 const int g_poseTimeoutToExit = 2000;
 
-void SampleViewer::glutIdle()
+void calculateHistogram(float* pHistogram, int histogramSize, const openni::VideoFrameRef& depthFrame)
+{
+	const openni::DepthPixel* pDepth = (const openni::DepthPixel*)depthFrame.getData();
+	int width = depthFrame.getWidth();
+	int height = depthFrame.getHeight();
+	// Calculate the accumulative histogram (the yellow display...)
+	memset(pHistogram, 0, histogramSize*sizeof(float));
+	int restOfRow = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel) - width;
+
+	unsigned int nNumberOfPoints = 0;
+	for (int y = 0; y < height; ++y)
+	{
+		for (int x = 0; x < width; ++x, ++pDepth)
+		{
+			if (*pDepth != 0)
+			{
+				pHistogram[*pDepth]++;
+				nNumberOfPoints++;
+			}
+		}
+		pDepth += restOfRow;
+	}
+	for (int nIndex=1; nIndex<histogramSize; nIndex++)
+	{
+		pHistogram[nIndex] += pHistogram[nIndex-1];
+	}
+	if (nNumberOfPoints)
+	{
+		for (int nIndex=1; nIndex<histogramSize; nIndex++)
+		{
+			pHistogram[nIndex] = (256 * (1.0f - (pHistogram[nIndex] / nNumberOfPoints)));
+		}
+	}
+}
+
+void Viewer::glutIdle()
 {
   log("glutIdle\n");
 	glutPostRedisplay();
 }
 
-void SampleViewer::glutReshape(int width, int height) {
-  SampleViewer::ms_self->ResizedWindow(width, height);
+void Viewer::glutReshape(int width, int height) {
+  Viewer::ms_self->ResizedWindow(width, height);
 }
 
-void SampleViewer::glutDisplay()
+void Viewer::glutDisplay()
 {
   log("glutDisplay\n");
-	SampleViewer::ms_self->Display();
+	Viewer::ms_self->Display();
 }
-void SampleViewer::glutKeyboard(unsigned char key, int x, int y)
+void Viewer::glutKeyboard(unsigned char key, int x, int y)
 {
-	SampleViewer::ms_self->OnKey(key, x, y);
+	Viewer::ms_self->OnKey(key, x, y);
 }
 
-SampleViewer::SampleViewer(const char* strSampleName) : m_poseUser(0)
+Viewer::Viewer()
 {
 	ms_self = this;
-	strncpy(m_strSampleName, strSampleName, ONI_MAX_STR);
-	finalized = false;
-	m_pUserTracker = new nite::UserTracker;
 }
-SampleViewer::~SampleViewer()
+Viewer::~Viewer()
 {
-	Finalize();
-
 	delete[] m_pTexMap;
-
 	ms_self = NULL;
 }
 
-void SampleViewer::Finalize()
-{
-  if(!finalized) {
-    if(recordingFilename != NULL && startedRecording)
-      recorder.stop();
-    if(m_pUserTracker != NULL)
-      delete m_pUserTracker;
-    nite::NiTE::shutdown();
-    openni::OpenNI::shutdown();
-    finalized = true;
-  }
-}
-
-openni::Status SampleViewer::Init(int argc, char **argv)
+openni::Status Viewer::Init(int argc, char **argv)
 {
 	m_pTexMap = NULL;
-	recordingFilename = NULL;
-	delayRecordingUntilSeen = false;
-	recordingEnabled = false;
-	depthAsPoints = false;
-
-	openni::Status rc = openni::OpenNI::initialize();
-	if (rc != openni::STATUS_OK)
-	{
-		printf("Failed to initialize OpenNI\n%s\n", openni::OpenNI::getExtendedError());
-		return rc;
-	}
-
-	const char* deviceUri = openni::ANY_DEVICE;
-	for (int i = 1; i < argc; ++i)
-	{
-		if (strcmp(argv[i], "-device") == 0)
-		{
-			deviceUri = argv[++i];
-		}
-
-		else if(strcmp(argv[i], "-record") == 0)
-		{
-		  recordingFilename = argv[++i];
-		  recordingEnabled = true;
-		}
-
-		else if(strcmp(argv[i], "-delay-recording-until-seen") == 0)
-		{
-		  delayRecordingUntilSeen = true;
-		}
-
-		else if(strcmp(argv[i], "-verbose") == 0) {
-		  verbose = true;
-		}
-
-		else if(strcmp(argv[i], "-depth-as-points") == 0) {
-		  depthAsPoints = true;
-		}
-
-		else {
-		  printf("failed to parse argument: %s\n", argv[i]);
-		  return openni::STATUS_ERROR;
-		}
-	}
-
-	rc = m_device.open(deviceUri);
-	if (rc == openni::STATUS_OK)
-	  printf("Opened device %s\n", deviceUri);
-	else {
-		printf("Failed to open device\n%s\n", openni::OpenNI::getExtendedError());
-		return rc;
-	}
-
-	if(recordingEnabled) {
-	  rc = depthStream.create(m_device, openni::SENSOR_DEPTH);
-	  if (rc == openni::STATUS_OK)
-	    {
-	      openni::VideoMode depthMode = depthStream.getVideoMode();
-	      depthMode.setFps(30);
-	      depthMode.setResolution(640,480);
-	      depthMode.setPixelFormat(openni::PIXEL_FORMAT_DEPTH_1_MM);
-	      rc = depthStream.setVideoMode(depthMode); 
-	      if(rc == openni::STATUS_OK){
-	      	rc = depthStream.start();
-	      }
-	      if (rc != openni::STATUS_OK)
-	      	{
-	      	  printf("Couldn't start depth stream:\n%s\n", openni::OpenNI::getExtendedError());
-	      	  depthStream.destroy();
-	      	}
-	    }
-	  else
-	    {
-	      printf("Couldn't find depth stream:\n%s\n", openni::OpenNI::getExtendedError());
-	    }
-
-	  startedRecording = false;
-	  recorder.create(recordingFilename);
-	  recorder.attach(depthStream);
-	  if(!delayRecordingUntilSeen)
-	    startRecording();
-	}
-
-	nite::NiTE::initialize();
-
-	if (m_pUserTracker->create(&m_device) != nite::STATUS_OK)
-	{
-	  printf("failed to create user tracker\n");
-	  return openni::STATUS_ERROR;
-	}
-
-
 	return InitOpenGL(argc, argv);
-
 }
 
-void SampleViewer::startRecording() {
-  printf("started recording\n");
-  recorder.start();
-  startedRecording = true;
-}
-
-openni::Status SampleViewer::Run()	//Does not return
+openni::Status Viewer::Run()	//Does not return
 {
   previousDisplayTime = 0;
 	glutMainLoop();
@@ -246,13 +155,11 @@ char g_generalMessage[100] = {0};
 	sprintf(g_userStatusLabels[user.getId()], "%s", msg);\
 	printf("[%08" PRIu64 "] User #%d:\t%s\n", ts, user.getId(), msg);}
 
-void SampleViewer::updateUserState(const nite::UserData& user, uint64_t ts)
+void Viewer::updateUserState(const nite::UserData& user, uint64_t ts)
 {
 	if (user.isNew())
 	{
 		USER_MESSAGE("New");
-		if(recordingEnabled && delayRecordingUntilSeen && !startedRecording)
-		  startRecording();
 	}
 	else if (user.isVisible() && !g_visibleUsers[user.getId()])
 		printf("[%08" PRIu64 "] User #%d:\tVisible\n", ts, user.getId());
@@ -312,14 +219,14 @@ void DrawFrameId(int frameId)
 }
 
 
-void SampleViewer::ResizedWindow(int width, int height)
+void Viewer::ResizedWindow(int width, int height)
 {
   windowWidth = width;
   windowHeight = height;
   glViewport(0, 0, windowWidth, windowHeight);
 }
 
-void SampleViewer::Display()
+void Viewer::Display()
 {
   struct timeval tv;
   uint64_t currentDisplayTime, timeDiff;
@@ -331,12 +238,9 @@ void SampleViewer::Display()
   }
   previousDisplayTime = currentDisplayTime;
 
-	nite::Status rc = m_pUserTracker->readFrame(&userTrackerFrame);
-	if (rc != nite::STATUS_OK)
-	{
-		printf("readFrame failed\n");
-		return;
-	}
+  processFrame();
+  m_pUserTracker = getUserTracker();
+  userTrackerFrame = getUserTrackerFrame();
 
 	log("getDepthFrame\n");
 	depthFrame = userTrackerFrame.getDepthFrame();
@@ -380,8 +284,6 @@ void SampleViewer::Display()
 		updateUserState(user, userTrackerFrame.getTimestamp());
 		if (user.isNew())
 		{
-			m_pUserTracker->startSkeletonTracking(user.getId());
-			m_pUserTracker->startPoseDetection(user.getId(), nite::POSE_CROSSED_HANDS);
 		}
 		else if (!user.isLost())
 		{
@@ -401,37 +303,6 @@ void SampleViewer::Display()
 			if (user.getSkeleton().getState() == nite::SKELETON_TRACKED && g_drawSkeleton)
 			{
 				DrawSkeleton(user);
-			}
-		}
-
-		if (m_poseUser == 0 || m_poseUser == user.getId())
-		{
-			const nite::PoseData& pose = user.getPose(nite::POSE_CROSSED_HANDS);
-
-			if (pose.isEntered())
-			{
-				// Start timer
-				sprintf(g_generalMessage, "In exit pose. Keep it for %d second%s to exit\n", g_poseTimeoutToExit/1000, g_poseTimeoutToExit/1000 == 1 ? "" : "s");
-				printf("Counting down %d second to exit\n", g_poseTimeoutToExit/1000);
-				m_poseUser = user.getId();
-				m_poseTime = userTrackerFrame.getTimestamp();
-			}
-			else if (pose.isExited())
-			{
-				memset(g_generalMessage, 0, sizeof(g_generalMessage));
-				printf("Count-down interrupted\n");
-				m_poseTime = 0;
-				m_poseUser = 0;
-			}
-			else if (pose.isHeld())
-			{
-				// tick
-				if (userTrackerFrame.getTimestamp() - m_poseTime > g_poseTimeoutToExit * 1000)
-				{
-					printf("Count down complete. Exit...\n");
-					Finalize();
-					exit(2);
-				}
 			}
 		}
 	}
@@ -458,7 +329,7 @@ void SampleViewer::Display()
 	log("Display done\n");
 }
 
-void SampleViewer::updateTextureMap() {
+void Viewer::updateTextureMap() {
   memset(m_pTexMap, 0, m_nTexMapX*m_nTexMapY*sizeof(openni::RGB888Pixel));
 
   float factor[3] = {1, 1, 1};
@@ -527,14 +398,14 @@ void SampleViewer::updateTextureMap() {
     }
 }
 
-void SampleViewer::drawTextureMap() {
+void Viewer::drawTextureMap() {
   if(depthAsPoints)
     drawTextureMapAsPoints();
   else
     drawTextureMapAsTexture();
 }
 
-void SampleViewer::drawTextureMapAsTexture() {
+void Viewer::drawTextureMapAsTexture() {
   glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
   checkGlErrors();
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -571,7 +442,7 @@ void SampleViewer::drawTextureMapAsTexture() {
   checkGlErrors();
 }
 
-void SampleViewer::drawTextureMapAsPoints() {
+void Viewer::drawTextureMapAsPoints() {
   float ratioX = (float)g_nXRes/(float)m_nTexMapX;
   float ratioY = (float)g_nYRes/(float)m_nTexMapY;
 
@@ -599,12 +470,11 @@ void SampleViewer::drawTextureMapAsPoints() {
   checkGlErrors();
 }
 
-void SampleViewer::OnKey(unsigned char key, int /*x*/, int /*y*/)
+void Viewer::OnKey(unsigned char key, int /*x*/, int /*y*/)
 {
 	switch (key)
 	{
 	case 27:
-		Finalize();
 		exit (1);
 	case 's':
 		// Draw skeleton?
@@ -638,12 +508,12 @@ void SampleViewer::OnKey(unsigned char key, int /*x*/, int /*y*/)
 
 }
 
-openni::Status SampleViewer::InitOpenGL(int argc, char **argv)
+openni::Status Viewer::InitOpenGL(int argc, char **argv)
 {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 	glutInitWindowSize(GL_WIN_SIZE_X, GL_WIN_SIZE_Y);
-	glutCreateWindow (m_strSampleName);
+	glutCreateWindow ("Tracker");
 	// 	glutFullScreen();
 	glutSetCursor(GLUT_CURSOR_NONE);
 
@@ -659,7 +529,7 @@ openni::Status SampleViewer::InitOpenGL(int argc, char **argv)
 
 }
 
-void SampleViewer::InitOpenGLHooks()
+void Viewer::InitOpenGLHooks()
 {
 	glutKeyboardFunc(glutKeyboard);
 	glutDisplayFunc(glutDisplay);
@@ -667,7 +537,7 @@ void SampleViewer::InitOpenGLHooks()
 	glutReshapeFunc(glutReshape);
 }
 
-void SampleViewer::DrawStatusLabel(const nite::UserData& user)
+void Viewer::DrawStatusLabel(const nite::UserData& user)
 {
 	int color = user.getId() % colorCount;
 	glColor3f(1.0f - Colors[color][0], 1.0f - Colors[color][1], 1.0f - Colors[color][2]);
@@ -682,7 +552,7 @@ void SampleViewer::DrawStatusLabel(const nite::UserData& user)
 	checkGlErrors();
 }
 
-void SampleViewer::DrawCenterOfMass(const nite::UserData& user)
+void Viewer::DrawCenterOfMass(const nite::UserData& user)
 {
 	glColor3f(1.0f, 1.0f, 1.0f);
 
@@ -699,7 +569,7 @@ void SampleViewer::DrawCenterOfMass(const nite::UserData& user)
 
 }
 
-void SampleViewer::DrawBoundingBox(const nite::UserData& user)
+void Viewer::DrawBoundingBox(const nite::UserData& user)
 {
 	glColor3f(1.0f, 1.0f, 1.0f);
 
@@ -726,7 +596,7 @@ void SampleViewer::DrawBoundingBox(const nite::UserData& user)
 
 }
 
-void SampleViewer::DrawLimb(const nite::SkeletonJoint& joint1, const nite::SkeletonJoint& joint2, int color)
+void Viewer::DrawLimb(const nite::SkeletonJoint& joint1, const nite::SkeletonJoint& joint2, int color)
 {
 	float coordinates[6] = {0};
 	m_pUserTracker->convertJointCoordinatesToDepth(joint1.getPosition().x, joint1.getPosition().y, joint1.getPosition().z, &coordinates[0], &coordinates[1]);
@@ -778,7 +648,7 @@ void SampleViewer::DrawLimb(const nite::SkeletonJoint& joint1, const nite::Skele
 	checkGlErrors();
 }
 
-void SampleViewer::DrawSkeleton(const nite::UserData& userData)
+void Viewer::DrawSkeleton(const nite::UserData& userData)
 {
 	DrawLimb(userData.getSkeleton().getJoint(nite::JOINT_HEAD), userData.getSkeleton().getJoint(nite::JOINT_NECK), userData.getId() % colorCount);
 
@@ -806,4 +676,3 @@ void SampleViewer::DrawSkeleton(const nite::UserData& userData)
 	DrawLimb(userData.getSkeleton().getJoint(nite::JOINT_RIGHT_KNEE), userData.getSkeleton().getJoint(nite::JOINT_RIGHT_FOOT), userData.getId() % colorCount);
 	checkGlErrors();
 }
-
