@@ -1,10 +1,8 @@
+prevent floor from disappearing when avatar moves a lot
+
+improve depth visiblity (limbs that obscure each other? shadow?)
+
 zoom in/out when user enters/leaves active area?
-
-reduce interaction latency
-  remove/reduce joint smoothing? (and add support for viewing with or without smoothing)
-    and/or replace with nite::UserTracker::setSkeletonSmoothingFactor?
-
-tracker: don't create depth stream if not recording to or playing back from ONI file
 
 ability to replay entire interaction (tracking + improv/rendering)
   log improv w timestamps?
@@ -13,15 +11,13 @@ ability to replay entire interaction (tracking + improv/rendering)
 investigate adding pelvis
   torso moves much less than hands, some kind of joint-specific weighting can compensate for this
 
-prevent floor from disappearing when avatar moves a lot
+tracker: don't create depth stream if not recording to or playing back from ONI file
 
-centralize avatar when idling for long time? (looks slightly strange when it idles off-center)
+protection against hypothetical runtime exception in interpolation of improvised path (see plot_observations.py)
 
 investigate why the pose mapping behaves differently Alex' two PCs with ubuntu (12.04 vs 14.04). right now different preferred locations need to be configured.
   possible clue: valencia_quaternion_7d_friction.data has different file sizes
   different numpy versions? (sklearn already excluded, since both run 0.14 now)
-
-protection against hypothetical runtime exception in interpolation of improvised path (see plot_observations.py)
 
 
 perhaps training data for BVHs should use all motion frames by default, rather than sampling the BVH with a mandatory frame rate
