@@ -306,7 +306,8 @@ class TrackedUsersScene(Scene):
             self._drag_y_previous = y
             self.updateGL()
         else:
-            if Scene.mouseMoveEvent(self, event):
+            Scene.mouseMoveEvent(self, event)
+            if self._dragging_orientation or self._dragging_y_position:
                 self.updateGL()
 
     def mouseReleaseEvent(self, event):
