@@ -2,6 +2,7 @@ from ui.ui import *
 
 FLOOR_SPOT_RADIUS = 30
 FLOOR_GRID_SIZE = 5
+MIN_OUTPUT_OPACITY = 0.65
 
 class Scene(BvhScene):
     def __init__(self, *args, **kwargs):
@@ -30,14 +31,41 @@ class Scene(BvhScene):
 
     def draw_output(self, vertices):
         self._update_camera_translation(vertices)
-        glColor3f(*self._parent.color_scheme["output"])
         self._draw_vertices(vertices)
 
     def _draw_vertices(self, vertices):
         edges = self.bvh_reader.vertices_to_edges(vertices)
+        edge_distance_pairs = [
+            (edge, self._edge_distance_to_camera(edge))
+            for edge in edges]
+        distances = [edge_distance_pair[1] for edge_distance_pair in edge_distance_pairs]
+        min_distance = min(distances)
+        max_distance = max(distances)
         glLineWidth(3.0)
-        for edge in edges:
+
+        sorted_edge_distance_pairs = sorted(
+            edge_distance_pairs,
+            key=lambda edge_distance_pair: -edge_distance_pair[1])
+        for edge, distance in sorted_edge_distance_pairs:
+            normalized_distance = (distance - min_distance) / (max_distance - min_distance)
+            opacity = MIN_OUTPUT_OPACITY + (1 - normalized_distance) * (1 - MIN_OUTPUT_OPACITY)
+            self._set_output_color_by_opacity(opacity)
             self._draw_line(edge.v1, edge.v2)
+
+    def _set_output_color_by_opacity(self, opacity):
+        fg_r, fg_g, fg_b = self._parent.color_scheme["output"]
+        bg_r, bg_g, bg_b, bg_a = self._parent.color_scheme["background"]
+        r = bg_r + (fg_r - bg_r) * opacity
+        g = bg_g + (fg_g - bg_g) * opacity
+        b = bg_b + (fg_b - bg_b) * opacity
+        glColor3f(r, g, b)
+
+    def _edge_distance_to_camera(self, edge):
+        return self._distance_to_camera(edge.v1) + self._distance_to_camera(edge.v2)
+
+    def _distance_to_camera(self, vertex):
+        return math.sqrt(pow(vertex[0] + (self._camera_position[0] + self._camera_translation[0]), 2) +
+                         pow(vertex[2] + (self._camera_position[2] + self._camera_translation[1]), 2))
 
     def _draw_line(self, v1, v2):
         glBegin(GL_LINES)
