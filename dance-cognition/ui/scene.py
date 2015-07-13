@@ -93,10 +93,8 @@ class Scene(QtOpenGL.QGLWidget):
             self._set_camera_orientation(
                 self._camera_y_orientation + self._camera_drag_speed * (x - self._drag_x_previous),
                 self._camera_x_orientation + self._camera_drag_speed * (y - self._drag_y_previous))
-            return True
         elif self._dragging_y_position:
             self._camera_position[1] += self._camera_y_speed * (y - self._drag_y_previous)
-            return True
         self._drag_x_previous = x
         self._drag_y_previous = y
 
