@@ -57,7 +57,7 @@ class TrackedUsersScene(Scene):
         self.configure_3d_projection(pixdx=-100, pixdy=0, fovy=40.0,
                                      near=PROJECTION_NEAR, far=PROJECTION_FAR)
 
-        self.draw_floor(
+        self.draw_floor_grid(
             num_cells=30,
             size=30000,
             y=self.parent().floor_y,

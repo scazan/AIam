@@ -141,7 +141,7 @@ class Scene(QtOpenGL.QGLWidget):
     def following_output(self):
         return False
 
-    def draw_floor(self, num_cells, size, color, y=0):
+    def draw_floor_grid(self, num_cells, size, color, y=0):
         z1 = -size/2
         z2 = size/2
         x1 = -size/2

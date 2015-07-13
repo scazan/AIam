@@ -67,7 +67,7 @@ class BvhScene(Scene):
             self._render_image()
         self.configure_3d_projection(-100, 0)
         if self.view_floor:
-            self.draw_floor(num_cells=30, size=100, color=self._parent.color_scheme["floor"])
+            self.draw_floor()
         if self._parent.focus_action.isChecked():
             self._draw_focus()
         self._draw_io(self.processed_input, self.draw_input, self.args.input_y_offset)
@@ -89,6 +89,9 @@ class BvhScene(Scene):
         self.drawTexture(QtCore.QPointF(0, 0), self._image_texture)
         glPopMatrix()
         glDisable(GL_TEXTURE_2D)
+
+    def draw_floor(self):
+        self.draw_floor_grid(num_cells=30, size=100, color=self._parent.color_scheme["floor"])
 
     def _draw_io(self, value, rendering_method, y_offset):
         glPushMatrix()
