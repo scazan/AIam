@@ -1,5 +1,3 @@
-prevent floor from disappearing when avatar moves a lot
-
 improve depth visiblity (limbs that obscure each other? shadow?)
 
 zoom in/out when user enters/leaves active area?
