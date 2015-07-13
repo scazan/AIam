@@ -2,7 +2,9 @@ from ui.ui import *
 
 FLOOR_SPOT_RADIUS = 30
 FLOOR_GRID_SIZE = 5
-MIN_OUTPUT_OPACITY = 0.65
+MIN_OUTPUT_OPACITY = 0.75
+MIN_LINE_WIDTH = 1.5
+MAX_LINE_WIDTH = 3.0
 
 class Scene(BvhScene):
     def __init__(self, *args, **kwargs):
@@ -41,24 +43,28 @@ class Scene(BvhScene):
         distances = [edge_distance_pair[1] for edge_distance_pair in edge_distance_pairs]
         min_distance = min(distances)
         max_distance = max(distances)
-        glLineWidth(3.0)
 
         sorted_edge_distance_pairs = sorted(
             edge_distance_pairs,
             key=lambda edge_distance_pair: -edge_distance_pair[1])
         for edge, distance in sorted_edge_distance_pairs:
             normalized_distance = (distance - min_distance) / (max_distance - min_distance)
-            opacity = MIN_OUTPUT_OPACITY + (1 - normalized_distance) * (1 - MIN_OUTPUT_OPACITY)
-            self._set_output_color_by_opacity(opacity)
+            relative_vicinity = 1 - normalized_distance
+            self._set_output_color_by_relative_vicinity(relative_vicinity)
+            self._set_line_width_by_relative_vicinity(relative_vicinity)
             self._draw_line(edge.v1, edge.v2)
 
-    def _set_output_color_by_opacity(self, opacity):
+    def _set_output_color_by_relative_vicinity(self, relative_vicinity):
+        opacity = MIN_OUTPUT_OPACITY + relative_vicinity * (1 - MIN_OUTPUT_OPACITY)
         fg_r, fg_g, fg_b = self._parent.color_scheme["output"]
         bg_r, bg_g, bg_b, bg_a = self._parent.color_scheme["background"]
         r = bg_r + (fg_r - bg_r) * opacity
         g = bg_g + (fg_g - bg_g) * opacity
         b = bg_b + (fg_b - bg_b) * opacity
         glColor3f(r, g, b)
+
+    def _set_line_width_by_relative_vicinity(self, relative_vicinity):
+        glLineWidth(MIN_LINE_WIDTH + relative_vicinity * (MAX_LINE_WIDTH - MIN_LINE_WIDTH))
 
     def _edge_distance_to_camera(self, edge):
         return self._distance_to_camera(edge.v1) + self._distance_to_camera(edge.v2)
