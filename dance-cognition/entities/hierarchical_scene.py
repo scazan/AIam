@@ -1,7 +1,7 @@
 from ui.ui import *
 
 FLOOR_SPOT_RADIUS = 30
-FLOOR_GRID_SIZE = 5
+FLOOR_GRID_SIZE = 9
 MIN_OUTPUT_OPACITY = 0.75
 MIN_LINE_WIDTH = 1.5
 MAX_LINE_WIDTH = 3.0
@@ -89,23 +89,24 @@ class Scene(BvhScene):
         return numpy.array([root_vertex[0], root_vertex[2]])
 
     def draw_floor(self):
-        if self._focus is not None:
+        if self.processed_output is not None:
+            central_output_position = self.central_output_position(self.processed_output)
             self._draw_floor_spots(
-                center_x=self._focus[0],
-                center_z=self._focus[1])
+                center_x=central_output_position[0],
+                center_z=central_output_position[1])
 
     def _draw_floor_spots(self, center_x, center_z):
         cell_size = FLOOR_SPOT_RADIUS * 2
-        center_nx = int(center_x / cell_size)
-        center_nz = int(center_z / cell_size)
+        quantified_center_x = int(center_x / cell_size / 2) * cell_size * 2
+        quantified_center_z = int(center_z / cell_size) * cell_size
         for nx in range(FLOOR_GRID_SIZE):
-            x = (center_nx + nx - float(FLOOR_GRID_SIZE)/2 + 0.5) * cell_size
+            x = quantified_center_x + (nx - float(FLOOR_GRID_SIZE)/2 + 0.5) * cell_size
             if nx % 2 == 0:
                 offset_z = 0
             else:
                 offset_z = FLOOR_SPOT_RADIUS
             for nz in range(FLOOR_GRID_SIZE):
-                z = offset_z + (center_nz + nz - float(FLOOR_GRID_SIZE)/2 + 0.5) * cell_size
+                z = offset_z + quantified_center_z + (nz - float(FLOOR_GRID_SIZE)/2 + 0.5) * cell_size
                 self._draw_floor_spot(x=x, z=z)
 
     def _draw_floor_spot(self, x, z, y=0):
