@@ -1,6 +1,8 @@
-improve depth visiblity (limbs that obscure each other? shadow?)
+shadow on floor
 
 zoom in/out when user enters/leaves active area?
+
+other floor design (checker? small random dots?)
 
 ability to replay entire interaction (tracking + improv/rendering)
   log improv w timestamps?
