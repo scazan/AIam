@@ -2,7 +2,7 @@ from ui.ui import *
 
 FLOOR_SPOT_RADIUS = 1
 FLOOR_GRID_SIZE = 9
-MIN_OUTPUT_OPACITY = 0.75
+MIN_OUTPUT_STRENGTH = 0.75
 MIN_LINE_WIDTH = 1.5
 MAX_LINE_WIDTH = 3.0
 
@@ -29,9 +29,10 @@ class Scene(BvhScene):
 
     def draw_output(self, vertices):
         self._update_camera_translation(vertices)
+        self._draw_as_shadow(vertices)
         self._draw_vertices(vertices, self._parent.color_scheme["output"])
 
-    def _draw_vertices(self, vertices, color, opacity=1):
+    def _draw_vertices(self, vertices, color):
         edges = self.bvh_reader.vertices_to_edges(vertices)
         edge_distance_pairs = [
             (edge, self._edge_distance_to_camera(edge))
@@ -46,17 +47,17 @@ class Scene(BvhScene):
         for edge, distance in sorted_edge_distance_pairs:
             normalized_distance = (distance - min_distance) / (max_distance - min_distance)
             relative_vicinity = 1 - normalized_distance
-            self._set_color_by_relative_vicinity(color, relative_vicinity, opacity)
+            self._set_color_by_relative_vicinity(color, relative_vicinity)
             self._set_line_width_by_relative_vicinity(relative_vicinity)
             self._draw_line(edge.v1, edge.v2)
 
-    def _set_color_by_relative_vicinity(self, foreground_color, relative_vicinity, base_opacity):
-        opacity = base_opacity * (MIN_OUTPUT_OPACITY + relative_vicinity * (1 - MIN_OUTPUT_OPACITY))
+    def _set_color_by_relative_vicinity(self, foreground_color, relative_vicinity):
+        strength = MIN_OUTPUT_STRENGTH + relative_vicinity * (1 - MIN_OUTPUT_STRENGTH)
         fg_r, fg_g, fg_b = foreground_color
         bg_r, bg_g, bg_b, bg_a = self._parent.color_scheme["background"]
-        r = bg_r + (fg_r - bg_r) * opacity
-        g = bg_g + (fg_g - bg_g) * opacity
-        b = bg_b + (fg_b - bg_b) * opacity
+        r = bg_r + (fg_r - bg_r) * strength
+        g = bg_g + (fg_g - bg_g) * strength
+        b = bg_b + (fg_b - bg_b) * strength
         glColor3f(r, g, b)
 
     def _set_line_width_by_relative_vicinity(self, relative_vicinity):
@@ -74,6 +75,13 @@ class Scene(BvhScene):
         glVertex3f(*v1)
         glVertex3f(*v2)
         glEnd()
+
+    def _draw_as_shadow(self, vertices):
+        glPushMatrix()
+        self.configure_3d_projection()
+        glScalef(1, 0, 1)
+        self._draw_vertices(vertices, color=self._parent.color_scheme["shadow"])
+        glPopMatrix()
 
     def centralize_output(self, processed_output):
         self._camera_movement = CameraMovement(
