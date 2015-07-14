@@ -261,7 +261,7 @@ class MainWindow(Window, EventListener):
         self._create_color_scheme_menu()
 
     def _create_main_menu(self):
-        self._main_menu = self._menu_bar.addMenu("Main")
+        self._main_menu = self._menu_bar.addMenu("&Main")
         self._add_toggleable_action(
             "Start", self._start,
             "Stop", self._stop,
@@ -275,6 +275,7 @@ class MainWindow(Window, EventListener):
             '&Stop export video', self._scene.stop_export_video,
             False, 'Ctrl+O')
         self._add_show_camera_settings_action()
+        self._add_quit_action()
 
     def _start(self):
         self._update_timer.stop()
@@ -315,6 +316,11 @@ class MainWindow(Window, EventListener):
         action.triggered.connect(self._scene.print_camera_settings)
         self._main_menu.addAction(action)
         
+    def _add_quit_action(self):
+        action = QtGui.QAction("&Quit", self)
+        action.triggered.connect(QtGui.QApplication.exit)
+        self._main_menu.addAction(action)
+
     def _create_view_menu(self):
         self._view_menu = self._menu_bar.addMenu("View")
         self._add_toolbar_action()
