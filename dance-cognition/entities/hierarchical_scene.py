@@ -25,14 +25,13 @@ class Scene(BvhScene):
             self._camera_movement.proceed(self.parent().time_increment)
 
     def draw_input(self, vertices):
-        glColor3f(*self._parent.color_scheme["input"])
-        self._draw_vertices(vertices)
+        self._draw_vertices(vertices, self._parent.color_scheme["input"])
 
     def draw_output(self, vertices):
         self._update_camera_translation(vertices)
-        self._draw_vertices(vertices)
+        self._draw_vertices(vertices, self._parent.color_scheme["output"])
 
-    def _draw_vertices(self, vertices):
+    def _draw_vertices(self, vertices, color, opacity=1):
         edges = self.bvh_reader.vertices_to_edges(vertices)
         edge_distance_pairs = [
             (edge, self._edge_distance_to_camera(edge))
@@ -47,13 +46,13 @@ class Scene(BvhScene):
         for edge, distance in sorted_edge_distance_pairs:
             normalized_distance = (distance - min_distance) / (max_distance - min_distance)
             relative_vicinity = 1 - normalized_distance
-            self._set_output_color_by_relative_vicinity(relative_vicinity)
+            self._set_color_by_relative_vicinity(color, relative_vicinity, opacity)
             self._set_line_width_by_relative_vicinity(relative_vicinity)
             self._draw_line(edge.v1, edge.v2)
 
-    def _set_output_color_by_relative_vicinity(self, relative_vicinity):
-        opacity = MIN_OUTPUT_OPACITY + relative_vicinity * (1 - MIN_OUTPUT_OPACITY)
-        fg_r, fg_g, fg_b = self._parent.color_scheme["output"]
+    def _set_color_by_relative_vicinity(self, foreground_color, relative_vicinity, base_opacity):
+        opacity = base_opacity * (MIN_OUTPUT_OPACITY + relative_vicinity * (1 - MIN_OUTPUT_OPACITY))
+        fg_r, fg_g, fg_b = foreground_color
         bg_r, bg_g, bg_b, bg_a = self._parent.color_scheme["background"]
         r = bg_r + (fg_r - bg_r) * opacity
         g = bg_g + (fg_g - bg_g) * opacity
