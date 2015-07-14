@@ -1,6 +1,6 @@
 from ui.ui import *
 
-FLOOR_SPOT_RADIUS = 30
+FLOOR_SPOT_RADIUS = 1
 FLOOR_GRID_SIZE = 9
 MIN_OUTPUT_OPACITY = 0.75
 MIN_LINE_WIDTH = 1.5
@@ -9,15 +9,12 @@ MAX_LINE_WIDTH = 3.0
 class Scene(BvhScene):
     def __init__(self, *args, **kwargs):
         BvhScene.__init__(self, *args, **kwargs)
-        self._camera_translation = None
+        self._camera_translation = numpy.zeros(2)
         self._camera_movement = None
         self._floor_spot_display_list_id = None
 
     def camera_translation(self):
-        if self._camera_translation is not None:
-            return self._camera_translation
-        else:
-            return numpy.zeros(2)
+        return self._camera_translation
 
     def _update_camera_translation(self, vertices):
         if self._camera_translation is None:
@@ -94,6 +91,9 @@ class Scene(BvhScene):
             self._draw_floor_spots(
                 center_x=central_output_position[0],
                 center_z=central_output_position[1])
+            self._draw_floor_shader(
+                x = -(self._camera_position[0] + self._camera_translation[0]),
+                z = -(self._camera_position[2] + self._camera_translation[1]))
 
     def _draw_floor_spots(self, center_x, center_z):
         cell_size = FLOOR_SPOT_RADIUS * 2
@@ -134,3 +134,21 @@ class Scene(BvhScene):
             glVertex3f(math.cos(angle2) * FLOOR_SPOT_RADIUS, 0, math.sin(angle2) * FLOOR_SPOT_RADIUS)
         glEnd()
         glEndList()
+
+    def _draw_floor_shader(self, x, z, y=0, resolution=15):
+        radius = FLOOR_SPOT_RADIUS * 2 * FLOOR_GRID_SIZE * 1.5
+        bg_r, bg_g, bg_b, bg_a = self._parent.color_scheme["background"]
+        angle_increment = (float) (2 * math.pi / resolution);
+        glPushMatrix()
+        glTranslatef(x, 0, z)
+        glBegin(GL_TRIANGLE_FAN)
+        glColor4f(bg_r, bg_g, bg_b, 0)
+        glVertex3f(0, 0, 0)
+        glColor4f(bg_r, bg_g, bg_b, 1)
+        for i in range(resolution):
+            angle1 = angle_increment * i
+            angle2 = angle_increment * (i+1)
+            glVertex3f(math.cos(angle1) * radius, 0, math.sin(angle1) * radius)
+            glVertex3f(math.cos(angle2) * radius, 0, math.sin(angle2) * radius)
+        glEnd()
+        glPopMatrix()
