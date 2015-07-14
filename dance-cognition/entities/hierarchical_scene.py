@@ -12,6 +12,16 @@ class Scene(BvhScene):
         self._camera_translation = numpy.zeros(2)
         self._camera_movement = None
         self._floor_spot_display_list_id = None
+        self._shadow_shear_matrix = self._create_shadow_shear_matrix()
+
+    def _create_shadow_shear_matrix(self):
+        Ky = 0
+        Kx = 0.5
+        return [ 
+            1, Ky, 0, 0, 
+            Kx, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1]
 
     def camera_translation(self):
         return self._camera_translation
@@ -80,6 +90,7 @@ class Scene(BvhScene):
         glPushMatrix()
         self.configure_3d_projection()
         glScalef(1, 0, 1)
+        glMultMatrixf(self._shadow_shear_matrix)
         self._draw_vertices(vertices, color=self._parent.color_scheme["shadow"])
         glPopMatrix()
 
