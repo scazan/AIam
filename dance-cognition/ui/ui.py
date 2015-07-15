@@ -14,6 +14,8 @@ from color_schemes import *
 from exporter import Exporter
 from scene import Scene
 from window import Window
+from floor_grid import FloorGrid
+from floor_spots import FloorSpots
 import shutil
 
 TOOLBAR_WIDTH = 400
@@ -24,6 +26,10 @@ CAMERA_Y_SPEED = .01
 CAMERA_KEY_SPEED = .1
 CAMERA_DRAG_SPEED = .1
 FRAME_RATE_WHILE_PAUSED = 30.0
+
+FLOOR_RENDERERS = {
+    "grid": (FloorGrid, {"num_cells": 30, "size": 100}),
+    "spots": (FloorSpots, {})}
 
 class BvhScene(Scene):
     @staticmethod
@@ -44,6 +50,10 @@ class BvhScene(Scene):
         if args.image:
             self._image = QtGui.QImage(args.image)
         self._exporting_video = False
+        if self.view_floor:
+            self._floor = None
+            self._floor_renderer_class, self._floor_renderer_args = \
+                FLOOR_RENDERERS[args.floor_renderer]
 
     def _set_focus(self):
         self._focus = self.central_output_position(self.processed_output)
@@ -67,7 +77,7 @@ class BvhScene(Scene):
             self._render_image()
         self.configure_3d_projection()
         if self.view_floor:
-            self.draw_floor()
+            self._draw_floor()
         if self._parent.focus_action.isChecked():
             self._draw_focus()
         self._draw_io(self.processed_input, self.draw_input, self.args.input_y_offset)
@@ -75,6 +85,27 @@ class BvhScene(Scene):
         if self._exporting_video:
             self._exporter.export_frame()
             self._parent.client.send_event(Event(Event.PROCEED_TO_NEXT_FRAME))
+
+    def _draw_floor(self):
+        if self.processed_output is not None:
+            center_x, center_z = self.central_output_position(self.processed_output)
+            camera_translation = self.camera_translation()
+            camera_x = self._camera_position[0] + camera_translation[0]
+            camera_z = self._camera_position[2] + camera_translation[1]
+
+            if self._floor is None:
+                self._floor = self._create_floor_renderer()
+            self._floor.render(
+                center_x,
+                center_z,
+                camera_x,
+                camera_z)
+
+    def _create_floor_renderer(self):
+        kwargs = self._floor_renderer_args
+        kwargs["floor_color"] = self._parent.color_scheme["floor"]
+        kwargs["background_color"] = self._parent.color_scheme["background"]
+        return self._floor_renderer_class(**kwargs)
 
     def _render_image(self):
         self.configure_2d_projection(0.0, self.width, self.height, 0.0)
@@ -92,9 +123,6 @@ class BvhScene(Scene):
 
     def configure_3d_projection(self):
         Scene.configure_3d_projection(self, -100, 0)
-
-    def draw_floor(self):
-        self.draw_floor_grid(num_cells=30, size=100, color=self._parent.color_scheme["floor"])
 
     def _draw_io(self, value, rendering_method, y_offset):
         glPushMatrix()
@@ -181,6 +209,9 @@ class MainWindow(Window, EventListener):
         parser.add_argument("--ui-event-log-target")
         parser.add_argument("--ui-event-log-source")
         parser.add_argument("--show-fps", action="store_true")
+        parser.add_argument("--floor-renderer",
+                            choices=FLOOR_RENDERERS.keys(),
+                            default="grid")
 
     def __init__(self, client, entity, student, bvh_reader, scene_widget_class, toolbar_class, args,
                  event_handlers={}):

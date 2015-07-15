@@ -7,6 +7,7 @@ import collections
 import numpy
 from ui.scene import Scene
 from ui.window import Window
+from ui.floor_grid import FloorGrid
 text_renderer_module = __import__("text_renderer")
 
 CAMERA_Y_SPEED = 1
@@ -35,6 +36,12 @@ class TrackedUsersScene(Scene):
         self._dragging_tracker_y_position = False
         self._dragging_tracker_pitch = False
         self.is_rendering = False
+        self._floor = FloorGrid(
+            num_cells=30,
+            size=30000,
+            y=self.parent().floor_y,
+            floor_color=(0,0,0,0.2),
+            background_color=(1,1,1,0))
 
     def initializeGL(self):
         glClearColor(1.0, 1.0, 1.0, 0.0)
@@ -57,11 +64,11 @@ class TrackedUsersScene(Scene):
         self.configure_3d_projection(pixdx=-100, pixdy=0, fovy=40.0,
                                      near=PROJECTION_NEAR, far=PROJECTION_FAR)
 
-        self.draw_floor_grid(
-            num_cells=30,
-            size=30000,
-            y=self.parent().floor_y,
-            color=(0,0,0,0.2))
+        self._floor.render(
+            center_x=0,
+            center_z=0,
+            camera_x=self._camera_position[0],
+            camera_z=self._camera_position[2])
 
         if self.parent().show_field_of_view_action.isChecked():
             self._draw_field_of_view_boundary()
