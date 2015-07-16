@@ -16,6 +16,7 @@ from scene import Scene
 from window import Window
 from floor_grid import FloorGrid
 from floor_spots import FloorSpots
+from floor_checkerboard import FloorCheckerboard
 import shutil
 
 TOOLBAR_WIDTH = 400
@@ -29,7 +30,12 @@ FRAME_RATE_WHILE_PAUSED = 30.0
 
 FLOOR_RENDERERS = {
     "grid": (FloorGrid, {"num_cells": 30, "size": 100}),
-    "spots": (FloorSpots, {})}
+    "spots": (FloorSpots, {}),
+    "checkerboard": (FloorCheckerboard, {
+            "num_cells": 30, "size": 100,
+            "board_color1": (1, 1, 1, .2),
+            "board_color2": (1, 1, 1, .4)}),
+    }
 
 class BvhScene(Scene):
     @staticmethod
