@@ -1,5 +1,6 @@
 import math
 from OpenGL.GL import *
+from shader import Shader
 
 FLOOR_SPOT_RADIUS = 1
 FLOOR_GRID_SIZE = 9
@@ -7,16 +8,19 @@ FLOOR_GRID_SIZE = 9
 class FloorSpots:
     def __init__(self, floor_color, background_color, y=0):
         self._floor_color = floor_color
-        self._background_color = background_color
         self._y = y
         self._display_list_id = None
+        self._shader = Shader(
+            radius = FLOOR_SPOT_RADIUS * 2 * FLOOR_GRID_SIZE * 1.5,
+            background_color = background_color)
 
     def render(self, center_x, center_z, camera_x, camera_z):
         self._draw_floor_spots(
             center_x,
             center_z)
-        self._draw_floor_shader(
+        self._shader.render(
             x=-camera_x,
+            y=0,
             z=-camera_z)
 
     def _draw_floor_spots(self, center_x, center_z):
@@ -57,21 +61,3 @@ class FloorSpots:
             glVertex3f(math.cos(angle2) * FLOOR_SPOT_RADIUS, 0, math.sin(angle2) * FLOOR_SPOT_RADIUS)
         glEnd()
         glEndList()
-
-    def _draw_floor_shader(self, x, z, y=0, resolution=15):
-        radius = FLOOR_SPOT_RADIUS * 2 * FLOOR_GRID_SIZE * 1.5
-        bg_r, bg_g, bg_b, bg_a = self._background_color
-        angle_increment = (float) (2 * math.pi / resolution);
-        glPushMatrix()
-        glTranslatef(x, 0, z)
-        glBegin(GL_TRIANGLE_FAN)
-        glColor4f(bg_r, bg_g, bg_b, 0)
-        glVertex3f(0, 0, 0)
-        glColor4f(bg_r, bg_g, bg_b, 1)
-        for i in range(resolution):
-            angle1 = angle_increment * i
-            angle2 = angle_increment * (i+1)
-            glVertex3f(math.cos(angle1) * radius, 0, math.sin(angle1) * radius)
-            glVertex3f(math.cos(angle2) * radius, 0, math.sin(angle2) * radius)
-        glEnd()
-        glPopMatrix()
