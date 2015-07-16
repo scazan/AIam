@@ -1,10 +1,6 @@
 re-create floor renderer when color scheme changed interactively
 
-shadow on floor
-
 zoom in/out when user enters/leaves active area?
-
-other floor design (checker? small random dots?)
 
 ability to replay entire interaction (tracking + improv/rendering)
   log improv w timestamps?
