@@ -8,7 +8,7 @@ class FloorGrid:
         self._size = size
         self._floor_color = floor_color
         self._y = y
-        self._cell_size = self._size / self._num_cells
+        self._cell_size = float(self._size) / self._num_cells
         self._hypotenuse = math.sqrt(self._cell_size * self._cell_size * 2)
         self._shader = Shader(
             radius = math.sqrt(self._size * self._size * 2),

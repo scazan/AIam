@@ -32,9 +32,9 @@ FLOOR_RENDERERS = {
     "grid": (FloorGrid, {"num_cells": 30, "size": 100}),
     "spots": (FloorSpots, {}),
     "checkerboard": (FloorCheckerboard, {
-            "num_cells": 30, "size": 100,
+            "num_cells": 20, "size": 20,
             "board_color1": (1, 1, 1, .2),
-            "board_color2": (1, 1, 1, .4)}),
+            "board_color2": (1, 1, 1, .3)}),
     }
 
 class BvhScene(Scene):
