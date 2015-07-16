@@ -22,7 +22,7 @@ class FloorCheckerboard:
 
     def render(self, center_x, center_z, camera_x, camera_z):
         self._draw_grid(center_x, center_z)
-        self._shader.render(center_x, 0, center_z)
+        self._shader.render(-camera_x, 0, -camera_z)
 
     def _draw_grid(self, center_x, center_z):
         quantified_center_x = int(center_x / self._hypotenuse) * self._hypotenuse
