@@ -1,4 +1,6 @@
 import numpy
+import random
+import math
 
 class FrictionConstrainer:
     def __init__(self, balance_detector):
@@ -40,3 +42,14 @@ class FloorConstrainer:
         offset = numpy.zeros(len(vertices[0]))
         offset[1] = self._floor_y - bottom_y
         return [vertex + offset for vertex in vertices]
+
+class RandomSlide:
+    def __init__(self, speed):
+        angle = random.uniform(0, math.pi*2)
+        self._translation_increment = numpy.array(
+            [math.cos(angle), 0, math.sin(angle)]) * speed
+        self._translation = numpy.zeros(3)
+
+    def constrain(self, vertices):
+        self._translation += self._translation_increment
+        return [vertex + self._translation for vertex in vertices]
