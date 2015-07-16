@@ -16,7 +16,7 @@ class FloorCheckerboard:
         self._cell_size = float(self._size) / self._num_cells
         self._hypotenuse = math.sqrt(self._cell_size * self._cell_size * 2)
         self._shader = Shader(
-            radius = math.sqrt(self._size * self._size * 2) / 2,
+            radius = math.sqrt(self._size * self._size * 2) * 0.55,
             background_color = background_color)
         self._grid_display_list_id = None
 
