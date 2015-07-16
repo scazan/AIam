@@ -1,3 +1,5 @@
+re-create floor renderer when color scheme changed interactively
+
 shadow on floor
 
 zoom in/out when user enters/leaves active area?
