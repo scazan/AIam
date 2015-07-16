@@ -53,3 +53,15 @@ class RandomSlide:
     def constrain(self, vertices):
         self._translation += self._translation_increment
         return [vertex + self._translation for vertex in vertices]
+
+class CircleSlide:
+    def __init__(self):
+        self._angle = 0
+        self._translation = numpy.zeros(3)
+
+    def constrain(self, vertices):
+        translation_increment = numpy.array(
+            [math.cos(self._angle), 0, math.sin(self._angle)]) * 0.02
+        self._translation += translation_increment
+        self._angle += 0.01
+        return [vertex + self._translation for vertex in vertices]

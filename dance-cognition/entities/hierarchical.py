@@ -21,6 +21,7 @@ class Entity(BaseEntity):
         parser.add_argument("--translation-weight", type=float, default=1.)
         parser.add_argument("--friction", action="store_true")
         parser.add_argument("--random-slide", type=float)
+        parser.add_argument("--circle-slide", action="store_true")
 
     def __init__(self, *args, **kwargs):
         BaseEntity.__init__(self, *args, **kwargs)
@@ -38,6 +39,8 @@ class Entity(BaseEntity):
             result.append(FloorConstrainer())
         if self.experiment.args.random_slide > 0:
             result.append(RandomSlide(self.experiment.args.random_slide))
+        if self.experiment.args.circle_slide:
+            result.append(CircleSlide())
         return result
 
     def _create_parameter_info_table(self):
