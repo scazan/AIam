@@ -60,6 +60,8 @@ class BvhScene(Scene):
             self._floor = None
             self._floor_renderer_class, self._floor_renderer_args = \
                 FLOOR_RENDERERS[args.floor_renderer]
+        if args.fixed_size:
+            self.setFixedSize(args.preferred_width, args.preferred_height)
 
     def _set_focus(self):
         self._focus = self.central_output_position(self.processed_output)
@@ -207,6 +209,7 @@ class MainWindow(Window, EventListener):
         Window.add_parser_arguments(parser)
         parser.add_argument("--width", dest="preferred_width", type=int, default=1000)
         parser.add_argument("--height", dest="preferred_height", type=int, default=720)
+        parser.add_argument("--fixed-size", action="store_true")
         parser.add_argument("--no-toolbar", action="store_true")
         parser.add_argument("--color-scheme", default="white")
         parser.add_argument("--image")
@@ -272,6 +275,8 @@ class MainWindow(Window, EventListener):
         self._update_timer.setInterval(1000. / FRAME_RATE_WHILE_PAUSED)
         QtCore.QObject.connect(self._update_timer, QtCore.SIGNAL('timeout()'), self._scene.updateGL)
 
+        if args.fixed_size:
+            self.setFixedSize(self.args.preferred_width, self.args.preferred_height)
         if self.args.fullscreen:
             self.give_keyboard_focus_to_fullscreen_window()
             self._fullscreen_action.toggle()
