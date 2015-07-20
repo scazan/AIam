@@ -32,27 +32,31 @@ class Scene(BvhScene):
             self._camera_movement.proceed(self.parent().time_increment)
 
     def draw_input(self, vertices):
-        self._draw_vertices(vertices, self._parent.color_scheme["input"])
+        self._process_vertices(vertices)
+        self._draw_vertices(self._parent.color_scheme["input"])
 
     def draw_output(self, vertices):
         self._update_camera_translation(vertices)
-        self._draw_as_shadow(vertices)
-        self._draw_vertices(vertices, self._parent.color_scheme["output"])
+        self._process_vertices(vertices)
+        self._draw_vertices_as_shadow()
+        self._draw_vertices(self._parent.color_scheme["output"])
 
-    def _draw_vertices(self, vertices, color):
+    def _process_vertices(self, vertices):
         edges = self.bvh_reader.vertices_to_edges(vertices)
         edge_distance_pairs = [
             (edge, self._edge_distance_to_camera(edge))
             for edge in edges]
         distances = [edge_distance_pair[1] for edge_distance_pair in edge_distance_pairs]
-        min_distance = min(distances)
-        max_distance = max(distances)
+        self._min_distance = min(distances)
+        self._max_distance = max(distances)
 
-        sorted_edge_distance_pairs = sorted(
+        self._sorted_edge_distance_pairs = sorted(
             edge_distance_pairs,
             key=lambda edge_distance_pair: -edge_distance_pair[1])
-        for edge, distance in sorted_edge_distance_pairs:
-            normalized_distance = (distance - min_distance) / (max_distance - min_distance)
+
+    def _draw_vertices(self, color):
+        for edge, distance in self._sorted_edge_distance_pairs:
+            normalized_distance = (distance - self._min_distance) / (self._max_distance - self._min_distance)
             relative_vicinity = 1 - normalized_distance
             self._set_color_by_relative_vicinity(color, relative_vicinity)
             self._set_line_width_by_relative_vicinity(relative_vicinity)
@@ -83,12 +87,12 @@ class Scene(BvhScene):
         glVertex3f(*v2)
         glEnd()
 
-    def _draw_as_shadow(self, vertices):
+    def _draw_vertices_as_shadow(self):
         glPushMatrix()
         self.configure_3d_projection()
         glScalef(1, 0, 1)
         glMultMatrixf(self._shadow_shear_matrix)
-        self._draw_vertices(vertices, color=self._parent.color_scheme["shadow"])
+        self._draw_vertices(color=self._parent.color_scheme["shadow"])
         glPopMatrix()
 
     def centralize_output(self, processed_output):
