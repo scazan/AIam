@@ -1,4 +1,3 @@
-one-click installation start
 one-click installation stop
 
 re-create floor renderer when color scheme changed interactively
