@@ -12,6 +12,7 @@ from event import Event
 from event_listener import EventListener
 from bvh.bvh_writer import BvhWriter
 import glob
+import subprocess
 
 from connectivity.websocket_server import WebsocketServer, ClientHandler
 from connectivity.websocket_client import WebsocketClient
@@ -87,6 +88,7 @@ class Experiment(EventListener):
                             help="Force websockets support (enabled automatically by --backend-only)")
         parser.add_argument("--no-websockets", action="store_true",
                             help="Force running without websockets support (e.g when combing --ui-only and --event-log-source)")
+        parser.add_argument("--launch-when-ready", help="Run command when websocket server ready")
         parser.add_argument("--output-receiver-host")
         parser.add_argument("--output-receiver-port", type=int, default=10000)
         parser.add_argument("--output-receiver-type", choices=["bvh", "world"], default="bvh")
@@ -273,7 +275,13 @@ class Experiment(EventListener):
     def _create_websocket_server(self):
         server = WebsocketServer(WebsocketUiHandler, {"experiment": self})
         print "websocket server ready"
+        self._invoke_potential_launcher_in_args()
         return server
+
+    def _invoke_potential_launcher_in_args(self):
+        if self.args.launch_when_ready:
+            print "launching %r" % self.args.launch_when_ready
+            self._launched_process = subprocess.Popen(self.args.launch_when_ready, shell=True)
 
     def _set_up_timed_refresh(self):
         self._server.add_periodic_callback(
