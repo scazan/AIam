@@ -26,7 +26,7 @@ VIDEO_EXPORT_PATH = "rendered_video"
 CAMERA_Y_SPEED = .01
 CAMERA_KEY_SPEED = .1
 CAMERA_DRAG_SPEED = .1
-FRAME_RATE_WHILE_PAUSED = 30.0
+FRAME_RATE = 30.0
 
 FLOOR_RENDERERS = {
     "grid": (FloorGrid, {"num_cells": 30, "size": 100}),
@@ -272,8 +272,9 @@ class MainWindow(Window, EventListener):
             self._fps_meter = FpsMeter()
 
         self._update_timer = QtCore.QTimer(self)
-        self._update_timer.setInterval(1000. / FRAME_RATE_WHILE_PAUSED)
+        self._update_timer.setInterval(1000. / FRAME_RATE)
         QtCore.QObject.connect(self._update_timer, QtCore.SIGNAL('timeout()'), self._scene.updateGL)
+        self._update_timer.start()
 
         if args.fixed_size:
             self.setFixedSize(self.args.preferred_width, self.args.preferred_height)
@@ -323,12 +324,10 @@ class MainWindow(Window, EventListener):
         self._add_quit_action()
 
     def _start(self):
-        self._update_timer.stop()
         self.client.send_event(Event(Event.START))
 
     def _stop(self):
         self.client.send_event(Event(Event.STOP))
-        self._update_timer.start()
 
     def _add_toggleable_action(self,
                                enable_title, enable_handler,
@@ -473,8 +472,6 @@ class MainWindow(Window, EventListener):
             self.time_increment = self._now - self._previous_frame_time
             if self.args.show_fps:
                 self._fps_meter.update()
-
-            self._scene.updateGL()
             self.toolbar.refresh()
 
         self._previous_frame_time = self._now
