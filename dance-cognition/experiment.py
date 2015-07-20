@@ -13,6 +13,7 @@ from event_listener import EventListener
 from bvh.bvh_writer import BvhWriter
 import glob
 import subprocess
+import yappi
 
 from connectivity.websocket_server import WebsocketServer, ClientHandler
 from connectivity.websocket_client import WebsocketClient
@@ -92,6 +93,7 @@ class Experiment(EventListener):
         parser.add_argument("--output-receiver-host")
         parser.add_argument("--output-receiver-port", type=int, default=10000)
         parser.add_argument("--output-receiver-type", choices=["bvh", "world"], default="bvh")
+        parser.add_argument("--with-profiler", action="store_true")
 
     def __init__(self, parser, event_handlers={}):
         event_handlers.update({
@@ -178,6 +180,10 @@ class Experiment(EventListener):
         if run_ui:
             self._scene_class = self._entity_scene_module.Scene
 
+        if self.args.with_profiler:
+            import yappi
+            yappi.start()
+
         if run_backend and run_ui:
             if self.args.websockets:
                 websocket_server = self._create_websocket_server()
@@ -198,6 +204,9 @@ class Experiment(EventListener):
             else:
                 client = WebsocketClient(self.args.backend_host)
             self.run_ui(client)
+
+        if self.args.with_profiler:
+            yappi.get_func_stats().print_all()
 
     def _start(self, event):
         self._running = True
