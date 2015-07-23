@@ -79,8 +79,6 @@ class Experiment(EventListener):
         parser.add_argument("-input-y-offset", type=float, default=.0)
         parser.add_argument("-output-y-offset", type=float, default=.0)
         parser.add_argument("-export-dir", default="export")
-        parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
-                            default="-3.767,-1.400,-3.485,-55.500,18.500")
         parser.add_argument("--floor", action="store_true")
         parser.add_argument("--backend-only", action="store_true")
         parser.add_argument("--ui-only", action="store_true")
