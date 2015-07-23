@@ -64,12 +64,12 @@ class BvhScene(Scene):
             self.setFixedSize(args.preferred_width, args.preferred_height)
 
     def _set_focus(self):
-        self._focus = self.central_output_position(self.processed_output)
+        self._focus = self.get_root_vertex(self.processed_output)
 
     def _output_outside_focus(self):
         if self._focus is not None:
             distance = numpy.linalg.norm(
-                self.central_output_position(self.processed_output) - self._focus)
+                self.get_root_vertex(self.processed_output) - self._focus)
             return distance > FOCUS_RADIUS
 
     def received_output(self, processed_output):
@@ -77,7 +77,7 @@ class BvhScene(Scene):
         if self._focus is None:
             self._set_focus()
         if self.following_output() and self._output_outside_focus():
-            self.centralize_output(self.processed_output)
+            self.centralize_output(processed_output)
             self._set_focus()
 
     def render(self):
@@ -88,6 +88,7 @@ class BvhScene(Scene):
             self._draw_floor()
         if self._parent.focus_action.isChecked():
             self._draw_focus()
+        self._update_camera_translation()
         self._draw_io(self.processed_input, self.draw_input, self.args.input_y_offset)
         self._draw_io(self.processed_output, self.draw_output, self.args.output_y_offset)
         if self._exporting_video:
@@ -96,7 +97,7 @@ class BvhScene(Scene):
 
     def _draw_floor(self):
         if self.processed_output is not None:
-            center_x, center_z = self.central_output_position(self.processed_output)
+            center_x, center_z = self.get_root_vertex(self.processed_output)
             camera_translation = self.camera_translation()
             camera_x = self._camera_position[0] + camera_translation[0]
             camera_z = self._camera_position[2] + camera_translation[1]
@@ -164,9 +165,6 @@ class BvhScene(Scene):
         glColor4f(*self._parent.color_scheme["unit_cube"])
         glutWireCube(2.0)
 
-    def centralize_output(self):
-        pass
-
     def _draw_focus(self):
         glLineWidth(1.0)
         glColor4f(*self._parent.color_scheme["focus"])
@@ -174,9 +172,6 @@ class BvhScene(Scene):
 
     def following_output(self):
         return self._parent.following_output()
-
-    def central_output_position(self, output):
-        return numpy.zeros(2)
 
     def start_export_video(self):
         if os.path.exists(VIDEO_EXPORT_PATH):
@@ -497,26 +492,6 @@ class MainWindow(Window, EventListener):
     def _handle_output(self, event):
         self._scene.received_output(event.content)
         self._refresh()
-
-class CameraMovement:
-    def __init__(self, source, target, duration=2):
-        self._source = source
-        self._target = target
-        self._duration = duration
-        self._t = 0
-    
-    def proceed(self, time_increment):
-        self._t += time_increment
-
-    def is_active(self):
-        return self._t < self._duration
-
-    def translation(self):
-        return self._source + (self._target - self._source) * \
-            self._velocity(self._t / self._duration)
-
-    def _velocity(self, relative_t):
-        return (math.sin((relative_t / 2 + .75) * math.pi*2) + 1) / 2
 
 class Layer:
     def __init__(self, rendering_function):

@@ -7,8 +7,6 @@ MAX_LINE_WIDTH = 3.0
 class Scene(BvhScene):
     def __init__(self, *args, **kwargs):
         BvhScene.__init__(self, *args, **kwargs)
-        self._camera_translation = numpy.zeros(2)
-        self._camera_movement = None
         self._shadow_shear_matrix = self._create_shadow_shear_matrix()
 
     def _create_shadow_shear_matrix(self):
@@ -20,26 +18,18 @@ class Scene(BvhScene):
             0, 0, 1, 0,
             0, 0, 0, 1]
 
-    def camera_translation(self):
-        return self._camera_translation
-
-    def _update_camera_translation(self, vertices):
-        if self._camera_translation is None:
-            root_vertex = vertices[0]
-            self._camera_translation = numpy.array([-root_vertex[0], -root_vertex[2]])
-        elif self._camera_movement and self._camera_movement.is_active():
-            self._camera_translation = self._camera_movement.translation()
-            self._camera_movement.proceed(self.parent().time_increment)
-
     def draw_input(self, vertices):
         self._process_vertices(vertices)
         self._draw_vertices(self._parent.color_scheme["input"])
 
     def draw_output(self, vertices):
-        self._update_camera_translation(vertices)
         self._process_vertices(vertices)
         self._draw_vertices_as_shadow()
         self._draw_vertices(self._parent.color_scheme["output"])
+
+    def get_root_vertex(self, processed_output):
+        root_vertex = processed_output[0]
+        return numpy.array([root_vertex[0], root_vertex[2]])
 
     def _process_vertices(self, vertices):
         edges = self.bvh_reader.vertices_to_edges(vertices)
@@ -94,12 +84,3 @@ class Scene(BvhScene):
         glMultMatrixf(self._shadow_shear_matrix)
         self._draw_vertices(color=self._parent.color_scheme["shadow"])
         glPopMatrix()
-
-    def centralize_output(self, processed_output):
-        self._camera_movement = CameraMovement(
-            source=self._camera_translation,
-            target=-self.central_output_position(processed_output))
-
-    def central_output_position(self, output):
-        root_vertex = output[0]
-        return numpy.array([root_vertex[0], root_vertex[2]])

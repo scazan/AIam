@@ -3,6 +3,7 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from PyQt4 import QtCore, QtOpenGL
 import math
+import numpy
 
 CIRCLE_PRECISION = 100
 
@@ -13,6 +14,8 @@ class Scene(QtOpenGL.QGLWidget):
         self._camera_y_speed = camera_y_speed
         self._camera_key_speed = camera_key_speed
         self._camera_drag_speed = camera_drag_speed
+        self._camera_translation = numpy.zeros(2)
+        self._camera_movement = None
         self._dragging_orientation = False
         self._dragging_y_position = False
         QtOpenGL.QGLWidget.__init__(self, parent)
@@ -72,7 +75,12 @@ class Scene(QtOpenGL.QGLWidget):
         glLoadIdentity()
 
     def camera_translation(self):
-        return [0, 0]
+        return self._camera_translation
+
+    def _update_camera_translation(self):
+        if self._camera_movement and self._camera_movement.is_active():
+            self._camera_translation = self._camera_movement.translation()
+            self._camera_movement.proceed(self.parent().time_increment)
 
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton and not self.following_output():
@@ -149,3 +157,31 @@ class Scene(QtOpenGL.QGLWidget):
             z = center_z + radius * math.sin(angle)
             glVertex3f(x, y, z)
         glEnd()
+
+    def centralize_output(self, processed_output):
+        self._camera_movement = CameraMovement(
+            source=self._camera_translation,
+            target=-self.get_root_vertex(processed_output))
+
+    def get_root_vertex(self, processed_output):
+        return numpy.zeros(2)
+
+class CameraMovement:
+    def __init__(self, source, target, duration=2):
+        self._source = source
+        self._target = target
+        self._duration = duration
+        self._t = 0
+    
+    def proceed(self, time_increment):
+        self._t += time_increment
+
+    def is_active(self):
+        return self._t < self._duration
+
+    def translation(self):
+        return self._source + (self._target - self._source) * \
+            self._velocity(self._t / self._duration)
+
+    def _velocity(self, relative_t):
+        return (math.sin((relative_t / 2 + .75) * math.pi*2) + 1) / 2
