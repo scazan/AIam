@@ -2,7 +2,7 @@
 
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../bvhplay")
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/bvh/bvhplay")
 
 from dimensionality_reduction.dimensionality_reduction_experiment import *
 from svg_exporter import SvgExporter
