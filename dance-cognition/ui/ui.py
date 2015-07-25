@@ -45,7 +45,10 @@ class BvhScene(Scene):
     def __init__(self, parent, bvh_reader, args):
         self._parent = parent
         self.bvh_reader = bvh_reader
-        self.view_floor = args.floor
+        if args.floor and args.floor_renderer:
+            self.view_floor = True
+        else:
+            self.view_floor = False
         self._focus = None
         self.processed_input = None
         self.processed_output = None
@@ -216,8 +219,7 @@ class MainWindow(Window, EventListener):
         parser.add_argument("--ui-event-log-source")
         parser.add_argument("--show-fps", action="store_true")
         parser.add_argument("--floor-renderer",
-                            choices=FLOOR_RENDERERS.keys(),
-                            default="grid")
+                            choices=FLOOR_RENDERERS.keys())
 
     def __init__(self, client, entity, student, bvh_reader, scene_widget_class, toolbar_class, args,
                  event_handlers={}):
