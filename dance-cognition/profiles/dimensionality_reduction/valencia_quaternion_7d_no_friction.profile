@@ -1,0 +1,1 @@
+-entity hierarchical --pca-type=KernelPCA -r quaternion -bvh scenes/valencia_kinect/*.bvh -training-data-frame-rate 10 -n 7 --camera=0.056,-0.630,-2.569,-16.800,5.200 --max-novelty=1.4 -output-y-offset=1 

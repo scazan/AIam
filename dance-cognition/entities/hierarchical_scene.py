@@ -7,7 +7,8 @@ MAX_LINE_WIDTH = 3.0
 class Scene(BvhScene):
     def __init__(self, *args, **kwargs):
         BvhScene.__init__(self, *args, **kwargs)
-        self._shadow_shear_matrix = self._create_shadow_shear_matrix()
+        if self.args.floor:
+            self._shadow_shear_matrix = self._create_shadow_shear_matrix()
 
     def _create_shadow_shear_matrix(self):
         Ky = 0
@@ -24,7 +25,8 @@ class Scene(BvhScene):
 
     def draw_output(self, vertices):
         self._process_vertices(vertices)
-        self._draw_vertices_as_shadow()
+        if self.args.floor:
+            self._draw_vertices_as_shadow()
         self._draw_vertices(self._parent.color_scheme["output"])
 
     def get_root_vertex(self, processed_output):
