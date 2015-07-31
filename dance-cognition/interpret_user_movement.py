@@ -17,12 +17,12 @@ from event import Event
 from tracked_users_viewer import TrackedUsersViewer
 from transformations import rotation_matrix
 
-WAITING_PARAMETERS = {
-    "velocity": 0.6,
-    "novelty": 0.3,
-    "extension": 1.0,
-    "location_preference": 0.5,
-}
+# WAITING_PARAMETERS = {
+#     "velocity": 0.6,
+#     "novelty": 0.3,
+#     "extension": 1.0,
+#     "location_preference": 0.5,
+# }
 
 PASSIVE_PARAMETERS = {
     "velocity": 0.3,
@@ -30,6 +30,8 @@ PASSIVE_PARAMETERS = {
     "extension": 0.02,
     "location_preference": 1.0,
 }
+
+WAITING_PARAMETERS = PASSIVE_PARAMETERS
 
 INTENSE_PARAMETERS = {
     "velocity": 1.0,
