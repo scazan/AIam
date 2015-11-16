@@ -16,6 +16,7 @@ from event_listener import EventListener
 from event import Event
 from tracked_users_viewer import TrackedUsersViewer
 from transformations import rotation_matrix
+from filters import OneEuroFilter
 
 # WAITING_PARAMETERS = {
 #     "velocity": 0.6,
@@ -58,6 +59,17 @@ class Joint:
         self._intensity_buffer = collections.deque(
             [0] * self._buffer_size, maxlen=self._buffer_size)
 
+        if args.enable_1euro_filter:
+            self._1euro_filters = [self._create_1euro_filter()
+                                   for n in range(3)]
+
+    def _create_1euro_filter(self):
+        return OneEuroFilter(
+            freq=FPS,
+            mincutoff=args.one_euro_mincutoff,
+            beta=args.one_euro_beta,
+            dcutoff=args.one_euro_dcutoff)
+
     def get_position(self):
         return self._interpreter.adjust_tracked_position(self._previous_position)
 
@@ -67,8 +79,12 @@ class Joint:
     def get_intensity(self):
         return sum(self._intensity_buffer) / self._buffer_size
 
-    def set_position(self, x, y, z):
-        new_position = numpy.array([x, y, z])
+    def set_position(self, *vector):
+        if args.enable_1euro_filter:
+            vector = [one_euro_filter(value)
+                      for one_euro_filter, value in zip(self._1euro_filters, vector)]
+            
+        new_position = numpy.array(vector)
         if self._previous_position is not None:
             movement = numpy.linalg.norm(new_position - self._previous_position)
             self._intensity_buffer.append(movement)
@@ -365,7 +381,11 @@ parser.add_argument("--active-area-center", default="0,2500")
 parser.add_argument("--active-area-radius", type=float, default=1500)
 parser.add_argument("--with-viewer", action="store_true")
 parser.add_argument("--without-sending", action="store_true")
-parser.add_argument("--intensity-smoothing-factor", type=float, default=1.0)
+parser.add_argument("--intensity-smoothing-factor", type=float, default=0.5)
+parser.add_argument("--enable-1euro-filter", action="store_true", default=True)
+parser.add_argument("--1euro-mincutoff", dest="one_euro_mincutoff", type=float, default=0.3)
+parser.add_argument("--1euro-beta", dest="one_euro_beta", type=float, default=0.001)
+parser.add_argument("--1euro-dcutoff", dest="one_euro_dcutoff", type=float, default=1.0)
 parser.add_argument("--log-source")
 parser.add_argument("--log-target")
 parser.add_argument("--profile", action="store_true")
