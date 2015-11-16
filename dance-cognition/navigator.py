@@ -94,9 +94,10 @@ class PathFollower:
         self._path = path
         self._velocity_correction = 1.
         if dynamics.__class__ != dynamics_module.constant_dynamics():
-            self._velocity_correction = \
-                self._estimate_duration(dynamics_module.constant_dynamics()) / \
-                self._estimate_duration(dynamics)
+            estimated_duration = self._estimate_duration(dynamics)
+            if estimated_duration > 0:
+                self._velocity_correction = self._estimate_duration(dynamics_module.constant_dynamics()) / \
+                                            self._estimate_duration(dynamics)
         self._dynamics = dynamics
         self._restart()
 

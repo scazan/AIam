@@ -275,12 +275,24 @@ class Improviser:
         self._on_changed_path = on_changed_path
 
     def select_next_move(self):
-        path_segments = self._generate_path()
-        self._path = self._interpolate_path(path_segments)
+        found_non_empty_path = False
+        while not found_non_empty_path:
+            path_segments = self._generate_path()
+            print "path_segments", len(path_segments)
+            self._path = self._interpolate_path(path_segments)
+            print "interpolated path", len(self._path)
+            if len(self._path) > 0:
+                found_non_empty_path = True
         self._path_follower = self._create_path_follower(self._path)
         self._on_changed_path()
 
     def _generate_path(self):
+        while True:
+            path = self._generate_potentially_empty_path()
+            if len(path) > 0:
+                return path
+
+    def _generate_potentially_empty_path(self):
         return self.experiment.navigator.generate_path(
             departure = self._departure(),
             num_segments = self.params.num_segments,
