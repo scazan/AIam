@@ -42,7 +42,6 @@ INTENSE_PARAMETERS = {
 
 INTENSITY_THRESHOLD = 5
 INTENSITY_CEILING = 80
-JOINT_SMOOTHING_DURATION = 1.0
 FPS = 30.0
 NUM_JOINTS_IN_SKELETON = 15
 JOINTS_DETERMNING_INTENSITY = ["left_hand", "right_hand"]
@@ -55,7 +54,7 @@ class Joint:
     def __init__(self, interpreter):
         self._interpreter = interpreter
         self._previous_position = None
-        self._buffer_size = int(JOINT_SMOOTHING_DURATION * FPS)
+        self._buffer_size = max(int(args.intensity_smoothing_factor * FPS), 1)
         self._intensity_buffer = collections.deque(
             [0] * self._buffer_size, maxlen=self._buffer_size)
 
@@ -366,6 +365,7 @@ parser.add_argument("--active-area-center", default="0,2500")
 parser.add_argument("--active-area-radius", type=float, default=1500)
 parser.add_argument("--with-viewer", action="store_true")
 parser.add_argument("--without-sending", action="store_true")
+parser.add_argument("--intensity-smoothing-factor", type=float, default=1.0)
 parser.add_argument("--log-source")
 parser.add_argument("--log-target")
 parser.add_argument("--profile", action="store_true")
