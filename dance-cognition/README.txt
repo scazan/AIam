@@ -19,6 +19,8 @@ sudo pip-2.7 install tornado==2.4.1
 sudo pip-2.7 install ws4py==0.3.2
 sudo pip-2.7 install yappi
 
+# install xquartz from http://www.xquartz.org/ on OS X > 10.7
+
 PREDICTION WITH BACKPROP NET
 
 python predict.py -p point_circle -train -training-duration 100
