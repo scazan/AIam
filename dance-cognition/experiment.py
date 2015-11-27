@@ -155,6 +155,8 @@ class Experiment(EventListener):
         self._ui_handlers_lock = threading.Lock()
         self._exporting_output = False
 
+        self._send_joint_ids()
+
     def ui_connected(self, handler):
         with self._ui_handlers_lock:
             self._ui_handlers.add(handler)
@@ -325,6 +327,10 @@ class Experiment(EventListener):
             frame = self.pose_to_bvh_frame(self.pose)
             self.bvh_writer.add_frame(frame)
 
+    def _send_joint_ids(self):
+        if self._output_sender is not None:
+            self._send_output_joint_id_recurse(self.pose.get_root_joint())
+
     def _send_output(self):
         if self.output is not None:
             self.entity.parameters_to_processed_pose(self.output, self.pose)
@@ -354,6 +360,15 @@ class Experiment(EventListener):
             self._send_output_joint_orientation(joint)
         for child in joint.children:
             self._send_output_bvh_recurse(child)
+
+    def _send_output_joint_id_recurse(self, joint):
+        self._send_output_joint_id(joint)
+        for child in joint.children:
+            self._send_output_joint_id_recurse(child)
+
+    def _send_output_joint_id(self, joint):
+        self._output_sender.send(
+            "/id", joint.definition.name, joint.definition.index)
 
     def _send_output_joint_translation(self, joint):
         self._output_sender.send(
