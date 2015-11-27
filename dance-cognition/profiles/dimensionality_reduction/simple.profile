@@ -1,0 +1,1 @@
+-entity hierarchical --pca-type=LinearPCA -r quaternion -bvh scenes/simple/*.bvh -training-data-frame-rate 15 -n 1 --friction --floor

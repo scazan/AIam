@@ -1,8 +1,12 @@
 *.log
-scenes/
+scenes/*
+!scenes/simple
+!scenes/valencia_kinect
+!scenes/2bone.bvh
 plots/
 export/
 rendered_video/
 *.dat
 *.data
 *.model
+*.cache
