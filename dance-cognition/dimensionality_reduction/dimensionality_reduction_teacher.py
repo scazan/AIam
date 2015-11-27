@@ -14,7 +14,7 @@ class Teacher:
             self._add_training_datum()
             self.proceed(time_increment)
             t += time_increment
-        print "ok"
+        print "created training data with %s samples" % len(self._training_data)
         return numpy.array(self._training_data)
 
     def proceed(self, time_increment):
