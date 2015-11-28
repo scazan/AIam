@@ -66,6 +66,15 @@ class BvhScene(Scene):
         if args.fixed_size:
             self.setFixedSize(args.preferred_width, args.preferred_height)
 
+        if args.z_up:
+            self.bvh_coordinate_left = 0
+            self.bvh_coordinate_up = 2
+            self.bvh_coordinate_far = 1
+        else:
+            self.bvh_coordinate_left = 0
+            self.bvh_coordinate_up = 1
+            self.bvh_coordinate_far = 2
+
     def _set_focus(self):
         self._focus = self.get_root_vertex(self.processed_output)
 
@@ -189,6 +198,12 @@ class BvhScene(Scene):
     def stop_export_video(self):
         self._exporting_video = False
         print "stopped exporting video"
+
+    def bvh_vertex(self, v):
+        glVertex3f(
+            v[self.bvh_coordinate_left],
+            v[self.bvh_coordinate_up],
+            v[self.bvh_coordinate_far])
 
 class ExperimentToolbar(QtGui.QWidget):
     def __init__(self, parent, args):

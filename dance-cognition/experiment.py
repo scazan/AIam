@@ -92,6 +92,7 @@ class Experiment(EventListener):
         parser.add_argument("--output-receiver-port", type=int, default=10000)
         parser.add_argument("--output-receiver-type", choices=["bvh", "world"], default="bvh")
         parser.add_argument("--with-profiler", action="store_true")
+        parser.add_argument("--z-up", action="store_true", help="Use Z-up for BVHs")
 
     def __init__(self, parser, event_handlers={}):
         event_handlers.update({

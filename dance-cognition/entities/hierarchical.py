@@ -32,11 +32,15 @@ class Entity(BaseEntity):
         self._unnormalized_constrainers = self._create_constrainers()
 
     def _create_constrainers(self):
+        if self.experiment.args.z_up:
+            coordinate_up = 2
+        else:
+            coordinate_up = 1
         result = []
         if self.experiment.args.friction:
-            result.append(FrictionConstrainer(BalanceDetector()))
+            result.append(FrictionConstrainer(BalanceDetector(coordinate_up)))
         if self.experiment.args.floor:
-            result.append(FloorConstrainer())
+            result.append(FloorConstrainer(coordinate_up))
         if self.experiment.args.random_slide > 0:
             result.append(RandomSlide(self.experiment.args.random_slide))
         if self.experiment.args.circle_slide:
