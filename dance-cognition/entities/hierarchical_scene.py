@@ -31,7 +31,9 @@ class Scene(BvhScene):
 
     def get_root_vertex(self, processed_output):
         root_vertex = processed_output[0]
-        return numpy.array([root_vertex[0], root_vertex[2]])
+        return numpy.array([
+                root_vertex[self.bvh_coordinate_left],
+                root_vertex[self.bvh_coordinate_far]])
 
     def _process_vertices(self, vertices):
         edges = self.bvh_reader.vertices_to_edges(vertices)
@@ -70,13 +72,18 @@ class Scene(BvhScene):
         return self._distance_to_camera(edge.v1) + self._distance_to_camera(edge.v2)
 
     def _distance_to_camera(self, vertex):
-        return math.sqrt(pow(vertex[0] + (self._camera_position[0] + self._camera_translation[0]), 2) +
-                         pow(vertex[2] + (self._camera_position[2] + self._camera_translation[1]), 2))
+        return math.sqrt(
+            pow(vertex[self.bvh_coordinate_up] + (
+                    self._camera_position[0] +
+                    self._camera_translation[0]), 2) +
+            pow(vertex[self.bvh_coordinate_far] + (
+                    self._camera_position[2] +
+                    self._camera_translation[1]), 2))
 
     def _draw_line(self, v1, v2):
         glBegin(GL_LINES)
-        glVertex3f(*v1)
-        glVertex3f(*v2)
+        self.bvh_vertex(v1)
+        self.bvh_vertex(v2)
         glEnd()
 
     def _draw_vertices_as_shadow(self):

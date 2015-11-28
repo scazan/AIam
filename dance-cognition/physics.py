@@ -25,22 +25,26 @@ class FrictionConstrainer:
         return [vertex + translation for vertex in unconstrained_vertices]
 
 class BalanceDetector:
+    def __init__(self, coordinate_up=1):
+        self._coordinate_up = coordinate_up
+
     def identify_supporting_vertex(self, vertices):
         return self._lowest_vertex(vertices)
 
     def _lowest_vertex(self, vertices):
         return min(
             range(len(vertices)),
-            key=lambda index: vertices[index][1])
+            key=lambda index: vertices[index][self._coordinate_up])
         
 class FloorConstrainer:
-    def __init__(self):
+    def __init__(self, coordinate_up=1):
         self._floor_y = 0
+        self._coordinate_up = coordinate_up
 
     def constrain(self, vertices):
-        bottom_y = min([vertex[1] for vertex in vertices])
+        bottom_y = min([vertex[self._coordinate_up] for vertex in vertices])
         offset = numpy.zeros(len(vertices[0]))
-        offset[1] = self._floor_y - bottom_y
+        offset[self._coordinate_up] = self._floor_y - bottom_y
         return [vertex + offset for vertex in vertices]
 
 class RandomSlide:
