@@ -53,7 +53,7 @@ class BvhCollection:
 
     def get_reader_at_time(self, t):
         for reader in self._readers:
-            if reader.start_time <= t and t <= reader.end_time:
+            if reader.start_time <= t and t < reader.end_time:
                 return reader
         return self._readers[-1]
 
