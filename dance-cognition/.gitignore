@@ -2,6 +2,7 @@
 scenes/*
 !scenes/simple
 !scenes/valencia_kinect
+!scenes/valencia_kinect_z-up
 !scenes/2bone.bvh
 plots/
 export/
