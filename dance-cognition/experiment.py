@@ -130,7 +130,7 @@ class Experiment(EventListener):
             args = parser.parse_args(profile_args_strings, namespace=args)
 
         if args.output_receiver_host:
-            from simple_osc_sender import OscSender
+            from connectivity.simple_osc_sender import OscSender
             self._output_sender = OscSender(
                 port=args.output_receiver_port, host=args.output_receiver_host)
         else:
