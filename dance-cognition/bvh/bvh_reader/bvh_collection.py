@@ -53,9 +53,9 @@ class BvhCollection:
 
     def get_reader_at_time(self, t):
         for reader in self._readers:
-            if reader.start_time <= t and t < reader.end_time:
+            if reader.start_time <= t and t <= reader.end_time:
                 return reader
-        raise Exception("get_reader_at_time failed for t=%s" % t)
+        return self._readers[-1]
 
     def normalize_vector(self, v):
         return array([
