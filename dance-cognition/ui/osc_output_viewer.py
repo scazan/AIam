@@ -139,13 +139,17 @@ class MainWindow(QtOpenGL.QGLWidget):
         glEnd()
 
     def _vertex(self, worldpos):
-        glVertex3f(*worldpos)
+        if self.args.z_up:
+            glVertex3f(worldpos[0], worldpos[2], worldpos[1])
+        else:
+            glVertex3f(*worldpos)
 
 parser = ArgumentParser()
 parser.add_argument("bvh", type=str)
 parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
                     default="-3.767,-1.400,-3.485,-55.500,18.500")
 parser.add_argument("--port", type=int, default=10000)
+parser.add_argument("--z-up", action="store_true")
 args = parser.parse_args()
 
 bvh_reader = bvh_reader_module.BvhReader(args.bvh)
