@@ -5,6 +5,7 @@ from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from PyQt4 import QtCore, QtGui, QtOpenGL
+from collections import defaultdict
 
 import sys
 import os
@@ -22,13 +23,17 @@ class MainWindow(QtOpenGL.QGLWidget):
         self.args = args
         self.margin = 0
         self._set_camera_from_arg(args.camera)
-        self._next_world_positions = {}
-        self._world_positions = None
+        self._next_frame = self._new_frame()
+        self._frame = None
         self._frame_count = None
         QtOpenGL.QGLWidget.__init__(self)
 
         self._osc_receiver = OscReceiver(args.port)
-        self._osc_receiver.add_method("/world", "iifff", self._received_worldpos)
+        if args.type == "world":
+            self._osc_receiver.add_method("/world", "iifff", self._received_worldpos)
+        elif args.type == "bvh":
+            self._osc_receiver.add_method("/translation", "iifff", self._received_translation)
+            self._osc_receiver.add_method("/orientation", "iifff", self._received_orientation)
         self._osc_receiver.start(auto_serve=True)
 
         timer = QtCore.QTimer(self)
@@ -36,17 +41,41 @@ class MainWindow(QtOpenGL.QGLWidget):
         QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), self.updateGL)
         timer.start()
 
+    def _new_frame(self):
+        if self.args.type == "world":
+            return {}
+        elif self.args.type == "bvh":
+            return defaultdict(dict)
+
     def _received_worldpos(self, path, args, types, src, user_data):
         frame_count, joint_index, x, y, z = args
+        self._on_new_data(frame_count, joint_index)
+        self._next_frame[joint_index] = (x, y, z)
+
+    def _on_new_data(self, frame_count, joint_index):
         if joint_index == 0:
             if self._frame_count is None:
                 self._frame_count = frame_count
             elif frame_count > self._frame_count:
-                self._world_positions = copy.copy(self._next_world_positions)
-                self._next_world_positions = {}
+                self._frame = copy.copy(self._next_frame)
+                self._next_frame = self._new_frame()
                 self._frame_count = frame_count
 
-        self._next_world_positions[joint_index] = (x, y, z)
+    def _received_translation(self, path, args, types, src, user_data):
+        frame_count, joint_index, x, y, z = args
+        self._on_new_data(frame_count, joint_index)
+        self._next_frame[joint_index].update(
+            {"Xposition": x,
+             "Yposition": y,
+             "Zposition": z})
+
+    def _received_orientation(self, path, args, types, src, user_data):
+        frame_count, joint_index, x, y, z = args
+        self._on_new_data(frame_count, joint_index)
+        self._next_frame[joint_index].update(
+            {"Xrotation": math.degrees(x),
+             "Yrotation": math.degrees(y),
+             "Zrotation": math.degrees(z)})
 
     def _set_camera_from_arg(self, arg):
         pos_x, pos_y, pos_z, orient_y, orient_z = map(float, arg.split(","))
@@ -118,9 +147,15 @@ class MainWindow(QtOpenGL.QGLWidget):
 
     def render(self):
         self.configure_3d_projection(-100, 0)
-        if self._world_positions is not None:
-            self._hierarchy.set_pose_vertices(self._pose, self._world_positions)
-            self._render_pose()
+        if self._frame is not None:
+            self._render_frame()
+
+    def _render_frame(self):
+        if self.args.type == "world":
+            self._hierarchy.set_pose_vertices(self._pose, self._frame)
+        elif self.args.type == "bvh":
+            self._hierarchy.set_pose_from_joint_dicts(self._pose, self._frame)
+        self._render_pose()
         
     def _render_pose(self):
         glColor3f(0, 0, 0)
@@ -150,6 +185,7 @@ parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
                     default="-3.767,-1.400,-3.485,-55.500,18.500")
 parser.add_argument("--port", type=int, default=10000)
 parser.add_argument("--z-up", action="store_true")
+parser.add_argument("--type", choices=["bvh", "world"], default="bvh")
 args = parser.parse_args()
 
 bvh_reader = bvh_reader_module.BvhReader(args.bvh)

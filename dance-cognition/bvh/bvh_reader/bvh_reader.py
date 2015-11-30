@@ -161,7 +161,7 @@ class Hierarchy:
         pose.get_root_joint().set_vertices(vertices, recurse)
 
     def set_pose_from_frame(self, pose, frame):
-        self._set_joint_from_bvh_recurse(frame, pose.get_root_joint())
+        self._set_joint_from_frame_recurse(frame, pose.get_root_joint())
         self.update_pose_world_positions(pose)
 
     def get_root_joint_definition(self):
@@ -170,29 +170,41 @@ class Hierarchy:
     def get_joint_definition(self, name):
         return self._joint_definitions[name]
 
-    def _set_joint_from_bvh_recurse(self, frame, joint, frame_data_index=0):
-        frame_dict = dict()
+    def _set_joint_from_frame_recurse(self, frame, joint, frame_data_index=0):
+        joint_dict = dict()
         for channel in joint.definition.channels:
-            frame_dict[channel] = frame[frame_data_index]
+            joint_dict[channel] = frame[frame_data_index]
             frame_data_index += 1
 
-        if "Xposition" in frame_dict:
-            joint.translation = array([
-                    frame_dict["Xposition"],
-                    frame_dict["Yposition"],
-                    frame_dict["Zposition"]])
-
-        if joint.definition.has_rotation:
-            joint.angles = [radians(frame_dict[channel])
-                            for channel in joint.definition.rotation_channels]
-            joint.rotation = Euler(joint.angles, joint.definition.axes)
+        self._set_joint_from_dict(joint, joint_dict)
 
         for child in joint.children:
-            frame_data_index = self._set_joint_from_bvh_recurse(frame, child, frame_data_index)
+            frame_data_index = self._set_joint_from_frame_recurse(frame, child, frame_data_index)
             if(frame_data_index == 0):
                 raise Exception("fatal error")
 
         return frame_data_index
+
+    def _set_joint_from_dict(self, joint, joint_dict):
+        if "Xposition" in joint_dict:
+            joint.translation = array([
+                    joint_dict["Xposition"],
+                    joint_dict["Yposition"],
+                    joint_dict["Zposition"]])
+
+        if joint.definition.has_rotation:
+            joint.angles = [radians(joint_dict[channel])
+                            for channel in joint.definition.rotation_channels]
+            joint.rotation = Euler(joint.angles, joint.definition.axes)
+
+    def set_pose_from_joint_dicts(self, pose, joint_dicts):
+        self._set_joint_from_dicts_recurse(pose.get_root_joint(), joint_dicts)
+        self.update_pose_world_positions(pose)
+
+    def _set_joint_from_dicts_recurse(self, joint, joint_dicts):
+        self._set_joint_from_dict(joint, joint_dicts[joint.definition.index])
+        for child in joint.children:
+            self._set_joint_from_dicts_recurse(child, joint_dicts)
 
     def update_pose_world_positions(self, pose):
         self._update_world_position_recurse(pose.get_root_joint())
