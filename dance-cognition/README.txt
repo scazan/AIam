@@ -11,13 +11,17 @@ sudo pip install ws4py==0.3.2
 INSTALLATION ON OSX
 
 # use macports
-sudo port install py27-pyqt4 py27-numpy py27-scikit-learn py27-opengl
+sudo port install py27-pyqt4
 # use /opt/local/bin/python2.7 instead of python when running
 
 sudo port install py27-pip
+sudo pip-2.7 install PyOpenGL
 sudo pip-2.7 install tornado==2.4.1
 sudo pip-2.7 install ws4py==0.3.2
 sudo pip-2.7 install yappi
+sudo pip-2.7 install scikit-learn==0.14
+sudo pip-2.7 install numpy
+sudo pip-2.7 install scipy
 
 # install xquartz from http://www.xquartz.org/ on OS X > 10.7
 
