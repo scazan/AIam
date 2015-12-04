@@ -165,8 +165,8 @@ class UserMovementInterpreter:
     WAITING = "waiting"
     ADAPTING_TO_USER = "adapting to user"
 
-    def __init__(self, send_interpretations=True, log_target=None, log_source=None):
-        self._send_interpretations = send_interpretations
+    def __init__(self, output_controller, log_target=None, log_source=None):
+        self._output_controller = output_controller
         self.intensity_ceiling = INTENSITY_CEILING
         self.active_area_center_x, self.active_area_center_z = [
             float(s) for s in args.active_area_center.split(",")]
@@ -253,13 +253,11 @@ class UserMovementInterpreter:
         self._select_user()
         system_state_changed = self._update_system_state()
 
-        if self._send_interpretations:
-            parameters = self._select_parameters_in_system_state()
-            self._send_parameters(parameters)
+        parameters = self._select_parameters_in_system_state()
+        self._output_controller.send_parameters(parameters)
 
         if system_state_changed:
-            if self._send_interpretations:
-                websocket_client.send_event(Event(Event.ABORT_PATH))
+            self._output_controller.abort_path()
             if args.with_viewer:
                 viewer.log(self._frame["timestamp"], "aborting path")
                 viewer.log(self._frame["timestamp"], self._system_state)
@@ -319,28 +317,11 @@ class UserMovementInterpreter:
             return WAITING_PARAMETERS
         elif self._system_state == self.ADAPTING_TO_USER:
             relative_intensity = self._get_relative_intensity()
-            return self._interpolate_parameters(
-                PASSIVE_PARAMETERS, INTENSE_PARAMETERS, relative_intensity)
-
-    def _interpolate_parameters(self, low_parameters, high_parameters, interpolation_value):
-        result = {}
-        for name in ["velocity", "novelty", "extension", "location_preference"]:
-            low_value = low_parameters[name]
-            high_value = high_parameters[name]
-            value = low_value + (high_value - low_value) * interpolation_value
-            result[name] = value
-        return result
+            return self._output_controller.intensity_to_output_parameters(relative_intensity)
 
     def _get_relative_intensity(self):
         return max(0, self._selected_user.get_intensity() - INTENSITY_THRESHOLD) / \
             (self.intensity_ceiling - INTENSITY_THRESHOLD)
-
-    def _send_parameters(self, parameters):
-        for name, value in parameters.iteritems():
-            websocket_client.send_event(
-                Event(Event.PARAMETER,
-                      {"name": name,
-                       "value": value}))
 
     def get_users(self):
         return [user for user in self._users.values()
@@ -373,6 +354,36 @@ class UserMovementInterpreter:
             time.sleep(sleep_duration)
             self._current_log_time += sleep_duration * self.log_replay_speed
         
+class OutputController:
+    def __init__(self, event_sender):
+        self._event_sender = event_sender
+
+    def intensity_to_output_parameters(self, relative_intensity):
+        return self._interpolate_parameters(
+            PASSIVE_PARAMETERS, INTENSE_PARAMETERS, relative_intensity)
+
+    def _interpolate_parameters(self, low_parameters, high_parameters, interpolation_value):
+        result = {}
+        for name in ["velocity", "novelty", "extension", "location_preference"]:
+            low_value = low_parameters[name]
+            high_value = high_parameters[name]
+            value = low_value + (high_value - low_value) * interpolation_value
+            result[name] = value
+        return result
+
+    def send_parameters(self, parameters):
+        for name, value in parameters.iteritems():
+            self._event_sender.send_event(
+                Event(Event.PARAMETER,
+                      {"name": name,
+                       "value": value}))
+
+    def abort_path(self):
+        self._event_sender.send_event(Event(Event.ABORT_PATH))
+
+class MockEventSender:
+    def send_event(self, event):
+        pass
 
 parser = ArgumentParser()
 TrackedUsersViewer.add_parser_arguments(parser)
@@ -391,8 +402,16 @@ parser.add_argument("--log-target")
 parser.add_argument("--profile", action="store_true")
 args = parser.parse_args()
 
+if args.without_sending:
+    event_sender = MockEventSender()
+else:
+    event_sender = WebsocketClient(WEBSOCKET_HOST)
+    event_sender.set_event_listener(EventListener())
+    event_sender.connect()
+
+output_controller = OutputController(event_sender)
 interpreter = UserMovementInterpreter(
-    send_interpretations=not args.without_sending,
+    output_controller,
     log_target=args.log_target,
     log_source=args.log_source)
 
@@ -412,11 +431,6 @@ def handle_joint_data(path, values, types, src, user_data):
 
 def handle_user_state(path, values, types, src, user_data):
     interpreter.handle_user_state(*values)
-
-if not args.without_sending:
-    websocket_client = WebsocketClient(WEBSOCKET_HOST)
-    websocket_client.set_event_listener(EventListener())
-    websocket_client.connect()
 
 if args.log_source:
     interpreter.process_log_in_new_thread()
