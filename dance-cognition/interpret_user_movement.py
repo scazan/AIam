@@ -173,7 +173,7 @@ class UserMovementInterpreter:
         self.active_area_radius = args.active_area_radius
         self.tracker_y_position, tracker_pitch = map(float, args.tracker.split(","))
         self.set_tracker_pitch(tracker_pitch)
-        self.reset()
+        self._reset()
 
         if log_source:
             self._read_log(log_source)
@@ -196,7 +196,18 @@ class UserMovementInterpreter:
         else:
             self.num_considered_joints = len(CONSIDERED_JOINTS)
 
-    def reset(self):
+    def set_up_osc_receiver(self):
+        osc_receiver = OscReceiver(OSC_PORT)
+        osc_receiver.add_method("/begin_session", "", self._handle_begin_session)
+        osc_receiver.add_method("/begin_frame", "f", self._handle_begin_frame)
+        osc_receiver.add_method("/joint", "isffff", self._handle_joint_data)
+        osc_receiver.add_method("/state", "is", self._handle_user_state)
+        osc_receiver.start()
+
+    def _handle_begin_session(self, path, values, types, src, user_data):
+        self._reset()
+
+    def _reset(self):
         self._frame = None
         self._users = {}
         self._selected_user = None
@@ -227,7 +238,8 @@ class UserMovementInterpreter:
         f.close()
         print "ok"
 
-    def handle_begin_frame(self, timestamp):
+    def _handle_begin_frame(self, path, values, types, src, user_data):
+        (timestamp,) = values
         if self._frame is not None:
             self._process_frame()
             if self._writing_to_log:
@@ -236,11 +248,13 @@ class UserMovementInterpreter:
                        "user_states": [],
                        "joint_data": []}
 
-    def handle_joint_data(self, user_id, joint_name, x, y, z, confidence):
+    def _handle_joint_data(self, path, values, types, src, user_data):
+        user_id, joint_name, x, y, z, confidence = values
         if self._frame is not None:
             self._frame["joint_data"].append((user_id, joint_name, x, y, z, confidence))
 
-    def handle_user_state(self, user_id, state):
+    def _handle_user_state(self, path, values, types, src, user_data):
+        user_id, state = values
         if self._frame is not None:
             self._frame["user_states"].append((user_id, state))
 
@@ -420,27 +434,10 @@ if args.with_viewer:
     viewer = TrackedUsersViewer(interpreter, args,
                                 enable_log_replay=args.log_source)
 
-def handle_begin_session(path, values, types, src, user_data):
-    interpreter.reset()
-
-def handle_begin_frame(path, values, types, src, user_data):
-    interpreter.handle_begin_frame(*values)
-
-def handle_joint_data(path, values, types, src, user_data):
-    interpreter.handle_joint_data(*values)
-
-def handle_user_state(path, values, types, src, user_data):
-    interpreter.handle_user_state(*values)
-
 if args.log_source:
     interpreter.process_log_in_new_thread()
 else:
-    osc_receiver = OscReceiver(OSC_PORT)
-    osc_receiver.add_method("/begin_session", "", handle_begin_session)
-    osc_receiver.add_method("/begin_frame", "f", handle_begin_frame)
-    osc_receiver.add_method("/joint", "isffff", handle_joint_data)
-    osc_receiver.add_method("/state", "is", handle_user_state)
-    osc_receiver.start()
+    interpreter.set_up_osc_receiver()
 
 if args.profile:
     import yappi
