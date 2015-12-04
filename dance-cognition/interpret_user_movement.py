@@ -367,7 +367,7 @@ class UserMovementInterpreter:
             sleep_duration = min(t - self._current_log_time, max_sleep_duration)
             time.sleep(sleep_duration)
             self._current_log_time += sleep_duration * self.log_replay_speed
-        
+
 class OutputController:
     def __init__(self, event_sender):
         self._event_sender = event_sender
@@ -414,6 +414,11 @@ parser.add_argument("--1euro-dcutoff", dest="one_euro_dcutoff", type=float, defa
 parser.add_argument("--log-source")
 parser.add_argument("--log-target")
 parser.add_argument("--profile", action="store_true")
+parser.add_argument("--simulate-via-midi", action="store_true")
+parser.add_argument("--midi-port")
+parser.add_argument("--midi-command", type=int)
+parser.add_argument("--midi-channel", type=int)
+parser.add_argument("--calibrate-midi", action="store_true")
 args = parser.parse_args()
 
 if args.without_sending:
@@ -424,34 +429,45 @@ else:
     event_sender.connect()
 
 output_controller = OutputController(event_sender)
-interpreter = UserMovementInterpreter(
-    output_controller,
-    log_target=args.log_target,
-    log_source=args.log_source)
 
-if args.with_viewer:
-    app = QtGui.QApplication(sys.argv)
-    viewer = TrackedUsersViewer(interpreter, args,
-                                enable_log_replay=args.log_source)
-
-if args.log_source:
-    interpreter.process_log_in_new_thread()
+if args.simulate_via_midi:
+    from simulate_input_via_midi import MidiInterpreter
+    interpreter = MidiInterpreter(
+        output_controller,
+        midi_port=args.midi_port,
+        command=args.midi_command,
+        channel=args.midi_channel,
+        calibrate=args.calibrate_midi)
+    interpreter.main_loop()
 else:
-    interpreter.set_up_osc_receiver()
+    interpreter = UserMovementInterpreter(
+        output_controller,
+        log_target=args.log_target,
+        log_source=args.log_source)
 
-if args.profile:
-    import yappi
-    yappi.start()
+    if args.with_viewer:
+        app = QtGui.QApplication(sys.argv)
+        viewer = TrackedUsersViewer(interpreter, args,
+                                    enable_log_replay=args.log_source)
 
-if args.with_viewer:
-    viewer.show()
-    app.exec_()
-else:
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        pass
+    if args.log_source:
+        interpreter.process_log_in_new_thread()
+    else:
+        interpreter.set_up_osc_receiver()
 
-if args.profile:
-    yappi.get_func_stats().print_all()
+    if args.profile:
+        import yappi
+        yappi.start()
+
+    if args.with_viewer:
+        viewer.show()
+        app.exec_()
+    else:
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            pass
+
+    if args.profile:
+        yappi.get_func_stats().print_all()
