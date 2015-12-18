@@ -3,7 +3,11 @@ from numpy import array
 
 class BvhCollection:
     def __init__(self, filenames):
-        self._readers = [bvh_reader.BvhReader(filename) for filename in filenames]
+        readers = [bvh_reader.BvhReader(filename) for filename in filenames]
+        self._init_readers(readers)
+
+    def _init_readers(self, readers):
+        self._readers = readers
         self._base_reader = self._readers[0]
 
     def get_readers(self):
