@@ -1,5 +1,6 @@
 import bvh_reader
 from numpy import array
+import copy
 
 class BvhCollection:
     def __init__(self, filenames):
@@ -16,6 +17,7 @@ class BvhCollection:
     def read(self):
         self._read_bvhs()
         self._set_scale_info()
+        self._hierarchy = self._create_hierachy()
 
     def _read_bvhs(self):
         self._duration = 0
@@ -45,6 +47,21 @@ class BvhCollection:
                 reader._scale_info.max_z)
         self._scale_info.update_scale_factor()
 
+    def _create_hierachy(self):
+        hierarchy = copy.deepcopy(self._base_reader.get_hierarchy())
+        self._set_static_orientation_recurse(hierarchy.get_root_joint_definition())
+        return hierarchy
+
+    def _set_static_orientation_recurse(self, joint_definition):
+        self._set_static_orientation(joint_definition)
+        for child_definition in joint_definition.child_definitions:
+            self._set_static_orientation_recurse(child_definition)
+
+    def _set_static_orientation(self, joint_definition):
+        joint_definition.has_static_rotation = all([
+                reader.get_hierarchy().get_joint_definition(joint_definition.name).has_static_rotation
+                for reader in self._readers])
+
     def get_frame_time(self):
         return self._base_reader.get_frame_time()
 
@@ -73,8 +90,8 @@ class BvhCollection:
             (v[1] + 1) / 2 * self._scale_info.scale_factor + self._scale_info.min_y,
             (v[2] + 1) / 2 * self._scale_info.scale_factor + self._scale_info.min_z])
 
-    def get_hierarchy(self, *args, **kwargs):
-        return self._base_reader.get_hierarchy(*args, **kwargs)
+    def get_hierarchy(self):
+        return self._hierarchy
 
     def vertices_to_edges(self, *args, **kwargs):
         return self._base_reader.vertices_to_edges(*args, **kwargs)
