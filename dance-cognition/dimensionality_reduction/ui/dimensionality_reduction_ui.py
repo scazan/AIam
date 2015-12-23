@@ -100,6 +100,10 @@ class DimensionalityReductionMainWindow(MainWindow):
     def _update_bvh_selector(self, event):
         self.toolbar.bvh_selector.setCurrentIndex(event.content)
 
+    def update_qgl_widgets(self):
+        MainWindow.update_qgl_widgets(self)
+        self.toolbar.update_qgl_widgets()
+
 class DimensionalityReductionToolbar(ExperimentToolbar):
     def __init__(self, *args):
         ExperimentToolbar.__init__(self, *args)
@@ -300,6 +304,9 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
 
     def on_received_reduction_from_backend(self, reduction):
         self._set_reduction(reduction)
+
+    def update_qgl_widgets(self):
+        self._reduction_tabs.currentWidget().update_qgl_widgets()
 
 class ModeTab(QtGui.QWidget):
     def __init__(self, mode_id):

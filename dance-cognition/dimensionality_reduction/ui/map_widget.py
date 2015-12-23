@@ -23,7 +23,6 @@ class MapTab(ReductionTab, QtGui.QWidget):
     def reduction_changed(self, reduction):
         self._reduction = reduction
         self._map_widget.set_reduction(reduction)
-        self._map_widget.updateGL()
 
     def set_enabled(self, enabled):
         self._map_widget.set_enabled(enabled)
@@ -52,11 +51,13 @@ class MapTab(ReductionTab, QtGui.QWidget):
         if len(checked_dimensions) == 2:
             self._map_widget.set_dimensions(checked_dimensions)
             self._map_widget.set_reduction(self._reduction)
-            self._map_widget.updateGL()
 
     def reduction_changed_interactively(self):
         self._reduction = self._map_widget.get_reduction()
         self._parent.reduction_changed_interactively(self)
+
+    def update_qgl_widgets(self):
+        self._map_widget.updateGL()
 
 class MapWidget(QtOpenGL.QGLWidget):
     def __init__(self, parent, dimensions):
@@ -178,7 +179,6 @@ class MapWidget(QtOpenGL.QGLWidget):
             self._reduction[1] = self._parent.exploration_value_to_normalized_reduction_value(
                 self._dimensions[1], float(y - self._margin) / self._height)
             self._parent.reduction_changed_interactively()
-            self.updateGL()
             
     def get_reduction(self):
         reduction = self._reduction_all_dimensions

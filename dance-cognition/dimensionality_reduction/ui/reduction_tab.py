@@ -10,3 +10,6 @@ class ReductionTab:
     def exploration_value_to_normalized_reduction_value(self, n, value):
         range_n = self.student.reduction_range[n]
         return value * range_n["explored_range"] + range_n["explored_min"]
+
+    def update_qgl_widgets(self):
+        pass

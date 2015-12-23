@@ -287,7 +287,7 @@ class MainWindow(Window, EventListener):
 
         self._update_timer = QtCore.QTimer(self)
         self._update_timer.setInterval(1000. / FRAME_RATE)
-        QtCore.QObject.connect(self._update_timer, QtCore.SIGNAL('timeout()'), self._scene.updateGL)
+        QtCore.QObject.connect(self._update_timer, QtCore.SIGNAL('timeout()'), self.update_qgl_widgets)
         self._update_timer.start()
 
         if args.fixed_size:
@@ -295,6 +295,9 @@ class MainWindow(Window, EventListener):
         if self.args.fullscreen:
             self.give_keyboard_focus_to_fullscreen_window()
             self._fullscreen_action.toggle()
+
+    def update_qgl_widgets(self):
+        self._scene.updateGL()
 
     def start(self):
         if self.client:
