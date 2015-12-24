@@ -49,7 +49,7 @@ class BvhReader(cgkit.bvh.BVHReader):
 
     def _read(self):
         cgkit.bvh.BVHReader.read(self)
-        self.hierarchy = Hierarchy(self._root_nood, self.frames[0])
+        self.hierarchy = Hierarchy(self._root_node, self.frames[0])
         self.num_joints = self.hierarchy.num_joints
         self._duration = self._num_frames * self._frame_time
 
@@ -81,8 +81,8 @@ class BvhReader(cgkit.bvh.BVHReader):
             vertices, edges)
         return edges
 
-    def onHierarchy(self, root_nood):
-        self._root_nood = root_nood
+    def onHierarchy(self, root_node):
+        self._root_node = root_node
         self.frames = []
 
     def onMotion(self, num_frames, frame_time):
