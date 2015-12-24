@@ -10,7 +10,7 @@ from collections import defaultdict
 import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/..")
-from bvh.bvh_reader import bvh_reader as bvh_reader_module
+from bvh import bvh_reader as bvh_reader_module
 from connectivity.simple_osc_receiver import OscReceiver
 
 FRAME_RATE = 50

@@ -1,5 +1,5 @@
 import unittest
-from bvh.bvh_reader.bvh_collection import BvhCollection
+from bvh.bvh_collection import BvhCollection
 
 class MockScaleInfo:
     min_x = 0

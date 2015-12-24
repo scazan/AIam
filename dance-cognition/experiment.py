@@ -4,7 +4,7 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/..")
 
 from argparse import ArgumentParser
 from storage import *
-from bvh.bvh_reader.bvh_collection import BvhCollection
+from bvh.bvh_collection import BvhCollection
 import imp
 from stopwatch import Stopwatch
 import threading
