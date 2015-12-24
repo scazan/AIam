@@ -8,7 +8,14 @@ import cgkit.bvh
 import os
 import cPickle
 from collections import defaultdict
-from bvh import Hierarchy, ScaleInfo
+from bvh import Hierarchy, ScaleInfo, JointDefinition
+from geo import make_translation_matrix
+
+CHANNEL_TO_AXIS = {
+    "Xrotation": "x",
+    "Yrotation": "y",
+    "Zrotation": "z",
+}
 
 class BvhReader(cgkit.bvh.BVHReader):
     def read(self):
@@ -49,9 +56,44 @@ class BvhReader(cgkit.bvh.BVHReader):
 
     def _read(self):
         cgkit.bvh.BVHReader.read(self)
-        self.hierarchy = Hierarchy(self._root_node, self.frames[0])
+        self.hierarchy = self._create_hierarchy()
         self.num_joints = self.hierarchy.num_joints
         self._duration = self._num_frames * self._frame_time
+
+    def _create_hierarchy(self):
+        self._joint_index = 0
+        root_node_definition = self._process_node(self._root_node)
+        return Hierarchy(root_node_definition, self.frames[0])
+
+    def _process_node(self, node, parentname='root'):
+        name = node.name
+        if (name == "End Site") or (name == "end site"):
+            name = parentname + "End"
+        joint_definition = JointDefinition(name, self._joint_index)
+        self._joint_index += 1
+        joint_definition.channels = node.channels
+
+        joint_definition.offset = node.offset
+        joint_definition.translation_matrix = make_translation_matrix(
+            node.offset[0],
+            node.offset[1],
+            node.offset[2])
+
+        if "Xrotation" in node.channels:
+            joint_definition.rotation_channels = filter(
+                lambda channel: channel in ["Xrotation", "Yrotation", "Zrotation"],
+                node.channels)
+            joint_definition.axes = "r" + "".join([
+                    CHANNEL_TO_AXIS[channel] for channel in joint_definition.rotation_channels])
+            joint_definition.has_rotation = True
+        else:
+            joint_definition.has_rotation = False
+
+        for child_node in node.children:
+            child_definition = self._process_node(child_node, name)
+            joint_definition.add_child_definition(child_definition)
+
+        return joint_definition
 
     def get_duration(self):
         return self._duration

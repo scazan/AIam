@@ -7,13 +7,7 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/..")
 from numpy import array, dot
 from transformations import euler_matrix
 import math
-from geo import *
-
-CHANNEL_TO_AXIS = {
-    "Xrotation": "x",
-    "Yrotation": "y",
-    "Zrotation": "z",
-}
+from geo import Euler, make_translation_matrix, edge
 
 class JointDefinition:
     def __init__(self, name, index):
@@ -105,43 +99,18 @@ class Joint:
                 child.set_vertices(vertices)
 
 class Hierarchy:
-    def __init__(self, root_node, example_frame):
-        self._joint_index = 0
+    def __init__(self, root_node_definition, example_frame):
+        self.num_joints = 0
         self._example_frame = example_frame
         self._joint_definitions = {}
-        self._root_joint_definition = self._process_node(root_node)
-        self.num_joints = self._joint_index
+        self._root_joint_definition = root_node_definition
+        self._process_joint_definition(root_node_definition)
 
-    def _process_node(self, node, parentname='root'):
-        name = node.name
-        if (name == "End Site") or (name == "end site"):
-            name = parentname + "End"
-        joint_definition = JointDefinition(name, self._joint_index)
-        self._joint_index += 1
-        joint_definition.channels = node.channels
-
-        joint_definition.offset = node.offset
-        joint_definition.translation_matrix = make_translation_matrix(
-            node.offset[0],
-            node.offset[1],
-            node.offset[2])
-
-        if "Xrotation" in node.channels:
-            joint_definition.rotation_channels = filter(
-                lambda channel: channel in ["Xrotation", "Yrotation", "Zrotation"],
-                node.channels)
-            joint_definition.axes = "r" + "".join([
-                    CHANNEL_TO_AXIS[channel] for channel in joint_definition.rotation_channels])
-            joint_definition.has_rotation = True
-        else:
-            joint_definition.has_rotation = False
-
-        for child_node in node.children:
-            child_definition = self._process_node(child_node, name)
-            joint_definition.add_child_definition(child_definition)
-
-        self._joint_definitions[name] = joint_definition
-        return joint_definition
+    def _process_joint_definition(self, joint_definition):
+        for child_definition in joint_definition.child_definitions:
+            self._process_joint_definition(child_definition)
+        self._joint_definitions[joint_definition.name] = joint_definition
+        self.num_joints += 1
 
     def create_pose(self):
         pose = Pose(self)
@@ -187,7 +156,7 @@ class Hierarchy:
                     joint_dict["Zposition"]])
 
         if joint.definition.has_rotation:
-            joint.angles = [radians(joint_dict[channel])
+            joint.angles = [math.radians(joint_dict[channel])
                             for channel in joint.definition.rotation_channels]
             joint.rotation = Euler(joint.angles, joint.definition.axes)
 
