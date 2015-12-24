@@ -99,9 +99,8 @@ class Joint:
                 child.set_vertices(vertices)
 
 class Hierarchy:
-    def __init__(self, root_node_definition, example_frame):
+    def __init__(self, root_node_definition):
         self.num_joints = 0
-        self._example_frame = example_frame
         self._joint_definitions = {}
         self._root_joint_definition = root_node_definition
         self._process_joint_definition(root_node_definition)
@@ -113,12 +112,7 @@ class Hierarchy:
         self.num_joints += 1
 
     def create_pose(self):
-        pose = Pose(self)
-        self._initialize_pose_angles(pose)
-        return pose
-
-    def _initialize_pose_angles(self, pose):
-        self.set_pose_from_frame(pose, self._example_frame)
+        return Pose(self)
 
     def set_pose_vertices(self, pose, vertices, recurse=True):
         pose.get_root_joint().set_vertices(vertices, recurse)
@@ -202,7 +196,8 @@ class Hierarchy:
 
     def _static_rotation_matrix(self, joint):
         if not hasattr(joint, "static_rotation_matrix"):
-            joint.definition.static_rotation_matrix = euler_matrix(*joint.angles, axes=joint.definition.axes)
+            joint.definition.static_rotation_matrix = euler_matrix(
+                *joint.definition.static_angles, axes=joint.definition.axes)
         return joint.definition.static_rotation_matrix
 
 class Pose:

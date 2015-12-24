@@ -63,7 +63,7 @@ class BvhReader(cgkit.bvh.BVHReader):
     def _create_hierarchy(self):
         self._joint_index = 0
         root_node_definition = self._process_node(self._root_node)
-        return Hierarchy(root_node_definition, self.frames[0])
+        return Hierarchy(root_node_definition)
 
     def _process_node(self, node, parentname='root'):
         name = node.name
@@ -168,7 +168,8 @@ class BvhReader(cgkit.bvh.BVHReader):
             self._unique_rotations[joint.definition.name].add(tuple(joint.angles))
 
     def _set_static_rotations(self):
-        for name, joints in self._unique_rotations.iteritems():
-            if len(joints) == 1:
+        for name, unique_rotations in self._unique_rotations.iteritems():
+            if len(unique_rotations) == 1:
                 joint_definition = self.hierarchy.get_joint_definition(name)
                 joint_definition.has_static_rotation = True
+                joint_definition.static_angles = list(unique_rotations)[0]
