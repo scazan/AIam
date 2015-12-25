@@ -359,11 +359,11 @@ class StillsExporter:
         print "exported stills to %s..." % self._output_path
         bvh_writer = BvhWriter(
             self.experiment.bvh_reader.get_hierarchy(),
-            self.experiment.bvh_reader.dt)
+            self.experiment.bvh_reader.get_frame_time())
         for reduction in self._reductions:
             output = self.experiment.student.inverse_transform(numpy.array([reduction]))[0]
-            self.experiment.entity.parameters_to_processed_pose(output, self.pose)
-            frame = self.experiment.pose_to_bvh_frame(self.pose)
+            self.experiment.entity.parameters_to_processed_pose(output, self.experiment.pose)
+            frame = self.experiment.pose_to_bvh_frame(self.experiment.pose)
             bvh_writer.add_frame(frame)
         bvh_writer.write(self._output_path)
         print "ok"
