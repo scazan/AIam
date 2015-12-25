@@ -327,8 +327,7 @@ class Experiment(EventListener):
     def _export_bvh(self):
         if self.output is not None:
             self.entity.parameters_to_processed_pose(self.output, self.pose)
-            frame = self.pose_to_bvh_frame(self.pose)
-            self.bvh_writer.add_frame(frame)
+            self.bvh_writer.add_pose_as_frame(self.pose)
 
     def _send_joint_ids(self):
         if self._output_sender is not None:
@@ -341,20 +340,6 @@ class Experiment(EventListener):
                 self._send_output_bvh_recurse(self.pose.get_root_joint())
             elif self.args.output_receiver_type == "world":
                 self._send_output_world()
-
-    def pose_to_bvh_frame(self, pose):
-        return self._joint_to_bvh_frame(pose.get_root_joint())
-
-    def _joint_to_bvh_frame(self, joint):
-        result = []
-        for channel in joint.definition.channels:
-            result.append(self._bvh_channel_data(joint, channel))
-        for child in joint.children:
-            result += self._joint_to_bvh_frame(child)
-        return result
-
-    def _bvh_channel_data(self, joint, channel):
-        return getattr(joint, channel)()
 
     def _send_output_bvh_recurse(self, joint):
         if not joint.definition.has_parent:

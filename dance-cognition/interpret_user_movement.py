@@ -15,8 +15,10 @@ from websocket_client import WebsocketClient
 from event_listener import EventListener
 from event import Event
 from tracked_users_viewer import TrackedUsersViewer
-from transformations import rotation_matrix
+from transformations import rotation_matrix, euler_from_matrix
 from filters import OneEuroFilter
+from bvh.bvh_writer import BvhWriter
+from bvh.bvh import Hierarchy, JointDefinition
 
 # WAITING_PARAMETERS = {
 #     "velocity": 0.6,
@@ -101,6 +103,9 @@ class User:
         self._num_updated_joints = 0
         self._intensity = 0
         self._distance_to_center = None
+        if args.export_bvh:
+            frame_time = 1.0 / args.input_frame_rate
+            self._bvh_writer = BvhWriter(interpreter.hierarchy, frame_time)
 
     def handle_joint_data(self, joint_name, x, y, z, confidence):
         if self._should_consider_joint(joint_name):
@@ -130,6 +135,8 @@ class User:
 
     def _process_frame(self):
         self._intensity = self._measure_intensity()
+        if args.export_bvh:
+            self._add_bvh_frame()
         self._num_updated_joints = 0
 
     def _measure_intensity(self):
@@ -160,6 +167,53 @@ class User:
         dx = torso_x - self._interpreter.active_area_center_x
         dz = torso_z - self._interpreter.active_area_center_z
         return math.sqrt(dx*dx + dz*dz)
+
+    def tear_down(self):
+        if args.export_bvh:
+            self._save_bvh()
+
+    def _add_bvh_frame(self):
+        pose = self._interpreter.hierarchy.create_pose()
+        root_joint_definition = self._interpreter.hierarchy.get_root_joint_definition()
+        if not hasattr(root_joint_definition, "offset"):
+            self._set_bvh_offset_recurse(root_joint_definition)
+        bvh_torso = pose.get_root_joint()
+        bvh_torso.worldpos = self.get_joint("torso").get_position()
+        self._calculate_joint_angles_recurse(bvh_torso)
+        self._bvh_writer.add_pose_as_frame(pose)
+
+    def _set_bvh_offset_recurse(self, joint_definition, parent=None):
+        if parent is None:
+            joint_definition.offset = (0, 0, 0)
+        elif joint_definition.is_end:
+            joint_definition.offset = (0, 0, 0)
+            parent.offset = (0, 0, 0)
+        else:
+            length = numpy.linalg.norm(
+                self.get_joint(joint_definition.name).get_position() - \
+                    self.get_joint(parent.name).get_position())
+            parent.offset = (length, 0, 0)
+        for child_definition in joint_definition.child_definitions:
+            self._set_bvh_offset_recurse(child_definition, joint_definition)
+
+    def _calculate_joint_angles_recurse(self, bvh_joint, parent=None):
+        if bvh_joint.definition.is_end:
+            parent.angles = (0, 0, 0)
+        elif parent is not None:
+            a = self.get_joint(bvh_joint.definition.name).get_position()
+            b = self.get_joint(parent.definition.name).get_position()
+            axis = numpy.cross(a, b)
+            angle = math.acos(numpy.dot(a,b)/(numpy.linalg.norm(a) * numpy.linalg.norm(b)))
+            rotation_matrix_ = rotation_matrix(angle, axis)
+            euler_radians = euler_from_matrix(rotation_matrix_)
+            parent.angles = [math.degrees(r) for r in euler_radians]
+        for bvh_child in bvh_joint.children:
+            self._calculate_joint_angles_recurse(bvh_child, bvh_joint)
+
+    def _save_bvh(self):
+        filename = "user%02d.bvh" % self._user_id
+        print "saving %s" % filename
+        self._bvh_writer.write(filename)
 
 class UserMovementInterpreter:
     WAITING = "waiting"
@@ -195,6 +249,49 @@ class UserMovementInterpreter:
             self.num_considered_joints = NUM_JOINTS_IN_SKELETON
         else:
             self.num_considered_joints = len(CONSIDERED_JOINTS)
+
+        if args.export_bvh:
+            self.hierarchy = self._create_hierarchy()
+
+        self._tearing_down = False
+
+    def _create_hierarchy(self):
+        self._joint_index = 0
+        torso = self._add_joint_definition("torso", root=True)
+
+        left_hip = self._add_joint_definition(name="left_hip")
+        left_knee = self._add_joint_definition(name="left_knee")
+        left_hip.add_child_definition(left_knee)
+        left_foot = self._add_joint_definition(name="left_foot")
+        left_knee.add_child_definition(left_foot)
+        left_foot_end = self._add_joint_definition(name="left_footEnd", is_end=True)
+        left_foot.add_child_definition(left_foot_end)
+        torso.add_child_definition(left_hip)
+
+        right_hip = self._add_joint_definition(name="right_hip")
+        right_knee = self._add_joint_definition(name="right_knee")
+        right_hip.add_child_definition(right_knee)
+        right_foot = self._add_joint_definition(name="right_foot")
+        right_knee.add_child_definition(right_foot)
+        right_foot_end = self._add_joint_definition(name="right_footEnd", is_end=True)
+        right_foot.add_child_definition(right_foot_end)
+        torso.add_child_definition(right_hip)
+
+        return Hierarchy(torso)
+    
+    def _add_joint_definition(self, name=None, root=False, is_end=False):
+        if root:
+            channels = ["Xposition", "Yposition", "Zposition", "Xrotation", "Yrotation", "Zrotation"]
+        elif is_end:
+            channels = []
+        else:
+            channels = ["Xrotation", "Yrotation", "Zrotation"]
+        joint_definition = JointDefinition(
+            name, self._joint_index,
+            channels=channels,
+            is_end=is_end)
+        self._joint_index += 1
+        return joint_definition
 
     def set_up_osc_receiver(self):
         osc_receiver = OscReceiver(OSC_PORT)
@@ -350,7 +447,7 @@ class UserMovementInterpreter:
         thread.start()
 
     def _process_log(self):
-        while True:
+        while not self._tearing_down:
             if len(self._log_entries) == 0:
                 print "finished processing log"
                 return
@@ -367,6 +464,11 @@ class UserMovementInterpreter:
             sleep_duration = min(t - self._current_log_time, max_sleep_duration)
             time.sleep(sleep_duration)
             self._current_log_time += sleep_duration * self.log_replay_speed
+
+    def tear_down(self):
+        for user in self._users.values():
+            user.tear_down()
+        self._tearing_down = True
 
 class OutputController:
     def __init__(self, event_sender):
@@ -419,6 +521,8 @@ parser.add_argument("--midi-port")
 parser.add_argument("--midi-command", type=int)
 parser.add_argument("--midi-channel", type=int)
 parser.add_argument("--calibrate-midi", action="store_true")
+parser.add_argument("--export-bvh", action="store_true")
+parser.add_argument("--input-frame-rate", type=float, default=30)
 args = parser.parse_args()
 
 if args.without_sending:
@@ -462,12 +566,13 @@ else:
     if args.with_viewer:
         viewer.show()
         app.exec_()
+        interpreter.tear_down()
     else:
         try:
             while True:
                 time.sleep(1)
         except KeyboardInterrupt:
-            pass
+            interpreter.tear_down()
 
     if args.profile:
         yappi.get_func_stats().print_all()

@@ -68,8 +68,12 @@ class BvhReader(cgkit.bvh.BVHReader):
     def _process_node(self, node, parentname='root'):
         name = node.name
         if (name == "End Site") or (name == "end site"):
+            is_end = True
             name = parentname + "End"
-        joint_definition = JointDefinition(name, self._joint_index)
+        else:
+            is_end = False
+        joint_definition = JointDefinition(
+            name=name, index=self._joint_index, is_end=is_end)
         self._joint_index += 1
         joint_definition.channels = node.channels
 

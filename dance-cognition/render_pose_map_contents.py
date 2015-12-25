@@ -107,8 +107,7 @@ class PoseMapRenderer:
         bvh_writer = BvhWriter(
             self._experiment.bvh_reader.get_hierarchy(),
             self._experiment.bvh_reader.get_frame_time())
-        frame = self._experiment.pose_to_bvh_frame(self._experiment.pose)
-        bvh_writer.add_frame(frame)
+        bvh_writer.add_pose_as_frame(self._experiment.pose)
         bvh_writer.write(self._bvh_tempfile_path)
 
     def _export_temp_bvh_to_svg(self, px, py, stroke_width, opacity):

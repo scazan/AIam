@@ -4,7 +4,8 @@ class BvhWriter:
         self._frame_time = frame_time
         self._frames = []
 
-    def add_frame(self, frame):
+    def add_pose_as_frame(self, pose):
+        frame = self._pose_to_bvh_frame(pose)
         self._frames.append(frame)
 
     def write(self, output_path):
@@ -28,7 +29,7 @@ class BvhWriter:
         if is_root:
             self._write("ROOT %s" % joint_definition.name)
         else:
-            if len(joint_definition.channels) == 0:
+            if joint_definition.is_end:
                 self._write("End Site")
             else:
                 self._write("JOINT %s" % joint_definition.name)
@@ -66,3 +67,17 @@ class BvhWriter:
 
     def _write(self, string):
         self._output.write(string)
+
+    def _pose_to_bvh_frame(self, pose):
+        return self._joint_to_bvh_frame(pose.get_root_joint())
+
+    def _joint_to_bvh_frame(self, joint):
+        result = []
+        for channel in joint.definition.channels:
+            result.append(self._bvh_channel_data(joint, channel))
+        for child in joint.children:
+            result += self._joint_to_bvh_frame(child)
+        return result
+
+    def _bvh_channel_data(self, joint, channel):
+        return getattr(joint, channel)()

@@ -10,11 +10,12 @@ import math
 from geo import Euler, make_translation_matrix, edge
 
 class JointDefinition:
-    def __init__(self, name, index):
+    def __init__(self, name, index, is_end, channels=[]):
         self.name = name
         self.index = index
+        self.is_end = is_end
         self.child_definitions = []
-        self.channels = []
+        self.channels = channels
         self.translation_matrix = array([
             [0.,0.,0.,0.],
             [0.,0.,0.,0.],
