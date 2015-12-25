@@ -53,6 +53,8 @@ class Joint:
         self.parent = parent
         self.translation = array([0.,0.,0.])
         self.children = []
+        if definition.has_static_rotation:
+            self.angles = definition.static_angles
 
     def add_child(self, child):
         self.children.append(child)
@@ -199,6 +201,15 @@ class Hierarchy:
             joint.definition.static_rotation_matrix = euler_matrix(
                 *joint.definition.static_angles, axes=joint.definition.axes)
         return joint.definition.static_rotation_matrix
+
+    def pretty_print(self):
+        self._pretty_print_recurse(self._root_joint_definition)
+
+    def _pretty_print_recurse(self, joint_definition, indent=0):
+        print "%sname=%r channels=%r offset=%r" % (
+            indent * "  ", joint_definition.name, joint_definition.channels, joint_definition.offset)
+        for child_definition in joint_definition.child_definitions:
+            self._pretty_print_recurse(child_definition, indent+1)
 
 class Pose:
     def __init__(self, hierarchy):
