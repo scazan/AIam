@@ -38,11 +38,12 @@ class MockHierarchy:
         return self._joint_definitions[name]
 
 class MockBvhReader:
-    def __init__(self, duration=1.0, num_frames=1, joints_with_static_rotation=[]):
+    def __init__(self, duration=1.0, num_frames=1, joints_with_static_rotation=[], frame_time=50):
         self._duration = duration
         self._num_frames = num_frames
         self._scale_info = MockScaleInfo()
         self._hierarchy = MockHierarchy(joints_with_static_rotation)
+        self._frame_time = frame_time
 
     def read(self):
         pass
@@ -55,6 +56,9 @@ class MockBvhReader:
 
     def get_hierarchy(self):
         return self._hierarchy
+
+    def get_frame_time(self):
+        return self._frame_time
 
 class TestedBvhCollection(BvhCollection):
     def __init__(self, bvh_readers):
@@ -101,3 +105,11 @@ class BvhCollectionTestCase(unittest.TestCase):
             child_result = self._get_joints_with_static_rotation(child_definition)
             result = result.union(child_result)
         return result
+
+    def test_frame_time(self):
+        self._given_bvh_reader(frame_time=100)
+        self._when_creating_bvh_collection()
+        self._then_frame_time_is(100)
+
+    def _then_frame_time_is(self, expected_value):
+        self.assertEquals(expected_value, self._bvh_collection.get_frame_time())
