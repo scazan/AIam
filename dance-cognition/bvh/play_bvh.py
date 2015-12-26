@@ -46,11 +46,24 @@ class BvhViewer(window.Window):
         t = self.t * args.speed
         if t > self.reader.get_duration() and not args.loop:
             return
-        glLineWidth(2.0)
-        glColor3f(0,0,0)
         self.reader.set_pose_from_time(self._pose, t)
         vertices = self._pose.get_vertices()
         edges = self.reader.vertices_to_edges(vertices)
+        if args.vertex_size > 0:
+            self._draw_vertices(vertices)
+        self._draw_edges(edges)
+
+    def _draw_vertices(self, vertices):
+        glPointSize(args.vertex_size)
+        glColor3f(0,0,0)
+        glBegin(GL_POINTS)
+        for vertex in vertices:
+            glVertex3f(*self._zoom_vertex(vertex))
+        glEnd()
+
+    def _draw_edges(self, edges):
+        glLineWidth(2.0)
+        glColor3f(0,0,0)
         for edge in edges:
             self._draw_line(self._zoom_vertex(edge.v1),
                             self._zoom_vertex(edge.v2))
@@ -96,6 +109,7 @@ parser.add_argument("-speed", type=float, default=1.0)
 parser.add_argument("-zoom", type=float, default=1.0)
 parser.add_argument("-unit-cube", action="store_true")
 parser.add_argument("-loop", action="store_true")
+parser.add_argument("-vertex-size", type=float, default=0)
 args = parser.parse_args()
 
 bvh_filenames = glob.glob(args.bvh)
