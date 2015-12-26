@@ -183,25 +183,22 @@ class User:
         self._bvh_writer.add_pose_as_frame(pose)
 
     def _set_bvh_offset_recurse(self, joint_definition, parent=None):
-        if parent is None:
+        if parent is None or parent.parent is None:
             joint_definition.offset = (0, 0, 0)
-        elif joint_definition.is_end:
-            joint_definition.offset = (0, 0, 0)
-            parent.offset = (0, 0, 0)
         else:
             length = numpy.linalg.norm(
-                self.get_joint(joint_definition.name).get_position() - \
+                self.get_joint(parent.parent.name).get_position() - \
                     self.get_joint(parent.name).get_position())
-            parent.offset = (length, 0, 0)
+            joint_definition.offset = (length, 0, 0)
         for child_definition in joint_definition.child_definitions:
             self._set_bvh_offset_recurse(child_definition, joint_definition)
 
     def _calculate_joint_angles_recurse(self, bvh_joint, parent=None):
-        if bvh_joint.definition.is_end:
-            parent.angles = (0, 0, 0)
-        elif parent is not None:
-            a = self.get_joint(bvh_joint.definition.name).get_position()
-            b = self.get_joint(parent.definition.name).get_position()
+        if parent is None or parent.parent is None:
+            bvh_joint.angles = (0, 0, 0)
+        else:
+            b = self.get_joint(parent.parent.definition.name).get_position()
+            a = self.get_joint(parent.definition.name).get_position()
             axis = numpy.cross(a, b)
             angle = math.acos(numpy.dot(a,b)/(numpy.linalg.norm(a) * numpy.linalg.norm(b)))
             rotation_matrix_ = rotation_matrix(angle, axis)
