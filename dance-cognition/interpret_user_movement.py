@@ -15,7 +15,7 @@ from websocket_client import WebsocketClient
 from event_listener import EventListener
 from event import Event
 from tracked_users_viewer import TrackedUsersViewer
-from transformations import rotation_matrix, euler_from_matrix
+from transformations import rotation_matrix, euler_from_matrix, euler_matrix
 from filters import OneEuroFilter
 from bvh.bvh_writer import BvhWriter
 from bvh.bvh import Hierarchy, JointDefinition
@@ -193,19 +193,34 @@ class User:
         for child_definition in joint_definition.child_definitions:
             self._set_bvh_offset_recurse(child_definition, joint_definition)
 
-    def _calculate_joint_angles_recurse(self, bvh_joint, parent=None):
+    def _calculate_joint_angles_recurse(self, bvh_joint, parent=None, parent_rotation_matrix=None):
         if parent is None or parent.parent is None:
             bvh_joint.angles = (0, 0, 0)
         else:
             b = self.get_joint(parent.parent.definition.name).get_position()
             a = self.get_joint(parent.definition.name).get_position()
-            axis = numpy.cross(a, b)
-            angle = math.acos(numpy.dot(a,b)/(numpy.linalg.norm(a) * numpy.linalg.norm(b)))
-            rotation_matrix_ = rotation_matrix(angle, axis)
-            euler_radians = euler_from_matrix(rotation_matrix_)
-            parent.angles = [math.degrees(r) for r in euler_radians]
+            direction = b - a
+            direction /= numpy.linalg.norm(direction)
+            heading = math.atan2(direction[1], direction[0])
+            pitch = math.asin(direction[2])
+            up = numpy.array([1, 0, 0])
+            w0 = numpy.array([-direction[1], direction[0], 0])
+            u0 = numpy.cross(w0, direction)
+            bank = math.atan2(
+                numpy.dot(w0, up),
+                numpy.dot(u0, up) / numpy.linalg.norm(w0) * numpy.linalg.norm(u0))
+            euler_angles = (heading, bank, pitch)
+            this_rotation_matrix = euler_matrix(*euler_angles, axes="rxyz")
+            if parent_rotation_matrix is not None:
+                rotation_matrix = numpy.dot(parent_rotation_matrix, numpy.linalg.inv(this_rotation_matrix))
+                euler_angles = euler_from_matrix(rotation_matrix, axes="rxyz")
+                parent_rotation_matrix = euler_matrix(*euler_angles, axes="rxyz")
+            else:
+                parent_rotation_matrix = this_rotation_matrix
+            parent.angles = euler_angles
+
         for bvh_child in bvh_joint.children:
-            self._calculate_joint_angles_recurse(bvh_child, bvh_joint)
+            self._calculate_joint_angles_recurse(bvh_child, bvh_joint, parent_rotation_matrix)
 
     def _save_bvh(self):
         filename = "user%02d.bvh" % self._user_id
