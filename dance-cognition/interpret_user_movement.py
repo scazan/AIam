@@ -214,7 +214,8 @@ class User:
             if parent_rotation_matrix is not None:
                 rotation_matrix = numpy.dot(parent_rotation_matrix, numpy.linalg.inv(this_rotation_matrix))
                 euler_angles = euler_from_matrix(rotation_matrix, axes="rxyz")
-                parent_rotation_matrix = euler_matrix(*euler_angles, axes="rxyz")
+                parent_rotation_matrix = numpy.dot(
+                    parent_rotation_matrix, euler_matrix(*euler_angles, axes="rxyz"))
             else:
                 parent_rotation_matrix = this_rotation_matrix
             parent.angles = euler_angles
@@ -289,6 +290,11 @@ class UserMovementInterpreter:
         right_foot.add_child_definition(right_foot_end)
         torso.add_child_definition(right_hip)
 
+        # neck = self._add_joint_definition(name="neck")
+        # torso.add_child_definition(neck)
+        # head = self._add_joint_definition(name="head", is_end=True)
+        # neck.add_child_definition(head)
+        
         return Hierarchy(torso)
     
     def _add_joint_definition(self, name=None, root=False, is_end=False):
