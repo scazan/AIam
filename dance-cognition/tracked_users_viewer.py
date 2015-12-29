@@ -126,6 +126,33 @@ class TrackedUsersScene(Scene):
         self._draw_skeleton(user)
 
     def _draw_skeleton(self, user):
+        if self.args.joint_size > 0:
+            self._draw_joints(user)
+        self._draw_limbs(user)
+
+    def _draw_joints(self, user):
+        glPointSize(self.args.joint_size)
+        glBegin(GL_POINTS)
+        for joint_name in ["head",
+                           "neck",
+                           "torso",
+                           "left_shoulder",
+                           "left_elbow",
+                           "left_hand",
+                           "left_hip",
+                           "left_knee",
+                           "left_foot",
+                           "right_shoulder",
+                           "right_elbow",
+                           "right_hand",
+                           "right_hip",
+                           "right_knee",
+                           "right_foot",
+                           ]:
+            glVertex3f(*user.get_joint(joint_name).get_position())
+        glEnd()
+
+    def _draw_limbs(self, user):
         if user == self._selected_user:
             line_width = SKELETON_WIDTH_SELECTED
         else:
@@ -390,6 +417,7 @@ class TrackedUsersViewer(Window):
         parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
                             default="59.964,-1578.000,2562.016,-188.500,16.000")
         parser.add_argument("--floor-y", type=float, default=0)
+        parser.add_argument("--joint-size", type=float)
 
     def _create_menu(self):
         self._menu_bar = QtGui.QMenuBar()
