@@ -177,7 +177,7 @@ class MainWindow(QtOpenGL.QGLWidget):
         if self.args.z_up:
             glVertex3f(worldpos[0], worldpos[2], worldpos[1])
         else:
-            glVertex3f(*worldpos)
+            glVertex3f(worldpos[0], worldpos[1], worldpos[2])
 
 parser = ArgumentParser()
 parser.add_argument("bvh", type=str)
