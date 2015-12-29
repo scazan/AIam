@@ -15,7 +15,7 @@ from websocket_client import WebsocketClient
 from event_listener import EventListener
 from event import Event
 from tracked_users_viewer import TrackedUsersViewer
-from transformations import rotation_matrix, euler_from_matrix, euler_matrix
+from transformations import rotation_matrix
 from filters import OneEuroFilter
 from bvh.bvh_writer import BvhWriter
 from bvh.bvh import Hierarchy, JointDefinition
@@ -174,54 +174,23 @@ class User:
 
     def _add_bvh_frame(self):
         pose = self._interpreter.hierarchy.create_pose()
-        root_joint_definition = self._interpreter.hierarchy.get_root_joint_definition()
-        if not hasattr(root_joint_definition, "offset"):
-            self._set_bvh_offset_recurse(root_joint_definition)
-        bvh_torso = pose.get_root_joint()
-        bvh_torso.worldpos = self.get_joint("torso").get_position()
-        self._calculate_joint_angles_recurse(bvh_torso)
+        vertices = self._get_vertices()
+        self._interpreter.hierarchy.set_pose_vertices(pose, vertices)
+        self._interpreter.hierarchy.update_pose_offsets_and_angles(pose)
         self._bvh_writer.add_pose_as_frame(pose)
 
-    def _set_bvh_offset_recurse(self, joint_definition, parent=None):
-        if parent is None or parent.parent is None:
-            joint_definition.offset = (0, 0, 0)
-        else:
-            length = numpy.linalg.norm(
-                self.get_joint(parent.parent.name).get_position() - \
-                    self.get_joint(parent.name).get_position())
-            joint_definition.offset = (length, 0, 0)
-        for child_definition in joint_definition.child_definitions:
-            self._set_bvh_offset_recurse(child_definition, joint_definition)
+    def _get_vertices(self):
+        result = {}
+        self._add_vertices_recurse("torso", result)
+        return result
 
-    def _calculate_joint_angles_recurse(self, bvh_joint, parent=None, parent_rotation_matrix=None):
-        if parent is None or parent.parent is None:
-            bvh_joint.angles = (0, 0, 0)
-        else:
-            b = self.get_joint(parent.parent.definition.name).get_position()
-            a = self.get_joint(parent.definition.name).get_position()
-            direction = b - a
-            direction /= numpy.linalg.norm(direction)
-            heading = math.atan2(direction[1], direction[0])
-            pitch = math.asin(direction[2])
-            up = numpy.array([1, 0, 0])
-            w0 = numpy.array([-direction[1], direction[0], 0])
-            u0 = numpy.cross(w0, direction)
-            bank = math.atan2(
-                numpy.dot(w0, up),
-                numpy.dot(u0, up) / numpy.linalg.norm(w0) * numpy.linalg.norm(u0))
-            euler_angles = (heading, bank, pitch)
-            this_rotation_matrix = euler_matrix(*euler_angles, axes="rxyz")
-            if parent_rotation_matrix is not None:
-                rotation_matrix = numpy.dot(parent_rotation_matrix, numpy.linalg.inv(this_rotation_matrix))
-                euler_angles = euler_from_matrix(rotation_matrix, axes="rxyz")
-                parent_rotation_matrix = numpy.dot(
-                    parent_rotation_matrix, euler_matrix(*euler_angles, axes="rxyz"))
-            else:
-                parent_rotation_matrix = this_rotation_matrix
-            parent.angles = euler_angles
-
-        for bvh_child in bvh_joint.children:
-            self._calculate_joint_angles_recurse(bvh_child, bvh_joint, parent_rotation_matrix)
+    def _add_vertices_recurse(self, joint_name, vertices):
+        joint_definition = self._interpreter.hierarchy.get_joint_definition(joint_name)
+        if not joint_definition.is_end:
+            joint = self.get_joint(joint_name)
+            vertices[joint_definition.index] = joint.get_position()
+            for child_definition in joint_definition.child_definitions:
+                self._add_vertices_recurse(child_definition.name, vertices)
 
     def _save_bvh(self):
         filename = "user%02d.bvh" % self._user_id

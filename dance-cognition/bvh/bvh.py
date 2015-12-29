@@ -5,7 +5,8 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/..")
 
 from numpy import array, dot
-from transformations import euler_matrix
+import numpy
+from transformations import euler_matrix, euler_from_matrix
 import math
 from geo import Euler, make_translation_matrix, edge
 
@@ -96,10 +97,14 @@ class Joint:
         return math.degrees(self.angles[2])
 
     def set_vertices(self, vertices, recurse=True):
-        self.worldpos = vertices[self.definition.index]
-        if recurse:
-            for child in self.children:
-                child.set_vertices(vertices)
+        if self.definition.is_end:
+            # should not be needed if renderer ignores end nodes?
+            self.worldpos = vertices[self.parent.definition.index]
+        else:
+            self.worldpos = vertices[self.definition.index]
+            if recurse:
+                for child in self.children:
+                    child.set_vertices(vertices)
 
 class Hierarchy:
     def __init__(self, root_node_definition):
@@ -119,6 +124,52 @@ class Hierarchy:
 
     def set_pose_vertices(self, pose, vertices, recurse=True):
         pose.get_root_joint().set_vertices(vertices, recurse)
+
+    def update_pose_offsets_and_angles(self, pose):
+        if not hasattr(self._root_joint_definition, "offset"):
+            self._set_bvh_offset_recurse(pose, self._root_joint_definition)
+        self._calculate_joint_angles_recurse(pose, pose.get_root_joint())
+
+    def _set_bvh_offset_recurse(self, pose, joint_definition, parent=None):
+        if parent is None or parent.parent is None:
+            joint_definition.offset = (0, 0, 0)
+        else:
+            length = numpy.linalg.norm(
+                pose.get_joint(parent.parent.name).worldpos - \
+                    pose.get_joint(parent.name).worldpos)
+            joint_definition.offset = (length, 0, 0)
+        for child_definition in joint_definition.child_definitions:
+            self._set_bvh_offset_recurse(pose, child_definition, joint_definition)
+
+    def _calculate_joint_angles_recurse(self, pose, bvh_joint, parent=None, parent_rotation_matrix=None):
+        if parent is None or parent.parent is None:
+            bvh_joint.angles = (0, 0, 0)
+        else:
+            b = array(pose.get_joint(parent.parent.definition.name).worldpos[0:3])
+            a = array(pose.get_joint(parent.definition.name).worldpos[0:3])
+            direction = b - a
+            direction /= numpy.linalg.norm(direction)
+            heading = math.atan2(direction[1], direction[0])
+            pitch = math.asin(direction[2])
+            up = array([1, 0, 0])
+            w0 = array([-direction[1], direction[0], 0])
+            u0 = numpy.cross(w0, direction)
+            bank = math.atan2(
+                dot(w0, up),
+                dot(u0, up) / numpy.linalg.norm(w0) * numpy.linalg.norm(u0))
+            euler_angles = (heading, bank, pitch)
+            this_rotation_matrix = euler_matrix(*euler_angles, axes="rxyz")
+            if parent_rotation_matrix is not None:
+                rotation_matrix = dot(parent_rotation_matrix, numpy.linalg.inv(this_rotation_matrix))
+                euler_angles = euler_from_matrix(rotation_matrix, axes="rxyz")
+                parent_rotation_matrix = dot(
+                    parent_rotation_matrix, euler_matrix(*euler_angles, axes="rxyz"))
+            else:
+                parent_rotation_matrix = this_rotation_matrix
+            parent.angles = euler_angles
+
+        for bvh_child in bvh_joint.children:
+            self._calculate_joint_angles_recurse(pose, bvh_child, bvh_joint, parent_rotation_matrix)
 
     def set_pose_from_frame(self, pose, frame):
         self._set_joint_from_frame_recurse(frame, pose.get_root_joint())
