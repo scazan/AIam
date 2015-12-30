@@ -18,7 +18,7 @@ from tracked_users_viewer import TrackedUsersViewer
 from transformations import rotation_matrix
 from filters import OneEuroFilter
 from bvh.bvh_writer import BvhWriter
-from bvh.bvh import Hierarchy, JointDefinition
+from bvh.bvh import HierarchyCreator, JointDefinition
 
 # WAITING_PARAMETERS = {
 #     "velocity": 0.6,
@@ -238,47 +238,22 @@ class UserMovementInterpreter:
         self._tearing_down = False
 
     def _create_hierarchy(self):
-        self._joint_index = 0
-        torso = self._add_joint_definition("torso", root=True)
-
-        left_hip = self._add_joint_definition(name="left_hip")
-        left_knee = self._add_joint_definition(name="left_knee")
-        left_hip.add_child_definition(left_knee)
-        left_foot = self._add_joint_definition(name="left_foot")
-        left_knee.add_child_definition(left_foot)
-        left_foot_end = self._add_joint_definition(name="left_footEnd", is_end=True)
-        left_foot.add_child_definition(left_foot_end)
-        torso.add_child_definition(left_hip)
-
-        right_hip = self._add_joint_definition(name="right_hip")
-        right_knee = self._add_joint_definition(name="right_knee")
-        right_hip.add_child_definition(right_knee)
-        right_foot = self._add_joint_definition(name="right_foot")
-        right_knee.add_child_definition(right_foot)
-        right_foot_end = self._add_joint_definition(name="right_footEnd", is_end=True)
-        right_foot.add_child_definition(right_foot_end)
-        torso.add_child_definition(right_hip)
-
-        # neck = self._add_joint_definition(name="neck")
-        # torso.add_child_definition(neck)
-        # head = self._add_joint_definition(name="head", is_end=True)
-        # neck.add_child_definition(head)
-        
-        return Hierarchy(torso)
-    
-    def _add_joint_definition(self, name=None, root=False, is_end=False):
-        if root:
-            channels = ["Xposition", "Yposition", "Zposition", "Xrotation", "Yrotation", "Zrotation"]
-        elif is_end:
-            channels = []
-        else:
-            channels = ["Xrotation", "Yrotation", "Zrotation"]
-        joint_definition = JointDefinition(
-            name, self._joint_index,
-            channels=channels,
-            is_end=is_end)
-        self._joint_index += 1
-        return joint_definition
+        return HierarchyCreator().create_hiearchy_from_dict({
+                "name": "torso",
+                "children": [
+                    {"name": "left_hip",
+                     "children": [
+                            {"name": "left_knee",
+                             "children": [
+                                    {"name": "left_foot"}
+                                    ]}]},
+                    {"name": "right_hip",
+                     "children": [
+                            {"name": "right_knee",
+                             "children": [
+                                    {"name": "right_foot"}
+                                    ]}]},
+                    ]})
 
     def set_up_osc_receiver(self):
         osc_receiver = OscReceiver(OSC_PORT)

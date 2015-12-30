@@ -263,6 +263,50 @@ class Hierarchy:
         for child_definition in joint_definition.child_definitions:
             self._pretty_print_recurse(child_definition, indent+1)
 
+class HierarchyCreator:
+    def create_hiearchy_from_dict(self, dict_):
+        self._joint_index = 0
+        root_node_definition = self._create_joint_definition_from_dict_recurse(dict_)
+        return Hierarchy(root_node_definition)
+    
+    def _create_joint_definition_from_dict_recurse(self, dict_):
+        is_root = (self._joint_index == 0)
+
+        joint_definition = self._create_joint_definition(
+            name=dict_["name"],
+            root=is_root)
+
+        if "children" in dict_:
+            child_dicts = dict_["children"]
+        else:
+            child_dicts = []
+
+        if len(child_dicts) == 0:
+            end = self._create_joint_definition(
+                name=dict_["name"] + "End",
+                is_end=True)
+            joint_definition.add_child_definition(end)
+        else:
+            for child_dict in child_dicts:
+                child_definition = self._create_joint_definition_from_dict_recurse(child_dict)
+                joint_definition.add_child_definition(child_definition)
+
+        return joint_definition
+
+    def _create_joint_definition(self, name=None, root=False, is_end=False):
+        if root:
+            channels = ["Xposition", "Yposition", "Zposition", "Xrotation", "Yrotation", "Zrotation"]
+        elif is_end:
+            channels = []
+        else:
+            channels = ["Xrotation", "Yrotation", "Zrotation"]
+        joint_definition = JointDefinition(
+            name, self._joint_index,
+            channels=channels,
+            is_end=is_end)
+        self._joint_index += 1
+        return joint_definition
+
 class Pose:
     def __init__(self, hierarchy):
         self._hierarchy = hierarchy
