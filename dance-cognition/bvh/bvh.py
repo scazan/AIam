@@ -122,8 +122,24 @@ class Hierarchy:
     def create_pose(self):
         return Pose(self)
 
-    def set_pose_vertices(self, pose, vertices, recurse=True):
-        pose.get_root_joint().set_vertices(vertices, recurse)
+    def set_pose_vertices(self, pose, vertices=None, get_vertex=None):
+        if vertices is None:
+            if get_vertex is None:
+                raise Exception("vertices or get_vertex must be specified")
+            else:
+                vertices = self._get_vertices(get_vertex)
+        pose.get_root_joint().set_vertices(vertices)
+
+    def _get_vertices(self, get_vertex):
+        def _add_vertices_recurse(joint_definition, vertices):
+            if not joint_definition.is_end:
+                vertices[joint_definition.index] = get_vertex(joint_definition.name)
+                for child_definition in joint_definition.child_definitions:
+                    _add_vertices_recurse(child_definition, vertices)
+
+        result = {}
+        _add_vertices_recurse(self.get_root_joint_definition(), result)
+        return result
 
     def update_pose_offsets_and_angles(self, pose):
         if not hasattr(self._root_joint_definition, "offset"):

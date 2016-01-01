@@ -18,7 +18,7 @@ from tracked_users_viewer import TrackedUsersViewer
 from transformations import rotation_matrix
 from filters import OneEuroFilter
 from bvh.bvh_writer import BvhWriter
-from bvh.bvh import HierarchyCreator, JointDefinition
+from bvh.bvh import HierarchyCreator
 
 # WAITING_PARAMETERS = {
 #     "velocity": 0.6,
@@ -174,23 +174,11 @@ class User:
 
     def _add_bvh_frame(self):
         pose = self._interpreter.hierarchy.create_pose()
-        vertices = self._get_vertices()
-        self._interpreter.hierarchy.set_pose_vertices(pose, vertices)
+        self._interpreter.hierarchy.set_pose_vertices(
+            pose,
+            get_vertex=lambda joint_name: self.get_joint(joint_name).get_position())
         self._interpreter.hierarchy.update_pose_offsets_and_angles(pose)
         self._bvh_writer.add_pose_as_frame(pose)
-
-    def _get_vertices(self):
-        result = {}
-        self._add_vertices_recurse("torso", result)
-        return result
-
-    def _add_vertices_recurse(self, joint_name, vertices):
-        joint_definition = self._interpreter.hierarchy.get_joint_definition(joint_name)
-        if not joint_definition.is_end:
-            joint = self.get_joint(joint_name)
-            vertices[joint_definition.index] = joint.get_position()
-            for child_definition in joint_definition.child_definitions:
-                self._add_vertices_recurse(child_definition.name, vertices)
 
     def _save_bvh(self):
         filename = "user%02d.bvh" % self._user_id
