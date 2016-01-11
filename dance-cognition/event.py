@@ -16,6 +16,8 @@ class Event:
     BVH_INDEX = "BVH_INDEX"
     PROCEED_TO_NEXT_FRAME = "PROCEED_TO_NEXT_FRAME"
     ABORT_PATH = "ABORT_PATH"
+    FEATURES = "FEATURES"
+    TARGET_FEATURES = "TARGET_FEATURES"
 
     def __init__(self, type_, content=None):
         self.type = type_

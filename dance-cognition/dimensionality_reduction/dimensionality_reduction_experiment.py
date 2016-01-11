@@ -31,6 +31,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--training-data-stats", action="store_true")
         parser.add_argument("--export-stills")
         parser.add_argument("--preferred-location", type=str)
+        parser.add_argument("--enable-features", action="store_true")
         ImproviserParameters().add_parser_arguments(parser)
 
     def __init__(self, parser):
@@ -40,10 +41,13 @@ class DimensionalityReductionExperiment(Experiment):
                 Event.REDUCTION: self._set_reduction,
                 Event.PARAMETER: self._handle_parameter_event,
                 Event.ABORT_PATH: self._abort_path,
+                Event.TARGET_FEATURES: self._handle_target_features,
                 })
         self.reduction = None
         self._velocity_integrator = LeakyIntegrator()
         self._mode = self.args.mode
+        if self.args.enable_features:
+            self._target_features = None
 
     def ui_connected(self, handler):
         Experiment.ui_connected(self, handler)
@@ -186,7 +190,14 @@ class DimensionalityReductionExperiment(Experiment):
             if self.reduction is None:
                 normalized_reduction = numpy.array([.5] * self.args.num_components)
                 self.reduction = self.student.unnormalize_reduction(normalized_reduction)
+            if self.args.enable_features and self._target_features is not None:
+                self._move_reduction_towards_target_features()
+                self.send_event_to_ui(Event(Event.REDUCTION, self.reduction))
         self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
+
+        if self.args.enable_features and self._mode != modes.EXPLORE:
+            features = self.entity.extract_features(self.output)
+            self.send_event_to_ui(Event(Event.FEATURES, features))
 
     def proceed(self):
         if self._mode == modes.FOLLOW:
@@ -248,6 +259,33 @@ class DimensionalityReductionExperiment(Experiment):
 
     def _broadcast_event_to_other_uis(self, event):
         self.send_event_to_ui(event)
+
+    def _handle_target_features(self, event):
+        self._target_features = event.content
+
+    def _move_reduction_towards_target_features(self):
+        reduction_candidates = self._get_reduction_candidates(self.reduction)
+        best_reduction_candidate = min(
+            reduction_candidates,
+            key=lambda reduction_candidate: self._score_reduction(reduction_candidate))
+        self.reduction = best_reduction_candidate
+
+    def _get_reduction_candidates(self, reduction):
+        normalized_reduction = self.student.normalize_reduction(self.reduction)
+        # Precise but inefficient:
+        # for offset in itertools.product([-0.01, 0.01], repeat=self.student.n_components):
+        #     yield self.student.unnormalize_reduction(normalized_reduction + offset)
+        # More efficient, less precise:
+        for n in range(self.student.n_components):
+            offset = numpy.zeros(self.student.n_components)
+            offset[n] = 0.01
+            yield self.student.unnormalize_reduction(normalized_reduction - offset)
+            yield self.student.unnormalize_reduction(normalized_reduction + offset)
+
+    def _score_reduction(self, reduction):       
+        output = self.student.inverse_transform(numpy.array([reduction]))[0]
+        features = self.entity.extract_features(output)
+        return abs(features - self._target_features)
 
 class ImproviserParameters(Parameters):
     def __init__(self):
