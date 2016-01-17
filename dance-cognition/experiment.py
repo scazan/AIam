@@ -200,7 +200,10 @@ class Experiment(EventListener):
         elif run_backend:
             self._server = self._create_websocket_server()
             self._set_up_timed_refresh()
-            self._server.start()
+            try:
+                self._server.start()
+            except KeyboardInterrupt:
+                pass
         elif run_ui:
             if self.args.no_websockets:
                 client = None
