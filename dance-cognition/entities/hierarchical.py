@@ -33,7 +33,6 @@ class Entity(BaseEntity):
         self._unnormalized_constrainers = self._create_constrainers()
         if self.args.enable_features:
             self.feature_extractor = FeatureExtractor()
-            self._pose_for_feature_extraction = self.bvh_reader.get_hierarchy().create_pose()
 
     def _create_constrainers(self):
         if self.experiment.args.z_up:
@@ -169,12 +168,11 @@ class Entity(BaseEntity):
         self.bvh_reader.get_hierarchy().set_pose_vertices(
             output_pose, vertices, not ASSUME_NO_TRANSLATIONAL_OFFSETS_IN_NON_ROOT)
 
-    def extract_features(self, output):
-        self.parameters_to_processed_pose(output, self._pose_for_feature_extraction)
-        left_hand_position = self._pose_for_feature_extraction.get_joint("LHand").worldpos
-        left_forearm_position = self._pose_for_feature_extraction.get_joint("LForearm").worldpos
-        left_shoulder_position = self._pose_for_feature_extraction.get_joint("LShoulder").worldpos
-        neck_position = self._pose_for_feature_extraction.get_joint("Neck").worldpos
+    def extract_features(self, pose):
+        left_hand_position = pose.get_joint("LHand").worldpos
+        left_forearm_position = pose.get_joint("LForearm").worldpos
+        left_shoulder_position = pose.get_joint("LShoulder").worldpos
+        neck_position = pose.get_joint("Neck").worldpos
         return self.feature_extractor.extract_features(
             left_hand_position,
             left_forearm_position,

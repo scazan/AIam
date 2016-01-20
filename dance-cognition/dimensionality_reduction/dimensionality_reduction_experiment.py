@@ -32,6 +32,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--export-stills")
         parser.add_argument("--preferred-location", type=str)
         parser.add_argument("--enable-features", action="store_true")
+        parser.add_argument("--train-feature-matcher", action="store_true")
         ImproviserParameters().add_parser_arguments(parser)
 
     def __init__(self, parser):
@@ -48,6 +49,7 @@ class DimensionalityReductionExperiment(Experiment):
         self._mode = self.args.mode
         if self.args.enable_features:
             self._target_features = None
+            self._pose_for_feature_extraction = self.bvh_reader.get_hierarchy().create_pose()
 
     def ui_connected(self, handler):
         Experiment.ui_connected(self, handler)
@@ -101,6 +103,11 @@ class DimensionalityReductionExperiment(Experiment):
         elif self.args.export_stills:
             self._load_model()
             StillsExporter(self, self.args.export_stills).export()
+
+        elif self.args.train_feature_matcher:
+            self._load_model()
+            self._training_data = load_training_data(self._training_data_path)
+            self._train_feature_matcher()
 
         else:
             self._load_model()
@@ -196,7 +203,8 @@ class DimensionalityReductionExperiment(Experiment):
         self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
 
         if self.args.enable_features and self._mode != modes.EXPLORE:
-            features = self.entity.extract_features(self.output)
+            self.entity.parameters_to_processed_pose(self.output, self._pose_for_feature_extraction)
+            features = self.entity.extract_features(self._pose_for_feature_extraction)
             self.send_event_to_ui(Event(Event.FEATURES, features))
 
     def proceed(self):
@@ -284,8 +292,18 @@ class DimensionalityReductionExperiment(Experiment):
 
     def _score_reduction(self, reduction):       
         output = self.student.inverse_transform(numpy.array([reduction]))[0]
-        features = self.entity.extract_features(output)
+        self.entity.parameters_to_processed_pose(output, self._pose_for_feature_extraction)
+        features = self.entity.extract_features(self._pose_for_feature_extraction)
         return abs(features - self._target_features)
+
+    def _train_feature_matcher(self):
+        print "training feature matcher..."
+        for parameters in self._training_data:
+            self.entity.parameters_to_processed_pose(parameters, self._pose_for_feature_extraction)
+            features = self.entity.extract_features(self._pose_for_feature_extraction)
+        raise Exception("incomplete implementation")
+        print "ok"
+
 
 class ImproviserParameters(Parameters):
     def __init__(self):
