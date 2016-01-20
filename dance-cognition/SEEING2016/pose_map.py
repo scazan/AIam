@@ -7,6 +7,7 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from PyQt4 import QtCore, QtGui, QtOpenGL
 from dimensionality_reduction.dimensionality_reduction_experiment import *
+import math
 
 FRAME_RATE = 50
 
@@ -18,8 +19,22 @@ class MapView(QtOpenGL.QGLWidget):
     def __init__(self, parent, experiment):
         QtOpenGL.QGLWidget.__init__(self, parent)
         self._experiment = experiment
+        self._set_camera_from_arg(experiment.args.camera)
+
+    def _set_camera_from_arg(self, arg):
+        pos_x, pos_y, pos_z, orient_y, orient_z = map(float, arg.split(","))
+        self._set_camera_position([pos_x, pos_y, pos_z])
+        self._set_camera_orientation(orient_y, orient_z)
+
+    def _set_camera_position(self, position):
+        self._camera_position = position
+
+    def _set_camera_orientation(self, y_orientation, x_orientation):
+        self._camera_y_orientation = y_orientation
+        self._camera_x_orientation = x_orientation
 
     def render(self):
+        self.configure_3d_projection(-100, 0)
         self._render_map()
         self._render_segments()
 
@@ -28,13 +43,14 @@ class MapView(QtOpenGL.QGLWidget):
         glPointSize(3.0)
         glBegin(GL_POINTS)
         for point in self.parent().map_points:
-            glVertex2f(*self._vertex(point))
+            glVertex3f(*self._vertex(point))
         glEnd()
 
     def _vertex(self, point):
         x = point[self.parent().dimensions[0]]
         y = point[self.parent().dimensions[1]]
-        return x*self.width, y*self.height
+        z = point[self.parent().dimensions[2]]
+        return z, y, z
         
     def _render_segments(self):
         glColor3f(.7, .7, .7)
@@ -45,7 +61,7 @@ class MapView(QtOpenGL.QGLWidget):
     def _render_segment(self, segment):
         glBegin(GL_LINE_STRIP)
         for point in segment:
-            glVertex2f(*self._vertex(point))
+            glVertex3f(*self._vertex(point))
         glEnd()
 
     def initializeGL(self):
@@ -71,6 +87,7 @@ class MapView(QtOpenGL.QGLWidget):
         glLoadIdentity()
         glOrtho(0.0, self.window_width, self.window_height, 0.0, -1.0, 1.0)
         glMatrixMode(GL_MODELVIEW)
+        self._aspect_ratio = float(window_width) / window_height
 
     def paintGL(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -79,7 +96,31 @@ class MapView(QtOpenGL.QGLWidget):
         self.render()
 
     def sizeHint(self):
-        return QtCore.QSize(500, 500)
+        return QtCore.QSize(640, 480)
+
+    def configure_3d_projection(self, pixdx=0, pixdy=0, fovy=45, near=0.1, far=100.0):
+        fov2 = ((fovy*math.pi) / 180.0) / 2.0
+        top = near * math.tan(fov2)
+        bottom = -top
+        right = top * self._aspect_ratio
+        left = -right
+        xwsize = right - left
+        ywsize = top - bottom
+        dx = -(pixdx*xwsize/self.width)
+        dy = -(pixdy*ywsize/self.height)
+
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        glFrustum (left + dx, right + dx, bottom + dy, top + dy, near, far)
+        glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
+
+        glRotatef(self._camera_x_orientation, 1.0, 0.0, 0.0)
+        glRotatef(self._camera_y_orientation, 0.0, 1.0, 0.0)
+        translate_x = self._camera_position[0]
+        translate_y = self._camera_position[1]
+        translate_z = self._camera_position[2]
+        glTranslatef(translate_x, translate_y, translate_z)
 
 class MainWindow(QtGui.QWidget):
     def __init__(self, experiment):
@@ -92,7 +133,7 @@ class MainWindow(QtGui.QWidget):
         if experiment.args.dimensions:
             self.dimensions = [int(string) for string in experiment.args.dimensions.split(",")]
         else:
-            self.dimensions = [0, 1]
+            self.dimensions = [0, 1, 2]
 
         QtGui.QMainWindow.__init__(self)
         self._layout = QtGui.QVBoxLayout()

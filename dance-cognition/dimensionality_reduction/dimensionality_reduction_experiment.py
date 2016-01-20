@@ -323,7 +323,7 @@ class ImproviserParameters(Parameters):
                            choices=ParameterFloatRange(0., 1.))
 
 class Improviser:
-    def __init__(self, experiment, params, on_changed_path):
+    def __init__(self, experiment, params, on_changed_path=None):
         self.experiment = experiment
         self.params = params
         self._path = None
@@ -340,7 +340,8 @@ class Improviser:
             if len(self._path) > 0:
                 found_non_empty_path = True
         self._path_follower = self._create_path_follower(self._path)
-        self._on_changed_path()
+        if self._on_changed_path:
+            self._on_changed_path()
 
     def _generate_path(self):
         while True:
