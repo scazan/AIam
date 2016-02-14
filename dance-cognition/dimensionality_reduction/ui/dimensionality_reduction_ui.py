@@ -116,7 +116,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._add_mode_tabs()
         self._add_reduction_tabs()
         if self.args.enable_features:
-            self._add_features_tabs()
+            self._add_features_tab_widgets()
         self.setLayout(self._layout)
         self.set_mode(self.args.mode)
 
@@ -141,10 +141,6 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         for n in range(self._reduction_tabs.count()):
             tab = self._reduction_tabs.widget(n)
             tab.set_enabled(exploring)
-        if self.args.enable_features:
-            for n in range(self._features_tabs.count()):
-                tab = self._features_tabs.widget(n)
-                tab.set_enabled(exploring)
         if not self._changing_mode_non_interactively:
             self.parent().client.send_event(
                 Event(Event.MODE, self.tabs.currentWidget()._mode_id))
@@ -319,18 +315,27 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
     def update_qgl_widgets(self):
         self._reduction_tabs.currentWidget().update_qgl_widgets()
 
-    def _add_features_tabs(self):
-        self._features_tabs = QtGui.QTabWidget()
-        self._add_features_sliders_tab()
-        self._layout.addWidget(self._features_tabs)
+    def _add_features_tab_widgets(self):
+        self._add_output_features_tab_widget()
+        self._add_input_features_tab_widget()
 
-    def _add_features_sliders_tab(self):
-        self._feature_sliders_tab = FeatureSliders(self, self.parent().entity.feature_extractor)
-        self._features_tabs.addTab(self._feature_sliders_tab, "Features")
+    def _add_output_features_tab_widget(self):
+        self._output_features_tab_widget = QtGui.QTabWidget()
+        self._output_features_sliders_tab = FeatureSliders(self, self.parent().entity.feature_extractor)
+        self._output_features_sliders_tab.set_enabled(False)
+        self._output_features_tab_widget.addTab(self._output_features_sliders_tab, "Output features")
+        self._layout.addWidget(self._output_features_tab_widget)
+
+    def _add_input_features_tab_widget(self):
+        self._target_features_tab_widget = QtGui.QTabWidget()
+        self._target_features_sliders_tab = FeatureSliders(self, self.parent().entity.feature_extractor)
+        self._target_features_sliders_tab.set_enabled(True)
+        self._target_features_tab_widget.addTab(self._target_features_sliders_tab, "Target features")
+        self._layout.addWidget(self._target_features_tab_widget)
 
     def on_received_features_from_backend(self, event):
         features = event.content
-        self._feature_sliders_tab.features_changed(features)
+        self._output_features_sliders_tab.features_changed(features)
 
     def features_changed_interactively(self, source_tab):
         features = source_tab.get_features()

@@ -3,7 +3,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/..")
 
 from argparse import ArgumentParser
-from storage import *
+import storage
 from bvh.bvh_collection import BvhCollection
 import imp
 from stopwatch import Stopwatch

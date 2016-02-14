@@ -9,6 +9,7 @@ import dynamics as dynamics_module
 import modes
 from parameters import *
 import interpolation
+import sklearn.neighbors
 
 class DimensionalityReductionExperiment(Experiment):
     @staticmethod
@@ -50,6 +51,7 @@ class DimensionalityReductionExperiment(Experiment):
         if self.args.enable_features:
             self._target_features = None
             self._pose_for_feature_extraction = self.bvh_reader.get_hierarchy().create_pose()
+            self._feature_matcher_path = "%s/%s.features" % (self.profiles_dir, self.args.profile)
 
     def ui_connected(self, handler):
         Experiment.ui_connected(self, handler)
@@ -73,7 +75,7 @@ class DimensionalityReductionExperiment(Experiment):
         teacher = Teacher(self.entity, self.args.training_data_frame_rate)
 
         if self.args.training_data_stats:
-            self._training_data = load_training_data(self._training_data_path)
+            self._training_data = storage.load(self._training_data_path)
             self._print_training_data_stats()
 
         if self.args.train:
@@ -81,8 +83,8 @@ class DimensionalityReductionExperiment(Experiment):
             self.student = pca_class(n_components=self.args.num_components)
             self._training_data = teacher.create_training_data(self._training_duration())
             self._train_model()
-            save_model([self.student, self.entity.model], self._model_path)
-            save_training_data(self._training_data, self._training_data_path)
+            storage.save([self.student, self.entity.model], self._model_path)
+            storage.save(self._training_data, self._training_data_path)
 
         elif self.args.plot_velocity:
             self._load_model()
@@ -97,7 +99,7 @@ class DimensionalityReductionExperiment(Experiment):
 
         elif self.args.analyze_accuracy:
             self._load_model()
-            self._training_data = load_training_data(self._training_data_path)
+            self._training_data = storage.load(self._training_data_path)
             self.student.analyze_accuracy(self._training_data)
 
         elif self.args.export_stills:
@@ -106,13 +108,15 @@ class DimensionalityReductionExperiment(Experiment):
 
         elif self.args.train_feature_matcher:
             self._load_model()
-            self._training_data = load_training_data(self._training_data_path)
+            self._training_data = storage.load(self._training_data_path)
             self._train_feature_matcher()
 
         else:
             self._load_model()
             if not self.args.ui_only:
-                self._training_data = load_training_data(self._training_data_path)
+                self._training_data = storage.load(self._training_data_path)
+                if self.args.enable_features:
+                    self._feature_matcher = storage.load(self._feature_matcher_path)
                 self.navigator = Navigator(
                     map_points=self.student.normalized_observed_reductions)
                 if self.args.preferred_location:
@@ -154,7 +158,7 @@ class DimensionalityReductionExperiment(Experiment):
             DimensionalityReductionToolbar, self.args)
 
     def _load_model(self):
-        self.student, entity_model = load_model(self._model_path)
+        self.student, entity_model = storage.load(self._model_path)
         self.entity.model = entity_model
 
     def _train_model(self):
@@ -202,7 +206,7 @@ class DimensionalityReductionExperiment(Experiment):
                 self.send_event_to_ui(Event(Event.REDUCTION, self.reduction))
         self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
 
-        if self.args.enable_features and self._mode != modes.EXPLORE:
+        if self.args.enable_features:
             self.entity.parameters_to_processed_pose(self.output, self._pose_for_feature_extraction)
             features = self.entity.extract_features(self._pose_for_feature_extraction)
             self.send_event_to_ui(Event(Event.FEATURES, features))
@@ -272,38 +276,24 @@ class DimensionalityReductionExperiment(Experiment):
         self._target_features = event.content
 
     def _move_reduction_towards_target_features(self):
-        reduction_candidates = self._get_reduction_candidates(self.reduction)
-        best_reduction_candidate = min(
-            reduction_candidates,
-            key=lambda reduction_candidate: self._score_reduction(reduction_candidate))
-        self.reduction = best_reduction_candidate
-
-    def _get_reduction_candidates(self, reduction):
-        normalized_reduction = self.student.normalize_reduction(self.reduction)
-        # Precise but inefficient:
-        # for offset in itertools.product([-0.01, 0.01], repeat=self.student.n_components):
-        #     yield self.student.unnormalize_reduction(normalized_reduction + offset)
-        # More efficient, less precise:
-        for n in range(self.student.n_components):
-            offset = numpy.zeros(self.student.n_components)
-            offset[n] = 0.01
-            yield self.student.unnormalize_reduction(normalized_reduction - offset)
-            yield self.student.unnormalize_reduction(normalized_reduction + offset)
-
-    def _score_reduction(self, reduction):       
-        output = self.student.inverse_transform(numpy.array([reduction]))[0]
-        self.entity.parameters_to_processed_pose(output, self._pose_for_feature_extraction)
-        features = self.entity.extract_features(self._pose_for_feature_extraction)
-        return abs(features - self._target_features)
+        training_data_index = self._feature_matcher.predict(self._target_features)[0]
+        parameters = self._training_data[training_data_index]
+        self.reduction = self.student.transform(numpy.array([parameters]))[0]
 
     def _train_feature_matcher(self):
         print "training feature matcher..."
-        for parameters in self._training_data:
-            self.entity.parameters_to_processed_pose(parameters, self._pose_for_feature_extraction)
-            features = self.entity.extract_features(self._pose_for_feature_extraction)
-        raise Exception("incomplete implementation")
-        print "ok"
+        feature_matcher = sklearn.neighbors.KNeighborsClassifier(
+            n_neighbors=1, weights='uniform')
+        feature_vectors = [
+            self._parameters_to_feature_vector(parameters)
+            for parameters in self._training_data]
+        feature_matcher.fit(feature_vectors, range(len(self._training_data)))
+        storage.save(feature_matcher, self._feature_matcher_path)
 
+    def _parameters_to_feature_vector(self, parameters):
+        self.entity.parameters_to_processed_pose(parameters, self._pose_for_feature_extraction)
+        features = self.entity.extract_features(self._pose_for_feature_extraction)
+        return features
 
 class ImproviserParameters(Parameters):
     def __init__(self):
