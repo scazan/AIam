@@ -321,24 +321,45 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
 
     def _add_output_features_tab_widget(self):
         self._output_features_tab_widget = QtGui.QTabWidget()
-        self._output_features_sliders_tab = FeatureSliders(self, self.parent().entity.feature_extractor)
-        self._output_features_sliders_tab.set_enabled(False)
-        self._output_features_tab_widget.addTab(self._output_features_sliders_tab, "Output features")
+        self._output_features_sliders = FeatureSliders(self, self.parent().entity.feature_extractor)
+        self._output_features_tab_widget.addTab(self._output_features_sliders, "Output features")
         self._layout.addWidget(self._output_features_tab_widget)
 
     def _add_input_features_tab_widget(self):
         self._target_features_tab_widget = QtGui.QTabWidget()
-        self._target_features_sliders_tab = FeatureSliders(self, self.parent().entity.feature_extractor)
-        self._target_features_sliders_tab.set_enabled(True)
+        self._target_features_sliders_tab = QtGui.QWidget()
+        layout = QtGui.QVBoxLayout()
+        self._target_features_sliders_tab.setLayout(layout)
+        self._target_features_sliders = FeatureSliders(self, self.parent().entity.feature_extractor)
+        layout.addLayout(self._create_target_features_checkbox_layout())
+        layout.addWidget(self._target_features_sliders)
         self._target_features_tab_widget.addTab(self._target_features_sliders_tab, "Target features")
         self._layout.addWidget(self._target_features_tab_widget)
 
+    def _create_target_features_checkbox_layout(self):
+        layout = QtGui.QHBoxLayout()
+        self._target_features_checkbox = QtGui.QCheckBox()
+        self._target_features_checkbox.stateChanged.connect(self._target_features_checkbox_changed)
+        label = QtGui.QLabel("Enable target")
+        layout.addWidget(self._target_features_checkbox)
+        layout.addWidget(label)
+        layout.addStretch(1)
+        return layout
+
+    def _target_features_checkbox_changed(self):
+        enabled = (self._target_features_checkbox.checkState() == QtCore.Qt.Checked)
+        self._target_features_sliders.set_enabled(enabled)
+        if enabled:
+            self.features_changed_interactively()
+        else:
+            self.parent().client.send_event(Event(Event.TARGET_FEATURES, None))
+            
     def on_received_features_from_backend(self, event):
         features = event.content
-        self._output_features_sliders_tab.features_changed(features)
+        self._output_features_sliders.features_changed(features)
 
-    def features_changed_interactively(self, source_tab):
-        features = source_tab.get_features()
+    def features_changed_interactively(self):
+        features = self._target_features_sliders.get_features()
         self.parent().client.send_event(Event(Event.TARGET_FEATURES, features))
 
 class ModeTab(QtGui.QWidget):

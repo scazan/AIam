@@ -9,6 +9,7 @@ class FeatureSliders(QtGui.QWidget):
         self._add_sliders()
         self._layout.addStretch(1)
         self.setLayout(self._layout)
+        self.set_enabled(False)
 
     def slider(self, n):
         return self._sliders[n]
@@ -29,7 +30,7 @@ class FeatureSliders(QtGui.QWidget):
             slider.setSingleStep(1)
             slider.setValue(self._feature_value_to_slider_value(n, 0.5))
             slider.sliderMoved.connect(
-                lambda: self._parent.features_changed_interactively(self))
+                lambda: self._parent.features_changed_interactively())
             self._layout.addWidget(slider)
             self._sliders.append(slider)
 
