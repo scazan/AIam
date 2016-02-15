@@ -1,0 +1,1 @@
+-entity hierarchical --pca-type=KernelPCA -r quaternion -bvh scenes/pn-01.22/*.bvh -training-data-frame-rate 10 -n 7 --camera=-0.099,-0.350,-0.714,26.400,9.400 --friction --floor --max-novelty=1.4 --left-hand=LeftHand --left-forearm=LeftForeArm --left-shoulder=LeftShoulder --neck=Neck
