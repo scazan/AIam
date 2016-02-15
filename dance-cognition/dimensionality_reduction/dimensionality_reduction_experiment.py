@@ -49,7 +49,7 @@ class DimensionalityReductionExperiment(Experiment):
         self._velocity_integrator = LeakyIntegrator()
         self._mode = self.args.mode
         if self.args.enable_features:
-            self._target_features = None
+            self._target_reduction_candidates = None
             self._pose_for_feature_extraction = self.bvh_reader.get_hierarchy().create_pose()
             self._feature_matcher_path = "%s/%s.features" % (self.profiles_dir, self.args.profile)
 
@@ -201,7 +201,7 @@ class DimensionalityReductionExperiment(Experiment):
             if self.reduction is None:
                 normalized_reduction = numpy.array([.5] * self.args.num_components)
                 self.reduction = self.student.unnormalize_reduction(normalized_reduction)
-            if self.args.enable_features and self._target_features is not None:
+            if self.args.enable_features and self._target_reduction_candidates is not None:
                 self._move_reduction_towards_target_features()
                 self.send_event_to_ui(Event(Event.REDUCTION, self.reduction))
         self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
@@ -273,17 +273,34 @@ class DimensionalityReductionExperiment(Experiment):
         self.send_event_to_ui(event)
 
     def _handle_target_features(self, event):
-        self._target_features = event.content
+        target_features = event.content
+        if target_features is None:
+            self._target_reduction_candidates = None
+        else:
+            self._target_reduction_candidates = [
+                self._training_data_index_to_reduction(training_data_index)
+                for training_data_index in self._feature_matcher.predict(target_features)]
+
+    def _training_data_index_to_reduction(self, training_data_index):
+        parameters = self._training_data[training_data_index]
+        return self.student.transform(numpy.array([parameters]))[0]
 
     def _move_reduction_towards_target_features(self):
-        training_data_index = self._feature_matcher.predict(self._target_features)[0]
-        parameters = self._training_data[training_data_index]
-        self.reduction = self.student.transform(numpy.array([parameters]))[0]
+        nearest_reduction_candidate = min(
+           self._target_reduction_candidates,
+           key=lambda reduction_candidate: numpy.linalg.norm(reduction_candidate - self.reduction))
+        direction_vector = nearest_reduction_candidate - self.reduction
+        max_norm = .5
+        direction_vector_norm = numpy.linalg.norm(direction_vector)
+        if direction_vector_norm > 0:
+            if direction_vector_norm > max_norm:
+                direction_vector *= max_norm / direction_vector_norm
+            self.reduction += direction_vector
 
     def _train_feature_matcher(self):
         print "training feature matcher..."
         feature_matcher = sklearn.neighbors.KNeighborsClassifier(
-            n_neighbors=1, weights='uniform')
+            n_neighbors=10, weights='uniform')
         feature_vectors = [
             self._parameters_to_feature_vector(parameters)
             for parameters in self._training_data]
