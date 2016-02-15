@@ -141,8 +141,10 @@ class Experiment(EventListener):
             bvh_filenames = glob.glob(args.bvh)
             if len(bvh_filenames) == 0:
                 raise Exception("no files found matching the pattern %s" % args.bvh)
+            print "loading BVHs from %s..." % args.bvh
             self.bvh_reader = BvhCollection(bvh_filenames)
             self.bvh_reader.read()
+            print "ok"
             self.bvh_writer = BvhWriter(self.bvh_reader.get_hierarchy(), self.bvh_reader.get_frame_time())
             self.pose = self.bvh_reader.get_hierarchy().create_pose()
         else:
