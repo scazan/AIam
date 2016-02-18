@@ -26,6 +26,9 @@ class Entity(BaseEntity):
         parser.add_argument("--left-hand")
         parser.add_argument("--left-forearm")
         parser.add_argument("--left-shoulder")
+        parser.add_argument("--right-hand")
+        parser.add_argument("--right-forearm")
+        parser.add_argument("--right-shoulder")
         parser.add_argument("--neck")
 
     def __init__(self, *args, **kwargs):
@@ -173,12 +176,7 @@ class Entity(BaseEntity):
             output_pose, vertices, not ASSUME_NO_TRANSLATIONAL_OFFSETS_IN_NON_ROOT)
 
     def extract_features(self, pose):
-        left_hand_position = pose.get_joint(self.args.left_hand).worldpos
-        left_forearm_position = pose.get_joint(self.args.left_forearm).worldpos
-        left_shoulder_position = pose.get_joint(self.args.left_shoulder).worldpos
-        neck_position = pose.get_joint(self.args.neck).worldpos
-        return self.feature_extractor.extract_features(
-            left_hand_position,
-            left_forearm_position,
-            left_shoulder_position,
-            neck_position)
+        positions = [
+            pose.get_joint(getattr(self.args, joint_name)).worldpos
+            for joint_name in self.feature_extractor.INPUT_JOINTS]
+        return self.feature_extractor.extract_features(*positions)
