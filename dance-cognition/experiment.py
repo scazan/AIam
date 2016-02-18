@@ -270,7 +270,7 @@ class Experiment(EventListener):
     def send_event_to_ui(self, event):
         with self._ui_handlers_lock:
             for ui_handler in self._ui_handlers:
-                if event.source is None or event.source != ui_handler:
+                if not (event.source == "PythonUI" and ui_handler.__class__ == SingleProcessUiHandler):
                     ui_handler.send_event(event)
 
     def current_time(self):
@@ -386,10 +386,10 @@ class SingleProcessUiHandler:
         self._experiment.ui_connected(self)
 
     def send_event(self, event):
+        event.source = self
         self._client.received_event(event)
 
-    def received_event(self, event, source):
-        event.source = source
+    def received_event(self, event):
         self._experiment.handle_event(event)
 
 class WebsocketUiHandler(ClientHandler):

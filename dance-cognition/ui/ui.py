@@ -105,7 +105,7 @@ class BvhScene(Scene):
         self._draw_io(self.processed_output, self.draw_output, self.args.output_y_offset)
         if self._exporting_video:
             self._exporter.export_frame()
-            self._parent.client.send_event(Event(Event.PROCEED_TO_NEXT_FRAME))
+            self._parent.send_event(Event(Event.PROCEED_TO_NEXT_FRAME))
 
     def _draw_floor(self):
         if self.processed_output is not None:
@@ -192,8 +192,8 @@ class BvhScene(Scene):
         self._exporter = Exporter(VIDEO_EXPORT_PATH, 0, 0, self.width, self.height)
         self._exporting_video = True
         print "exporting video to %s" % VIDEO_EXPORT_PATH
-        self._parent.client.send_event(Event(Event.STOP))
-        self._parent.client.send_event(Event(Event.PROCEED_TO_NEXT_FRAME))
+        self._parent.send_event(Event(Event.STOP))
+        self._parent.send_event(Event(Event.PROCEED_TO_NEXT_FRAME))
 
     def stop_export_video(self):
         self._exporting_video = False
@@ -330,8 +330,8 @@ class MainWindow(Window, EventListener):
             "Stop", self._stop,
             True, " ")
         self._add_toggleable_action(
-            '&Export BVH', lambda: self.client.send_event(Event(Event.START_EXPORT_BVH)),
-            '&Stop export BVH', lambda: self.client.send_event(Event(Event.STOP_EXPORT_BVH)),
+            '&Export BVH', lambda: self.send_event(Event(Event.START_EXPORT_BVH)),
+            '&Stop export BVH', lambda: self.send_event(Event(Event.STOP_EXPORT_BVH)),
             False, 'Ctrl+E')
         self._add_toggleable_action(
             '&Export video', self._scene.start_export_video,
@@ -341,10 +341,10 @@ class MainWindow(Window, EventListener):
         self._add_quit_action()
 
     def _start(self):
-        self.client.send_event(Event(Event.START))
+        self.send_event(Event(Event.START))
 
     def _stop(self):
-        self.client.send_event(Event(Event.STOP))
+        self.send_event(Event(Event.STOP))
 
     def _add_toggleable_action(self,
                                enable_title, enable_handler,
@@ -512,6 +512,10 @@ class MainWindow(Window, EventListener):
     def _handle_output(self, event):
         self._scene.received_output(event.content)
         self._refresh()
+
+    def send_event(self, event):
+        event.source = "PythonUI"
+        self.client.send_event(event)
 
 class Layer:
     def __init__(self, rendering_function):

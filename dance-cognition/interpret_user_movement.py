@@ -19,6 +19,7 @@ from transformations import rotation_matrix
 from filters import OneEuroFilter
 from bvh.bvh_writer import BvhWriter
 from bvh.bvh import HierarchyCreator
+from feature_extraction import FeatureExtractor
 
 # WAITING_PARAMETERS = {
 #     "velocity": 0.6,
@@ -323,6 +324,10 @@ class UserMovementInterpreter:
                 viewer.log(self._frame["timestamp"], "aborting path")
                 viewer.log(self._frame["timestamp"], self._system_state)
 
+        if args.enable_features and self._selected_user is not None:
+            features = self._extract_features()
+            self._output_controller.send_features(features)
+
         if args.with_viewer:
             viewer.process_frame(self._frame)
 
@@ -420,6 +425,20 @@ class UserMovementInterpreter:
             user.tear_down()
         self._tearing_down = True
 
+    def _extract_features(self):
+        positions = [
+            self._selected_user.get_joint(joint_name).get_position()
+            for joint_name in [
+                "left_hand",
+                "left_elbow",
+                "left_shoulder",
+                "right_hand",
+                "right_elbow",
+                "right_shoulder",
+                "neck",
+                ]]
+        return feature_extractor.extract_features(*positions)
+
 class OutputController:
     def __init__(self, event_sender):
         self._event_sender = event_sender
@@ -447,6 +466,9 @@ class OutputController:
     def abort_path(self):
         self._event_sender.send_event(Event(Event.ABORT_PATH))
 
+    def send_features(self, features):
+        self._event_sender.send_event(Event(Event.TARGET_FEATURES, features))
+
 class MockEventSender:
     def send_event(self, event):
         pass
@@ -473,6 +495,7 @@ parser.add_argument("--midi-channel", type=int)
 parser.add_argument("--calibrate-midi", action="store_true")
 parser.add_argument("--export-bvh", action="store_true")
 parser.add_argument("--input-frame-rate", type=float, default=30)
+parser.add_argument("--enable-features", action="store_true")
 args = parser.parse_args()
 
 if args.without_sending:
@@ -499,6 +522,9 @@ else:
         log_target=args.log_target,
         log_source=args.log_source)
 
+    if args.enable_features:
+        feature_extractor = FeatureExtractor()
+        
     if args.with_viewer:
         app = QtGui.QApplication(sys.argv)
         viewer = TrackedUsersViewer(interpreter, args,

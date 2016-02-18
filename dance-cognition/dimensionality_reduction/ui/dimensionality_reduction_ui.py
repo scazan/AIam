@@ -25,6 +25,7 @@ class DimensionalityReductionMainWindow(MainWindow):
                 Event.BVH_INDEX: self._update_bvh_selector,
                 Event.PARAMETER: self._received_parameter,
                 Event.FEATURES: self._handle_features,
+                Event.TARGET_FEATURES: self._handle_target_features,
                 }, **kwargs)
         self._add_toggleable_action(
             '&Plot reduction', self._start_plot_reduction,
@@ -51,7 +52,7 @@ class DimensionalityReductionMainWindow(MainWindow):
     def _add_abort_path_action(self):
         action = QtGui.QAction('Abort path', self)
         action.setShortcut('F12')
-        action.triggered.connect(lambda: self.client.send_event(Event(Event.ABORT_PATH)))
+        action.triggered.connect(lambda: self.send_event(Event(Event.ABORT_PATH)))
         self._improvisation_menu.addAction(action)
 
     def _show_normalized_reduction(self):
@@ -109,6 +110,9 @@ class DimensionalityReductionMainWindow(MainWindow):
     def _handle_features(self, event):
         self.toolbar.on_received_features_from_backend(event)
 
+    def _handle_target_features(self, event):
+        self.toolbar.on_received_target_features_from_backend(event)
+
 class DimensionalityReductionToolbar(ExperimentToolbar):
     def __init__(self, *args):
         ExperimentToolbar.__init__(self, *args)
@@ -142,7 +146,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
             tab = self._reduction_tabs.widget(n)
             tab.set_enabled(exploring)
         if not self._changing_mode_non_interactively:
-            self.parent().client.send_event(
+            self.parent().send_event(
                 Event(Event.MODE, self.tabs.currentWidget()._mode_id))
 
     def _add_follow_tab(self):
@@ -173,7 +177,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._follow_tab_layout.addWidget(self.bvh_selector)
 
     def _cursor_changed(self, value):
-        self.parent().client.send_event(Event(
+        self.parent().send_event(Event(
                 Event.SET_CURSOR,
                 float(value) / SLIDER_PRECISION * self.parent().entity.get_duration()))
 
@@ -289,7 +293,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
     def reduction_changed_interactively(self, source_tab):
         normalized_reduction = source_tab.get_normalized_reduction()
         reduction = self.parent().student.unnormalize_reduction(normalized_reduction)
-        self.parent().client.send_event(Event(Event.REDUCTION, reduction))
+        self.parent().send_event(Event(Event.REDUCTION, reduction))
         self.parent().reduction = reduction
         for n in range(self._reduction_tabs.count()):
             tab = self._reduction_tabs.widget(n)
@@ -352,15 +356,19 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         if enabled:
             self.features_changed_interactively()
         else:
-            self.parent().client.send_event(Event(Event.TARGET_FEATURES, None))
+            self.parent().send_event(Event(Event.TARGET_FEATURES, None))
             
     def on_received_features_from_backend(self, event):
         features = event.content
         self._output_features_sliders.features_changed(features)
+            
+    def on_received_target_features_from_backend(self, event):
+        features = event.content
+        self._target_features_sliders.features_changed(features)
 
     def features_changed_interactively(self):
         features = self._target_features_sliders.get_features()
-        self.parent().client.send_event(Event(Event.TARGET_FEATURES, features))
+        self.parent().send_event(Event(Event.TARGET_FEATURES, features))
 
 class ModeTab(QtGui.QWidget):
     def __init__(self, mode_id):

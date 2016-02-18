@@ -282,6 +282,7 @@ class DimensionalityReductionExperiment(Experiment):
                 self._target_features, return_distance=False)[0]
             sampled_reductions_index = sampled_reductions_indices[0]
             self._target_reduction = self._sampled_reductions[sampled_reductions_index]
+            self._broadcast_event_to_other_uis(event)
 
     def _move_reduction_towards_target_features(self):
         direction_vector = self._target_reduction - self.reduction
