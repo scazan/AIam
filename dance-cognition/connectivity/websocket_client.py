@@ -4,6 +4,7 @@ from event import Event
 from event_packing import EventPacker
 import contextlib
 from tornado.stack_context import StackContext
+import time
 
 class WebsocketClient(ws4py.client.threadedclient.WebSocketClient):
     def __init__(self, host):
@@ -17,6 +18,16 @@ class WebsocketClient(ws4py.client.threadedclient.WebSocketClient):
 
     def closed(self, code, reason=None):
         print "connection to server was closed (code=%r reason=%r)" % (code, reason)
+
+    def connect(self):
+        try:
+            ws4py.client.threadedclient.WebSocketClient.connect(self)
+        except KeyboardInterrupt:
+            self.close()
+        except:            
+            time.sleep(2)
+            print "connection failed - attempting reconnect"
+            self.connect()
 
     @contextlib.contextmanager
     def _print_exception(self):
@@ -34,7 +45,13 @@ class WebsocketClient(ws4py.client.threadedclient.WebSocketClient):
         pass
 
     def send_event(self, event):
-        self.send(EventPacker.pack(event))
+        packed_event = EventPacker.pack(event)
+        try:
+            self.send(packed_event)
+        except:
+            print "send_event failed - attempting reconnect"
+            ws4py.client.threadedclient.WebSocketClient.__init__(self, self.url)
+            self.connect()
 
     def set_event_listener(self, event_listener):
         self._event_listener = event_listener
