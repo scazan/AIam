@@ -5,9 +5,8 @@ class FeatureSliders(QtGui.QWidget):
         QtGui.QWidget.__init__(self)
         self._parent = parent
         self._feature_extractor = feature_extractor
-        self._layout = QtGui.QVBoxLayout()
+        self._layout = QtGui.QFormLayout()
         self._add_sliders()
-        self._layout.addStretch(1)
         self.setLayout(self._layout)
         self.set_enabled(False)
 
@@ -31,7 +30,8 @@ class FeatureSliders(QtGui.QWidget):
             slider.setValue(self._feature_value_to_slider_value(n, 0.5))
             slider.sliderMoved.connect(
                 lambda: self._parent.features_changed_interactively())
-            self._layout.addWidget(slider)
+            label = QtGui.QLabel(self._feature_extractor.FEATURES[n])
+            self._layout.addRow(label, slider)
             self._sliders.append(slider)
 
     def set_enabled(self, enabled):
