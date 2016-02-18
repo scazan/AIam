@@ -402,17 +402,25 @@ class UserMovementInterpreter:
         thread.start()
 
     def _process_log(self):
+        log_entry_index = 0
         while not self._tearing_down:
-            if len(self._log_entries) == 0:
+            if log_entry_index == len(self._log_entries):
                 print "finished processing log"
-                return
-            self._frame = self._log_entries.pop(0)
+                if args.auto_restart_log:
+                    print "restarting log processing"
+                    log_entry_index = 0
+                    self._current_log_time = None
+                    self._reset()
+                else:
+                    return
+            self._frame = self._log_entries[log_entry_index]
             t = self._frame["timestamp"] / 1000
             if self._current_log_time is None:
                 self._current_log_time = t
             else:
                 self._sleep_until(t)
             self._process_frame()
+            log_entry_index += 1
 
     def _sleep_until(self, t, max_sleep_duration=1.0):
         while self._current_log_time < t:
@@ -487,6 +495,7 @@ parser.add_argument("--1euro-beta", dest="one_euro_beta", type=float, default=0.
 parser.add_argument("--1euro-dcutoff", dest="one_euro_dcutoff", type=float, default=1.0)
 parser.add_argument("--log-source")
 parser.add_argument("--log-target")
+parser.add_argument("--auto-restart-log", action="store_true")
 parser.add_argument("--profile", action="store_true")
 parser.add_argument("--simulate-via-midi", action="store_true")
 parser.add_argument("--midi-port")
