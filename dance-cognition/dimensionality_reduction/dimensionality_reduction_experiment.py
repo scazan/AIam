@@ -116,7 +116,8 @@ class DimensionalityReductionExperiment(Experiment):
             if not self.args.ui_only:
                 self._training_data = storage.load(self._training_data_path)
                 if self.args.enable_features:
-                    self._feature_matcher = storage.load(self._feature_matcher_path)
+                    self._feature_matcher, self._sampled_reductions = storage.load(
+                        self._feature_matcher_path)
                 self.navigator = Navigator(
                     map_points=self.student.normalized_observed_reductions)
                 if self.args.preferred_location:
@@ -277,14 +278,10 @@ class DimensionalityReductionExperiment(Experiment):
         if self._target_features is None:
             self._target_reduction = None
         else:
-            training_data_indices = self._feature_matcher.kneighbors(
+            sampled_reductions_indices = self._feature_matcher.kneighbors(
                 self._target_features, return_distance=False)[0]
-            training_data_index = training_data_indices[0]
-            self._target_reduction = self._training_data_index_to_reduction(training_data_index)
-
-    def _training_data_index_to_reduction(self, training_data_index):
-        parameters = self._training_data[training_data_index]
-        return self.student.transform(numpy.array([parameters]))[0]
+            sampled_reductions_index = sampled_reductions_indices[0]
+            self._target_reduction = self._sampled_reductions[sampled_reductions_index]
 
     def _move_reduction_towards_target_features(self):
         direction_vector = self._target_reduction - self.reduction
@@ -299,14 +296,34 @@ class DimensionalityReductionExperiment(Experiment):
         print "training feature matcher..."
         feature_matcher = sklearn.neighbors.KNeighborsClassifier(
             n_neighbors=1, weights='uniform')
+        sampled_reductions = self._sample_reduction_space()
         feature_vectors = [
-            self._parameters_to_feature_vector(parameters)
-            for parameters in self._training_data]
-        feature_matcher.fit(feature_vectors, range(len(self._training_data)))
-        storage.save(feature_matcher, self._feature_matcher_path)
+            self._reduction_to_feature_vector(reduction)
+            for reduction in sampled_reductions]
+        feature_matcher.fit(feature_vectors, sampled_reductions)
+        storage.save((feature_matcher, sampled_reductions), self._feature_matcher_path)
 
-    def _parameters_to_feature_vector(self, parameters):
-        self.entity.parameters_to_processed_pose(parameters, self._pose_for_feature_extraction)
+    def _sample_reduction_space(self, num_training_data=100, samples_per_training_data=10):
+        sampled_reductions = []
+        for n in range(num_training_data):
+            training_data_index = int(float(n) / num_training_data * len(self._training_data))
+            parameters = self._training_data[training_data_index]
+            reduction = self.student.transform(numpy.array([parameters]))[0]
+            sampled_reductions += self._sample_reductions_around(
+                reduction, samples_per_training_data)
+        return sampled_reductions
+
+    def _sample_reductions_around(self, reduction, num_samples):
+        return [reduction + self._random_vector(magnitude=0.1)
+                for n in range(num_samples)]
+
+    def _random_vector(self, magnitude):
+        return (numpy.random.rand(self.args.num_components) - 0.5) * magnitude
+
+    def _reduction_to_feature_vector(self, reduction):
+        output = self.student.inverse_transform(numpy.array([reduction]))[0]
+        self.entity.parameters_to_processed_pose(
+            output, self._pose_for_feature_extraction)
         features = self.entity.extract_features(self._pose_for_feature_extraction)
         return features
 
