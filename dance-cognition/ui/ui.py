@@ -101,11 +101,14 @@ class BvhScene(Scene):
         if self._parent.focus_action.isChecked():
             self._draw_focus()
         self._update_camera_translation()
-        self._draw_io(self.processed_input, self.draw_input, self.args.input_y_offset)
-        self._draw_io(self.processed_output, self.draw_output, self.args.output_y_offset)
+        self.render_io()
         if self._exporting_video:
             self._exporter.export_frame()
             self._parent.send_event(Event(Event.PROCEED_TO_NEXT_FRAME))
+
+    def render_io(self):
+        self._draw_io(self.processed_input, self.draw_input, self.args.input_y_offset)
+        self._draw_io(self.processed_output, self.draw_output, self.args.output_y_offset)
 
     def _draw_floor(self):
         if self.processed_output is not None:
@@ -145,13 +148,13 @@ class BvhScene(Scene):
     def configure_3d_projection(self):
         Scene.configure_3d_projection(self, -100, 0)
 
-    def _draw_io(self, value, rendering_method, y_offset):
+    def _draw_io(self, value, rendering_method, y_offset, **kwargs):
         glPushMatrix()
         glTranslatef(0, y_offset, 0)
         if self.args.unit_cube:
             self._draw_unit_cube()
         if value is not None:
-            rendering_method(value)
+            rendering_method(value, **kwargs)
         glPopMatrix()
 
     def initializeGL(self):

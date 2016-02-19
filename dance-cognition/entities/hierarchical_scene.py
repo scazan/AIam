@@ -7,6 +7,7 @@ MAX_LINE_WIDTH = 3.0
 class Scene(BvhScene):
     def __init__(self, *args, **kwargs):
         BvhScene.__init__(self, *args, **kwargs)
+        self.feature_match_result = None
         if self.args.floor:
             self._shadow_shear_matrix = self._create_shadow_shear_matrix()
 
@@ -19,15 +20,30 @@ class Scene(BvhScene):
             0, 0, 1, 0,
             0, 0, 0, 1]
 
+    def render_io(self):
+        if self.feature_match_result is None:
+            BvhScene.render_io(self)
+        else:
+            self._render_feature_matches()
+
     def draw_input(self, vertices):
         self._process_vertices(vertices)
         self._draw_vertices(self._parent.color_scheme["input"])
 
-    def draw_output(self, vertices):
+    def draw_output(self, vertices, opacity=1):
         self._process_vertices(vertices)
         if self.args.floor:
             self._draw_vertices_as_shadow()
-        self._draw_vertices(self._parent.color_scheme["output"])
+        color = self._get_color_by_opacity(self._parent.color_scheme["output"], opacity)
+        self._draw_vertices(color)
+
+    def _get_color_by_opacity(self, foreground_color, opacity):
+        fg_r, fg_g, fg_b = foreground_color
+        bg_r, bg_g, bg_b, bg_a = self._parent.color_scheme["background"]
+        r = bg_r + (fg_r - bg_r) * opacity
+        g = bg_g + (fg_g - bg_g) * opacity
+        b = bg_b + (fg_b - bg_b) * opacity
+        return r, g, b
 
     def get_root_vertex(self, processed_output):
         root_vertex = processed_output[0]
@@ -57,13 +73,8 @@ class Scene(BvhScene):
             self._draw_line(edge.v1, edge.v2)
 
     def _set_color_by_relative_vicinity(self, foreground_color, relative_vicinity):
-        strength = MIN_OUTPUT_STRENGTH + relative_vicinity * (1 - MIN_OUTPUT_STRENGTH)
-        fg_r, fg_g, fg_b = foreground_color
-        bg_r, bg_g, bg_b, bg_a = self._parent.color_scheme["background"]
-        r = bg_r + (fg_r - bg_r) * strength
-        g = bg_g + (fg_g - bg_g) * strength
-        b = bg_b + (fg_b - bg_b) * strength
-        glColor3f(r, g, b)
+        opacity = MIN_OUTPUT_STRENGTH + relative_vicinity * (1 - MIN_OUTPUT_STRENGTH)
+        glColor3f(*self._get_color_by_opacity(foreground_color, opacity))
 
     def _set_line_width_by_relative_vicinity(self, relative_vicinity):
         glLineWidth(MIN_LINE_WIDTH + relative_vicinity * (MAX_LINE_WIDTH - MIN_LINE_WIDTH))
@@ -93,3 +104,11 @@ class Scene(BvhScene):
         glMultMatrixf(self._shadow_shear_matrix)
         self._draw_vertices(color=self._parent.color_scheme["shadow"])
         glPopMatrix()
+
+    def _render_feature_matches(self):
+        for processed_output, opacity in self.feature_match_result:
+            self._render_feature_match(processed_output, opacity)
+
+    def _render_feature_match(self, processed_output, opacity):
+        self._draw_io(
+            processed_output, self.draw_output, self.args.output_y_offset, opacity=opacity)

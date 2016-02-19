@@ -244,10 +244,7 @@ class Experiment(EventListener):
                     self.send_event_to_ui(Event(Event.INPUT, self.entity.processed_input))
 
                 if self.output is not None:
-                    if (self._server.client_subscribes_to(Event.OUTPUT) or
-                        self._output_sender and self.args.output_receiver_type == "world"):
-                        self.processed_output = self.entity.process_output(self.output)
-                        self.send_event_to_ui(Event(Event.OUTPUT, self.processed_output))
+                    self.process_and_broadcast_output()
 
         self.previous_frame_time = self.now
         self._frame_count += 1
@@ -256,6 +253,12 @@ class Experiment(EventListener):
             self._export_bvh()
         if self._output_sender:
             self._send_output()
+
+    def process_and_broadcast_output(self):
+        if (self._server.client_subscribes_to(Event.OUTPUT) or
+            self._output_sender and self.args.output_receiver_type == "world"):
+            self.processed_output = self.entity.process_output(self.output)
+            self.send_event_to_ui(Event(Event.OUTPUT, self.processed_output))
 
     def _proceed_to_next_frame(self, event):
         self.time_increment = 1. / self.args.frame_rate

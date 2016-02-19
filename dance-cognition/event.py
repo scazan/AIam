@@ -18,6 +18,7 @@ class Event:
     ABORT_PATH = "ABORT_PATH"
     FEATURES = "FEATURES"
     TARGET_FEATURES = "TARGET_FEATURES"
+    FEATURE_MATCH_RESULT = "FEATURE_MATCH_RESULT"
 
     def __init__(self, type_, content=None):
         self.type = type_

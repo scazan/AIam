@@ -26,6 +26,7 @@ class DimensionalityReductionMainWindow(MainWindow):
                 Event.PARAMETER: self._received_parameter,
                 Event.FEATURES: self._handle_features,
                 Event.TARGET_FEATURES: self._handle_target_features,
+                Event.FEATURE_MATCH_RESULT: self._handle_feature_match_result,
                 }, **kwargs)
         self._add_toggleable_action(
             '&Plot reduction', self._start_plot_reduction,
@@ -112,6 +113,19 @@ class DimensionalityReductionMainWindow(MainWindow):
 
     def _handle_target_features(self, event):
         self.toolbar.on_received_target_features_from_backend(event)
+
+    def _handle_feature_match_result(self, event):
+        feature_match_tuples = event.content
+        feature_match_tuples_sorted_by_distance = sorted(
+            feature_match_tuples,
+            key=lambda feature_match_tuple: -feature_match_tuple[1])
+        feature_match_result_with_opacity = []
+        n = 0
+        for processed_output, _ in feature_match_tuples_sorted_by_distance:
+            opacity = float(n) / (len(feature_match_tuples)-1)
+            feature_match_result_with_opacity.append((processed_output, opacity))
+            n += 1
+        self._scene.feature_match_result = feature_match_result_with_opacity
 
 class DimensionalityReductionToolbar(ExperimentToolbar):
     def __init__(self, *args):

@@ -34,6 +34,8 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--preferred-location", type=str)
         parser.add_argument("--enable-features", action="store_true")
         parser.add_argument("--train-feature-matcher", action="store_true")
+        parser.add_argument("--num-feature-matches", type=int, default=1)
+        parser.add_argument("--show-all-feature-matches", action="store_true")
         ImproviserParameters().add_parser_arguments(parser)
 
     def __init__(self, parser):
@@ -212,6 +214,12 @@ class DimensionalityReductionExperiment(Experiment):
             features = self.entity.extract_features(self._pose_for_feature_extraction)
             self.send_event_to_ui(Event(Event.FEATURES, features))
 
+    def process_and_broadcast_output(self):
+        if not (self._mode == modes.EXPLORE and
+                self._target_reduction is not None and
+                self.args.show_all_feature_matches):
+            Experiment.process_and_broadcast_output(self)
+
     def proceed(self):
         if self._mode == modes.FOLLOW:
             self.entity.proceed(self.time_increment)
@@ -278,11 +286,28 @@ class DimensionalityReductionExperiment(Experiment):
         if self._target_features is None:
             self._target_reduction = None
         else:
-            sampled_reductions_indices = self._feature_matcher.kneighbors(
-                self._target_features, return_distance=False)[0]
-            sampled_reductions_index = sampled_reductions_indices[0]
-            self._target_reduction = self._sampled_reductions[sampled_reductions_index]
+            distances_list, sampled_reductions_indices_list = self._feature_matcher.kneighbors(
+                self._target_features, return_distance=True)
+            distances = distances_list[0]
+            sampled_reductions_indices = sampled_reductions_indices_list[0]
+            nearest_neighbor_index = min(range(len(distances)),
+                                         key=lambda neighbor_index: distances[neighbor_index])
+            best_sampled_reductions_index = sampled_reductions_indices[nearest_neighbor_index]
+            self._target_reduction = self._sampled_reductions[best_sampled_reductions_index]
             self._broadcast_event_to_other_uis(event)
+
+            if self.args.show_all_feature_matches:
+                match_result_as_tuples = [
+                    (self._reduction_to_processed_output(
+                            self._sampled_reductions[sampled_reductions_index]),
+                     distance)
+                    for sampled_reductions_index, distance
+                    in zip(sampled_reductions_indices, distances)]
+                self.send_event_to_ui(Event(Event.FEATURE_MATCH_RESULT, match_result_as_tuples))
+
+    def _reduction_to_processed_output(self, reduction):
+        output = self.student.inverse_transform(numpy.array([reduction]))[0]
+        return self.entity.process_output(output)
 
     def _move_reduction_towards_target_features(self):
         direction_vector = self._target_reduction - self.reduction
@@ -296,7 +321,7 @@ class DimensionalityReductionExperiment(Experiment):
     def _train_feature_matcher(self):
         print "training feature matcher..."
         feature_matcher = sklearn.neighbors.KNeighborsClassifier(
-            n_neighbors=1, weights='uniform')
+            n_neighbors=self.args.num_feature_matches, weights='uniform')
         sampled_reductions = self._sample_reduction_space()
         feature_vectors = [
             self._reduction_to_feature_vector(reduction)
