@@ -34,6 +34,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--preferred-location", type=str)
         parser.add_argument("--enable-features", action="store_true")
         parser.add_argument("--train-feature-matcher", action="store_true")
+        parser.add_argument("--feature-matching-speed", type=float, default=1.5)
         parser.add_argument("--num-feature-matches", type=int, default=1)
         parser.add_argument("--show-all-feature-matches", action="store_true")
         parser.add_argument("--face-forward", action="store_true")
@@ -314,7 +315,7 @@ class DimensionalityReductionExperiment(Experiment):
 
     def _move_reduction_towards_target_features(self):
         direction_vector = self._target_reduction - self.reduction
-        max_norm = .5
+        max_norm = self.args.feature_matching_speed
         direction_vector_norm = numpy.linalg.norm(direction_vector)
         if direction_vector_norm > 0:
             if direction_vector_norm > max_norm:
