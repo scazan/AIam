@@ -29,7 +29,9 @@ class Entity(BaseEntity):
         parser.add_argument("--right-hand")
         parser.add_argument("--right-forearm")
         parser.add_argument("--right-shoulder")
+        parser.add_argument("--torso")
         parser.add_argument("--neck")
+        parser.add_argument("--head")
 
     def __init__(self, *args, **kwargs):
         BaseEntity.__init__(self, *args, **kwargs)

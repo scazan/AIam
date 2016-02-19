@@ -443,7 +443,9 @@ class UserMovementInterpreter:
                 "right_hand",
                 "right_elbow",
                 "right_shoulder",
+                "torso",
                 "neck",
+                "head",
                 ]]
         return feature_extractor.extract_features(*positions)
 
