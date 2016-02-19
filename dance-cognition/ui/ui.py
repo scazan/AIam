@@ -462,7 +462,7 @@ class MainWindow(Window, EventListener):
     def _add_face_forward_action(self):
         self._face_forward_action = QtGui.QAction("Face forward", self)
         self._face_forward_action.setCheckable(True)
-        self._face_forward_action.setChecked(False)
+        self._face_forward_action.setChecked(self.args.face_forward)
         self._face_forward_action.setShortcut("F11")
         self._face_forward_action.toggled.connect(self._toggled_face_forward)
         self._view_menu.addAction(self._face_forward_action)

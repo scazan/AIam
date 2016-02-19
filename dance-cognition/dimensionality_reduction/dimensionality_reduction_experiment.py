@@ -36,6 +36,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--train-feature-matcher", action="store_true")
         parser.add_argument("--num-feature-matches", type=int, default=1)
         parser.add_argument("--show-all-feature-matches", action="store_true")
+        parser.add_argument("--face-forward", action="store_true")
         ImproviserParameters().add_parser_arguments(parser)
 
     def __init__(self, parser):
@@ -50,6 +51,8 @@ class DimensionalityReductionExperiment(Experiment):
         self.reduction = None
         self._velocity_integrator = LeakyIntegrator()
         self._mode = self.args.mode
+        if self.args.face_forward:
+            self.entity.face_forward = True
         if self.args.enable_features:
             self._target_reduction = None
             self._pose_for_feature_extraction = self.bvh_reader.get_hierarchy().create_pose()
