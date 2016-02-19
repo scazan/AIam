@@ -159,9 +159,9 @@ class Entity(BaseEntity):
     def _parameters_to_joint_rotation(self, parameters, joint, parameter_index):
         rotation_parameters = parameters[
             parameter_index:parameter_index+
-            self.experiment.entity.rotation_parametrization.num_parameters]
-        parameter_index += self.experiment.entity.rotation_parametrization.num_parameters
-        radians = self.experiment.entity.rotation_parametrization.parameters_to_rotation(
+            self.rotation_parametrization.num_parameters]
+        parameter_index += self.rotation_parametrization.num_parameters
+        radians = self.rotation_parametrization.parameters_to_rotation(
             rotation_parameters, joint.definition.axes)
         joint.angles = radians
         return parameter_index
