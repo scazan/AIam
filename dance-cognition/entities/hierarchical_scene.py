@@ -5,10 +5,16 @@ MIN_LINE_WIDTH = 1.5
 MAX_LINE_WIDTH = 3.0
 
 class Scene(BvhScene):
+    @staticmethod
+    def add_parser_arguments(parser):
+        BvhScene.add_parser_arguments(parser)
+        parser.add_argument("--enable-light-source", action="store_true")
+        parser.add_argument("--enable-shadow", action="store_true")
+
     def __init__(self, *args, **kwargs):
         BvhScene.__init__(self, *args, **kwargs)
         self.feature_match_result = None
-        if self.args.floor:
+        if self.args.enable_shadow:
             self._shadow_shear_matrix = self._create_shadow_shear_matrix()
 
     def _create_shadow_shear_matrix(self):
@@ -32,7 +38,7 @@ class Scene(BvhScene):
 
     def draw_output(self, vertices, opacity=1):
         self._process_vertices(vertices)
-        if self.args.floor:
+        if self.args.enable_shadow:
             self._draw_vertices_as_shadow()
         color = self._get_color_by_opacity(self._parent.color_scheme["output"], opacity)
         self._draw_vertices(color)
@@ -53,18 +59,32 @@ class Scene(BvhScene):
 
     def _process_vertices(self, vertices):
         edges = self.bvh_reader.vertices_to_edges(vertices)
-        edge_distance_pairs = [
-            (edge, self._edge_distance_to_camera(edge))
-            for edge in edges]
-        distances = [edge_distance_pair[1] for edge_distance_pair in edge_distance_pairs]
-        self._min_distance = min(distances)
-        self._max_distance = max(distances)
-
-        self._sorted_edge_distance_pairs = sorted(
-            edge_distance_pairs,
-            key=lambda edge_distance_pair: -edge_distance_pair[1])
+        if self.args.enable_light_source:
+            edge_distance_pairs = [
+                (edge, self._edge_distance_to_camera(edge))
+                for edge in edges]
+            distances = [edge_distance_pair[1] for edge_distance_pair in edge_distance_pairs]
+            self._min_distance = min(distances)
+            self._max_distance = max(distances)
+            self._sorted_edge_distance_pairs = sorted(
+                edge_distance_pairs,
+                key=lambda edge_distance_pair: -edge_distance_pair[1])
+        else:
+            self._edges = edges
 
     def _draw_vertices(self, color):
+        if self.args.enable_light_source:
+            self._draw_vertices_with_light_source(color)
+        else:
+            self._draw_vertices_without_light_source(color)
+
+    def _draw_vertices_without_light_source(self, color):
+        glColor3f(*color)
+        glLineWidth(3.0)
+        for edge in self._edges:
+            self._draw_line(edge.v1, edge.v2)
+            
+    def _draw_vertices_with_light_source(self, color):
         for edge, distance in self._sorted_edge_distance_pairs:
             normalized_distance = (distance - self._min_distance) / (self._max_distance - self._min_distance)
             relative_vicinity = 1 - normalized_distance
