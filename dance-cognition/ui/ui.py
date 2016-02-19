@@ -389,6 +389,7 @@ class MainWindow(Window, EventListener):
         self._add_follow_action()
         self._add_focus_action()
         self._add_floor_action()
+        self._add_face_forward_action()
 
     def _add_toolbar_action(self):
         self._toolbar_action = QtGui.QAction('Toolbar', self)
@@ -454,6 +455,17 @@ class MainWindow(Window, EventListener):
 
     def _toggled_floor(self):
         self._scene.view_floor = self._floor_action.isChecked()
+
+    def _add_face_forward_action(self):
+        self._face_forward_action = QtGui.QAction("Face forward", self)
+        self._face_forward_action.setCheckable(True)
+        self._face_forward_action.setChecked(False)
+        self._face_forward_action.setShortcut("F11")
+        self._face_forward_action.toggled.connect(self._toggled_face_forward)
+        self._view_menu.addAction(self._face_forward_action)
+
+    def _toggled_face_forward(self):
+        self.entity.face_forward = self._face_forward_action.isChecked()
         
     def _create_color_scheme_menu(self):
         menu = self._menu_bar.addMenu("Color scheme")

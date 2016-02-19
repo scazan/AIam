@@ -1,7 +1,7 @@
 from experiment import *
 from angle_parameters import EulerTo3Vectors, EulerToQuaternion
 from numpy import array, dot
-from transformations import euler_matrix
+from transformations import euler_matrix, quaternion_from_euler, euler_from_quaternion
 import random
 from physics import *
 from feature_extraction import FeatureExtractor
@@ -38,6 +38,7 @@ class Entity(BaseEntity):
         self._create_parameter_info_table()
         self._normalized_constrainers = self._create_constrainers()
         self._unnormalized_constrainers = self._create_constrainers()
+        self.face_forward = False
         if self.args.enable_features:
             self.feature_extractor = FeatureExtractor()
 
@@ -163,8 +164,27 @@ class Entity(BaseEntity):
         parameter_index += self.rotation_parametrization.num_parameters
         radians = self.rotation_parametrization.parameters_to_rotation(
             rotation_parameters, joint.definition.axes)
+        if self.face_forward and joint.parent is None:
+            radians = self._orient_forward(radians, joint.definition.axes)
         joint.angles = radians
         return parameter_index
+
+    def _orient_forward(self, euler_angles, axes):
+        if axes[1] == "y":
+            return self._orient_forward_y_first(euler_angles)
+        else:
+            euler_angles_yxz = euler_from_quaternion(
+                quaternion_from_euler(*euler_angles, axes=axes),
+                axes="ryxz")
+            euler_angles_yxz_forward = self._orient_forward_y_first(euler_angles_yxz)
+            return euler_from_quaternion(
+                quaternion_from_euler(*euler_angles_yxz_forward, axes="ryxz"),
+                axes=axes)
+
+    def _orient_forward_y_first(self, euler_angles):
+        euler_angles = list(euler_angles)
+        euler_angles[0] = 0
+        return euler_angles
 
     def parameters_to_processed_pose(self, parameters, output_pose):
         self._set_pose_from_parameters(parameters)
