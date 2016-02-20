@@ -24,7 +24,7 @@ class DimensionalityReductionExperiment(Experiment):
                             choices=[modes.FOLLOW,
                                      modes.IMPROVISE,
                                      modes.EXPLORE],
-                            default=modes.FOLLOW)
+                            default=modes.EXPLORE)
         parser.add_argument("--max-novelty", type=float, default=1.)
         parser.add_argument("--plot-velocity")
         parser.add_argument("--analyze-components", action="store_true")
@@ -356,6 +356,9 @@ class DimensionalityReductionExperiment(Experiment):
             output, self._pose_for_feature_extraction)
         features = self.entity.extract_features(self._pose_for_feature_extraction)
         return features
+
+    def should_read_bvh_frames(self):
+        return self.args.train or self.args.mode == modes.FOLLOW
 
 class ImproviserParameters(Parameters):
     def __init__(self):

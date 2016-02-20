@@ -18,9 +18,9 @@ CHANNEL_TO_AXIS = {
 }
 
 class BvhReader(cgkit.bvh.BVHReader):
-    def read(self):
+    def read(self, read_frames=True):
         if self._cache_exists():
-            self._read()
+            self._read(read_frames)
             self._load_from_cache()
         else:
             self._read()
@@ -54,8 +54,8 @@ class BvhReader(cgkit.bvh.BVHReader):
     def _cache_filename(self):
         return "%s.cache" % self.filename
 
-    def _read(self):
-        cgkit.bvh.BVHReader.read(self)
+    def _read(self, read_frames):
+        cgkit.bvh.BVHReader.read(self, read_frames)
         self.hierarchy = self._create_hierarchy()
         self.num_joints = self.hierarchy.num_joints
         self._duration = self._num_frames * self._frame_time

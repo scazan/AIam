@@ -14,17 +14,17 @@ class BvhCollection:
     def get_readers(self):
         return self._readers
 
-    def read(self):
-        self._read_bvhs()
+    def read(self, read_frames=True):
+        self._read_bvhs(read_frames)
         self._set_scale_info()
         self._hierarchy = self._create_hierachy()
 
-    def _read_bvhs(self):
+    def _read_bvhs(self, read_frames):
         self._duration = 0
         frame_offset = 0
         index = 0
         for reader in self._readers:
-            reader.read()
+            reader.read(read_frames)
             reader.index = index
             reader.start_time = self._duration
             reader.end_time = self._duration + reader.get_duration()

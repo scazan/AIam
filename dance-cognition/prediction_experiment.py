@@ -74,3 +74,6 @@ class PredictionExperiment(Experiment):
             self.teacher.proceed(time_increment)
             t += time_increment
         print "ok"
+
+    def should_read_bvh_frames(self):
+        return True

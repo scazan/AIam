@@ -137,6 +137,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
             self._add_features_tab_widgets()
         self.setLayout(self._layout)
         self.set_mode(self.args.mode)
+        self._activate_current_mode()
 
     def set_mode(self, mode):
         mode_tab = self._mode_tabs[mode]
@@ -147,7 +148,8 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
     def _add_mode_tabs(self):
         self.tabs = QtGui.QTabWidget()
         self._mode_tabs = {}
-        self._add_follow_tab()
+        if self.args.mode == modes.FOLLOW:
+            self._add_follow_tab()
         self._add_explore_tab()
         self._add_improvise_tab()
         self.tabs.currentChanged.connect(self._changed_mode_tab)
@@ -155,13 +157,16 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._changing_mode_non_interactively = False
 
     def _changed_mode_tab(self):
+        self._activate_current_mode()
+        if not self._changing_mode_non_interactively:
+            self.parent().send_event(
+                Event(Event.MODE, self.tabs.currentWidget()._mode_id))
+
+    def _activate_current_mode(self):
         exploring = (self.tabs.currentWidget() == self.explore_tab)
         for n in range(self._reduction_tabs.count()):
             tab = self._reduction_tabs.widget(n)
             tab.set_enabled(exploring)
-        if not self._changing_mode_non_interactively:
-            self.parent().send_event(
-                Event(Event.MODE, self.tabs.currentWidget()._mode_id))
 
     def _add_follow_tab(self):
         self.follow_tab = ModeTab(modes.FOLLOW)

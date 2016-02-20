@@ -31,6 +31,9 @@
 # the provisions above, a recipient may use your version of this file under
 # the terms of any one of the MPL, the GPL or the LGPL.
 #
+# History:
+# Alex Berman: added read_frames argument to the read method
+#
 # ***** END LICENSE BLOCK *****
 # $Id: bvh.py,v 1.1 2005/02/06 22:26:02 mbaas Exp $
 
@@ -85,17 +88,17 @@ class BVHReader:
         pass
 
     # read
-    def read(self):
+    def read(self, read_frames=True):
         """Read the entire file.
         """
         self.fhandle = file(self.filename)
 
         self.readHierarchy()
         self.onHierarchy(self._root)
-        self.readMotion()
+        self.readMotion(read_frames)
 
     # readMotion
-    def readMotion(self):
+    def readMotion(self, read_frames):
         """Read the motion samples.
         """
         # No more tokens (i.e. end of file)? Then just return 
@@ -126,15 +129,15 @@ class BVHReader:
 
         self.onMotion(frames, dt)
 
-        # Read the channel values
-        for i in range(frames):
-            s = self.readLine()
-            a = s.split()
-            if len(a)!=self._numchannels:
-                raise SyntaxError("Syntax error in line %d: %d float values expected, got %d instead"%(self.linenr, self._numchannels, len(a)))
-            values = map(lambda x: float(x), a)
-            self.onFrame(values)
-
+        if read_frames:
+            # Read the channel values
+            for i in range(frames):
+                s = self.readLine()
+                a = s.split()
+                if len(a)!=self._numchannels:
+                    raise SyntaxError("Syntax error in line %d: %d float values expected, got %d instead"%(self.linenr, self._numchannels, len(a)))
+                values = map(lambda x: float(x), a)
+                self.onFrame(values)
 
     # readHierarchy
     def readHierarchy(self):
