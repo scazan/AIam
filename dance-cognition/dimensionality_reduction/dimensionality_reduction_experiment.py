@@ -220,6 +220,7 @@ class DimensionalityReductionExperiment(Experiment):
 
     def process_and_broadcast_output(self):
         if not (self._mode == modes.EXPLORE and
+                self.args.enable_features and
                 self._target_reduction is not None and
                 self.args.show_all_feature_matches):
             Experiment.process_and_broadcast_output(self)
