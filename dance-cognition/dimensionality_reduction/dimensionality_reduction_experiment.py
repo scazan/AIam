@@ -418,14 +418,10 @@ class Improviser:
             if self.experiment.args.preferred_location:
                 return self.experiment.preferred_location
             else:
-                unnormalized_departure = self._get_stimulus()
+                unnormalized_departure = numpy.array([.5] * self.experiment.args.num_components)
         else:
             unnormalized_departure = self.experiment.reduction
         return self.experiment.student.normalize_reduction(unnormalized_departure)
-
-    def _get_stimulus(self):
-        return self.experiment.student.transform(numpy.array([
-                    self.experiment.get_adapted_stimulus_value()]))[0]
 
     def _interpolate_path(self, path_segments):
         return interpolation.interpolate(
