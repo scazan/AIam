@@ -122,7 +122,10 @@ class DimensionalityReductionMainWindow(MainWindow):
         feature_match_result_with_opacity = []
         n = 0
         for processed_output, _ in feature_match_tuples_sorted_by_distance:
-            opacity = float(n) / (len(feature_match_tuples)-1)
+            if len(feature_match_tuples) == 1:
+                opacity = 1
+            else:
+                opacity = float(n) / (len(feature_match_tuples)-1)
             feature_match_result_with_opacity.append((processed_output, opacity))
             n += 1
         self._scene.feature_match_result = feature_match_result_with_opacity
