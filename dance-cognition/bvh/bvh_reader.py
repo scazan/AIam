@@ -23,7 +23,7 @@ class BvhReader(cgkit.bvh.BVHReader):
             self._read(read_frames)
             self._load_from_cache()
         else:
-            self._read()
+            self._read(read_frames)
             self._probe_static_rotations()
             self._probe_vertex_range()
             self._save_to_cache()
