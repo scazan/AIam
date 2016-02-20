@@ -392,7 +392,8 @@ class MainWindow(Window, EventListener):
         self._add_follow_action()
         self._add_focus_action()
         self._add_floor_action()
-        self._add_face_forward_action()
+        if self.args.entity == "hierarchical":
+            self._add_face_forward_action()
 
     def _add_toolbar_action(self):
         self._toolbar_action = QtGui.QAction('Toolbar', self)
