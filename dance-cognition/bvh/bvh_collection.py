@@ -45,6 +45,9 @@ class BvhCollection:
                 reader._scale_info.max_x,
                 reader._scale_info.max_y,
                 reader._scale_info.max_z)
+            self._scale_info.max_pose_size = max(
+                self._scale_info.max_pose_size,
+                reader._scale_info.max_pose_size)
         self._scale_info.update_scale_factor()
 
     def _create_hierachy(self):
@@ -79,10 +82,16 @@ class BvhCollection:
         return self._readers[-1]
 
     def normalize_vector(self, v):
+        return self.normalize_vector_without_translation(
+            array([v[0] - self._scale_info.min_x,
+                   v[1] - self._scale_info.min_y,
+                   v[2] - self._scale_info.min_z]))
+
+    def normalize_vector_without_translation(self, v):
         return array([
-            (v[0] - self._scale_info.min_x) / self._scale_info.scale_factor * 2 - 1,
-            (v[1] - self._scale_info.min_y) / self._scale_info.scale_factor * 2 - 1,
-            (v[2] - self._scale_info.min_z) / self._scale_info.scale_factor * 2 - 1])
+            v[0] / self._scale_info.scale_factor * 2 - 1,
+            v[1] / self._scale_info.scale_factor * 2 - 1,
+            v[2] / self._scale_info.scale_factor * 2 - 1])
 
     def skeleton_scale_vector(self, v):
         return array([

@@ -352,6 +352,7 @@ class Pose:
 
 class ScaleInfo:
     min_x = None
+    max_pose_size = 0
 
     def update_with_vector(self, x, y, z):
         if self.min_x is None:
@@ -367,7 +368,14 @@ class ScaleInfo:
             self.max_z = max(self.max_z, z)
 
     def update_scale_factor(self):
-        self.scale_factor = max([
-                self.max_x - self.min_x,
-                self.max_y - self.min_y,
-                self.max_z - self.min_z])
+        if self.max_pose_size == 0:
+            print "Warning: max_pose_size==0. Setting scale_factor to 1."
+            self.scale_factor = 1
+        else:
+            self.scale_factor = self.max_pose_size
+
+    def update_max_pose_size(self, vertices):
+        for coordinate in range(3):
+            values = [vertex[coordinate] for vertex in vertices]
+            this_size = max(values) - min(values)
+            self.max_pose_size = max(self.max_pose_size, this_size)

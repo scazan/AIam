@@ -147,6 +147,7 @@ class BvhReader(cgkit.bvh.BVHReader):
             vertices = pose.get_vertices()
             for vertex in vertices:
                 self._scale_info.update_with_vector(*vertex[0:3])
+            self._scale_info.update_max_pose_size(vertices)
         self._scale_info.update_scale_factor()
         print "ok"
 

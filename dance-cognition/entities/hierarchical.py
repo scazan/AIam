@@ -21,6 +21,7 @@ class Entity(BaseEntity):
         parser.add_argument("--translate", action="store_true")
         parser.add_argument("--translation-weight", type=float, default=1.)
         parser.add_argument("--friction", action="store_true")
+        parser.add_argument("--pose-scale", type=float, default=.5)
         parser.add_argument("--random-slide", type=float)
         parser.add_argument("--circle-slide", action="store_true")
         parser.add_argument("--left-hand")
@@ -117,23 +118,24 @@ class Entity(BaseEntity):
         parameters.extend(rotation_parameters)
 
     def process_input(self, parameters):
-        return self._parameters_to_normalized_vertices(parameters)
+        return self._parameters_to_scaled_normalized_vertices(parameters)
 
     def process_output(self, parameters):
         return self._constrained_output_vertices(parameters)
 
     def _constrained_output_vertices(self, parameters):
-        vertices = self._parameters_to_normalized_vertices(parameters)
+        vertices = self._parameters_to_scaled_normalized_vertices(parameters)
         for constrainer in self._normalized_constrainers:
             vertices = constrainer.constrain(vertices)
         return vertices
 
-    def _parameters_to_normalized_vertices(self, parameters):
+    def _parameters_to_scaled_normalized_vertices(self, parameters):
         self._set_pose_from_parameters(parameters)
         root_joint = self.pose.get_root_joint()
         vertices = root_joint.get_vertices()
-        normalized_vertices = [self.bvh_reader.normalize_vector(vertex)
-                               for vertex in vertices]
+        normalized_vertices = [
+            self.bvh_reader.normalize_vector_without_translation(vertex) * self.args.pose_scale
+            for vertex in vertices]
         return normalized_vertices
 
     def _set_pose_from_parameters(self, parameters):
