@@ -11,7 +11,7 @@ class Entity(BaseEntity):
         return normalized_vectors.flatten()
 
     def process_io(self, value):
-        normalized_vectors = value.reshape([self.bvh_reader.num_joints, 3])
+        normalized_vectors = value.reshape([self.bvh_reader.get_num_joints(), 3])
         vertices = [self.bvh_reader.skeleton_scale_vector(vector)
                     for vector in normalized_vectors]
         return vertices

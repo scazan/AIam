@@ -95,3 +95,6 @@ class BvhCollection:
 
     def vertices_to_edges(self, *args, **kwargs):
         return self._base_reader.vertices_to_edges(*args, **kwargs)
+
+    def get_num_joints(self):
+        return self._hierarchy.get_num_joints()

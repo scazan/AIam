@@ -108,7 +108,7 @@ class Joint:
 
 class Hierarchy:
     def __init__(self, root_node_definition):
-        self.num_joints = 0
+        self._num_joints = 0
         self._joint_definitions = {}
         self._root_joint_definition = root_node_definition
         self._process_joint_definition(root_node_definition)
@@ -117,7 +117,10 @@ class Hierarchy:
         for child_definition in joint_definition.child_definitions:
             self._process_joint_definition(child_definition)
         self._joint_definitions[joint_definition.name] = joint_definition
-        self.num_joints += 1
+        self._num_joints += 1
+
+    def get_num_joints(self):
+        return self._num_joints
 
     def create_pose(self):
         return Pose(self)

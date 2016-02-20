@@ -57,7 +57,7 @@ class BvhReader(cgkit.bvh.BVHReader):
     def _read(self, read_frames):
         cgkit.bvh.BVHReader.read(self, read_frames)
         self.hierarchy = self._create_hierarchy()
-        self.num_joints = self.hierarchy.num_joints
+        self._num_joints = self.hierarchy.get_num_joints()
         self._duration = self._num_frames * self._frame_time
 
     def _create_hierarchy(self):
