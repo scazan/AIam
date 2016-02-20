@@ -38,22 +38,22 @@ class Entity(BaseEntity):
         self.rotation_parametrization = rotation_parametrizations[
             self.args.rotation_parametrization]
         self._create_parameter_info_table()
+        if self.experiment.args.z_up:
+            self._coordinate_up = 2
+        else:
+            self._coordinate_up = 1
         self._normalized_constrainers = self._create_constrainers()
         self._unnormalized_constrainers = self._create_constrainers()
         self.face_forward = False
         if self.args.enable_features:
-            self.feature_extractor = FeatureExtractor()
+            self.feature_extractor = FeatureExtractor(self._coordinate_up)
 
     def _create_constrainers(self):
-        if self.experiment.args.z_up:
-            coordinate_up = 2
-        else:
-            coordinate_up = 1
         result = []
         if self.experiment.args.friction:
-            result.append(FrictionConstrainer(BalanceDetector(coordinate_up)))
+            result.append(FrictionConstrainer(BalanceDetector(self._coordinate_up)))
         if self.experiment.args.floor:
-            result.append(FloorConstrainer(coordinate_up))
+            result.append(FloorConstrainer(self._coordinate_up))
         if self.experiment.args.random_slide > 0:
             result.append(RandomSlide(self.experiment.args.random_slide))
         if self.experiment.args.circle_slide:

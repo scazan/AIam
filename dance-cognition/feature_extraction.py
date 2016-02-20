@@ -15,6 +15,9 @@ class FeatureExtractor:
         "neck",
         "head"]
 
+    def __init__(self, coordinate_up=1):
+        self._coordinate_up = 1
+
     def get_num_features(self):
         return len(self.FEATURES)
 
@@ -47,9 +50,9 @@ class FeatureExtractor:
                     for i in range(len(positions)-1)])
 
     def _get_elevation(self, start_position, end_position, total_distance):
-        start_y = start_position[1]
-        end_y = end_position[1]
-        return ((start_y - end_y) / total_distance + 1) / 2
+        start_up = start_position[self._coordinate_up]
+        end_up = end_position[self._coordinate_up]
+        return ((start_up - end_up) / total_distance + 1) / 2
 
     def _distance(self, p1, p2):
         return numpy.linalg.norm(p1 - p2)
