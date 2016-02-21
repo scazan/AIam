@@ -19,7 +19,7 @@ class DimensionalityReductionMainWindow(MainWindow):
         MainWindow.__init__(self, *args, event_handlers={
                 Event.REDUCTION: self._handle_reduction,
                 Event.MODE: self._set_mode,
-                Event.IMPROVISER_PATH: self._set_improviser_path,
+                Event.IMPROVISE_PATH: self._set_improvise_path,
                 Event.VELOCITY: self._set_velocity,
                 Event.CURSOR: self._set_cursor,
                 Event.BVH_INDEX: self._update_bvh_selector,
@@ -90,7 +90,7 @@ class DimensionalityReductionMainWindow(MainWindow):
     def _set_mode(self, event):
         self.toolbar.set_mode(event.content)
 
-    def _set_improviser_path(self, event):
+    def _set_improvise_path(self, event):
         if self.toolbar.map_tab:
             self.toolbar.map_tab.set_path(numpy.array(event.content))
 
@@ -240,17 +240,17 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
     def _add_improvise_tab(self):
         self.improvise_tab = ModeTab(modes.IMPROVISE)
         self._improvise_tab_layout = QtGui.QVBoxLayout()
-        self._improviser_params = ImproviserParameters()
-        self._improviser_params.add_notifier(self.parent().client)
-        self._improviser_params_form = self.add_parameter_fields(
-            self._improviser_params, self._improvise_tab_layout)
+        self._improvise_params = ImproviseParameters()
+        self._improvise_params.add_notifier(self.parent().client)
+        self._improvise_params_form = self.add_parameter_fields(
+            self._improvise_params, self._improvise_tab_layout)
         self.improvise_tab.setLayout(self._improvise_tab_layout)
         self.tabs.addTab(self.improvise_tab, "Improvise")
         self._mode_tabs[modes.IMPROVISE] = self.improvise_tab
 
     def received_parameter(self, event):
-        self._improviser_params.handle_event(event)
-        self._improviser_params_form.update_field(event.content["name"])
+        self._improvise_params.handle_event(event)
+        self._improvise_params_form.update_field(event.content["name"])
 
     def _add_reduction_tabs(self):
         self._set_exploration_ranges()

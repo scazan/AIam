@@ -4,11 +4,9 @@ from component_analysis import ComponentAnalysis
 import pca
 import random
 from leaky_integrator import LeakyIntegrator
-from navigator import Navigator, PathFollower
-import dynamics as dynamics_module
 import modes
 from parameters import *
-import interpolation
+from behaviors.improvise import ImproviseParameters, Improvise
 import sklearn.neighbors
 
 class DimensionalityReductionExperiment(Experiment):
@@ -38,7 +36,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--num-feature-matches", type=int, default=1)
         parser.add_argument("--show-all-feature-matches", action="store_true")
         parser.add_argument("--face-forward", action="store_true")
-        ImproviserParameters().add_parser_arguments(parser)
+        ImproviseParameters().add_parser_arguments(parser)
 
     def __init__(self, parser):
         self.profiles_dir = "profiles/dimensionality_reduction"
@@ -64,12 +62,12 @@ class DimensionalityReductionExperiment(Experiment):
         handler.send_event(Event(Event.MODE, self._mode))
         if self.reduction is not None:
             handler.send_event(Event(Event.REDUCTION, self.reduction))
-        self._improviser_params.add_notifier(handler)
-        self._improviser_params.notify_changed_all()
+        self._improvise_params.add_notifier(handler)
+        self._improvise_params.notify_changed_all()
 
     def ui_disconnected(self, handler):
         Experiment.ui_disconnected(self, handler)
-        self._improviser_params.remove_notifier(handler)
+        self._improvise_params.remove_notifier(handler)
 
     def _handle_mode_event(self, event):
         self._mode = event.content
@@ -124,22 +122,22 @@ class DimensionalityReductionExperiment(Experiment):
                 if self.args.enable_features:
                     self._feature_matcher, self._sampled_reductions = storage.load(
                         self._feature_matcher_path)
-                self.navigator = Navigator(
-                    map_points=self.student.normalized_observed_reductions)
                 if self.args.preferred_location:
-                    self.preferred_location = numpy.array([
+                    preferred_location = numpy.array([
                             float(s) for s in self.args.preferred_location.split(",")])
-                    self.navigator.set_preferred_location(self.preferred_location)
-                self._improviser_params = ImproviserParameters()
-                self._improviser_params.set_values_from_args(self.args)
-                self._improviser = Improviser(
-                    self, self._improviser_params,
+                else:
+                    preferred_location = None
+                self._improvise_params = ImproviseParameters()
+                self._improvise_params.set_values_from_args(self.args)
+                self._improvise = Improvise(
+                    self, self._improvise_params,
+                    preferred_location,
                     on_changed_path=lambda: \
-                        self.send_event_to_ui(Event(Event.IMPROVISER_PATH, self._improviser.path())))
+                        self.send_event_to_ui(Event(Event.IMPROVISE_PATH, self._improvise.path())))
             self.run_backend_and_or_ui()
 
     def _abort_path(self, event):
-        self._improviser.select_next_move()
+        self._improvise.select_next_move()
 
     def add_ui_parser_arguments(self, parser):
         from ui.dimensionality_reduction_ui import DimensionalityReductionMainWindow
@@ -202,7 +200,7 @@ class DimensionalityReductionExperiment(Experiment):
             self._follow()
             self.send_event_to_ui(Event(Event.REDUCTION, self.reduction))
         elif self._mode == modes.IMPROVISE:
-            self.reduction = self._improviser.current_position()
+            self.reduction = self._improvise.get_reduction()
             self.send_event_to_ui(Event(Event.REDUCTION, self.reduction))
         elif self._mode == modes.EXPLORE:
             if self.reduction is None:
@@ -235,7 +233,7 @@ class DimensionalityReductionExperiment(Experiment):
                     self.entity.get_cursor() / self.entity.get_duration()))
             self._potentially_send_bvh_index_to_ui()
         elif self._mode == modes.IMPROVISE:
-            self._improviser.proceed(self.time_increment)
+            self._improvise.proceed(self.time_increment)
 
     def update_cursor(self, event):
         Experiment.update_cursor(self, event)
@@ -280,7 +278,7 @@ class DimensionalityReductionExperiment(Experiment):
         f.close()
 
     def _handle_parameter_event(self, event):
-        self._improviser_params.handle_event(event)
+        self._improvise_params.handle_event(event)
         self._broadcast_event_to_other_uis(event)
 
     def _broadcast_event_to_other_uis(self, event):
@@ -360,92 +358,6 @@ class DimensionalityReductionExperiment(Experiment):
 
     def should_read_bvh_frames(self):
         return self.args.train or self.args.mode == modes.FOLLOW
-
-class ImproviserParameters(Parameters):
-    def __init__(self):
-        Parameters.__init__(self)
-        self.add_parameter("novelty", type=float, default=.5,
-                           choices=ParameterFloatRange(0., 1.))
-        self.add_parameter("extension", type=float, default=1.,
-                           choices=ParameterFloatRange(0., 2.))
-        self.add_parameter("num_segments", type=int, default=10)
-        self.add_parameter("resolution", type=int, default=100)
-        self.add_parameter("velocity", type=float, default=0.5,
-                           choices=ParameterFloatRange(.001, 3.))
-        self.add_parameter("min_relative_velocity", type=float, default=.3,
-                           choices=ParameterFloatRange(.001, 1.))
-        self.add_parameter("dynamics", choices=["constant", "sine", "exponential"], default="sine")
-        self.add_parameter("location_preference", type=float, default=0,
-                           choices=ParameterFloatRange(0., 1.))
-
-class Improviser:
-    def __init__(self, experiment, params, on_changed_path=None):
-        self.experiment = experiment
-        self.params = params
-        self._path = None
-        self._path_follower = None
-        self._on_changed_path = on_changed_path
-
-    def select_next_move(self):
-        found_non_empty_path = False
-        while not found_non_empty_path:
-            path_segments = self._generate_path()
-            print "path_segments", len(path_segments)
-            self._path = self._interpolate_path(path_segments)
-            print "interpolated path", len(self._path)
-            if len(self._path) > 0:
-                found_non_empty_path = True
-        self._path_follower = self._create_path_follower(self._path)
-        if self._on_changed_path:
-            self._on_changed_path()
-
-    def _generate_path(self):
-        while True:
-            path = self._generate_potentially_empty_path()
-            if len(path) > 0:
-                return path
-
-    def _generate_potentially_empty_path(self):
-        return self.experiment.navigator.generate_path(
-            departure = self._departure(),
-            num_segments = self.params.num_segments,
-            novelty = self.params.novelty * self.experiment.args.max_novelty,
-            extension = self.params.extension,
-            location_preference = self.params.location_preference)
-
-    def _departure(self):
-        if self.experiment.reduction is None:
-            if self.experiment.args.preferred_location:
-                return self.experiment.preferred_location
-            else:
-                unnormalized_departure = numpy.array([.5] * self.experiment.args.num_components)
-        else:
-            unnormalized_departure = self.experiment.reduction
-        return self.experiment.student.normalize_reduction(unnormalized_departure)
-
-    def _interpolate_path(self, path_segments):
-        return interpolation.interpolate(
-            path_segments,
-            resolution=self.params.resolution)
-
-    def _create_path_follower(self, path):
-        dynamics_class = getattr(dynamics_module, "%s_dynamics" % self.params.dynamics)
-        dynamics = dynamics_class(min_relative_velocity=self.params.min_relative_velocity)
-        return PathFollower(path, dynamics)
-
-    def proceed(self, time_increment):
-        if self._path_follower is None:
-            self.select_next_move()
-        if self._path_follower.reached_destination():
-            self.select_next_move()
-        self._path_follower.proceed(time_increment * self.params.velocity)
-
-    def current_position(self):
-        normalized_position = self._path_follower.current_position()
-        return self.experiment.student.unnormalize_reduction(normalized_position)
-
-    def path(self):
-        return self._path
 
 class StillsExporter:
     def __init__(self, experiment, stills_data_path):
