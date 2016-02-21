@@ -100,7 +100,7 @@ class Experiment(EventListener):
                 Event.STOP: self._stop,
                 Event.START_EXPORT_BVH: self._start_export_bvh,
                 Event.STOP_EXPORT_BVH: self._stop_export_bvh,
-                Event.SET_CURSOR: self.update_cursor,
+                Event.SET_CURSOR: lambda event: self.update_cursor(event.content),
                 Event.PROCEED_TO_NEXT_FRAME: self._proceed_to_next_frame,
                 })
         EventListener.__init__(self, handlers=event_handlers)
@@ -171,8 +171,8 @@ class Experiment(EventListener):
             if handler in self._ui_handlers:
                 self._ui_handlers.remove(handler)
 
-    def update_cursor(self, event):
-        self.entity.set_cursor(event.content)
+    def update_cursor(self, cursor):
+        self.entity.set_cursor(cursor)
 
     def add_ui_parser_arguments(self, parser):
         from ui.ui import MainWindow

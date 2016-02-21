@@ -3,9 +3,9 @@ from dimensionality_reduction_teacher import *
 from component_analysis import ComponentAnalysis
 import pca
 import random
-from leaky_integrator import LeakyIntegrator
 import modes
 from parameters import *
+from behaviors.follow import Follow
 from behaviors.explore import Explore
 from behaviors.improvise import ImproviseParameters, Improvise
 import sklearn.neighbors
@@ -25,7 +25,6 @@ class DimensionalityReductionExperiment(Experiment):
                                      modes.EXPLORE],
                             default=modes.EXPLORE)
         parser.add_argument("--max-novelty", type=float, default=1.)
-        parser.add_argument("--plot-velocity")
         parser.add_argument("--analyze-components", action="store_true")
         parser.add_argument("--analyze-accuracy", action="store_true")
         parser.add_argument("--training-data-stats", action="store_true")
@@ -49,7 +48,6 @@ class DimensionalityReductionExperiment(Experiment):
                 Event.TARGET_FEATURES: self._handle_target_features,
                 })
         self.reduction = None
-        self._velocity_integrator = LeakyIntegrator()
         self._mode = self.args.mode
         if self.args.face_forward:
             self.entity.face_forward = True
@@ -94,10 +92,6 @@ class DimensionalityReductionExperiment(Experiment):
             storage.save([self.student, self.entity.model], self._model_path)
             storage.save(self._training_data, self._training_data_path)
 
-        elif self.args.plot_velocity:
-            self._load_model()
-            self._plot_velocity()
-
         elif self.args.analyze_components:
             self._load_model()
             ComponentAnalysis(
@@ -124,11 +118,15 @@ class DimensionalityReductionExperiment(Experiment):
             if not self.args.ui_only:
                 self._training_data = storage.load(self._training_data_path)
 
+                self._follow = self._create_follow_behavior()
                 self._explore = self._create_explore_behavior()
                 self._improvise = self._create_improvise_behavior()
                 self._behaviors = [self._explore, self._improvise]
 
             self.run_backend_and_or_ui()
+
+    def _create_follow_behavior(self):
+        return Follow(self)
 
     def _create_explore_behavior(self):
         kwargs = {}
@@ -214,8 +212,8 @@ class DimensionalityReductionExperiment(Experiment):
 
     def update(self):
         if self._mode == modes.FOLLOW:
-            self._follow()
-            self.send_event_to_ui(Event(Event.REDUCTION, self.reduction))
+            self.input = self._follow.get_input()
+            self._set_reduction(self._follow.get_reduction())
         elif self._mode == modes.IMPROVISE:
             self._set_reduction(self._improvise.get_reduction())
         elif self._mode == modes.EXPLORE:
@@ -234,57 +232,13 @@ class DimensionalityReductionExperiment(Experiment):
 
     def proceed(self):
         if self._mode == modes.FOLLOW:
-            self.entity.proceed(self.time_increment)
-            if hasattr(self, "_velocity"):
-                self.send_event_to_ui(Event(Event.VELOCITY, self._velocity))
-            self.send_event_to_ui(Event(
-                    Event.CURSOR,
-                    self.entity.get_cursor() / self.entity.get_duration()))
-            self._potentially_send_bvh_index_to_ui()
+            self._follow.proceed(self.time_increment)
         elif self._mode == modes.IMPROVISE:
             self._improvise.proceed(self.time_increment)
 
-    def update_cursor(self, event):
-        Experiment.update_cursor(self, event)
-        self._potentially_send_bvh_index_to_ui()
-
-    def _potentially_send_bvh_index_to_ui(self):
-        if self.args.bvh:
-            bvh_index = self._get_current_bvh_index()
-            self.send_event_to_ui(Event(Event.BVH_INDEX, bvh_index))
-
-    def _get_current_bvh_index(self):
-        bvh_reader = self.bvh_reader.get_reader_at_time(self.entity.get_cursor())
-        return bvh_reader.index
-            
-    def _follow(self):
-        self.input = self.get_adapted_stimulus_value()
-        next_reduction = self.student.transform(numpy.array([self.input]))[0]
-        if self.reduction is not None:
-            self._measure_velocity(
-                self.student.normalize_reduction(self.reduction),
-                self.student.normalize_reduction(next_reduction))
-        self.reduction = next_reduction
-
-    def get_adapted_stimulus_value(self):
-        return self.entity.adapt_value_to_model(self.entity.get_value())
-
-    def _measure_velocity(self, r1, r2):
-        distance = numpy.linalg.norm(r1 - r2)
-        self._velocity_integrator.integrate(
-            distance / self.time_increment, self.time_increment)
-        self._velocity = self._velocity_integrator.value()
-
-    def _plot_velocity(self):
-        f = open(self.args.plot_velocity, "w")
-        t = 0
-        self.time_increment = 1.0 / self.args.frame_rate
-        self._follow()
-        while t < self.entity.get_duration():
-            self._follow()
-            print >>f, self._velocity
-            t += self.time_increment
-        f.close()
+    def update_cursor(self, cursor):
+        Experiment.update_cursor(self, cursor)
+        self._follow.on_updated_cursor()
 
     def _handle_parameter_event(self, event):
         self._improvise_params.handle_event(event)

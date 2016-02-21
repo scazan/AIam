@@ -20,7 +20,6 @@ class DimensionalityReductionMainWindow(MainWindow):
                 Event.REDUCTION: self._handle_reduction,
                 Event.MODE: self._set_mode,
                 Event.IMPROVISE_PATH: self._set_improvise_path,
-                Event.VELOCITY: self._set_velocity,
                 Event.CURSOR: self._set_cursor,
                 Event.BVH_INDEX: self._update_bvh_selector,
                 Event.PARAMETER: self._received_parameter,
@@ -93,9 +92,6 @@ class DimensionalityReductionMainWindow(MainWindow):
     def _set_improvise_path(self, event):
         if self.toolbar.map_tab:
             self.toolbar.map_tab.set_path(numpy.array(event.content))
-
-    def _set_velocity(self, event):
-        self.toolbar.velocity_label.setText("%.3f" % event.content)
 
     def _set_cursor(self, event):
         if hasattr(self.toolbar, "cursor_slider"):
@@ -178,7 +174,6 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
             self._add_cursor_slider()
         if self.args.bvh:
             self._add_bvh_selector()
-        self._add_velocity_view()
         self._follow_tab_layout.addStretch(1)
         self.follow_tab.setLayout(self._follow_tab_layout)
         self.tabs.addTab(self.follow_tab, "Follow")
@@ -202,13 +197,6 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self.parent().send_event(Event(
                 Event.SET_CURSOR,
                 float(value) / SLIDER_PRECISION * self.parent().entity.get_duration()))
-
-    def _add_velocity_view(self):
-        layout = QtGui.QHBoxLayout()
-        layout.addWidget(QtGui.QLabel("Input velocity: "))
-        self.velocity_label = QtGui.QLabel("")
-        layout.addWidget(self.velocity_label)
-        self._follow_tab_layout.addLayout(layout)
 
     def _add_explore_tab(self):
         self.explore_tab = ModeTab(modes.EXPLORE)
