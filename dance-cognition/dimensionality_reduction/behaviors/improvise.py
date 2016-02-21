@@ -33,6 +33,10 @@ class Improvise:
             map_points=experiment.student.normalized_observed_reductions)
         if preferred_location is not None:
             self._navigator.set_preferred_location(preferred_location)
+        self._reduction = None
+
+    def set_reduction(self, reduction):
+        self._reduction = reduction
 
     def select_next_move(self):
         found_non_empty_path = False
@@ -62,13 +66,13 @@ class Improvise:
             location_preference = self.params.location_preference)
 
     def _departure(self):
-        if self.experiment.reduction is None:
+        if self._reduction is None:
             if self._preferred_location is not None:
                 return self._preferred_location
             else:
                 unnormalized_departure = numpy.array([.5] * self.experiment.args.num_components)
         else:
-            unnormalized_departure = self.experiment.reduction
+            unnormalized_departure = self._reduction
         return self.experiment.student.normalize_reduction(unnormalized_departure)
 
     def _interpolate_path(self, path_segments):

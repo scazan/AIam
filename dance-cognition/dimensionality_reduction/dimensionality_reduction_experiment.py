@@ -43,7 +43,7 @@ class DimensionalityReductionExperiment(Experiment):
         self.profiles_dir = "profiles/dimensionality_reduction"
         Experiment.__init__(self, parser, event_handlers={
                 Event.MODE: self._handle_mode_event,
-                Event.REDUCTION: self._set_reduction,
+                Event.REDUCTION: lambda event: self._set_reduction(event.content),
                 Event.PARAMETER: self._handle_parameter_event,
                 Event.ABORT_PATH: self._abort_path,
                 Event.TARGET_FEATURES: self._handle_target_features,
@@ -72,9 +72,12 @@ class DimensionalityReductionExperiment(Experiment):
     def _handle_mode_event(self, event):
         self._mode = event.content
 
-    def _set_reduction(self, event):
-        self.reduction = event.content
-        self._explore.set_reduction(self.reduction)
+    def _set_reduction(self, new_reduction):
+        if self.reduction is None or not numpy.array_equal(new_reduction, self.reduction):
+            self.reduction = new_reduction
+            for behavior in self._behaviors:
+                behavior.set_reduction(self.reduction)
+            self.send_event_to_ui(Event(Event.REDUCTION, self.reduction))
 
     def run(self):
         teacher = Teacher(self.entity, self.args.training_data_frame_rate)
@@ -122,19 +125,9 @@ class DimensionalityReductionExperiment(Experiment):
                 self._training_data = storage.load(self._training_data_path)
 
                 self._explore = self._create_explore_behavior()
+                self._improvise = self._create_improvise_behavior()
+                self._behaviors = [self._explore, self._improvise]
 
-                if self.args.preferred_location:
-                    preferred_location = numpy.array([
-                            float(s) for s in self.args.preferred_location.split(",")])
-                else:
-                    preferred_location = None
-                self._improvise_params = ImproviseParameters()
-                self._improvise_params.set_values_from_args(self.args)
-                self._improvise = Improvise(
-                    self, self._improvise_params,
-                    preferred_location,
-                    on_changed_path=lambda: \
-                        self.send_event_to_ui(Event(Event.IMPROVISE_PATH, self._improvise.path())))
             self.run_backend_and_or_ui()
 
     def _create_explore_behavior(self):
@@ -145,6 +138,20 @@ class DimensionalityReductionExperiment(Experiment):
             kwargs["feature_matcher"] = feature_matcher
             kwargs["sampled_reductions"] = sampled_reductions
         return Explore(self, **kwargs)
+
+    def _create_improvise_behavior(self):
+        if self.args.preferred_location:
+            preferred_location = numpy.array([
+                    float(s) for s in self.args.preferred_location.split(",")])
+        else:
+            preferred_location = None
+        self._improvise_params = ImproviseParameters()
+        self._improvise_params.set_values_from_args(self.args)
+        return Improvise(
+            self, self._improvise_params,
+            preferred_location,
+            on_changed_path=lambda: \
+                self.send_event_to_ui(Event(Event.IMPROVISE_PATH, self._improvise.path())))
 
     def _abort_path(self, event):
         self._improvise.select_next_move()
@@ -210,13 +217,9 @@ class DimensionalityReductionExperiment(Experiment):
             self._follow()
             self.send_event_to_ui(Event(Event.REDUCTION, self.reduction))
         elif self._mode == modes.IMPROVISE:
-            self.reduction = self._improvise.get_reduction()
-            self.send_event_to_ui(Event(Event.REDUCTION, self.reduction))
+            self._set_reduction(self._improvise.get_reduction())
         elif self._mode == modes.EXPLORE:
-            new_reduction = self._explore.get_reduction()
-            if not numpy.array_equal(new_reduction, self.reduction):
-                self.reduction = new_reduction
-                self.send_event_to_ui(Event(Event.REDUCTION, self.reduction))
+            self._set_reduction(self._explore.get_reduction())
         self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
 
         if self.args.enable_features:
