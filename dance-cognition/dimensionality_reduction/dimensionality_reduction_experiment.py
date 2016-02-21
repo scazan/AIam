@@ -6,6 +6,7 @@ import random
 from leaky_integrator import LeakyIntegrator
 import modes
 from parameters import *
+from behaviors.explore import Explore
 from behaviors.improvise import ImproviseParameters, Improvise
 import sklearn.neighbors
 
@@ -53,7 +54,6 @@ class DimensionalityReductionExperiment(Experiment):
         if self.args.face_forward:
             self.entity.face_forward = True
         if self.args.enable_features:
-            self._target_reduction = None
             self._pose_for_feature_extraction = self.bvh_reader.get_hierarchy().create_pose()
             self._feature_matcher_path = "%s/%s.features" % (self.profiles_dir, self.args.profile)
 
@@ -74,6 +74,7 @@ class DimensionalityReductionExperiment(Experiment):
 
     def _set_reduction(self, event):
         self.reduction = event.content
+        self._explore.set_reduction(self.reduction)
 
     def run(self):
         teacher = Teacher(self.entity, self.args.training_data_frame_rate)
@@ -119,9 +120,9 @@ class DimensionalityReductionExperiment(Experiment):
             self._load_model()
             if not self.args.ui_only:
                 self._training_data = storage.load(self._training_data_path)
-                if self.args.enable_features:
-                    self._feature_matcher, self._sampled_reductions = storage.load(
-                        self._feature_matcher_path)
+
+                self._explore = self._create_explore_behavior()
+
                 if self.args.preferred_location:
                     preferred_location = numpy.array([
                             float(s) for s in self.args.preferred_location.split(",")])
@@ -135,6 +136,15 @@ class DimensionalityReductionExperiment(Experiment):
                     on_changed_path=lambda: \
                         self.send_event_to_ui(Event(Event.IMPROVISE_PATH, self._improvise.path())))
             self.run_backend_and_or_ui()
+
+    def _create_explore_behavior(self):
+        kwargs = {}
+        if self.args.enable_features:
+            feature_matcher, sampled_reductions = storage.load(self._feature_matcher_path)
+            kwargs["enable_features"] = True
+            kwargs["feature_matcher"] = feature_matcher
+            kwargs["sampled_reductions"] = sampled_reductions
+        return Explore(self, **kwargs)
 
     def _abort_path(self, event):
         self._improvise.select_next_move()
@@ -203,11 +213,9 @@ class DimensionalityReductionExperiment(Experiment):
             self.reduction = self._improvise.get_reduction()
             self.send_event_to_ui(Event(Event.REDUCTION, self.reduction))
         elif self._mode == modes.EXPLORE:
-            if self.reduction is None:
-                normalized_reduction = numpy.array([.5] * self.args.num_components)
-                self.reduction = self.student.unnormalize_reduction(normalized_reduction)
-            if self.args.enable_features and self._target_reduction is not None:
-                self._move_reduction_towards_target_features()
+            new_reduction = self._explore.get_reduction()
+            if not numpy.array_equal(new_reduction, self.reduction):
+                self.reduction = new_reduction
                 self.send_event_to_ui(Event(Event.REDUCTION, self.reduction))
         self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
 
@@ -218,9 +226,7 @@ class DimensionalityReductionExperiment(Experiment):
 
     def process_and_broadcast_output(self):
         if not (self._mode == modes.EXPLORE and
-                self.args.enable_features and
-                self._target_reduction is not None and
-                self.args.show_all_feature_matches):
+                self._explore.showing_feature_matches()):
             Experiment.process_and_broadcast_output(self)
 
     def proceed(self):
@@ -285,41 +291,8 @@ class DimensionalityReductionExperiment(Experiment):
         self.send_event_to_ui(event)
 
     def _handle_target_features(self, event):
-        self._target_features = event.content
-        if self._target_features is None:
-            self._target_reduction = None
-        else:
-            distances_list, sampled_reductions_indices_list = self._feature_matcher.kneighbors(
-                self._target_features, return_distance=True)
-            distances = distances_list[0]
-            sampled_reductions_indices = sampled_reductions_indices_list[0]
-            nearest_neighbor_index = min(range(len(distances)),
-                                         key=lambda neighbor_index: distances[neighbor_index])
-            best_sampled_reductions_index = sampled_reductions_indices[nearest_neighbor_index]
-            self._target_reduction = self._sampled_reductions[best_sampled_reductions_index]
-            self._broadcast_event_to_other_uis(event)
-
-            if self.args.show_all_feature_matches:
-                match_result_as_tuples = [
-                    (self._reduction_to_processed_output(
-                            self._sampled_reductions[sampled_reductions_index]),
-                     distance)
-                    for sampled_reductions_index, distance
-                    in zip(sampled_reductions_indices, distances)]
-                self.send_event_to_ui(Event(Event.FEATURE_MATCH_RESULT, match_result_as_tuples))
-
-    def _reduction_to_processed_output(self, reduction):
-        output = self.student.inverse_transform(numpy.array([reduction]))[0]
-        return self.entity.process_output(output)
-
-    def _move_reduction_towards_target_features(self):
-        direction_vector = self._target_reduction - self.reduction
-        max_norm = self.args.feature_matching_speed
-        direction_vector_norm = numpy.linalg.norm(direction_vector)
-        if direction_vector_norm > 0:
-            if direction_vector_norm > max_norm:
-                direction_vector *= max_norm / direction_vector_norm
-            self.reduction += direction_vector
+        self._explore.set_target_features(event.content)
+        self._broadcast_event_to_other_uis(event)
 
     def _train_feature_matcher(self):
         print "training feature matcher..."
