@@ -7,8 +7,6 @@
 
 #include "Tracker.hpp"
 
-#define FPS 30
-
 extern bool verbose;
 
 Tracker::Tracker() {
@@ -26,6 +24,7 @@ openni::Status Tracker::init(int argc, char **argv) {
   float startTimeSecs = 0;
   bool overrideSmoothingFactor = false;
   float smoothingFactor = 0;
+  int fps = 30;
   skipEmptySegments = false;
   fastForwarding = false;
   viewerEnabled = false;
@@ -72,6 +71,10 @@ openni::Status Tracker::init(int argc, char **argv) {
       depthAsPoints = true;
     }
 
+    else if(strcmp(argv[i], "-fps") == 0) {
+      fps = atoi(argv[++i]);
+    }
+
     else {
       printf("failed to parse argument: %s\n", argv[i]);
       return openni::STATUS_ERROR;
@@ -87,7 +90,7 @@ openni::Status Tracker::init(int argc, char **argv) {
   status = depthStream.create(device, openni::SENSOR_DEPTH);
   if (status == openni::STATUS_OK) {
     openni::VideoMode depthMode = depthStream.getVideoMode();
-    depthMode.setFps(FPS);
+    depthMode.setFps(fps);
     depthMode.setResolution(640, 480);
     depthMode.setPixelFormat(openni::PIXEL_FORMAT_DEPTH_1_MM);
     status = depthStream.setVideoMode(depthMode); 
@@ -131,7 +134,7 @@ openni::Status Tracker::init(int argc, char **argv) {
   }
 
   if(startTimeSecs > 0) {
-    startFrameIndex = (int) (startTimeSecs * FPS);
+    startFrameIndex = (int) (startTimeSecs * fps);
     printf("Total number of frames: %d\n", device.getPlaybackControl()->getNumberOfFrames(depthStream));
     printf("Fast-forwarding to frame %d\n", startFrameIndex);
     seekingInRecording = true;
