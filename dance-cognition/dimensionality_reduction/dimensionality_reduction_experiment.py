@@ -8,6 +8,7 @@ from parameters import *
 from behaviors.follow import Follow
 from behaviors.explore import Explore
 from behaviors.improvise import ImproviseParameters, Improvise
+import sampling
 import sklearn.neighbors
 
 class DimensionalityReductionExperiment(Experiment):
@@ -262,22 +263,14 @@ class DimensionalityReductionExperiment(Experiment):
         feature_matcher.fit(feature_vectors, sampled_reductions)
         storage.save((feature_matcher, sampled_reductions), self._feature_matcher_path)
 
-    def _sample_reduction_space(self, num_training_data=100, samples_per_training_data=10):
-        sampled_reductions = []
-        for n in range(num_training_data):
-            training_data_index = int(float(n) / num_training_data * len(self._training_data))
-            parameters = self._training_data[training_data_index]
-            reduction = self.student.transform(numpy.array([parameters]))[0]
-            sampled_reductions += self._sample_reductions_around(
-                reduction, samples_per_training_data)
-        return sampled_reductions
-
-    def _sample_reductions_around(self, reduction, num_samples):
-        return [reduction + self._random_vector(magnitude=0.1)
-                for n in range(num_samples)]
-
-    def _random_vector(self, magnitude):
-        return (numpy.random.rand(self.args.num_components) - 0.5) * magnitude
+    def _sample_reduction_space(self):
+        function = lambda n: self.student.transform(numpy.array([self._training_data[n]]))[0]
+        return sampling.NeighborhoodSampler.sample(
+            function,
+            num_inputs=len(self._training_data),
+            num_neighborhoods=100,
+            samples_per_neighborhood=10,
+            neighborhood_size=0.1)
 
     def _reduction_to_feature_vector(self, reduction):
         output = self.student.inverse_transform(numpy.array([reduction]))[0]
