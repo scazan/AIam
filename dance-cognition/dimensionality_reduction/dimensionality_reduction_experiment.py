@@ -256,18 +256,19 @@ class DimensionalityReductionExperiment(Experiment):
         print "training feature matcher..."
         feature_matcher = sklearn.neighbors.KNeighborsClassifier(
             n_neighbors=self.args.num_feature_matches, weights='uniform')
-        sampled_reductions = self._sample_reduction_space()
+        sampled_normalized_reductions = self._sample_normalized_reduction_space()
+        sampled_reductions = [
+            self.student.unnormalize_reduction(normalized_reduction)
+            for normalized_reduction in sampled_normalized_reductions]
         feature_vectors = [
             self._reduction_to_feature_vector(reduction)
             for reduction in sampled_reductions]
         feature_matcher.fit(feature_vectors, sampled_reductions)
         storage.save((feature_matcher, sampled_reductions), self._feature_matcher_path)
 
-    def _sample_reduction_space(self):
-        function = lambda n: self.student.transform(numpy.array([self._training_data[n]]))[0]
+    def _sample_normalized_reduction_space(self):
         return sampling.NeighborhoodSampler.sample(
-            function,
-            num_inputs=len(self._training_data),
+            data=self.student.normalized_observed_reductions,
             num_neighborhoods=100,
             samples_per_neighborhood=10,
             neighborhood_size=0.1)

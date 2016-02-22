@@ -8,10 +8,8 @@ experiment = DimensionalityReductionExperiment(parser)
 experiment._load_model()
 
 data = experiment.student.normalized_observed_reductions
-function = lambda n: data[n]
 samples = sampling.NeighborhoodSampler.sample(
-    function,
-    num_inputs=len(data),
+    data,
     num_neighborhoods=100,
     samples_per_neighborhood=10,
     neighborhood_size=0.1)
