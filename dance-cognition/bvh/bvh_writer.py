@@ -6,6 +6,9 @@ class BvhWriter:
 
     def add_pose_as_frame(self, pose):
         frame = self._pose_to_bvh_frame(pose)
+        self.add_frame(frame)
+
+    def add_frame(self, frame):
         self._frames.append(frame)
 
     def write(self, output_path):
