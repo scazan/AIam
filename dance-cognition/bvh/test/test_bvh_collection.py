@@ -8,6 +8,7 @@ class MockScaleInfo:
     max_x = 0
     max_y = 0
     max_z = 0
+    max_pose_size = 0
 
 class MockJointDefinition:
     def __init__(self, name, joints_with_static_rotation):
@@ -45,7 +46,7 @@ class MockBvhReader:
         self._hierarchy = MockHierarchy(joints_with_static_rotation)
         self._frame_time = frame_time
 
-    def read(self):
+    def read(self, read_frames):
         pass
 
     def get_duration(self):
