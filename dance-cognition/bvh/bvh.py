@@ -282,25 +282,25 @@ class Hierarchy:
         for child_definition in joint_definition.child_definitions:
             self._pretty_print_recurse(child_definition, indent+1)
 
-    def delete_joints(self, joint_names):
-        self._delete_joints_recurse(joint_names, self._root_joint_definition)
+    def delete_joints(self, joints_to_delete):
+        self._delete_joints_recurse(joints_to_delete, self._root_joint_definition)
 
-    def _delete_joints_recurse(self, joint_names, joint_definition):
+    def _delete_joints_recurse(self, joints_to_delete, joint_definition):
         result_child_definitions = []
         for child_definition in joint_definition.child_definitions:
-            if child_definition.name not in joint_names:
+            if child_definition.name not in joints_to_delete:
                 result_child_definitions.append(child_definition)
-            self._delete_joints_recurse(joint_names, child_definition)
+            self._delete_joints_recurse(joints_to_delete, child_definition)
         joint_definition.child_definitions = result_child_definitions
 
-    def delete_joints_from_frame(self, joint_names, frame):
+    def delete_joints_from_frame(self, joints_to_delete, frame):
         result = []
         self._delete_joints_from_frame_recurse(
-            joint_names, frame, self._root_joint_definition, result)
+            joints_to_delete, frame, self._root_joint_definition, result)
         return result
 
-    def _delete_joints_from_frame_recurse(self, joint_names, frame, joint_definition, result, frame_data_index=0, skip_children=False):
-        if joint_definition.name in joint_names or skip_children:
+    def _delete_joints_from_frame_recurse(self, joints_to_delete, frame, joint_definition, result, frame_data_index=0, skip_children=False):
+        if joint_definition.name in joints_to_delete or skip_children:
             frame_data_index += len(joint_definition.channels)
             skip_children = True
         else:
@@ -311,7 +311,7 @@ class Hierarchy:
 
         for child_definition in joint_definition.child_definitions:
             frame_data_index = self._delete_joints_from_frame_recurse(
-                joint_names, frame, child_definition, result, frame_data_index, skip_children)
+                joints_to_delete, frame, child_definition, result, frame_data_index, skip_children)
 
         return frame_data_index
 
