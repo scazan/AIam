@@ -28,3 +28,10 @@ class KMeansSampler:
         kmeans = sklearn.cluster.KMeans(n_clusters=num_samples)
         kmeans.fit(data)
         return kmeans.cluster_centers_
+
+class MiniBatchKMeansSampler:
+    @classmethod
+    def sample(cls, data, num_samples):
+        kmeans = sklearn.cluster.MiniBatchKMeans(n_clusters=num_samples)
+        kmeans.fit(data)
+        return kmeans.cluster_centers_
