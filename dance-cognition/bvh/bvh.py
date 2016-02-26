@@ -291,7 +291,14 @@ class Hierarchy:
             if child_definition.name not in joints_to_delete:
                 result_child_definitions.append(child_definition)
             self._delete_joints_recurse(joints_to_delete, child_definition)
+        if len(result_child_definitions) == 0 and len(joint_definition.child_definitions) > 0:
+            result_child_definitions.append(self._create_end_node())
         joint_definition.child_definitions = result_child_definitions
+
+    def _create_end_node(self):
+        joint_definition = JointDefinition(name="End Site", index=None, channels=[], is_end=True)
+        joint_definition.offset = (0, 0, 0)
+        return joint_definition
 
     def delete_joints_from_frame(self, joints_to_delete, frame):
         result = []
