@@ -1,3 +1,10 @@
+# Outputs data file which can be used e.g. with gnuplot.
+#
+# Example usage:
+# gnuplot> plot "observations.dat" with points pointsize 0.1 pointtype 7 lc rgb "red", "./samples.dat"  with points pointsize 0.1 pointtype 7 lc rgb "blue"
+#
+# observations.dat can be generated with plot_observations.py
+
 from dimensionality_reduction.dimensionality_reduction_experiment import *
 
 parser = ArgumentParser()
