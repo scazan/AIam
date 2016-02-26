@@ -1,4 +1,5 @@
 import numpy
+import sklearn.cluster
 
 class NeighborhoodSampler:
     @classmethod
@@ -20,3 +21,10 @@ class NeighborhoodSampler:
     @classmethod
     def _random_vector(cls, num_dimensions, magnitude):
         return (numpy.random.rand(num_dimensions) - 0.5) * magnitude
+
+class KMeansSampler:
+    @classmethod
+    def sample(cls, data, num_samples):
+        kmeans = sklearn.cluster.KMeans(n_clusters=num_samples)
+        kmeans.fit(data)
+        return kmeans.cluster_centers_

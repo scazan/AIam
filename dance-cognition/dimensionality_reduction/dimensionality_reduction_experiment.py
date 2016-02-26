@@ -267,11 +267,9 @@ class DimensionalityReductionExperiment(Experiment):
         storage.save((feature_matcher, sampled_reductions), self._feature_matcher_path)
 
     def _sample_normalized_reduction_space(self):
-        return sampling.NeighborhoodSampler.sample(
+        return sampling.KMeansSampler.sample(
             data=self.student.normalized_observed_reductions,
-            num_neighborhoods=100,
-            samples_per_neighborhood=10,
-            neighborhood_size=0.1)
+            num_samples=500)
 
     def _reduction_to_feature_vector(self, reduction):
         output = self.student.inverse_transform(numpy.array([reduction]))[0]
