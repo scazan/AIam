@@ -7,6 +7,7 @@ import storage
 from bvh.bvh_collection import BvhCollection
 import imp
 from stopwatch import Stopwatch
+from fps_meter import FpsMeter
 import threading
 from event import Event
 from event_listener import EventListener
@@ -93,6 +94,7 @@ class Experiment(EventListener):
         parser.add_argument("--output-receiver-type", choices=["bvh", "world"], default="bvh")
         parser.add_argument("--with-profiler", action="store_true")
         parser.add_argument("--z-up", action="store_true", help="Use Z-up for BVHs")
+        parser.add_argument("--show-fps", action="store_true")
 
     def __init__(self, parser, event_handlers={}):
         event_handlers.update({
@@ -155,6 +157,8 @@ class Experiment(EventListener):
         self.entity = entity_class(self)
         self._running = True
         self.stopwatch = Stopwatch()
+        if self.args.show_fps:
+            self._fps_meter = FpsMeter()
         self._frame_count = 0
         self._ui_handlers = set()
         self._ui_handlers_lock = threading.Lock()
@@ -235,6 +239,8 @@ class Experiment(EventListener):
         else:
             if self.is_running():
                 self.time_increment = self.now - self.previous_frame_time
+                if self.args.show_fps:
+                    self._fps_meter.update()
                 self.proceed()
 
                 self.entity.update()

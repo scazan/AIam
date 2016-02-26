@@ -7,8 +7,6 @@ import numpy
 from parameters import *
 from event import Event
 from event_listener import EventListener
-from stopwatch import Stopwatch
-from fps_meter import FpsMeter
 from parameters_form import ParametersForm
 from color_schemes import *
 from exporter import Exporter
@@ -235,7 +233,6 @@ class MainWindow(Window, EventListener):
         parser.add_argument("--image-margin", type=int, default=0)
         parser.add_argument("--ui-event-log-target")
         parser.add_argument("--ui-event-log-source")
-        parser.add_argument("--show-fps", action="store_true")
         parser.add_argument("--floor-renderer",
                             choices=FLOOR_RENDERERS.keys())
 
@@ -282,11 +279,7 @@ class MainWindow(Window, EventListener):
         self.setLayout(self.outer_vertical_layout)
 
         self._set_color_scheme(self.args.color_scheme)
-        self.time_increment = 0
-        self._stopwatch = Stopwatch()
-        self._frame_count = 0
-        if self.args.show_fps:
-            self._fps_meter = FpsMeter()
+        self.time_increment = 1.0 / FRAME_RATE
 
         self._update_timer = QtCore.QTimer(self)
         self._update_timer.setInterval(1000. / FRAME_RATE)
@@ -497,19 +490,6 @@ class MainWindow(Window, EventListener):
         scheme_name = str(checked_action.data().toString())
         self._set_color_scheme(scheme_name, caused_by_menu=True)
 
-    def _refresh(self):
-        self._now = self._stopwatch.get_elapsed_time()
-        if self._frame_count == 0:
-            self._stopwatch.start()
-        else:
-            self.time_increment = self._now - self._previous_frame_time
-            if self.args.show_fps:
-                self._fps_meter.update()
-            self.toolbar.refresh()
-
-        self._previous_frame_time = self._now
-        self._frame_count += 1
-
     def keyPressEvent(self, event):
         key = event.key()
         if key == QtCore.Qt.Key_Escape:
@@ -527,7 +507,6 @@ class MainWindow(Window, EventListener):
 
     def _handle_output(self, event):
         self._scene.received_output(event.content)
-        self._refresh()
 
     def send_event(self, event):
         event.source = "PythonUI"
