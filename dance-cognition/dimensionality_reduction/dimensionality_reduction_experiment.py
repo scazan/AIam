@@ -275,7 +275,7 @@ class DimensionalityReductionExperiment(Experiment):
 
     def _sample_normalized_reduction_space(self):
         return sampling.KMeansSampler.sample(
-            data=self.student.normalized_observed_reductions,
+            observations=self.student.normalized_observed_reductions,
             num_samples=500)
 
     def _reduction_to_feature_vector(self, reduction):

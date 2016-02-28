@@ -4,12 +4,12 @@ import sklearn.neighbors
 
 class NeighborhoodSampler:
     @classmethod
-    def sample(cls, data, num_neighborhoods, samples_per_neighborhood, neighborhood_size):
-        num_inputs = len(data)
+    def sample(cls, observations, num_neighborhoods, samples_per_neighborhood, neighborhood_size):
+        num_inputs = len(observations)
         result = []
         for n in range(num_neighborhoods):
-            data_index = int(float(n) / num_neighborhoods * num_inputs)
-            datum = data[data_index]
+            observation_index = int(float(n) / num_neighborhoods * num_inputs)
+            datum = observations[observation_index]
             result += cls._sample_neighborhood(datum, samples_per_neighborhood, neighborhood_size)
         return result
 
@@ -25,36 +25,36 @@ class NeighborhoodSampler:
 
 class KMeansSampler:
     @classmethod
-    def sample(cls, data, num_samples):
+    def sample(cls, observations, num_samples):
         kmeans = sklearn.cluster.KMeans(n_clusters=num_samples)
-        kmeans.fit(data)
+        kmeans.fit(observations)
         return kmeans.cluster_centers_
 
 class MiniBatchKMeansSampler:
     @classmethod
-    def sample(cls, data, num_samples):
+    def sample(cls, observations, num_samples):
         kmeans = sklearn.cluster.MiniBatchKMeans(n_clusters=num_samples)
-        kmeans.fit(data)
+        kmeans.fit(observations)
         return kmeans.cluster_centers_
 
 class DistanceDistributionEqualizationSampler:
-    def sample(self, data, num_samples):
-        self._data = data
+    def sample(self, observations, num_samples):
+        self._observations = observations
         self._knn = sklearn.neighbors.KNeighborsClassifier(n_neighbors=2)
-        indices = range(len(data))
-        self._knn.fit(data, indices)
+        indices = range(len(observations))
+        self._knn.fit(observations, indices)
         indices_sorted_by_nearest_neighbor_distance = sorted(
             indices,
             key=lambda index: self._distance_to_nearest_neighbor(index))
         linear_index_distribution = [
-            int(n) for n in numpy.arange(0, len(data), float(len(data))/num_samples)]
+            int(n) for n in numpy.arange(0, len(observations), float(len(observations))/num_samples)]
         sampled_indices = [
             indices_sorted_by_nearest_neighbor_distance[index]
             for index in linear_index_distribution]
-        return [data[index] for index in sampled_indices]
+        return [observations[index] for index in sampled_indices]
 
     def _distance_to_nearest_neighbor(self, index):
-        observation = self._data[index]
+        observation = self._observations[index]
         distances_list, _ = self._knn.kneighbors(observation, return_distance=True)
         distances = distances_list[0]
         return max(distances)
