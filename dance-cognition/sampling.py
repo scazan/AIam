@@ -58,3 +58,24 @@ class DistanceDistributionEqualizationSampler:
         distances_list, _ = self._knn.kneighbors(observation, return_distance=True)
         distances = distances_list[0]
         return max(distances)
+
+class MinDistanceSampler:
+    @classmethod
+    def sample(cls, observations, min_distance, num_neighbors_ratio=0.01):
+        knn = sklearn.neighbors.KNeighborsClassifier(
+            n_neighbors=int(len(observations) * num_neighbors_ratio))
+        indices = range(len(observations))
+        knn.fit(observations, indices)
+        dropped_indices = set()
+        for index, observation in zip(indices, observations):
+            distances_list, neighbor_indices_list = knn.kneighbors(observation)
+            distances = distances_list[0]
+            neighbor_indices = neighbor_indices_list[0]
+            for neighbor_index, distance in zip(neighbor_indices, distances):
+                if (neighbor_index != index and
+                    distance < min_distance and
+                    neighbor_index not in dropped_indices):
+                    dropped_indices.add(index)
+                    break
+        sampled_indices = set(indices) - dropped_indices
+        return [observations[index] for index in sampled_indices]
