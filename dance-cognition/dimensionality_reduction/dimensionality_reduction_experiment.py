@@ -253,17 +253,24 @@ class DimensionalityReductionExperiment(Experiment):
         self._broadcast_event_to_other_uis(event)
 
     def _train_feature_matcher(self):
-        print "training feature matcher..."
+        print "training feature matcher:"
         feature_matcher = sklearn.neighbors.KNeighborsClassifier(
             n_neighbors=self.args.num_feature_matches, weights='uniform')
+        print "sampling training data of size %s..." % len(
+            self.student.normalized_observed_reductions)
         sampled_normalized_reductions = self._sample_normalized_reduction_space()
+        print "selected %s samples" % len(sampled_normalized_reductions)
         sampled_reductions = [
             self.student.unnormalize_reduction(normalized_reduction)
             for normalized_reduction in sampled_normalized_reductions]
+        print "extracting features from samples..."
         feature_vectors = [
             self._reduction_to_feature_vector(reduction)
             for reduction in sampled_reductions]
+        print "ok"
+        print "training feature matcher on samples..."
         feature_matcher.fit(feature_vectors, sampled_reductions)
+        print "ok"
         storage.save((feature_matcher, sampled_reductions), self._feature_matcher_path)
 
     def _sample_normalized_reduction_space(self):
