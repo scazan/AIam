@@ -27,7 +27,7 @@ class Event:
         self.source = None
 
     def __str__(self):
-        return "Event(%r, %r)" % (self.type, self.content)
+        return "Event(%r, %r, source=%s)" % (self.type, self.content, self.source)
 
     def __repr__(self):
         return str(self)

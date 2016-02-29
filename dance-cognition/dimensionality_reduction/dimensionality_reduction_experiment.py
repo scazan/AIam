@@ -43,7 +43,7 @@ class DimensionalityReductionExperiment(Experiment):
         self.profiles_dir = "profiles/dimensionality_reduction"
         Experiment.__init__(self, parser, event_handlers={
                 Event.MODE: self._handle_mode_event,
-                Event.REDUCTION: lambda event: self._set_reduction(event.content),
+                Event.REDUCTION: self._handle_reduction,
                 Event.PARAMETER: self._handle_parameter_event,
                 Event.ABORT_PATH: self._abort_path,
                 Event.TARGET_FEATURES: self._handle_target_features,
@@ -70,11 +70,21 @@ class DimensionalityReductionExperiment(Experiment):
     def _handle_mode_event(self, event):
         self._mode = event.content
 
-    def _set_reduction(self, new_reduction):
+    def _handle_reduction(self, event):
+        new_reduction = event.content
         if self.reduction is None or not numpy.array_equal(new_reduction, self.reduction):
             self.reduction = new_reduction
             for behavior in self._behaviors:
                 behavior.set_reduction(self.reduction)
+            self.send_event_to_ui(event)
+
+    def _set_reduction_from_behavior(self, behavior):
+        new_reduction = behavior.get_reduction()
+        if self.reduction is None or not numpy.array_equal(new_reduction, self.reduction):
+            self.reduction = new_reduction
+            for other_behavior in self._behaviors:
+                if other_behavior != behavior:
+                    behavior.set_reduction(self.reduction)
             self.send_event_to_ui(Event(Event.REDUCTION, self.reduction))
 
     def run(self):
@@ -213,11 +223,11 @@ class DimensionalityReductionExperiment(Experiment):
     def update(self):
         if self._mode == modes.FOLLOW:
             self.input = self._follow.get_input()
-            self._set_reduction(self._follow.get_reduction())
+            self._set_reduction_from_behavior(self._follow)
         elif self._mode == modes.IMPROVISE:
-            self._set_reduction(self._improvise.get_reduction())
+            self._set_reduction_from_behavior(self._improvise)
         elif self._mode == modes.EXPLORE:
-            self._set_reduction(self._explore.get_reduction())
+            self._set_reduction_from_behavior(self._explore)
         self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
 
         if self.args.enable_features:
