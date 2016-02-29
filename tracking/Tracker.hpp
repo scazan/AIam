@@ -9,7 +9,7 @@
 
 #define OSC_HOST "127.0.0.1"
 #define OSC_PORT 15002
-#define OSC_BUFFER_SIZE 1024
+#define OSC_BUFFER_SIZE 4096
 
 class Tracker;
 

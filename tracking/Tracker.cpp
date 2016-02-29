@@ -346,6 +346,11 @@ void Tracker::addJointData(osc::OutboundPacketStream &stream,
 	 << joint.getPosition().y
 	 << joint.getPosition().z
 	 << joint.getPositionConfidence()
+	 << joint.getOrientation().w
+	 << joint.getOrientation().x
+	 << joint.getOrientation().y
+	 << joint.getOrientation().z
+	 << joint.getOrientationConfidence()
 	 << osc::EndMessage;
 }
 

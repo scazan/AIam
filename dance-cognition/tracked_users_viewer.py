@@ -8,6 +8,7 @@ import numpy
 from ui.scene import Scene
 from ui.window import Window
 from ui.floor_grid import FloorGrid
+from transformations import euler_from_quaternion
 text_renderer_module = __import__("text_renderer")
 
 CAMERA_Y_SPEED = 1
@@ -25,6 +26,8 @@ CENTER_POSITION_SYMBOL_SIZE = 200
 TRACKER_PITCH_SPEED = .1
 TRACKER_Y_POSITION_SPEED = .5
 ASSUMED_VIEW_DISTANCE = 5000
+ORIENTATION_ARROW_LENGTH = 1000
+ORIENTATION_ARROWHEAD_SIZE = 100
 
 class TrackedUsersScene(Scene):
     def __init__(self, parent):
@@ -124,6 +127,8 @@ class TrackedUsersScene(Scene):
         self._draw_label(user)
         self._draw_intensity(user)
         self._draw_skeleton(user)
+        if self.parent().orientation_action.isChecked():
+            self._draw_orientation(user)
 
     def _draw_skeleton(self, user):
         if self.args.joint_size > 0:
@@ -220,8 +225,8 @@ class TrackedUsersScene(Scene):
             user.get_joint(name1).get_position(),
             user.get_joint(name2).get_position())
 
-        confidence = min([user.get_joint(name1).get_confidence(),
-                          user.get_joint(name2).get_confidence()])
+        confidence = min([user.get_joint(name1).get_position_confidence(),
+                          user.get_joint(name2).get_position_confidence()])
 
         self._draw_solid_limb(user, confidence, vertices)
         self._draw_limb_shadow(user, confidence, vertices)
@@ -307,6 +312,27 @@ class TrackedUsersScene(Scene):
             center_x=self.parent().interpreter.active_area_center_x,
             center_z=self.parent().interpreter.active_area_center_z,
             radius=self.parent().interpreter.active_area_radius)
+
+    def _draw_orientation(self, user):
+        torso = user.get_joint("torso")
+        euler_xyz = euler_from_quaternion(torso.get_orientation(), axes="rxyz")
+        y_orientation = euler_xyz[1]
+        y = self.parent().floor_y
+        x, _, z = torso.get_position()
+        a = 1 - (.8 - torso.get_orientation_confidence() * .8)        
+        glColor4f(0, 1, 0, a)
+        glPushMatrix()
+        glTranslatef(x, y, z)
+        glRotatef(math.degrees(y_orientation + math.pi/2), 0, 1, 0)
+        glBegin(GL_LINES)
+        glVertex3f(0, 0, 0)
+        glVertex3f(ORIENTATION_ARROW_LENGTH, 0, 0)
+        glVertex3f(ORIENTATION_ARROW_LENGTH, 0, 0)
+        glVertex3f(ORIENTATION_ARROW_LENGTH-ORIENTATION_ARROWHEAD_SIZE, 0, -ORIENTATION_ARROWHEAD_SIZE)
+        glVertex3f(ORIENTATION_ARROW_LENGTH, 0, 0)
+        glVertex3f(ORIENTATION_ARROW_LENGTH-ORIENTATION_ARROWHEAD_SIZE, 0, +ORIENTATION_ARROWHEAD_SIZE)
+        glEnd()
+        glPopMatrix()
 
     def _print_positions(self):
         for user in self.parent().interpreter.get_users():
@@ -454,6 +480,7 @@ class TrackedUsersViewer(Window):
         self._add_show_field_of_view_action()
         self._add_fullscreen_action()
         self._add_auto_refresh_action()
+        self._add_orientation_action()
 
     def _add_show_field_of_view_action(self):
         self.show_field_of_view_action = QtGui.QAction('Show field of view', self)
@@ -482,6 +509,12 @@ class TrackedUsersViewer(Window):
         self.auto_refresh_action.setShortcut('r')
         self._view_menu.addAction(self.auto_refresh_action)
         self.auto_refresh_action.toggle()
+
+    def _add_orientation_action(self):
+        self.orientation_action = QtGui.QAction('Orientation', self)
+        self.orientation_action.setCheckable(True)
+        self.orientation_action.setShortcut('o')
+        self._view_menu.addAction(self.orientation_action)
 
     def _create_replay_menu(self):
         self._replay_menu = self._menu_bar.addMenu("Replay")

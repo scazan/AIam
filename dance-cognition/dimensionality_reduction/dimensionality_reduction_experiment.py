@@ -10,6 +10,7 @@ from behaviors.explore import Explore
 from behaviors.improvise import ImproviseParameters, Improvise
 import sampling
 import sklearn.neighbors
+from transformations import euler_from_quaternion
 
 class DimensionalityReductionExperiment(Experiment):
     @staticmethod
@@ -36,7 +37,6 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--feature-matching-speed", type=float, default=1.5)
         parser.add_argument("--num-feature-matches", type=int, default=1)
         parser.add_argument("--show-all-feature-matches", action="store_true")
-        parser.add_argument("--face-forward", action="store_true")
         ImproviseParameters().add_parser_arguments(parser)
 
     def __init__(self, parser):
@@ -47,11 +47,11 @@ class DimensionalityReductionExperiment(Experiment):
                 Event.PARAMETER: self._handle_parameter_event,
                 Event.ABORT_PATH: self._abort_path,
                 Event.TARGET_FEATURES: self._handle_target_features,
+                Event.ROOT_ORIENTATION: self._handle_root_orientation,
+                Event.TARGET_ROOT_Y_ORIENTATION: self._handle_target_root_y_orientation,
                 })
         self.reduction = None
         self._mode = self.args.mode
-        if self.args.face_forward:
-            self.entity.face_forward = True
         if self.args.enable_features:
             self._pose_for_feature_extraction = self.bvh_reader.get_hierarchy().create_pose()
             self._feature_matcher_path = "%s/%s.features" % (self.profiles_dir, self.args.profile)
@@ -287,6 +287,15 @@ class DimensionalityReductionExperiment(Experiment):
 
     def should_read_bvh_frames(self):
         return self.args.train or self.args.mode == modes.FOLLOW
+
+    def _handle_root_orientation(self, event):
+        quaternion = event.content
+        euler_xyz = euler_from_quaternion(quaternion, axes="rxyz")
+        y_orientation = euler_xyz[1]
+        self.send_event_to_ui(Event(Event.TARGET_ROOT_Y_ORIENTATION, y_orientation))
+
+    def _handle_target_root_y_orientation(self, event):
+        self.entity.root_y_orientation = event.content
 
 class StillsExporter:
     def __init__(self, experiment, stills_data_path):

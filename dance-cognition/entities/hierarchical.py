@@ -45,7 +45,7 @@ class Entity(BaseEntity):
             self._coordinate_up = 1
         self._normalized_constrainers = self._create_constrainers()
         self._unnormalized_constrainers = self._create_constrainers()
-        self.face_forward = False
+        self.root_y_orientation = None
         if self.args.enable_features:
             self.feature_extractor = FeatureExtractor(self._coordinate_up)
 
@@ -168,26 +168,26 @@ class Entity(BaseEntity):
         parameter_index += self.rotation_parametrization.num_parameters
         radians = self.rotation_parametrization.parameters_to_rotation(
             rotation_parameters, joint.definition.axes)
-        if self.face_forward and joint.parent is None:
-            radians = self._orient_forward(radians, joint.definition.axes)
+        if self.root_y_orientation is not None and joint.parent is None:
+            radians = self._reorient_y(radians, joint.definition.axes)
         joint.angles = radians
         return parameter_index
 
-    def _orient_forward(self, euler_angles, axes):
+    def _reorient_y(self, euler_angles, axes):
         if axes[1] == "y":
-            return self._orient_forward_y_first(euler_angles)
+            return self._reorient_y_with_y_first_in_axes(euler_angles)
         else:
             euler_angles_yxz = euler_from_quaternion(
                 quaternion_from_euler(*euler_angles, axes=axes),
                 axes="ryxz")
-            euler_angles_yxz_forward = self._orient_forward_y_first(euler_angles_yxz)
+            euler_angles_yxz_reoriented = self._reorient_y_with_y_first_in_axes(euler_angles_yxz)
             return euler_from_quaternion(
-                quaternion_from_euler(*euler_angles_yxz_forward, axes="ryxz"),
+                quaternion_from_euler(*euler_angles_yxz_reoriented, axes="ryxz"),
                 axes=axes)
 
-    def _orient_forward_y_first(self, euler_angles):
+    def _reorient_y_with_y_first_in_axes(self, euler_angles):
         euler_angles = list(euler_angles)
-        euler_angles[0] = 0
+        euler_angles[0] = self.root_y_orientation
         return euler_angles
 
     def parameters_to_processed_pose(self, parameters, output_pose):

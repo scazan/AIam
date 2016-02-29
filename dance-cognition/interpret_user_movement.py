@@ -76,8 +76,14 @@ class Joint:
     def get_position(self):
         return self._interpreter.adjust_tracked_position(self._previous_position)
 
-    def get_confidence(self):
-        return self._confidence
+    def get_orientation(self):
+        return self._orientation
+
+    def get_position_confidence(self):
+        return self._position_confidence
+
+    def get_orientation_confidence(self):
+        return self._orientation_confidence
 
     def get_intensity(self):
         return sum(self._intensity_buffer) / self._buffer_size
@@ -93,8 +99,14 @@ class Joint:
             self._intensity_buffer.append(movement)
         self._previous_position = new_position
 
-    def set_confidence(self, confidence):
-        self._confidence = confidence
+    def set_orientation(self, *quaternion):
+        self._orientation = quaternion
+
+    def set_position_confidence(self, position_confidence):
+        self._position_confidence = position_confidence
+
+    def set_orientation_confidence(self, orientation_confidence):
+        self._orientation_confidence = orientation_confidence
 
 class User:
     def __init__(self, user_id, interpreter):
@@ -108,9 +120,9 @@ class User:
             frame_time = 1.0 / args.input_frame_rate
             self._bvh_writer = BvhWriter(interpreter.hierarchy, frame_time)
 
-    def handle_joint_data(self, joint_name, x, y, z, confidence):
+    def handle_joint_data(self, joint_name, *args):
         if self._should_consider_joint(joint_name):
-            self._process_joint_data(joint_name, x, y, z, confidence)
+            self._process_joint_data(joint_name, *args)
 
     def _should_consider_joint(self, joint_name):
         if args.with_viewer:
@@ -118,11 +130,17 @@ class User:
         else:
             return joint_name in CONSIDERED_JOINTS
 
-    def _process_joint_data(self, joint_name, x, y, z, confidence):
+    def _process_joint_data(self, joint_name,
+                            position_x, position_y, position_z,
+                            position_confidence,
+                            orientation_w, orientation_x, orientation_y, orientation_z,
+                            orientation_confidence):
         self._ensure_joint_exists(joint_name)
         joint = self._joints[joint_name]
-        joint.set_position(x, y, z)
-        joint.set_confidence(confidence)
+        joint.set_position(position_x, position_y, position_z)
+        joint.set_position_confidence(position_confidence)
+        joint.set_orientation(orientation_w, orientation_x, orientation_y, orientation_z)
+        joint.set_orientation_confidence(orientation_confidence)
         if joint_name == "torso":
             self._distance_to_center = None
         self._last_updated_joint = joint_name
@@ -248,7 +266,7 @@ class UserMovementInterpreter:
         osc_receiver = OscReceiver(OSC_PORT)
         osc_receiver.add_method("/begin_session", "", self._handle_begin_session)
         osc_receiver.add_method("/begin_frame", "f", self._handle_begin_frame)
-        osc_receiver.add_method("/joint", "isffff", self._handle_joint_data)
+        osc_receiver.add_method("/joint", "isfffffffff", self._handle_joint_data)
         osc_receiver.add_method("/state", "is", self._handle_user_state)
         osc_receiver.start()
 
@@ -297,9 +315,8 @@ class UserMovementInterpreter:
                        "joint_data": []}
 
     def _handle_joint_data(self, path, values, types, src, user_data):
-        user_id, joint_name, x, y, z, confidence = values
         if self._frame is not None:
-            self._frame["joint_data"].append((user_id, joint_name, x, y, z, confidence))
+            self._frame["joint_data"].append(values)
 
     def _handle_user_state(self, path, values, types, src, user_data):
         user_id, state = values
@@ -328,14 +345,18 @@ class UserMovementInterpreter:
             features = self._extract_features()
             self._output_controller.send_features(features)
 
+        if self._selected_user is not None:
+            self._output_controller.send_root_orientation(
+                self._selected_user.get_joint("torso").get_orientation())
+
         if args.with_viewer:
             viewer.process_frame(self._frame)
 
-    def _process_joint_data(self, user_id, joint_name, x, y, z, confidence):
+    def _process_joint_data(self, user_id, *args):
         if user_id not in self._users:
             self._users[user_id] = User(user_id, self)
         user = self._users[user_id]
-        user.handle_joint_data(joint_name, x, y, z, confidence)
+        user.handle_joint_data(*args)
 
     def _process_user_state(self, user_id, state):
         if state == "lost":
@@ -478,6 +499,9 @@ class OutputController:
 
     def send_features(self, features):
         self._event_sender.send_event(Event(Event.TARGET_FEATURES, features))
+
+    def send_root_orientation(self, orientation):
+        self._event_sender.send_event(Event(Event.ROOT_ORIENTATION, list(orientation)))
 
 class MockEventSender:
     def send_event(self, event):
