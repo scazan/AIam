@@ -3,6 +3,8 @@ from ui.ui import *
 MIN_OUTPUT_STRENGTH = 0.75
 MIN_LINE_WIDTH = 1.5
 MAX_LINE_WIDTH = 3.0
+ORIENTATION_ARROW_LENGTH = 1
+ORIENTATION_ARROWHEAD_SIZE = 0.1
 
 class Scene(BvhScene):
     @staticmethod
@@ -132,3 +134,18 @@ class Scene(BvhScene):
     def _render_feature_match(self, processed_output, opacity):
         self._draw_io(
             processed_output, self.draw_output, self.args.output_y_offset, opacity=opacity)
+
+    def render_root_y_orientation(self, root_y_orientation):
+        glColor3f(0, 1, 0)
+        glPushMatrix()
+        # glTranslatef(x, 0, z)
+        glRotatef(math.degrees(root_y_orientation + math.pi/2), 0, 1, 0)
+        glBegin(GL_LINES)
+        glVertex3f(0, 0, 0)
+        glVertex3f(ORIENTATION_ARROW_LENGTH, 0, 0)
+        glVertex3f(ORIENTATION_ARROW_LENGTH, 0, 0)
+        glVertex3f(ORIENTATION_ARROW_LENGTH-ORIENTATION_ARROWHEAD_SIZE, 0, -ORIENTATION_ARROWHEAD_SIZE)
+        glVertex3f(ORIENTATION_ARROW_LENGTH, 0, 0)
+        glVertex3f(ORIENTATION_ARROW_LENGTH-ORIENTATION_ARROWHEAD_SIZE, 0, +ORIENTATION_ARROWHEAD_SIZE)
+        glEnd()
+        glPopMatrix()

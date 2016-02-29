@@ -131,6 +131,9 @@ class DimensionalityReductionMainWindow(MainWindow):
     def _handle_target_root_y_orientation(self, event):
         self.toolbar.handle_target_root_y_orientation(event.content)
 
+    def get_root_y_orientation(self):
+        return self.toolbar.get_root_y_orientation()
+
 class DimensionalityReductionToolbar(ExperimentToolbar):
     def __init__(self, *args):
         ExperimentToolbar.__init__(self, *args)
@@ -264,13 +267,15 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._send_root_orientation()
 
     def _send_root_orientation(self):
+        self.parent().client.send_event(
+            Event(Event.TARGET_ROOT_Y_ORIENTATION, self.get_root_y_orientation()))
+
+    def get_root_y_orientation(self):
         if self._root_y_orientation_checkbox.checkState() == QtCore.Qt.Checked:
-            target_root_y_orientation = float(
+            return float(
                 self._root_y_orientation_slider.value()) / SLIDER_PRECISION * math.pi*2
         else:
-            target_root_y_orientation = None
-        self.parent().client.send_event(
-            Event(Event.TARGET_ROOT_Y_ORIENTATION, target_root_y_orientation))
+            return None
 
     def _root_y_orientation_changed(self, event):
         self._send_root_orientation()

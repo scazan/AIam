@@ -100,6 +100,10 @@ class BvhScene(Scene):
             self._draw_focus()
         self._update_camera_translation()
         self.render_io()
+        if self._parent.orientation_action.isChecked():
+            root_y_orientation = self._parent.get_root_y_orientation()
+            if root_y_orientation is not None:
+                self.render_root_y_orientation(root_y_orientation)
         if self._exporting_video:
             self._exporter.export_frame()
             self._parent.send_event(Event(Event.PROCEED_TO_NEXT_FRAME))
@@ -205,6 +209,9 @@ class BvhScene(Scene):
             v[self.bvh_coordinate_left],
             v[self.bvh_coordinate_up],
             v[self.bvh_coordinate_far])
+
+    def get_root_y_orientation(self):
+        pass
 
 class ExperimentToolbar(QtGui.QWidget):
     def __init__(self, parent, args):
@@ -385,6 +392,8 @@ class MainWindow(Window, EventListener):
         self._add_follow_action()
         self._add_focus_action()
         self._add_floor_action()
+        if self.args.entity == "hierarchical":
+            self._add_orientation_action()
 
     def _add_toolbar_action(self):
         self._toolbar_action = QtGui.QAction('Toolbar', self)
@@ -450,6 +459,12 @@ class MainWindow(Window, EventListener):
 
     def _toggled_floor(self):
         self._scene.view_floor = self._floor_action.isChecked()
+
+    def _add_orientation_action(self):
+        self.orientation_action = QtGui.QAction("Orientation", self)
+        self.orientation_action.setCheckable(True)
+        self.orientation_action.setShortcut("o")
+        self._view_menu.addAction(self.orientation_action)
 
     def _create_color_scheme_menu(self):
         menu = self._menu_bar.addMenu("Color scheme")
