@@ -47,7 +47,6 @@ class DimensionalityReductionExperiment(Experiment):
                 Event.PARAMETER: self._handle_parameter_event,
                 Event.ABORT_PATH: self._abort_path,
                 Event.TARGET_FEATURES: self._handle_target_features,
-                Event.ROOT_ORIENTATION: self._handle_root_orientation,
                 Event.TARGET_ROOT_Y_ORIENTATION: self._handle_target_root_y_orientation,
                 })
         self.reduction = None
@@ -287,12 +286,6 @@ class DimensionalityReductionExperiment(Experiment):
 
     def should_read_bvh_frames(self):
         return self.args.train or self.args.mode == modes.FOLLOW
-
-    def _handle_root_orientation(self, event):
-        quaternion = event.content
-        euler_xyz = euler_from_quaternion(quaternion, axes="rxyz")
-        y_orientation = euler_xyz[1]
-        self.send_event_to_ui(Event(Event.TARGET_ROOT_Y_ORIENTATION, y_orientation))
 
     def _handle_target_root_y_orientation(self, event):
         self.entity.root_y_orientation = event.content

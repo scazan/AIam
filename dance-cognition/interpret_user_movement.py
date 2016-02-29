@@ -15,7 +15,7 @@ from websocket_client import WebsocketClient
 from event_listener import EventListener
 from event import Event
 from tracked_users_viewer import TrackedUsersViewer
-from transformations import rotation_matrix
+from transformations import rotation_matrix, euler_from_quaternion
 from filters import OneEuroFilter
 from bvh.bvh_writer import BvhWriter
 from bvh.bvh import HierarchyCreator
@@ -119,6 +119,10 @@ class User:
         if args.export_bvh:
             frame_time = 1.0 / args.input_frame_rate
             self._bvh_writer = BvhWriter(interpreter.hierarchy, frame_time)
+        self._root_orientation_buffer_size = max(int(args.orientation_smoothing_factor * FPS), 1)
+        self._root_orientation_buffer = collections.deque(
+            numpy.zeros(4) * self._root_orientation_buffer_size,
+            maxlen=self._root_orientation_buffer_size)
 
     def handle_joint_data(self, joint_name, *args):
         if self._should_consider_joint(joint_name):
@@ -154,6 +158,7 @@ class User:
 
     def _process_frame(self):
         self._intensity = self._measure_intensity()
+        self._process_root_orientation()
         if args.export_bvh:
             self._add_bvh_frame()
         self._num_updated_joints = 0
@@ -163,6 +168,12 @@ class User:
             self.get_joint(joint_name).get_intensity()
             for joint_name in JOINTS_DETERMNING_INTENSITY]) / \
                 len(JOINTS_DETERMNING_INTENSITY)
+
+    def _process_root_orientation(self):
+        self._root_orientation_buffer.append(numpy.array(self.get_joint("torso").get_orientation()))
+        smoothed_root_orientation = sum(self._root_orientation_buffer) / self._root_orientation_buffer_size
+        self._smoothed_root_y_orientation = euler_from_quaternion(
+            smoothed_root_orientation, axes="rxyz")[1]
 
     def get_intensity(self):
         return self._intensity
@@ -204,6 +215,9 @@ class User:
         print "saving %s" % filename
         self._bvh_writer.write(filename)
 
+    def get_root_y_orientation(self):
+        return self._smoothed_root_y_orientation
+        
 class UserMovementInterpreter:
     WAITING = "waiting"
     ADAPTING_TO_USER = "adapting to user"
@@ -346,8 +360,8 @@ class UserMovementInterpreter:
             self._output_controller.send_features(features)
 
         if self._selected_user is not None:
-            self._output_controller.send_root_orientation(
-                self._selected_user.get_joint("torso").get_orientation())
+            self._output_controller.send_root_y_orientation(
+                self._selected_user.get_root_y_orientation())
 
         if args.with_viewer:
             viewer.process_frame(self._frame)
@@ -500,8 +514,8 @@ class OutputController:
     def send_features(self, features):
         self._event_sender.send_event(Event(Event.TARGET_FEATURES, features))
 
-    def send_root_orientation(self, orientation):
-        self._event_sender.send_event(Event(Event.ROOT_ORIENTATION, list(orientation)))
+    def send_root_y_orientation(self, y_orientation):
+        self._event_sender.send_event(Event(Event.TARGET_ROOT_Y_ORIENTATION, y_orientation))
 
 class MockEventSender:
     def send_event(self, event):
@@ -519,6 +533,7 @@ parser.add_argument("--enable-1euro-filter", action="store_true", default=True)
 parser.add_argument("--1euro-mincutoff", dest="one_euro_mincutoff", type=float, default=0.3)
 parser.add_argument("--1euro-beta", dest="one_euro_beta", type=float, default=0.001)
 parser.add_argument("--1euro-dcutoff", dest="one_euro_dcutoff", type=float, default=1.0)
+parser.add_argument("--orientation-smoothing-factor", type=float, default=0.5)
 parser.add_argument("--log-source")
 parser.add_argument("--log-target")
 parser.add_argument("--auto-restart-log", action="store_true")
