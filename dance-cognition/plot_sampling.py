@@ -1,7 +1,7 @@
 # Outputs data file which can be used e.g. with gnuplot.
 #
 # Example usage:
-# gnuplot> plot "observations.dat" with points pointsize 0.1 pointtype 7 lc rgb "red", "./samples.dat"  with points pointsize 0.1 pointtype 7 lc rgb "blue"
+# gnuplot> plot "observations.dat" with points pointsize 0.5 pointtype 7 lc rgb "#a08080", "./samples.dat"  with points pointsize 1 pointtype 2 lc rgb "#0000ff"
 #
 # observations.dat can be generated with plot_observations.py
 
