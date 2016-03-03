@@ -42,9 +42,7 @@ class Improvise:
         found_non_empty_path = False
         while not found_non_empty_path:
             path_segments = self._generate_path()
-            print "path_segments", len(path_segments)
             self._path = self._interpolate_path(path_segments)
-            print "interpolated path", len(self._path)
             if len(self._path) > 0:
                 found_non_empty_path = True
         self._path_follower = self._create_path_follower(self._path)
