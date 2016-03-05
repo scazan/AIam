@@ -68,6 +68,9 @@ class MapWidget(QtOpenGL.QGLWidget):
         self.set_dimensions(dimensions)
         self._dragging = False
         self._enabled = False
+        self._mode_specific_renderers = {
+            modes.IMPROVISE: ImproviseMapViewRenderer(self),
+            }
 
     def set_dimensions(self, dimensions):
         self._dimensions = dimensions
@@ -75,7 +78,6 @@ class MapWidget(QtOpenGL.QGLWidget):
             :,dimensions]
         self._split_into_segments(observations)
         self._reduction = None
-        self._path = None
         self._observations_layer.refresh()
 
     def _split_into_segments(self, observations):
@@ -95,9 +97,6 @@ class MapWidget(QtOpenGL.QGLWidget):
     def set_reduction(self, reduction_all_dimensions):
         self._reduction_all_dimensions = reduction_all_dimensions
         self._reduction = reduction_all_dimensions[self._dimensions]
-
-    def set_path(self, path):
-        self._path = path[:,self._dimensions]
 
     def set_enabled(self, enabled):
         self._enabled = enabled
@@ -127,18 +126,23 @@ class MapWidget(QtOpenGL.QGLWidget):
         glMatrixMode(GL_MODELVIEW)
         glTranslatef(self._margin, self._margin, 0)
         self._observations_layer.draw()
-        if self._path is not None:
-            self._render_path()
+        self._render_according_to_mode()
         if self._reduction is not None:
             self._render_reduction()
+
+    def _render_according_to_mode(self):
+        toolbar = self._parent.parent().parent().parent()
+        mode = toolbar.get_mode()
+        if mode in self._mode_specific_renderers:
+            self._mode_specific_renderers[mode].render()
 
     def _render_observations(self):
         glColor4f(0, 0, 0, .1)
         glLineWidth(1.0)
         for segment in self._segments:
-            self._render_segment(segment)
+            self.render_line_strip(segment)
 
-    def _render_segment(self, segment):
+    def render_line_strip(self, segment):
         glBegin(GL_LINE_STRIP)
         for vertex in segment:
             glVertex2f(*self._vertex(*self._normalized_reduction_to_explored_range(vertex)))
@@ -150,15 +154,6 @@ class MapWidget(QtOpenGL.QGLWidget):
         glBegin(GL_POINTS)
         glVertex2f(*self._vertex(*self._normalized_reduction_to_explored_range(self._reduction)))
         glEnd()
-
-    def _render_path(self):
-        glPushAttrib(GL_ENABLE_BIT)
-        glLineStipple(4, 0xAAAA)
-        glEnable(GL_LINE_STIPPLE)
-        glColor4f(0, 0, 0, .6)
-        glLineWidth(2.0)
-        self._render_segment(self._path)
-        glPopAttrib()
 
     def _vertex(self, x, y):
         return x*self._width, y*self._height
@@ -194,3 +189,22 @@ class MapWidget(QtOpenGL.QGLWidget):
     def _normalized_reduction_value_to_explored_range(self, n, value):
         return self._parent.normalized_reduction_value_to_exploration_value(
             self._dimensions[n], value)
+
+class ImproviseMapViewRenderer:
+    def __init__(self, map_view):
+        self._map_view = map_view
+
+    def render(self):
+        toolbar = self._map_view.parent().parent().parent().parent()
+        path = toolbar.get_improvise_path()
+        if path is not None:
+            self._render_path(path)
+
+    def _render_path(self, path):
+        glPushAttrib(GL_ENABLE_BIT)
+        glLineStipple(4, 0xAAAA)
+        glEnable(GL_LINE_STIPPLE)
+        glColor4f(0, 0, 0, .6)
+        glLineWidth(2.0)
+        self._map_view.render_line_strip(path)
+        glPopAttrib()

@@ -89,11 +89,11 @@ class DimensionalityReductionMainWindow(MainWindow):
         print "saved reduction data to %s" % REDUCTION_PLOT_PATH
 
     def _set_mode(self, event):
-        self.toolbar.set_mode(event.content)
+        mode = event.content
+        self.toolbar.set_mode(mode)
 
     def _set_improvise_path(self, event):
-        if self.toolbar.map_tab:
-            self.toolbar.map_tab.set_path(numpy.array(event.content))
+        self.toolbar.set_improvise_path(numpy.array(event.content))
 
     def _set_cursor(self, event):
         if hasattr(self.toolbar, "cursor_slider"):
@@ -145,12 +145,17 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self.setLayout(self._layout)
         self.set_mode(self.args.mode)
         self._activate_current_mode()
+        self._improvise_path = None
 
     def set_mode(self, mode):
+        self._mode = mode
         mode_tab = self._mode_tabs[mode]
         self._changing_mode_non_interactively = True
         self.tabs.setCurrentWidget(mode_tab)
         self._changing_mode_non_interactively = False
+
+    def get_mode(self):
+        return self._mode
 
     def _add_mode_tabs(self):
         self._parameter_sets = {}
@@ -472,6 +477,12 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._parameter_sets[parameters.__class__.__name__] = {
             "parameters": parameters,
             "form": form}
+
+    def set_improvise_path(self, path):
+        self._improvise_path = path
+
+    def get_improvise_path(self):
+        return self._improvise_path
 
 class ModeTab(QtGui.QWidget):
     def __init__(self, mode_id):
