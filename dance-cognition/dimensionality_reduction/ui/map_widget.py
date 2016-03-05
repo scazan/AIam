@@ -29,7 +29,7 @@ class MapTab(ReductionTab, QtGui.QWidget):
 
     def _add_map_widget(self):
         self._map_widget = MapWidget(self, self._dimensions)
-        self._map_widget.setFixedSize(370, 370)
+        self._map_widget.setFixedSize(270, 270)
         self._map_layout.addWidget(self._map_widget)
 
     def _add_map_dimension_checkboxes(self):

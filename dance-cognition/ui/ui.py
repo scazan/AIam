@@ -17,7 +17,7 @@ from floor_spots import FloorSpots
 from floor_checkerboard import FloorCheckerboard
 import shutil
 
-TOOLBAR_WIDTH = 400
+TOOLBAR_HEIGHT = 350
 SLIDER_PRECISION = 1000
 FOCUS_RADIUS = .75
 VIDEO_EXPORT_PATH = "rendered_video"
@@ -262,7 +262,7 @@ class MainWindow(Window, EventListener):
         self.outer_vertical_layout.setMargin(0)
         self.outer_vertical_layout.setContentsMargins(0, 0, 0, 0)
 
-        inner_horizontal_layout = QtGui.QHBoxLayout()
+        inner_vertical_layout = QtGui.QVBoxLayout()
 
         size_policy = QtGui.QSizePolicy(
             QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
@@ -272,17 +272,17 @@ class MainWindow(Window, EventListener):
         self._scene = scene_widget_class(self, bvh_reader, args)
         self._scene.setSizePolicy(size_policy)
         self._create_menu()
-        inner_horizontal_layout.addWidget(self._scene)
+        inner_vertical_layout.addWidget(self._scene)
 
         self.toolbar = toolbar_class(self, args)
         if self.args.no_toolbar:
             self._hide_toolbar()
         else:
             self._show_toolbar()
-        inner_horizontal_layout.addWidget(self.toolbar)
+        inner_vertical_layout.addWidget(self.toolbar)
 
-        inner_horizontal_layout.setAlignment(self.toolbar, QtCore.Qt.AlignTop)
-        self.outer_vertical_layout.addLayout(inner_horizontal_layout)
+        inner_vertical_layout.setAlignment(self.toolbar, QtCore.Qt.AlignTop)
+        self.outer_vertical_layout.addLayout(inner_vertical_layout)
         self.setLayout(self.outer_vertical_layout)
 
         self._set_color_scheme(self.args.color_scheme)
@@ -410,10 +410,10 @@ class MainWindow(Window, EventListener):
             self._hide_toolbar()
 
     def _show_toolbar(self):
-        self.toolbar.setFixedSize(TOOLBAR_WIDTH, self.args.preferred_height)
+        self.toolbar.setFixedSize(self.args.preferred_width, TOOLBAR_HEIGHT)
 
     def _hide_toolbar(self):
-        self.toolbar.setFixedSize(0, self.args.preferred_height)
+        self.toolbar.setFixedSize(self.args.preferred_width, 0)
 
     def _add_fullscreen_action(self):
         self._fullscreen_action = QtGui.QAction('Fullscreen', self)

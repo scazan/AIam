@@ -137,7 +137,7 @@ class DimensionalityReductionMainWindow(MainWindow):
 class DimensionalityReductionToolbar(ExperimentToolbar):
     def __init__(self, *args):
         ExperimentToolbar.__init__(self, *args)
-        self._layout = QtGui.QVBoxLayout()
+        self._layout = QtGui.QHBoxLayout()
         self._add_mode_tabs()
         self._add_reduction_tabs()
         if self.args.enable_features:
@@ -422,6 +422,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._target_features_sliders = FeatureSliders(self, self.parent().entity.feature_extractor)
         layout.addLayout(self._create_target_features_checkbox_layout())
         layout.addWidget(self._target_features_sliders)
+        layout.addStretch(1)
         self._target_features_tab_widget.addTab(self._target_features_sliders_tab, "Target features")
         self._layout.addWidget(self._target_features_tab_widget)
 
