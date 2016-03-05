@@ -224,6 +224,9 @@ class ExperimentToolbar(QtGui.QWidget):
     def add_parameter_fields(self, parameters, parent):
         return ParametersForm(parameters, parent)
 
+    def get_event_handlers(self):
+        return {}
+
 class MainWindow(Window, EventListener):
     @staticmethod
     def add_parser_arguments(parser):
@@ -251,10 +254,12 @@ class MainWindow(Window, EventListener):
         self.student = student
         self.args = args
 
+        self.toolbar = toolbar_class(self, args)
         event_handlers.update({
                 Event.INPUT: self._handle_input,
                 Event.OUTPUT: self._handle_output,
                 })
+        event_handlers.update(self.toolbar.get_event_handlers())
         EventListener.__init__(self, handlers=event_handlers)
 
         self.outer_vertical_layout = QtGui.QVBoxLayout()
@@ -274,7 +279,6 @@ class MainWindow(Window, EventListener):
         self._create_menu()
         inner_vertical_layout.addWidget(self._scene)
 
-        self.toolbar = toolbar_class(self, args)
         if self.args.no_toolbar:
             self._hide_toolbar()
         else:

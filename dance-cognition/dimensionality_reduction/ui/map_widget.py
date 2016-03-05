@@ -190,12 +190,13 @@ class MapWidget(QtOpenGL.QGLWidget):
         return self._parent.normalized_reduction_value_to_exploration_value(
             self._dimensions[n], value)
 
-class ImproviseMapViewRenderer:
+class MapViewRenderer:
     def __init__(self, map_view):
-        self._map_view = map_view
+        self.map_view = map_view
 
+class ImproviseMapViewRenderer(MapViewRenderer):
     def render(self):
-        toolbar = self._map_view.parent().parent().parent().parent()
+        toolbar = self.map_view.parent().parent().parent().parent()
         path = toolbar.get_improvise_path()
         if path is not None:
             self._render_path(path)
@@ -206,5 +207,5 @@ class ImproviseMapViewRenderer:
         glEnable(GL_LINE_STIPPLE)
         glColor4f(0, 0, 0, .6)
         glLineWidth(2.0)
-        self._map_view.render_line_strip(path)
+        self.map_view.render_line_strip(path)
         glPopAttrib()

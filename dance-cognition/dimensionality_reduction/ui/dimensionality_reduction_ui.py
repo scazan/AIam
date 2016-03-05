@@ -20,7 +20,6 @@ class DimensionalityReductionMainWindow(MainWindow):
         MainWindow.__init__(self, *args, event_handlers={
                 Event.REDUCTION: self._handle_reduction,
                 Event.MODE: self._set_mode,
-                Event.IMPROVISE_PATH: self._set_improvise_path,
                 Event.CURSOR: self._set_cursor,
                 Event.BVH_INDEX: self._update_bvh_selector,
                 Event.PARAMETER: self._received_parameter,
@@ -92,9 +91,6 @@ class DimensionalityReductionMainWindow(MainWindow):
         mode = event.content
         self.toolbar.set_mode(mode)
 
-    def _set_improvise_path(self, event):
-        self.toolbar.set_improvise_path(numpy.array(event.content))
-
     def _set_cursor(self, event):
         if hasattr(self.toolbar, "cursor_slider"):
             self.toolbar.cursor_slider.setValue(event.content * SLIDER_PRECISION)
@@ -146,6 +142,9 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self.set_mode(self.args.mode)
         self._activate_current_mode()
         self._improvise_path = None
+
+    def get_event_handlers(self):
+        return {Event.IMPROVISE_PATH: self._set_improvise_path}
 
     def set_mode(self, mode):
         self._mode = mode
@@ -478,8 +477,8 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
             "parameters": parameters,
             "form": form}
 
-    def set_improvise_path(self, path):
-        self._improvise_path = path
+    def _set_improvise_path(self, event):
+        self._improvise_path = numpy.array(event.content)
 
     def get_improvise_path(self):
         return self._improvise_path
