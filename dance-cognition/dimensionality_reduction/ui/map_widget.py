@@ -52,7 +52,7 @@ class MapTab(ReductionTab, QtGui.QWidget):
             lambda n: self._map_dimension_checkboxes[n].checkState() == QtCore.Qt.Checked,
             range(self.student.n_components))
         if len(checked_dimensions) == 2:
-            self._map_widget.set_dimensions(checked_dimensions)
+            self._map_widget.dimensions_changed(checked_dimensions)
             self._map_widget.set_reduction(self._reduction)
 
     def reduction_changed_interactively(self):
@@ -82,8 +82,14 @@ class MapWidget(QtOpenGL.QGLWidget):
             result += renderer.get_event_handlers().items()
         return result
 
+    def dimensions_changed(self, dimensions):
+        self.set_dimensions(dimensions)
+        mode_specific_renderer = self._get_mode_specific_renderer()
+        if mode_specific_renderer is not None:
+            mode_specific_renderer.dimensions_changed()
+
     def set_dimensions(self, dimensions):
-        self._dimensions = dimensions
+        self.dimensions = dimensions
         observations = self.student.normalized_observed_reductions[
             :,dimensions]
         self._split_into_segments(observations)
@@ -106,7 +112,7 @@ class MapWidget(QtOpenGL.QGLWidget):
 
     def set_reduction(self, reduction_all_dimensions):
         self._reduction_all_dimensions = reduction_all_dimensions
-        self._reduction = reduction_all_dimensions[self._dimensions]
+        self._reduction = reduction_all_dimensions[self.dimensions]
 
     def set_enabled(self, enabled):
         self._enabled = enabled
@@ -192,15 +198,15 @@ class MapWidget(QtOpenGL.QGLWidget):
             x = event.x()
             y = event.y()
             self._reduction[0] = self._parent.exploration_value_to_normalized_reduction_value(
-                self._dimensions[0], float(x - self._margin) / self._width)
+                self.dimensions[0], float(x - self._margin) / self._width)
             self._reduction[1] = self._parent.exploration_value_to_normalized_reduction_value(
-                self._dimensions[1], float(y - self._margin) / self._height)
+                self.dimensions[1], float(y - self._margin) / self._height)
             self._parent.reduction_changed_interactively()
             
     def get_reduction(self):
         reduction = self._reduction_all_dimensions
-        reduction[self._dimensions[0]] = self._reduction[0]
-        reduction[self._dimensions[1]] = self._reduction[1]
+        reduction[self.dimensions[0]] = self._reduction[0]
+        reduction[self.dimensions[1]] = self._reduction[1]
         return reduction
 
     def _normalized_reduction_to_explored_range(self, reduction):
@@ -210,7 +216,7 @@ class MapWidget(QtOpenGL.QGLWidget):
 
     def _normalized_reduction_value_to_explored_range(self, n, value):
         return self._parent.normalized_reduction_value_to_exploration_value(
-            self._dimensions[n], value)
+            self.dimensions[n], value)
 
 class MapViewRenderer:
     def __init__(self, map_view):
@@ -218,6 +224,9 @@ class MapViewRenderer:
 
     def should_render_observations(self):
         return True
+
+    def dimensions_changed(self):
+        pass
 
 class ImproviseMapViewRenderer(MapViewRenderer):
     def __init__(self, *args, **kwargs):
@@ -240,7 +249,7 @@ class ImproviseMapViewRenderer(MapViewRenderer):
         glEnable(GL_LINE_STIPPLE)
         glColor4f(0, 0, 0, .6)
         glLineWidth(2.0)
-        self.map_view.render_line_strip(path)
+        self.map_view.render_line_strip(path[:,self.map_view.dimensions])
         glPopAttrib()
 
 class FlaneurMapViewRenderer(MapViewRenderer):
@@ -265,16 +274,18 @@ class FlaneurMapViewRenderer(MapViewRenderer):
         glPointSize(1.0)
         glBegin(GL_POINTS)
         for map_point in self.map_view.student.flaneur_map_points:
-            self.map_view.vertex(map_point)
+            self.map_view.vertex(map_point[:,self.map_view.dimensions])
         glEnd()
 
     def _render_neighbors_center(self):
         glColor3f(.8, .2, .2)
         glPointSize(3.0)
         glBegin(GL_POINTS)
-        self.map_view.vertex(self._neighbors_center)
+        self.map_view.vertex(self._neighbors_center[:,self.map_view.dimensions])
         glEnd()
 
     def should_render_observations(self):
         return False
 
+    def dimensions_changed(self):
+        self._map_points_layer.refresh()
