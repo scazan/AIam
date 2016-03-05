@@ -505,7 +505,8 @@ class OutputController:
         for name, value in parameters.iteritems():
             self._event_sender.send_event(
                 Event(Event.PARAMETER,
-                      {"name": name,
+                      {"class": "ImproviseParameters",
+                       "name": name,
                        "value": value}))
 
     def abort_path(self):

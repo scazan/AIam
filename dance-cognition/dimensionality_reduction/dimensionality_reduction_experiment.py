@@ -8,6 +8,7 @@ from parameters import *
 from behaviors.follow import Follow
 from behaviors.explore import Explore
 from behaviors.improvise import ImproviseParameters, Improvise
+from behaviors.flaneur_behavior import FlaneurBehavior, FlaneurParameters
 import sampling
 import sklearn.neighbors
 from transformations import euler_from_quaternion
@@ -24,7 +25,8 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--mode",
                             choices=[modes.FOLLOW,
                                      modes.IMPROVISE,
-                                     modes.EXPLORE],
+                                     modes.EXPLORE,
+                                     modes.FLANEUR],
                             default=modes.EXPLORE)
         parser.add_argument("--max-novelty", type=float, default=1.)
         parser.add_argument("--analyze-components", action="store_true")
@@ -38,6 +40,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--num-feature-matches", type=int, default=1)
         parser.add_argument("--show-all-feature-matches", action="store_true")
         ImproviseParameters().add_parser_arguments(parser)
+        FlaneurParameters().add_parser_arguments(parser)
 
     def __init__(self, parser):
         self.profiles_dir = "profiles/dimensionality_reduction"
@@ -60,12 +63,19 @@ class DimensionalityReductionExperiment(Experiment):
         handler.send_event(Event(Event.MODE, self._mode))
         if self.reduction is not None:
             handler.send_event(Event(Event.REDUCTION, self.reduction))
-        self._improvise_params.add_notifier(handler)
+        self._improvise_params.add_listener(self._send_changed_parameter)
         self._improvise_params.notify_changed_all()
 
     def ui_disconnected(self, handler):
         Experiment.ui_disconnected(self, handler)
-        self._improvise_params.remove_notifier(handler)
+        self._improvise_params.remove_listener(self._send_changed_parameter)
+
+    def _send_changed_parameter(self, parameter):
+        self.send_event_to_ui(Event(
+                Event.PARAMETER,
+                {"class": parameter.parameters.__class__.__name__,
+                 "name": parameter.name,
+                 "value": parameter.value()}))
 
     def _handle_mode_event(self, event):
         self._mode = event.content
@@ -128,10 +138,12 @@ class DimensionalityReductionExperiment(Experiment):
             if not self.args.ui_only:
                 self._training_data = storage.load(self._training_data_path)
 
+                self._parameter_sets = {}
                 self._follow = self._create_follow_behavior()
                 self._explore = self._create_explore_behavior()
                 self._improvise = self._create_improvise_behavior()
-                self._behaviors = [self._explore, self._improvise]
+                self._flaneur_behavior = self._create_flaneur_behavior()
+                self._behaviors = [self._explore, self._improvise, self._flaneur_behavior]
 
             self.run_backend_and_or_ui()
 
@@ -155,11 +167,21 @@ class DimensionalityReductionExperiment(Experiment):
             preferred_location = None
         self._improvise_params = ImproviseParameters()
         self._improvise_params.set_values_from_args(self.args)
+        self._add_parameter_set(self._improvise_params)
         return Improvise(
             self, self._improvise_params,
             preferred_location,
             on_changed_path=lambda: \
                 self.send_event_to_ui(Event(Event.IMPROVISE_PATH, self._improvise.path())))
+
+    def _create_flaneur_behavior(self):
+        self._flaneur_params = FlaneurParameters()
+        self._flaneur_params.set_values_from_args(self.args)
+        self._add_parameter_set(self._flaneur_params)
+        return FlaneurBehavior(self, self._flaneur_params)
+
+    def _add_parameter_set(self, parameters):
+        self._parameter_sets[parameters.__class__.__name__] = parameters
 
     def _abort_path(self, event):
         self._improvise.select_next_move()
@@ -228,6 +250,8 @@ class DimensionalityReductionExperiment(Experiment):
             self._set_reduction_from_behavior(self._improvise)
         elif self._mode == modes.EXPLORE:
             self._set_reduction_from_behavior(self._explore)
+        elif self._mode == modes.FLANEUR:
+            self._set_reduction_from_behavior(self._flaneur_behavior)
         self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
 
         if self.args.enable_features:
@@ -245,13 +269,19 @@ class DimensionalityReductionExperiment(Experiment):
             self._follow.proceed(self.time_increment)
         elif self._mode == modes.IMPROVISE:
             self._improvise.proceed(self.time_increment)
+        elif self._mode == modes.FLANEUR:
+            self._flaneur_behavior.proceed(self.time_increment)
 
     def update_cursor(self, cursor):
         Experiment.update_cursor(self, cursor)
         self._follow.on_updated_cursor()
 
     def _handle_parameter_event(self, event):
-        self._improvise_params.handle_event(event)
+        class_name = event.content["class"]
+        parameters = self._parameter_sets[class_name]
+        parameter_name = event.content["name"]
+        parameter = parameters.get_parameter(parameter_name)
+        parameter.set_value(event.content["value"])
         self._broadcast_event_to_other_uis(event)
 
     def _broadcast_event_to_other_uis(self, event):

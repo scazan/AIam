@@ -153,12 +153,14 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._changing_mode_non_interactively = False
 
     def _add_mode_tabs(self):
+        self._parameter_sets = {}
         self.tabs = QtGui.QTabWidget()
         self._mode_tabs = {}
         if self.args.mode == modes.FOLLOW:
             self._add_follow_tab()
         self._add_explore_tab()
         self._add_improvise_tab()
+        self._add_flaneur_tab()
         self.tabs.currentChanged.connect(self._changed_mode_tab)
         self._layout.addWidget(self.tabs)
         self._changing_mode_non_interactively = False
@@ -289,16 +291,29 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self.improvise_tab = ModeTab(modes.IMPROVISE)
         self._improvise_tab_layout = QtGui.QVBoxLayout()
         self._improvise_params = ImproviseParameters()
-        self._improvise_params.add_notifier(self.parent().client)
+        self._improvise_params.add_listener(self._send_changed_parameter)
         self._improvise_params_form = self.add_parameter_fields(
             self._improvise_params, self._improvise_tab_layout)
         self.improvise_tab.setLayout(self._improvise_tab_layout)
         self.tabs.addTab(self.improvise_tab, "Improvise")
         self._mode_tabs[modes.IMPROVISE] = self.improvise_tab
+        self._add_parameter_set(self._improvise_params, self._improvise_params_form)
+
+    def _send_changed_parameter(self, parameter):
+        self.parent().client.send_event(Event(
+                Event.PARAMETER,
+                {"class": parameter.parameters.__class__.__name__,
+                 "name": parameter.name,
+                 "value": parameter.value()}))
 
     def received_parameter(self, event):
-        self._improvise_params.handle_event(event)
-        self._improvise_params_form.update_field(event.content["name"])
+        class_name = event.content["class"]
+        parameter_set = self._parameter_sets[class_name]
+        parameters = parameter_set["parameters"]
+        parameter_name = event.content["name"]
+        parameter = parameters.get_parameter(parameter_name)
+        parameter.set_value(event.content["value"], notify=False)
+        parameter_set["form"].update_field(parameter_name)
 
     def _add_reduction_tabs(self):
         self._set_exploration_ranges()
@@ -439,6 +454,23 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
     def features_changed_interactively(self):
         features = self._target_features_sliders.get_features()
         self.parent().send_event(Event(Event.TARGET_FEATURES, features))
+
+    def _add_flaneur_tab(self):
+        self.flaneur_tab = ModeTab(modes.FLANEUR)
+        self._flaneur_tab_layout = QtGui.QVBoxLayout()
+        self._flaneur_params = FlaneurParameters()
+        self._flaneur_params.add_listener(self._send_changed_parameter)
+        self._flaneur_params_form = self.add_parameter_fields(
+            self._flaneur_params, self._flaneur_tab_layout)
+        self.flaneur_tab.setLayout(self._flaneur_tab_layout)
+        self.tabs.addTab(self.flaneur_tab, "Flaneur")
+        self._mode_tabs[modes.FLANEUR] = self.flaneur_tab
+        self._add_parameter_set(self._flaneur_params, self._flaneur_params_form)
+
+    def _add_parameter_set(self, parameters, form):
+        self._parameter_sets[parameters.__class__.__name__] = {
+            "parameters": parameters,
+            "form": form}
 
 class ModeTab(QtGui.QWidget):
     def __init__(self, mode_id):
