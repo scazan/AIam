@@ -171,13 +171,13 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._changing_mode_non_interactively = False
 
     def _changed_mode_tab(self):
+        self._mode = self.tabs.currentWidget()._mode_id
         self._activate_current_mode()
         if not self._changing_mode_non_interactively:
-            self.parent().send_event(
-                Event(Event.MODE, self.tabs.currentWidget()._mode_id))
+            self.parent().send_event(Event(Event.MODE, self._mode))
 
     def _activate_current_mode(self):
-        exploring = (self.tabs.currentWidget() == self.explore_tab)
+        exploring = (self._mode == modes.EXPLORE)
         for n in range(self._reduction_tabs.count()):
             tab = self._reduction_tabs.widget(n)
             tab.set_enabled(exploring)
@@ -375,7 +375,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._reduction_tabs.currentWidget().reduction_changed(normalized_reduction)
 
     def refresh(self):
-        if self.tabs.currentWidget() != self.explore_tab:
+        if self._mode != modes.EXPLORE:
             normalized_reduction = self.parent().student.normalize_reduction(
                 self.parent().reduction)
             self._update_current_reduction_widget(normalized_reduction)
