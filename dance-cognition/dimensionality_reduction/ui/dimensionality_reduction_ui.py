@@ -141,10 +141,12 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self.setLayout(self._layout)
         self.set_mode(self.args.mode)
         self._activate_current_mode()
-        self._improvise_path = None
 
     def get_event_handlers(self):
-        return {Event.IMPROVISE_PATH: self._set_improvise_path}
+        if self.map_tab:
+            return self.map_tab.get_event_handlers()
+        else:
+            return {}
 
     def set_mode(self, mode):
         self._mode = mode
@@ -476,12 +478,6 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._parameter_sets[parameters.__class__.__name__] = {
             "parameters": parameters,
             "form": form}
-
-    def _set_improvise_path(self, event):
-        self._improvise_path = numpy.array(event.content)
-
-    def get_improvise_path(self):
-        return self._improvise_path
 
 class ModeTab(QtGui.QWidget):
     def __init__(self, mode_id):

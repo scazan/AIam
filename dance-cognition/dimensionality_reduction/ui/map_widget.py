@@ -14,6 +14,9 @@ class MapTab(ReductionTab, QtGui.QWidget):
         self._map_layout.addStretch(1)
         self.setLayout(self._map_layout)
 
+    def get_event_handlers(self):
+        return self._map_widget.get_event_handlers()
+
     def set_path(self, path):
         self._map_widget.set_path(path)
 
@@ -71,6 +74,12 @@ class MapWidget(QtOpenGL.QGLWidget):
         self._mode_specific_renderers = {
             modes.IMPROVISE: ImproviseMapViewRenderer(self),
             }
+
+    def get_event_handlers(self):
+        result = []
+        for renderer in self._mode_specific_renderers.values():
+            result += renderer.get_event_handlers().items()
+        return result
 
     def set_dimensions(self, dimensions):
         self._dimensions = dimensions
@@ -195,11 +204,19 @@ class MapViewRenderer:
         self.map_view = map_view
 
 class ImproviseMapViewRenderer(MapViewRenderer):
+    def __init__(self, *args, **kwargs):
+        MapViewRenderer.__init__(self, *args, **kwargs)
+        self._improvise_path = None
+
+    def get_event_handlers(self):
+        return {Event.IMPROVISE_PATH: self._set_improvise_path}
+
+    def _set_improvise_path(self, event):
+        self._improvise_path = numpy.array(event.content)
+
     def render(self):
-        toolbar = self.map_view.parent().parent().parent().parent()
-        path = toolbar.get_improvise_path()
-        if path is not None:
-            self._render_path(path)
+        if self._improvise_path is not None:
+            self._render_path(self._improvise_path)
 
     def _render_path(self, path):
         glPushAttrib(GL_ENABLE_BIT)
