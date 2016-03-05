@@ -1,5 +1,6 @@
 from flaneur import Flaneur
 from parameters import *
+from event import Event
 
 class FlaneurParameters(Parameters):
     def __init__(self):
@@ -23,6 +24,8 @@ class FlaneurBehavior:
 
     def proceed(self, time_increment):
         self._flaneur.proceed(time_increment)
+        self._experiment.send_event_to_ui(
+            Event(Event.NEIGHBORS_CENTER, self._flaneur.get_neighbors_center()))
 
     def get_reduction(self):
         normalized_position = self._flaneur.get_position()

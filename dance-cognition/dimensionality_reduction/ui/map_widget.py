@@ -73,6 +73,7 @@ class MapWidget(QtOpenGL.QGLWidget):
         self._enabled = False
         self._mode_specific_renderers = {
             modes.IMPROVISE: ImproviseMapViewRenderer(self),
+            modes.FLANEUR: FlaneurMapViewRenderer(self),
             }
 
     def get_event_handlers(self):
@@ -154,18 +155,19 @@ class MapWidget(QtOpenGL.QGLWidget):
     def render_line_strip(self, segment):
         glBegin(GL_LINE_STRIP)
         for vertex in segment:
-            glVertex2f(*self._vertex(*self._normalized_reduction_to_explored_range(vertex)))
+            self.vertex(vertex)
         glEnd()
 
     def _render_reduction(self):
         glColor3f(0, 0, 0)
         glPointSize(5.0)
         glBegin(GL_POINTS)
-        glVertex2f(*self._vertex(*self._normalized_reduction_to_explored_range(self._reduction)))
+        self.vertex(self._reduction)
         glEnd()
 
-    def _vertex(self, x, y):
-        return x*self._width, y*self._height
+    def vertex(self, reduction):
+        x, y = self._normalized_reduction_to_explored_range(reduction)
+        glVertex2f(x*self._width, y*self._height)
 
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton and self._enabled:
@@ -226,3 +228,22 @@ class ImproviseMapViewRenderer(MapViewRenderer):
         glLineWidth(2.0)
         self.map_view.render_line_strip(path)
         glPopAttrib()
+
+class FlaneurMapViewRenderer(MapViewRenderer):
+    def __init__(self, *args, **kwargs):
+        MapViewRenderer.__init__(self, *args, **kwargs)
+        self._neighbors_center = None
+
+    def get_event_handlers(self):
+        return {Event.NEIGHBORS_CENTER: self._set_neighbors_center}
+
+    def _set_neighbors_center(self, event):
+        self._neighbors_center = event.content
+
+    def render(self):
+        if self._neighbors_center is not None:
+            glColor3f(.8, .2, .2)
+            glPointSize(3.0)
+            glBegin(GL_POINTS)
+            self.map_view.vertex(self._neighbors_center)
+            glEnd()
