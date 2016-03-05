@@ -178,7 +178,8 @@ class DimensionalityReductionExperiment(Experiment):
         self._flaneur_params = FlaneurParameters()
         self._flaneur_params.set_values_from_args(self.args)
         self._add_parameter_set(self._flaneur_params)
-        return FlaneurBehavior(self, self._flaneur_params)
+        self.student.flaneur_map_points = self.student.normalized_observed_reductions
+        return FlaneurBehavior(self, self._flaneur_params, self.student.flaneur_map_points)
 
     def _add_parameter_set(self, parameters):
         self._parameter_sets[parameters.__class__.__name__] = parameters

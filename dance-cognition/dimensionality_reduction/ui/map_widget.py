@@ -66,7 +66,7 @@ class MapWidget(QtOpenGL.QGLWidget):
     def __init__(self, parent, dimensions):
         QtOpenGL.QGLWidget.__init__(self, parent)
         self._parent = parent
-        self._student = parent.student
+        self.student = parent.student
         self._observations_layer = Layer(self._render_observations)
         self.set_dimensions(dimensions)
         self._dragging = False
@@ -84,7 +84,7 @@ class MapWidget(QtOpenGL.QGLWidget):
 
     def set_dimensions(self, dimensions):
         self._dimensions = dimensions
-        observations = self._student.normalized_observed_reductions[
+        observations = self.student.normalized_observed_reductions[
             :,dimensions]
         self._split_into_segments(observations)
         self._reduction = None
@@ -135,16 +135,27 @@ class MapWidget(QtOpenGL.QGLWidget):
         glOrtho(0.0, self.window_width, self.window_height, 0.0, -1.0, 1.0)
         glMatrixMode(GL_MODELVIEW)
         glTranslatef(self._margin, self._margin, 0)
-        self._observations_layer.draw()
+
+        self._mode_specific_renderer = self._get_mode_specific_renderer()
+        if not self._mode_disables_observations_rendering():
+            self._observations_layer.draw()
         self._render_according_to_mode()
         if self._reduction is not None:
             self._render_reduction()
 
-    def _render_according_to_mode(self):
+    def _get_mode_specific_renderer(self):
         toolbar = self._parent.parent().parent().parent()
         mode = toolbar.get_mode()
         if mode in self._mode_specific_renderers:
-            self._mode_specific_renderers[mode].render()
+            return self._mode_specific_renderers[mode]
+
+    def _mode_disables_observations_rendering(self):
+        if self._mode_specific_renderer is not None:
+            return not self._mode_specific_renderer.should_render_observations()
+
+    def _render_according_to_mode(self):
+        if self._mode_specific_renderer is not None:
+            self._mode_specific_renderer.render()
 
     def _render_observations(self):
         glColor4f(0, 0, 0, .1)
@@ -205,6 +216,9 @@ class MapViewRenderer:
     def __init__(self, map_view):
         self.map_view = map_view
 
+    def should_render_observations(self):
+        return True
+
 class ImproviseMapViewRenderer(MapViewRenderer):
     def __init__(self, *args, **kwargs):
         MapViewRenderer.__init__(self, *args, **kwargs)
@@ -233,6 +247,7 @@ class FlaneurMapViewRenderer(MapViewRenderer):
     def __init__(self, *args, **kwargs):
         MapViewRenderer.__init__(self, *args, **kwargs)
         self._neighbors_center = None
+        self._map_points_layer = Layer(self._render_map_points)
 
     def get_event_handlers(self):
         return {Event.NEIGHBORS_CENTER: self._set_neighbors_center}
@@ -241,9 +256,25 @@ class FlaneurMapViewRenderer(MapViewRenderer):
         self._neighbors_center = event.content
 
     def render(self):
+        self._map_points_layer.draw()
         if self._neighbors_center is not None:
-            glColor3f(.8, .2, .2)
-            glPointSize(3.0)
-            glBegin(GL_POINTS)
-            self.map_view.vertex(self._neighbors_center)
-            glEnd()
+            self._render_neighbors_center()
+
+    def _render_map_points(self):
+        glColor3f(.5, .5, .5)
+        glPointSize(1.0)
+        glBegin(GL_POINTS)
+        for map_point in self.map_view.student.flaneur_map_points:
+            self.map_view.vertex(map_point)
+        glEnd()
+
+    def _render_neighbors_center(self):
+        glColor3f(.8, .2, .2)
+        glPointSize(3.0)
+        glBegin(GL_POINTS)
+        self.map_view.vertex(self._neighbors_center)
+        glEnd()
+
+    def should_render_observations(self):
+        return False
+
