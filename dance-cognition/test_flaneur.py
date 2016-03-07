@@ -13,6 +13,7 @@ from sklearn.datasets import make_classification
 from stopwatch import Stopwatch
 from argparse import ArgumentParser
 import random
+import math
 
 FRAME_RATE = 50
 SLIDER_PRECISION = 1000
@@ -45,10 +46,28 @@ class MapView(QtOpenGL.QGLWidget):
         return x*self.width, y*self.height
 
     def _render_neighbors(self):
-        glColor3f(.5, .2, .2)
+        if self.parent().weight_function_action.isChecked():
+            self._render_neighbors_colored_by_weights()
+        else:
+            self._render_neighbors_with_color(self._color_by_weight(1))
+
+    def _render_neighbors_colored_by_weights(self):
+        glPointSize(2.0)
+        glBegin(GL_POINTS)
+        for weight, point in zip(self._experiment.flaneur.get_weights(),
+                                 self._experiment.flaneur.get_neighbors()):
+            glColor4f(*self._color_by_weight(weight))
+            glVertex2f(*self._vertex(*point))
+        glEnd()
+
+    def _color_by_weight(self, weight):
+        return (.3, 0, 0, weight)
+
+    def _render_neighbors_with_color(self, rgba):
+        glColor4f(*rgba)
         glPointSize(1.0)
         glBegin(GL_POINTS)
-        for x,y in self._experiment.flaneur.get_neighbors():
+        for x, y in self._experiment.flaneur.get_neighbors():
             glVertex2f(*self._vertex(x, y))
         glEnd()
 
@@ -72,6 +91,8 @@ class MapView(QtOpenGL.QGLWidget):
         glClearAccum(0.0, 0.0, 0.0, 0.0)
         glClearDepth(1.0)
         glEnable(GL_POINT_SMOOTH)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glutInit(sys.argv)
 
     def resizeGL(self, window_width, window_height):
@@ -147,6 +168,7 @@ class MainWindow(QtGui.QWidget):
         self._menu = menu_bar.addMenu("Flaneur test")
         self._add_reset_action()
         self._add_generate_map_action()
+        self._addweight_function_action()
 
     def _add_reset_action(self):
         action = QtGui.QAction('Reset', self)
@@ -160,6 +182,19 @@ class MainWindow(QtGui.QWidget):
         action.triggered.connect(self._generate_map)
         self._menu.addAction(action)
 
+    def _addweight_function_action(self):
+        self.weight_function_action = QtGui.QAction('Weight function', self)
+        self.weight_function_action.setShortcut('w')
+        self.weight_function_action.setCheckable(True)
+        self.weight_function_action.triggered.connect(self._toggled_weight_function)
+        self._menu.addAction(self.weight_function_action)
+
+    def _toggled_weight_function(self):
+        if self.weight_function_action.isChecked():
+            self._experiment.flaneur.weight_function = self._experiment.weight_function
+        else:
+            self._experiment.flaneur.weight_function = None
+            
     def _generate_map(self):
         self._experiment.generate_map()
 
@@ -210,6 +245,17 @@ class Experiment:
 
     def reset(self):
         self.flaneur.reset()
+
+    def weight_function(self, point_index):
+        point = self.map_points[point_index]
+        return self._vicinity_to_center(point)
+
+    def _vicinity_to_center(self, point):
+        distance_to_center = numpy.linalg.norm(point - [.5, .5])
+        if distance_to_center == 0:
+            return 1
+        else:
+            return max(0, 1 - distance_to_center)
 
 parser = ArgumentParser()
 parser.add_argument("-model")

@@ -7,11 +7,13 @@ class Flaneur:
     def __init__(self, map_points,
                  translational_speed=0.2,
                  directional_speed=0.05,
-                 look_ahead_distance=0.1):
+                 look_ahead_distance=0.1,
+                 weight_function=None):
         self.map_points = map_points
         self.translational_speed = translational_speed
         self.directional_speed = directional_speed
         self.look_ahead_distance = look_ahead_distance
+        self.weight_function = weight_function
         self._n_dimensions = len(map_points[0])
         self._nearest_neighbor_classifier = sklearn.neighbors.KNeighborsClassifier(
             n_neighbors=NUM_NEIGHBORS, weights='uniform')
@@ -23,6 +25,7 @@ class Flaneur:
         self._direction = None
         self._neighbors = []
         self._neighbors_center = None
+        self._weights = []
 
     def get_position(self):
         return self._position
@@ -32,6 +35,9 @@ class Flaneur:
 
     def get_neighbors_center(self):
         return self._neighbors_center
+
+    def get_weights(self):
+        return self._weights
 
     def proceed(self, time_increment):
         self._time_increment = time_increment
@@ -45,14 +51,31 @@ class Flaneur:
         distances_list, points_indices_list = self._nearest_neighbor_classifier.kneighbors(
             position_ahead)
         distances = distances_list[0]
-        points_indices = points_indices_list[0]
-        self._neighbors = [self.map_points[index] for index in points_indices]
-        self._neighbors_center = numpy.mean(self._neighbors, 0)
+        self._points_indices = points_indices_list[0]
+        self._neighbors = [self.map_points[index] for index in self._points_indices]        
+        self._neighbors_center = self._get_neighbors_center()
         target_direction = self._neighbors_center - self._position
         if self._direction is None:
             self._direction = target_direction
         else:
             self._move_towards_direction(target_direction)
+
+    def _get_neighbors_center(self):
+        if self.weight_function is None:
+            return numpy.mean(self._neighbors, 0)
+        else:
+            self._weights = numpy.array([
+                self.weight_function(index)
+                for index in self._points_indices])
+            weights_min = min(self._weights)
+            weights_max = max(self._weights)
+            weights_range = weights_max - weights_min
+            if weights_range == 0:
+                self._weights = [1] * len(self._points_indices)
+                return numpy.mean(self._neighbors, 0)
+            else:
+                self._weights = (self._weights - weights_min) / weights_range
+                return numpy.average(self._neighbors, 0, self._weights)
 
     def _get_position_ahead(self):
         if self._direction is None:

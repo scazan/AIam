@@ -21,6 +21,7 @@ class Event:
     FEATURE_MATCH_RESULT = "FEATURE_MATCH_RESULT"
     TARGET_ROOT_Y_ORIENTATION = "TARGET_ROOT_Y_ORIENTATION"
     NEIGHBORS_CENTER = "NEIGHBORS_CENTER"
+    NEIGHBORS = "NEIGHBORS"
 
     def __init__(self, type_, content=None):
         self.type = type_

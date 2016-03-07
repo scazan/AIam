@@ -256,16 +256,23 @@ class FlaneurMapViewRenderer(MapViewRenderer):
     def __init__(self, *args, **kwargs):
         MapViewRenderer.__init__(self, *args, **kwargs)
         self._neighbors_center = None
+        self._neighbors = None
         self._map_points_layer = Layer(self._render_map_points)
 
     def get_event_handlers(self):
-        return {Event.NEIGHBORS_CENTER: self._set_neighbors_center}
+        return {Event.NEIGHBORS_CENTER: self._set_neighbors_center,
+                Event.NEIGHBORS: self._set_neighbors}
 
     def _set_neighbors_center(self, event):
         self._neighbors_center = event.content
 
+    def _set_neighbors(self, event):
+        self._neighbors, self._weights = event.content
+
     def render(self):
         self._map_points_layer.draw()
+        if self._neighbors is not None:
+            self._render_neighbors()
         if self._neighbors_center is not None:
             self._render_neighbors_center()
 
@@ -276,6 +283,18 @@ class FlaneurMapViewRenderer(MapViewRenderer):
         for map_point in self.map_view.student.flaneur_map_points:
             self.map_view.vertex(map_point[:,self.map_view.dimensions])
         glEnd()
+
+    def _render_neighbors(self):
+        glPointSize(2.0)
+        glBegin(GL_POINTS)
+        points = numpy.array(self._neighbors)[:,self.map_view.dimensions]
+        for weight, point in zip(self._weights, points):
+            glColor4f(*self._color_by_weight(weight))
+            self.map_view.vertex(point)
+        glEnd()
+
+    def _color_by_weight(self, weight):
+        return (.3, 0, 0, weight)
 
     def _render_neighbors_center(self):
         glColor3f(.8, .2, .2)

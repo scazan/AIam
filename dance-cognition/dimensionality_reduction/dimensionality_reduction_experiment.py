@@ -137,6 +137,9 @@ class DimensionalityReductionExperiment(Experiment):
             self._load_model()
             if not self.args.ui_only:
                 self._training_data = storage.load(self._training_data_path)
+                if self.args.enable_features:
+                    self._feature_matcher, self._sampled_reductions, self._sampled_feature_vectors = \
+                        storage.load(self._feature_matcher_path)
 
                 self._parameter_sets = {}
                 self._follow = self._create_follow_behavior()
@@ -153,10 +156,9 @@ class DimensionalityReductionExperiment(Experiment):
     def _create_explore_behavior(self):
         kwargs = {}
         if self.args.enable_features:
-            feature_matcher, sampled_reductions = storage.load(self._feature_matcher_path)
             kwargs["enable_features"] = True
-            kwargs["feature_matcher"] = feature_matcher
-            kwargs["sampled_reductions"] = sampled_reductions
+            kwargs["feature_matcher"] = self._feature_matcher
+            kwargs["sampled_reductions"] = self._sampled_reductions
         return Explore(self, **kwargs)
 
     def _create_improvise_behavior(self):
@@ -175,11 +177,22 @@ class DimensionalityReductionExperiment(Experiment):
                 self.send_event_to_ui(Event(Event.IMPROVISE_PATH, self._improvise.path())))
 
     def _create_flaneur_behavior(self):
+        kwargs = {}
+        if self.args.enable_features:
+            kwargs["enable_features"] = True
+            kwargs["sampled_feature_vectors"] = self._sampled_feature_vectors
         self._flaneur_params = FlaneurParameters()
         self._flaneur_params.set_values_from_args(self.args)
         self._add_parameter_set(self._flaneur_params)
-        self.student.flaneur_map_points = self.student.normalized_observed_reductions
-        return FlaneurBehavior(self, self._flaneur_params, self.student.flaneur_map_points)
+        if self.args.enable_features:
+            self.student.flaneur_map_points = [
+                self.student.normalize_reduction(reduction)
+                for reduction in self._sampled_reductions]
+        else:
+            self.student.flaneur_map_points = self.student.normalized_observed_reductions
+        return FlaneurBehavior(
+            self, self._flaneur_params, self.student.flaneur_map_points,
+            **kwargs)
 
     def _add_parameter_set(self, parameters):
         self._parameter_sets[parameters.__class__.__name__] = parameters
@@ -289,7 +302,9 @@ class DimensionalityReductionExperiment(Experiment):
         self.send_event_to_ui(event)
 
     def _handle_target_features(self, event):
-        self._explore.set_target_features(event.content)
+        target_features = event.content
+        self._explore.set_target_features(target_features)
+        self._flaneur_behavior.set_target_features(target_features)
         self._broadcast_event_to_other_uis(event)
 
     def _train_feature_matcher(self):
@@ -304,14 +319,16 @@ class DimensionalityReductionExperiment(Experiment):
             self.student.unnormalize_reduction(normalized_reduction)
             for normalized_reduction in sampled_normalized_reductions]
         print "extracting features from samples..."
-        feature_vectors = [
+        sampled_feature_vectors = [
             self._reduction_to_feature_vector(reduction)
             for reduction in sampled_reductions]
         print "ok"
         print "training feature matcher on samples..."
-        feature_matcher.fit(feature_vectors, sampled_reductions)
+        feature_matcher.fit(sampled_feature_vectors, sampled_reductions)
         print "ok"
-        storage.save((feature_matcher, sampled_reductions), self._feature_matcher_path)
+        storage.save(
+            (feature_matcher, sampled_reductions, sampled_feature_vectors),
+            self._feature_matcher_path)
 
     def _sample_normalized_reduction_space(self):
         return sampling.KMeansSampler.sample(
