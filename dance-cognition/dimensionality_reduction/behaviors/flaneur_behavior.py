@@ -25,6 +25,8 @@ class FlaneurBehavior:
             self._sampled_feature_vectors = sampled_feature_vectors
             self._feature_matcher = feature_matcher
             self._target_features = None
+            num_features = len(experiment.entity.feature_extractor.FEATURES)
+            self._max_feature_distance = numpy.linalg.norm([1] * num_features)
             self._flaneur.weight_function = self._vicinity_to_target_features
 
     def _parameter_changed(self, parameter):
@@ -51,10 +53,9 @@ class FlaneurBehavior:
         else:
             features = self._sampled_feature_vectors[point_index]
             distance_to_target_features = numpy.linalg.norm(features - self._target_features)
-            if distance_to_target_features == 0:
-                return 1
-            else:
-                return max(0, 1 - math.pow(distance_to_target_features, 3))
+            relative_vicinity = (self._max_feature_distance - distance_to_target_features) / \
+                self._max_feature_distance
+            return math.pow(relative_vicinity, 3)
 
     def set_target_features(self, target_features):
         self._target_features = target_features
