@@ -52,7 +52,7 @@ class Explore:
                  distance)
                 for sampled_reductions_index, distance
                 in zip(sampled_reductions_indices, distances)]
-            self._experiment.send_event_to_ui(Event(Event.FEATURE_MATCH_RESULT, match_result_as_tuples))
+            self._experiment.send_event_to_ui(Event(Event.FEATURE_MATCH_OUTPUTS, match_result_as_tuples))
 
     def _move_reduction_towards_target_features(self):
         direction_vector = self._target_reduction - self._reduction

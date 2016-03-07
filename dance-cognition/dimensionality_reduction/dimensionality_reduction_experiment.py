@@ -180,6 +180,7 @@ class DimensionalityReductionExperiment(Experiment):
         kwargs = {}
         if self.args.enable_features:
             kwargs["enable_features"] = True
+            kwargs["feature_matcher"] = self._feature_matcher
             kwargs["sampled_feature_vectors"] = self._sampled_feature_vectors
         self._flaneur_params = FlaneurParameters()
         self._flaneur_params.set_values_from_args(self.args)

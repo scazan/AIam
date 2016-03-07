@@ -257,11 +257,13 @@ class FlaneurMapViewRenderer(MapViewRenderer):
         MapViewRenderer.__init__(self, *args, **kwargs)
         self._neighbors_center = None
         self._neighbors = None
+        self._sampled_reductions_indices = None
         self._map_points_layer = Layer(self._render_map_points)
 
     def get_event_handlers(self):
         return {Event.NEIGHBORS_CENTER: self._set_neighbors_center,
-                Event.NEIGHBORS: self._set_neighbors}
+                Event.NEIGHBORS: self._set_neighbors,
+                Event.FEATURE_MATCHES: self._set_feature_matches}
 
     def _set_neighbors_center(self, event):
         self._neighbors_center = event.content
@@ -269,8 +271,13 @@ class FlaneurMapViewRenderer(MapViewRenderer):
     def _set_neighbors(self, event):
         self._neighbors, self._weights = event.content
 
+    def _set_feature_matches(self, event):
+        self._distances, self._sampled_reductions_indices = event.content
+
     def render(self):
         self._map_points_layer.draw()
+        if self._sampled_reductions_indices is not None:
+            self._render_feature_matches()
         if self._neighbors is not None:
             self._render_neighbors()
         if self._neighbors_center is not None:
@@ -285,7 +292,7 @@ class FlaneurMapViewRenderer(MapViewRenderer):
         glEnd()
 
     def _render_neighbors(self):
-        glPointSize(2.0)
+        glPointSize(3.0)
         glBegin(GL_POINTS)
         points = numpy.array(self._neighbors)[:,self.map_view.dimensions]
         for weight, point in zip(self._weights, points):
@@ -294,7 +301,7 @@ class FlaneurMapViewRenderer(MapViewRenderer):
         glEnd()
 
     def _color_by_weight(self, weight):
-        return (.3, 0, 0, weight)
+        return (.4, 0, 0, weight)
 
     def _render_neighbors_center(self):
         glColor3f(.8, .2, .2)
@@ -302,6 +309,26 @@ class FlaneurMapViewRenderer(MapViewRenderer):
         glBegin(GL_POINTS)
         self.map_view.vertex(self._neighbors_center[:,self.map_view.dimensions])
         glEnd()
+
+    def _render_feature_matches(self):
+        glPointSize(6.0)
+        glBegin(GL_POINTS)
+        normalized_distances = self._normalize(self._distances)
+        for distance, sampled_reduction_index in zip(normalized_distances, self._sampled_reductions_indices):
+            reduction = self.map_view.student.flaneur_map_points[sampled_reduction_index]
+            opacity = 1 - distance
+            glColor4f(0, .6, 0, opacity)
+            self.map_view.vertex(reduction[:,self.map_view.dimensions])
+        glEnd()
+
+    def _normalize(self, values):
+        min_value = min(values)
+        max_value = max(values)
+        values_range = max_value - min_value
+        if values_range == 0:
+            return [.5] * len(values)
+        else:
+            return (values - min_value) / values_range
 
     def should_render_observations(self):
         return False

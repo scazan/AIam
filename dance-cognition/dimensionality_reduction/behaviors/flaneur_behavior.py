@@ -16,13 +16,14 @@ class FlaneurParameters(Parameters):
 
 class FlaneurBehavior:
     def __init__(self, experiment, params, map_points,
-                 enable_features=False, sampled_feature_vectors=None):
+                 enable_features=False, feature_matcher=None, sampled_feature_vectors=None):
         self._experiment = experiment
         self.params = params
         params.add_listener(self._parameter_changed)
         self._flaneur = Flaneur(map_points)
         if enable_features:
             self._sampled_feature_vectors = sampled_feature_vectors
+            self._feature_matcher = feature_matcher
             self._target_features = None
             self._flaneur.weight_function = self._vicinity_to_target_features
 
@@ -57,3 +58,9 @@ class FlaneurBehavior:
 
     def set_target_features(self, target_features):
         self._target_features = target_features
+        distances_list, sampled_reductions_indices_list = self._feature_matcher.kneighbors(
+            target_features, return_distance=True)
+        distances = distances_list[0]
+        sampled_reductions_indices = sampled_reductions_indices_list[0]
+        self._experiment.send_event_to_ui(
+            Event(Event.FEATURE_MATCHES, (distances, sampled_reductions_indices)))
