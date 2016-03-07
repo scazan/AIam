@@ -318,7 +318,7 @@ class FlaneurMapViewRenderer(MapViewRenderer):
             reduction = self.map_view.student.flaneur_map_points[sampled_reduction_index]
             opacity = 1 - distance
             glColor4f(0, .6, 0, opacity)
-            self.map_view.vertex(reduction[:,self.map_view.dimensions])
+            self.map_view.vertex(reduction[self.map_view.dimensions])
         glEnd()
 
     def _normalize(self, values):
