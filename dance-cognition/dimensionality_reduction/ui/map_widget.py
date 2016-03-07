@@ -274,14 +274,14 @@ class FlaneurMapViewRenderer(MapViewRenderer):
         glPointSize(1.0)
         glBegin(GL_POINTS)
         for map_point in self.map_view.student.flaneur_map_points:
-            self.map_view.vertex(map_point[:,self.map_view.dimensions])
+            self.map_view.vertex(map_point[self.map_view.dimensions])
         glEnd()
 
     def _render_neighbors_center(self):
         glColor3f(.8, .2, .2)
         glPointSize(3.0)
         glBegin(GL_POINTS)
-        self.map_view.vertex(self._neighbors_center[:,self.map_view.dimensions])
+        self.map_view.vertex(self._neighbors_center[self.map_view.dimensions])
         glEnd()
 
     def should_render_observations(self):
