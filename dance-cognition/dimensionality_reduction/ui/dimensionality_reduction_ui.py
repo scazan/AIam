@@ -297,6 +297,11 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
     def _add_imitate_tab(self):
         self.imitate_tab = ModeTab(modes.IMITATE)
         self._imitate_tab_layout = QtGui.QVBoxLayout()
+        self._imitate_params = ImitateParameters()
+        self._imitate_params.add_listener(self._send_changed_parameter)
+        self._imitate_params_form = self.add_parameter_fields(
+            self._imitate_params, self._imitate_tab_layout)
+        self._add_parameter_set(self._imitate_params, self._imitate_params_form)
         self._imitate_tab_layout.addStretch(1)
         self.imitate_tab.setLayout(self._imitate_tab_layout)
         self.tabs.addTab(self.imitate_tab, "Imitate")
@@ -478,10 +483,10 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._flaneur_params.add_listener(self._send_changed_parameter)
         self._flaneur_params_form = self.add_parameter_fields(
             self._flaneur_params, self._flaneur_tab_layout)
+        self._add_parameter_set(self._flaneur_params, self._flaneur_params_form)
         self.flaneur_tab.setLayout(self._flaneur_tab_layout)
         self.tabs.addTab(self.flaneur_tab, "Flaneur")
         self._mode_tabs[modes.FLANEUR] = self.flaneur_tab
-        self._add_parameter_set(self._flaneur_params, self._flaneur_params_form)
 
     def _add_parameter_set(self, parameters, form):
         self._parameter_sets[parameters.__class__.__name__] = {

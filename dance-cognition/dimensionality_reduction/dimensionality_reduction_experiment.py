@@ -7,7 +7,7 @@ import modes
 from parameters import *
 from behaviors.follow import Follow
 from behaviors.explore import Explore
-from behaviors.imitate import Imitate
+from behaviors.imitate import Imitate, ImitateParameters
 from behaviors.improvise import ImproviseParameters, Improvise
 from behaviors.flaneur_behavior import FlaneurBehavior, FlaneurParameters
 import sampling
@@ -38,7 +38,6 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--preferred-location", type=str)
         parser.add_argument("--enable-features", action="store_true")
         parser.add_argument("--train-feature-matcher", action="store_true")
-        parser.add_argument("--feature-matching-speed", type=float, default=1.5)
         parser.add_argument("--num-feature-matches", type=int, default=1)
         parser.add_argument("--show-all-feature-matches", action="store_true")
         ImproviseParameters().add_parser_arguments(parser)
@@ -162,7 +161,10 @@ class DimensionalityReductionExperiment(Experiment):
 
     def _create_imitate_behavior(self):
         feature_matcher, sampled_reductions = storage.load(self._feature_matcher_path)
-        return Imitate(self, feature_matcher, sampled_reductions)
+        self._imitate_params = ImitateParameters()
+        self._imitate_params.set_values_from_args(self.args)
+        self._add_parameter_set(self._imitate_params)
+        return Imitate(self, feature_matcher, sampled_reductions, self._imitate_params)
 
     def _create_improvise_behavior(self):
         if self.args.preferred_location:

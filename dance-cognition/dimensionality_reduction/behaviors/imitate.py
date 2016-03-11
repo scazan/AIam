@@ -1,11 +1,23 @@
 import numpy
 from event import Event
+from parameters import *
+
+class ImitateParameters(Parameters):
+    def __init__(self):
+        Parameters.__init__(self)
+        self.add_parameter("translational_speed", type=float, default=1.5,
+                           choices=ParameterFloatRange(0., 3.))
 
 class Imitate:
-    def __init__(self, experiment, feature_matcher, sampled_reductions):
+    def __init__(self,
+                 experiment,
+                 feature_matcher,
+                 sampled_reductions,
+                 params):
         self._experiment = experiment
         self._feature_matcher = feature_matcher
         self._sampled_reductions = sampled_reductions
+        self.params = params
         self._target_reduction = None
         self._new_target_features = None
         normalized_reduction = numpy.array([.5] * experiment.args.num_components)
@@ -53,7 +65,7 @@ class Imitate:
 
     def _move_reduction_towards_target_features(self):
         direction_vector = self._target_reduction - self._reduction
-        max_norm = self._experiment.args.feature_matching_speed
+        max_norm = self.params.translational_speed
         direction_vector_norm = numpy.linalg.norm(direction_vector)
         if direction_vector_norm > 0:
             if direction_vector_norm > max_norm:
