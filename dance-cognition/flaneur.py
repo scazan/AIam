@@ -64,17 +64,10 @@ class Flaneur:
         if self.weight_function is None:
             return numpy.mean(self._neighbors, 0)
         else:
-            self._weights = numpy.array([
-                self.weight_function(index)
-                for index in self._points_indices])
-            weights_min = min(self._weights)
-            weights_max = max(self._weights)
-            weights_range = weights_max - weights_min
-            if weights_range == 0:
-                self._weights = [1] * len(self._points_indices)
+            self._weights = self.weight_function(self._points_indices)
+            if self._weights is None:
                 return numpy.mean(self._neighbors, 0)
             else:
-                self._weights = (self._weights - weights_min) / weights_range
                 return numpy.average(self._neighbors, 0, self._weights)
 
     def _get_position_ahead(self):

@@ -295,9 +295,14 @@ class FlaneurMapViewRenderer(MapViewRenderer):
         glPointSize(3.0)
         glBegin(GL_POINTS)
         points = numpy.array(self._neighbors)[:,self.map_view.dimensions]
-        for weight, point in zip(self._weights, points):
-            glColor4f(*self._color_by_weight(weight))
-            self.map_view.vertex(point)
+        if self._weights is None:
+            glColor4f(*self._color_by_weight(1))
+            for point in points:
+                self.map_view.vertex(point)
+        else:
+            for weight, point in zip(self._weights, points):
+                glColor4f(*self._color_by_weight(weight))
+                self.map_view.vertex(point)
         glEnd()
 
     def _color_by_weight(self, weight):

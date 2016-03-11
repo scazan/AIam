@@ -246,9 +246,20 @@ class Experiment:
     def reset(self):
         self.flaneur.reset()
 
-    def weight_function(self, point_index):
-        point = self.map_points[point_index]
-        return self._vicinity_to_center(point)
+    def weight_function(self, point_indices):
+        vicinity_values = [
+            self._vicinity_to_center(self.map_points[point_index])
+            for point_index in point_indices]
+        return self._normalize(vicinity_values)
+
+    def _normalize(self, values):
+        min_value = min(values)
+        max_value = max(values)
+        values_range = max_value - min_value
+        if values_range == 0:
+            return [.5] * len(values)
+        else:
+            return (values - min_value) / values_range
 
     def _vicinity_to_center(self, point):
         distance_to_center = numpy.linalg.norm(point - [.5, .5])

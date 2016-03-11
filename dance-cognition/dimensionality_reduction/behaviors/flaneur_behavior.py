@@ -25,9 +25,7 @@ class FlaneurBehavior:
             self._sampled_feature_vectors = sampled_feature_vectors
             self._feature_matcher = feature_matcher
             self._target_features = None
-            num_features = len(experiment.entity.feature_extractor.FEATURES)
-            self._max_feature_distance = numpy.linalg.norm([1] * num_features)
-            self._flaneur.weight_function = self._vicinity_to_target_features
+            self._flaneur.weight_function = self._weight_function
 
     def _parameter_changed(self, parameter):
         setattr(self._flaneur, parameter.name, parameter.value())
@@ -47,15 +45,27 @@ class FlaneurBehavior:
     def set_reduction(self, reduction):
         pass
 
-    def _vicinity_to_target_features(self, point_index):
-        if self._target_features is None:
-            return 1
+    def _weight_function(self, point_indices):
+        if self._target_features is not None:
+            distances = [
+                self._distance_to_target_features(self._sampled_feature_vectors[point_index])
+                for point_index in point_indices]
+            normalized_distances = self._normalize(distances)
+            return [
+                1 - math.pow(normalized_distance, 0.1)
+                for normalized_distance in normalized_distances]
+
+    def _normalize(self, values):
+        min_value = min(values)
+        max_value = max(values)
+        values_range = max_value - min_value
+        if values_range == 0:
+            return [.5] * len(values)
         else:
-            features = self._sampled_feature_vectors[point_index]
-            distance_to_target_features = numpy.linalg.norm(features - self._target_features)
-            relative_vicinity = (self._max_feature_distance - distance_to_target_features) / \
-                self._max_feature_distance
-            return math.pow(relative_vicinity, 3)
+            return (values - min_value) / values_range
+
+    def _distance_to_target_features(self, features):
+        return numpy.linalg.norm(features - self._target_features)
 
     def set_target_features(self, target_features):
         self._target_features = target_features
