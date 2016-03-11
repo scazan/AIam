@@ -277,6 +277,8 @@ class DimensionalityReductionExperiment(Experiment):
     def proceed(self):
         if self._mode == modes.FOLLOW:
             self._follow.proceed(self.time_increment)
+        elif self._mode == modes.IMITATE:
+            self._imitate.proceed(self.time_increment)
         elif self._mode == modes.IMPROVISE:
             self._improvise.proceed(self.time_increment)
         elif self._mode == modes.FLANEUR:

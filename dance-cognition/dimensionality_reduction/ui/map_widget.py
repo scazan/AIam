@@ -72,6 +72,7 @@ class MapWidget(QtOpenGL.QGLWidget):
         self._dragging = False
         self._enabled = False
         self._mode_specific_renderers = {
+            modes.IMITATE: ImitateMapViewRenderer(self),
             modes.IMPROVISE: ImproviseMapViewRenderer(self),
             modes.FLANEUR: FlaneurMapViewRenderer(self),
             }
@@ -182,8 +183,8 @@ class MapWidget(QtOpenGL.QGLWidget):
         self.vertex(self._reduction)
         glEnd()
 
-    def vertex(self, reduction):
-        x, y = self._normalized_reduction_to_explored_range(reduction)
+    def vertex(self, normalized_reduction):
+        x, y = self._normalized_reduction_to_explored_range(normalized_reduction)
         glVertex2f(x*self._width, y*self._height)
 
     def mousePressEvent(self, event):
@@ -209,9 +210,9 @@ class MapWidget(QtOpenGL.QGLWidget):
         reduction[self.dimensions[1]] = self._reduction[1]
         return reduction
 
-    def _normalized_reduction_to_explored_range(self, reduction):
+    def _normalized_reduction_to_explored_range(self, normalized_reduction):
         return numpy.array([
-                self._normalized_reduction_value_to_explored_range(n, reduction[n])
+                self._normalized_reduction_value_to_explored_range(n, normalized_reduction[n])
                 for n in range(2)])
 
     def _normalized_reduction_value_to_explored_range(self, n, value):
@@ -227,6 +228,28 @@ class MapViewRenderer:
 
     def dimensions_changed(self):
         pass
+
+class ImitateMapViewRenderer(MapViewRenderer):
+    def __init__(self, *args, **kwargs):
+        MapViewRenderer.__init__(self, *args, **kwargs)
+        self._target_normalized_reduction = None
+
+    def get_event_handlers(self):
+        return {Event.TARGET_REDUCTION: self._set_target_reduction}
+
+    def _set_target_reduction(self, event):
+        self._target_normalized_reduction = self.map_view.student.normalize_reduction(event.content)
+
+    def render(self):
+        if self._target_normalized_reduction is not None:
+            self._render_target_reduction()
+
+    def _render_target_reduction(self):
+        glColor3f(.8, .2, .2)
+        glPointSize(3.0)
+        glBegin(GL_POINTS)
+        self.map_view.vertex(self._target_normalized_reduction[self.map_view.dimensions])
+        glEnd()
 
 class ImproviseMapViewRenderer(MapViewRenderer):
     def __init__(self, *args, **kwargs):

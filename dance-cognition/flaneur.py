@@ -36,9 +36,7 @@ class Flaneur:
     def proceed(self, time_increment):
         self._time_increment = time_increment
         self._process_direction()
-        norm = numpy.linalg.norm(self._direction)
-        if norm > 0:
-            self._position += self._direction / norm * self._time_increment * self.translational_speed
+        self._move_in_direction()
 
     def _process_direction(self):
         position_ahead = self._get_position_ahead()
@@ -69,3 +67,8 @@ class Flaneur:
         norm = numpy.linalg.norm(difference)
         if norm > 0:
             self._direction += difference / norm * min(self.directional_speed * self._time_increment, 1)
+
+    def _move_in_direction(self):
+        norm = numpy.linalg.norm(self._direction)
+        if norm > 0:
+            self._position += self._direction / norm * self._time_increment * self.translational_speed
