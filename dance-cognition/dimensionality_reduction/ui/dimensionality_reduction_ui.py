@@ -165,6 +165,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         if self.args.mode == modes.FOLLOW:
             self._add_follow_tab()
         self._add_explore_tab()
+        self._add_imitate_tab()
         self._add_improvise_tab()
         self._add_flaneur_tab()
         self.tabs.currentChanged.connect(self._changed_mode_tab)
@@ -292,6 +293,14 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         clamped_y_orientation = unclamped_y_orientation % (math.pi*2)
         self._root_y_orientation_slider.setValue(
             int(clamped_y_orientation * SLIDER_PRECISION / (math.pi*2)))
+
+    def _add_imitate_tab(self):
+        self.imitate_tab = ModeTab(modes.IMITATE)
+        self._imitate_tab_layout = QtGui.QVBoxLayout()
+        self._imitate_tab_layout.addStretch(1)
+        self.imitate_tab.setLayout(self._imitate_tab_layout)
+        self.tabs.addTab(self.imitate_tab, "Imitate")
+        self._mode_tabs[modes.IMITATE] = self.imitate_tab
 
     def _add_improvise_tab(self):
         self.improvise_tab = ModeTab(modes.IMPROVISE)

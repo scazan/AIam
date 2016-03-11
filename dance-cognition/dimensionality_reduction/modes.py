@@ -1,4 +1,5 @@
 IMPROVISE = "improvise"
 FOLLOW = "follow"
 EXPLORE = "explore"
+IMITATE = "imitate"
 FLANEUR = "flaneur"

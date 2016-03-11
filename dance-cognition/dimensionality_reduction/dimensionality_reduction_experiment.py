@@ -7,6 +7,7 @@ import modes
 from parameters import *
 from behaviors.follow import Follow
 from behaviors.explore import Explore
+from behaviors.imitate import Imitate
 from behaviors.improvise import ImproviseParameters, Improvise
 from behaviors.flaneur_behavior import FlaneurBehavior, FlaneurParameters
 import sampling
@@ -26,6 +27,7 @@ class DimensionalityReductionExperiment(Experiment):
                             choices=[modes.FOLLOW,
                                      modes.IMPROVISE,
                                      modes.EXPLORE,
+                                     modes.IMITATE,
                                      modes.FLANEUR],
                             default=modes.EXPLORE)
         parser.add_argument("--max-novelty", type=float, default=1.)
@@ -141,9 +143,14 @@ class DimensionalityReductionExperiment(Experiment):
                 self._parameter_sets = {}
                 self._follow = self._create_follow_behavior()
                 self._explore = self._create_explore_behavior()
+                self._imitate = self._create_imitate_behavior()
                 self._improvise = self._create_improvise_behavior()
                 self._flaneur_behavior = self._create_flaneur_behavior()
-                self._behaviors = [self._explore, self._improvise, self._flaneur_behavior]
+                self._behaviors = [
+                    self._explore,
+                    self._imitate,
+                    self._improvise,
+                    self._flaneur_behavior]
 
             self.run_backend_and_or_ui()
 
@@ -151,13 +158,11 @@ class DimensionalityReductionExperiment(Experiment):
         return Follow(self)
 
     def _create_explore_behavior(self):
-        kwargs = {}
-        if self.args.enable_features:
-            feature_matcher, sampled_reductions = storage.load(self._feature_matcher_path)
-            kwargs["enable_features"] = True
-            kwargs["feature_matcher"] = feature_matcher
-            kwargs["sampled_reductions"] = sampled_reductions
-        return Explore(self, **kwargs)
+        return Explore(self)
+
+    def _create_imitate_behavior(self):
+        feature_matcher, sampled_reductions = storage.load(self._feature_matcher_path)
+        return Imitate(self, feature_matcher, sampled_reductions)
 
     def _create_improvise_behavior(self):
         if self.args.preferred_location:
@@ -251,6 +256,8 @@ class DimensionalityReductionExperiment(Experiment):
             self._set_reduction_from_behavior(self._improvise)
         elif self._mode == modes.EXPLORE:
             self._set_reduction_from_behavior(self._explore)
+        elif self._mode == modes.IMITATE:
+            self._set_reduction_from_behavior(self._imitate)
         elif self._mode == modes.FLANEUR:
             self._set_reduction_from_behavior(self._flaneur_behavior)
         self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
@@ -261,8 +268,8 @@ class DimensionalityReductionExperiment(Experiment):
             self.send_event_to_ui(Event(Event.FEATURES, features))
 
     def process_and_broadcast_output(self):
-        if not (self._mode == modes.EXPLORE and
-                self._explore.showing_feature_matches()):
+        if not (self._mode == modes.IMITATE and
+                self._imitate.showing_feature_matches()):
             Experiment.process_and_broadcast_output(self)
 
     def proceed(self):
@@ -289,7 +296,7 @@ class DimensionalityReductionExperiment(Experiment):
         self.send_event_to_ui(event)
 
     def _handle_target_features(self, event):
-        self._explore.set_target_features(event.content)
+        self._imitate.set_target_features(event.content)
         self._broadcast_event_to_other_uis(event)
 
     def _train_feature_matcher(self):
