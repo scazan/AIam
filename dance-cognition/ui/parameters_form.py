@@ -5,18 +5,30 @@ SLIDER_PRECISION = 1000
 
 class ParametersForm:
     def __init__(self, parameters, parent):
-        layout = QtGui.QFormLayout()
-        self._fields_by_name = {}
+        layout = QtGui.QGridLayout()
+        self._field_widgets = {}
+        self._value_widgets = {}
+        row = 0
         for parameter in parameters:
-            field = self._create_parameter_field(parameter)
-            layout.addRow(QtGui.QLabel(parameter.name), field)
-            self._fields_by_name[parameter.name] = field
+            name_widget = QtGui.QLabel(parameter.name)
+            field_widget = self._create_parameter_field(parameter)
+            self._field_widgets[parameter.name] = field_widget
+            layout.addWidget(name_widget, row, 0)
+            if isinstance(field_widget, Slider):
+                value_widget = QtGui.QLabel()
+                layout.addWidget(field_widget, row, 1)
+                layout.addWidget(value_widget, row, 2)
+                self._value_widgets[parameter.name] = value_widget
+                self._update_value_widget(parameter)
+            else:
+                layout.addWidget(field_widget, row, 1, 1, 2)
+            row += 1
         parent.addLayout(layout)
 
     def _create_parameter_field(self, parameter):
         if parameter.choices is not None:
             if parameter.choices.__class__ is ParameterFloatRange:
-                field = Slider(parameter)
+                field = Slider(self, parameter)
             else:
                 field = ListChoice(parameter)
         elif parameter.type == str:
@@ -29,11 +41,19 @@ class ParametersForm:
         return field
 
     def update_field(self, name):
-        field = self._fields_by_name[name]
-        field.update()
+        field_widget = self._field_widgets[name]
+        field_widget.update()
+
+    def value_changed(self, parameter):
+        self._update_value_widget(parameter)
+
+    def _update_value_widget(self, parameter):
+        value_widget = self._value_widgets[parameter.name]
+        value_widget.setText("%.2f" % parameter.value())
 
 class Slider(QtGui.QSlider):
-    def __init__(self, parameter):
+    def __init__(self, form, parameter):
+        self._form = form
         self._parameter = parameter
         QtGui.QSlider.__init__(self, QtCore.Qt.Horizontal)
         self.setRange(0, SLIDER_PRECISION)
@@ -51,6 +71,7 @@ class Slider(QtGui.QSlider):
     def _slider_value_changed(self, parameter, slider_value):
         value = self._slider_value_to_parameter_value(parameter, slider_value)
         parameter.set_value(value)
+        self._form.value_changed(parameter)
 
     def update(self):
         self.setValue(self._parameter_value_to_slider_value(self._parameter))

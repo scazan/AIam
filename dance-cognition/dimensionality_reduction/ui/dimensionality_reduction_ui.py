@@ -315,6 +315,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._improvise_params.add_listener(self._send_changed_parameter)
         self._improvise_params_form = self.add_parameter_fields(
             self._improvise_params, self._improvise_tab_layout)
+        self._improvise_tab_layout.addStretch(1)
         self.improvise_tab.setLayout(self._improvise_tab_layout)
         self.tabs.addTab(self.improvise_tab, "Improvise")
         self._mode_tabs[modes.IMPROVISE] = self.improvise_tab
@@ -485,6 +486,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._flaneur_params_form = self.add_parameter_fields(
             self._flaneur_params, self._flaneur_tab_layout)
         self._add_parameter_set(self._flaneur_params, self._flaneur_params_form)
+        self._flaneur_tab_layout.addStretch(1)
         self.flaneur_tab.setLayout(self._flaneur_tab_layout)
         self.tabs.addTab(self.flaneur_tab, "Flaneur")
         self._mode_tabs[modes.FLANEUR] = self.flaneur_tab
