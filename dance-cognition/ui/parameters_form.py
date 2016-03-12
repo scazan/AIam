@@ -5,25 +5,28 @@ SLIDER_PRECISION = 1000
 
 class ParametersForm:
     def __init__(self, parameters, parent):
-        layout = QtGui.QGridLayout()
+        self._grid_layout = QtGui.QGridLayout()
         self._field_widgets = {}
         self._value_widgets = {}
-        row = 0
+        self._row = 0
         for parameter in parameters:
             name_widget = QtGui.QLabel(parameter.name)
             field_widget = self._create_parameter_field(parameter)
             self._field_widgets[parameter.name] = field_widget
-            layout.addWidget(name_widget, row, 0)
+            self._add_widget(name_widget, 0)
             if isinstance(field_widget, Slider):
                 value_widget = QtGui.QLabel()
-                layout.addWidget(field_widget, row, 1)
-                layout.addWidget(value_widget, row, 2)
+                self._add_widget(field_widget, 1)
+                self._add_widget(value_widget, 2)
                 self._value_widgets[parameter.name] = value_widget
                 self._update_value_widget(parameter)
             else:
-                layout.addWidget(field_widget, row, 1, 1, 2)
-            row += 1
-        parent.addLayout(layout)
+                self._add_widget(field_widget, 1, column_span=2)                
+            self._row += 1
+        parent.addLayout(self._grid_layout)
+
+    def _add_widget(self, widget, column, row_span=1, column_span=1):
+        self._grid_layout.addWidget(widget, self._row, column, row_span, column_span)
 
     def _create_parameter_field(self, parameter):
         if parameter.choices is not None:
