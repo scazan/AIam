@@ -142,14 +142,16 @@ class DimensionalityReductionExperiment(Experiment):
                 self._parameter_sets = {}
                 self._follow = self._create_follow_behavior()
                 self._explore = self._create_explore_behavior()
-                self._imitate = self._create_imitate_behavior()
                 self._improvise = self._create_improvise_behavior()
                 self._flaneur_behavior = self._create_flaneur_behavior()
                 self._behaviors = [
                     self._explore,
-                    self._imitate,
                     self._improvise,
                     self._flaneur_behavior]
+
+                if self.args.enable_features:
+                    self._imitate = self._create_imitate_behavior()
+                    self._behaviors.append(self._imitate)
 
             self.run_backend_and_or_ui()
 
@@ -300,7 +302,8 @@ class DimensionalityReductionExperiment(Experiment):
         self.send_event_to_ui(event)
 
     def _handle_target_features(self, event):
-        self._imitate.set_target_features(event.content)
+        if self.args.enable_features:
+            self._imitate.set_target_features(event.content)
         self._broadcast_event_to_other_uis(event)
 
     def _train_feature_matcher(self):

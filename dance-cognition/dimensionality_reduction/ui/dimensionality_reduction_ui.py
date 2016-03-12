@@ -165,9 +165,10 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         if self.args.mode == modes.FOLLOW:
             self._add_follow_tab()
         self._add_explore_tab()
-        self._add_imitate_tab()
         self._add_improvise_tab()
         self._add_flaneur_tab()
+        if self.args.enable_features:
+            self._add_imitate_tab()
         self.tabs.currentChanged.connect(self._changed_mode_tab)
         self._layout.addWidget(self.tabs)
         self._changing_mode_non_interactively = False
