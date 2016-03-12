@@ -16,6 +16,7 @@ class ParametersForm:
             self._add_widget(name_widget, 0)
             if isinstance(field_widget, Slider):
                 value_widget = QtGui.QLabel()
+                value_widget.setFixedWidth(30)
                 self._add_widget(field_widget, 1)
                 self._add_widget(value_widget, 2)
                 self._value_widgets[parameter.name] = value_widget
