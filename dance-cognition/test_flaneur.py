@@ -214,7 +214,7 @@ class Experiment:
 parser = ArgumentParser()
 parser.add_argument("-model")
 parser.add_argument("--translational-speed", type=float, default=0.2)
-parser.add_argument("--directional-speed", type=float, default=0.05)
+parser.add_argument("--directional-speed", type=float, default=0.7)
 parser.add_argument("--look-ahead-distance", type=float, default=0.1)
 args = parser.parse_args()
 

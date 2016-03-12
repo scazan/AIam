@@ -1,6 +1,7 @@
 import numpy
 from event import Event
 from parameters import *
+from dimensionality_reduction.utils import PositionComparison
 
 class ImitateParameters(Parameters):
     def __init__(self):
@@ -113,17 +114,3 @@ class Imitate:
     def showing_feature_matches(self):
         return (self._target_normalized_reduction is not None and
                 self._experiment.args.show_all_feature_matches)
-
-class PositionComparison:
-    def __init__(self, source, target):
-        self._vector_towards_target = target - source
-        self._distance_to_target = numpy.linalg.norm(self._vector_towards_target)
-        if self._distance_to_target > 0:
-            self._direction_as_unit_vector = self._vector_towards_target / self._distance_to_target
-
-    def get_distance_to_target(self):
-        return self._distance_to_target
-
-    def get_direction_as_unit_vector(self):
-        return self._direction_as_unit_vector
-
