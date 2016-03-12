@@ -169,6 +169,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._add_flaneur_tab()
         if self.args.enable_features:
             self._add_imitate_tab()
+            self._add_hybrid_tab()
         self.tabs.currentChanged.connect(self._changed_mode_tab)
         self._layout.addWidget(self.tabs)
         self._changing_mode_non_interactively = False
@@ -307,6 +308,19 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self.imitate_tab.setLayout(self._imitate_tab_layout)
         self.tabs.addTab(self.imitate_tab, "Imitate")
         self._mode_tabs[modes.IMITATE] = self.imitate_tab
+
+    def _add_hybrid_tab(self):
+        self.hybrid_tab = ModeTab(modes.HYBRID)
+        self._hybrid_tab_layout = QtGui.QVBoxLayout()
+        self._hybrid_params = HybridParameters()
+        self._hybrid_params.add_listener(self._send_changed_parameter)
+        self._hybrid_params_form = self.add_parameter_fields(
+            self._hybrid_params, self._hybrid_tab_layout)
+        self._add_parameter_set(self._hybrid_params, self._hybrid_params_form)
+        self._hybrid_tab_layout.addStretch(1)
+        self.hybrid_tab.setLayout(self._hybrid_tab_layout)
+        self.tabs.addTab(self.hybrid_tab, "Hybrid")
+        self._mode_tabs[modes.HYBRID] = self.hybrid_tab
 
     def _add_improvise_tab(self):
         self.improvise_tab = ModeTab(modes.IMPROVISE)

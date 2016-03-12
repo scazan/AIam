@@ -34,3 +34,6 @@ def _nearest_index(iterable, target):
 
 def _distance(a, b):
     return numpy.linalg.norm(a - b)
+
+def linear_interpolation(a, b, interpolation):
+    return a + (b - a) * interpolation

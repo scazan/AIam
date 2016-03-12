@@ -10,6 +10,7 @@ from behaviors.explore import Explore
 from behaviors.imitate import Imitate, ImitateParameters
 from behaviors.improvise import ImproviseParameters, Improvise
 from behaviors.flaneur_behavior import FlaneurBehavior, FlaneurParameters
+from behaviors.hybrid import Hybrid, HybridParameters
 import sampling
 import sklearn.neighbors
 from transformations import euler_from_quaternion
@@ -28,7 +29,8 @@ class DimensionalityReductionExperiment(Experiment):
                                      modes.IMPROVISE,
                                      modes.EXPLORE,
                                      modes.IMITATE,
-                                     modes.FLANEUR],
+                                     modes.FLANEUR,
+                                     modes.HYBRID],
                             default=modes.EXPLORE)
         parser.add_argument("--max-novelty", type=float, default=1.)
         parser.add_argument("--analyze-components", action="store_true")
@@ -150,8 +152,12 @@ class DimensionalityReductionExperiment(Experiment):
                     self._flaneur_behavior]
 
                 if self.args.enable_features:
+                    self._feature_matcher, self._sampled_reductions = storage.load(
+                        self._feature_matcher_path)
                     self._imitate = self._create_imitate_behavior()
                     self._behaviors.append(self._imitate)
+                    self._hybrid = self._create_hybrid_behavior()
+                    self._behaviors.append(self._hybrid)
 
             self.run_backend_and_or_ui()
 
@@ -162,11 +168,19 @@ class DimensionalityReductionExperiment(Experiment):
         return Explore(self)
 
     def _create_imitate_behavior(self):
-        feature_matcher, sampled_reductions = storage.load(self._feature_matcher_path)
         self._imitate_params = ImitateParameters()
         self._imitate_params.set_values_from_args(self.args)
         self._add_parameter_set(self._imitate_params)
-        return Imitate(self, feature_matcher, sampled_reductions, self._imitate_params)
+        return Imitate(self, self._feature_matcher, self._sampled_reductions, self._imitate_params)
+
+    def _create_hybrid_behavior(self):
+        self._hybrid_params = HybridParameters()
+        self._hybrid_params.set_values_from_args(self.args)
+        self._add_parameter_set(self._hybrid_params)
+        return Hybrid(
+            self, self._feature_matcher, self._sampled_reductions,
+            self.student.flaneur_map_points,
+            self._hybrid_params)
 
     def _create_improvise_behavior(self):
         if self.args.preferred_location:
@@ -264,6 +278,8 @@ class DimensionalityReductionExperiment(Experiment):
             self._set_reduction_from_behavior(self._imitate)
         elif self._mode == modes.FLANEUR:
             self._set_reduction_from_behavior(self._flaneur_behavior)
+        elif self._mode == modes.HYBRID:
+            self._set_reduction_from_behavior(self._hybrid)
         self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
 
         if self.args.enable_features:
@@ -285,6 +301,8 @@ class DimensionalityReductionExperiment(Experiment):
             self._improvise.proceed(self.time_increment)
         elif self._mode == modes.FLANEUR:
             self._flaneur_behavior.proceed(self.time_increment)
+        elif self._mode == modes.HYBRID:
+            self._hybrid.proceed(self.time_increment)
 
     def update_cursor(self, cursor):
         Experiment.update_cursor(self, cursor)
@@ -304,6 +322,7 @@ class DimensionalityReductionExperiment(Experiment):
     def _handle_target_features(self, event):
         if self.args.enable_features:
             self._imitate.set_target_features(event.content)
+            self._hybrid.set_target_features(event.content)
         self._broadcast_event_to_other_uis(event)
 
     def _train_feature_matcher(self):

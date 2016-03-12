@@ -40,16 +40,10 @@ class Flaneur:
         self._move_in_direction()
 
     def _process_direction(self):
-        position_ahead = self._get_position_ahead()
-        distances_list, points_indices_list = self._nearest_neighbor_classifier.kneighbors(
-            position_ahead)
-        distances = distances_list[0]
-        points_indices = points_indices_list[0]
-        self._neighbors = [self.map_points[index] for index in points_indices]
-        self._neighbors_center = numpy.mean(self._neighbors, 0)
+        target_position = self.get_target_position(self._position, self._direction)
         target_comparison = PositionComparison(
             source=self._position,
-            target=self._neighbors_center)
+            target=target_position)
         if target_comparison.get_distance_to_target() > 0:
             target_direction = target_comparison.get_direction_as_unit_vector()
             if self._direction is None:
@@ -57,15 +51,25 @@ class Flaneur:
             else:
                 self._move_towards_direction(target_direction)
 
-    def _get_position_ahead(self):
-        if self._direction is None:
-            return self._position
+    def get_target_position(self, current_position, current_direction):
+        position_ahead = self._get_position_ahead(current_position, current_direction)
+        distances_list, points_indices_list = self._nearest_neighbor_classifier.kneighbors(
+            position_ahead)
+        distances = distances_list[0]
+        points_indices = points_indices_list[0]
+        self._neighbors = [self.map_points[index] for index in points_indices]
+        self._neighbors_center = numpy.mean(self._neighbors, 0)
+        return self._neighbors_center
+
+    def _get_position_ahead(self, current_position, current_direction):
+        if current_direction is None:
+            return current_position
         else:
-            norm = numpy.linalg.norm(self._direction)
+            norm = numpy.linalg.norm(current_direction)
             if norm > 0:
-                return self._position + self._direction / norm * self.look_ahead_distance
+                return current_position + current_direction / norm * self.look_ahead_distance
             else:
-                return self._position
+                return current_position
 
     def _move_towards_direction(self, target_direction):
         difference = target_direction - self._direction

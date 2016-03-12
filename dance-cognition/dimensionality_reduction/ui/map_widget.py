@@ -1,4 +1,5 @@
 from dimensionality_reduction_ui import *
+from event import merge_event_handler_dicts
 
 SPLIT_SENSITIVITY = .2
 
@@ -75,13 +76,13 @@ class MapWidget(QtOpenGL.QGLWidget):
             modes.IMITATE: ImitateMapViewRenderer(self),
             modes.IMPROVISE: ImproviseMapViewRenderer(self),
             modes.FLANEUR: FlaneurMapViewRenderer(self),
+            modes.HYBRID: HybridMapViewRenderer(self),
             }
 
     def get_event_handlers(self):
-        result = []
-        for renderer in self._mode_specific_renderers.values():
-            result += renderer.get_event_handlers().items()
-        return result
+        return merge_event_handler_dicts([
+                renderer.get_event_handlers()
+                for renderer in self._mode_specific_renderers.values()])
 
     def dimensions_changed(self, dimensions):
         self.set_dimensions(dimensions)
@@ -312,3 +313,20 @@ class FlaneurMapViewRenderer(MapViewRenderer):
 
     def dimensions_changed(self):
         self._map_points_layer.refresh()
+
+class HybridMapViewRenderer(FlaneurMapViewRenderer, ImitateMapViewRenderer):
+    def __init__(self, *args, **kwargs):
+        FlaneurMapViewRenderer.__init__(self, *args, **kwargs)
+        ImitateMapViewRenderer.__init__(self, *args, **kwargs)
+
+    def get_event_handlers(self):
+        return dict(
+            list(FlaneurMapViewRenderer.get_event_handlers(self).items()) +
+            list(ImitateMapViewRenderer.get_event_handlers(self).items()))
+
+    def render(self):
+        FlaneurMapViewRenderer.render(self)
+        ImitateMapViewRenderer.render(self)
+
+    def should_render_observations(self):
+        return False

@@ -45,3 +45,31 @@ class Event:
 
     def __setstate__(self, state):
         self.type, self.content = state
+
+def merge_event_handler_dicts(event_handler_dicts):
+    event_types = _get_all_event_types(event_handler_dicts)
+    return dict(
+        (event_type, _get_merged_event_handlers_for_type(event_handler_dicts, event_type))
+        for event_type in event_types)
+
+def _get_all_event_types(event_handler_dicts):
+    result = set()
+    for event_handler_dict in event_handler_dicts:
+        result.update(event_handler_dict.keys())
+    return result
+
+def _get_merged_event_handlers_for_type(event_handler_dicts, event_type):
+    handlers = _get_all_handlers_of_type(event_handler_dicts, event_type)
+    if len(handlers) == 1:
+        return handlers[0]
+    else:
+        def merged_handler(event):
+            for handler in handlers:
+                handler(event)
+        return lambda event: merged_handler(event)
+
+def _get_all_handlers_of_type(event_handler_dicts, event_type):
+    return [
+        event_handler_dict[event_type]
+        for event_handler_dict in event_handler_dicts
+        if event_type in event_handler_dict]

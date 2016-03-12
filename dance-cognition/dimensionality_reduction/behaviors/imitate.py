@@ -18,11 +18,11 @@ class Imitate:
                  experiment,
                  feature_matcher,
                  sampled_reductions,
-                 params):
+                 parameters):
         self._experiment = experiment
         self._feature_matcher = feature_matcher
         self._sampled_reductions = sampled_reductions
-        self.params = params
+        self._parameters = parameters
         self._target_normalized_reduction = None
         self._new_target_features = None
         self.set_reduction(numpy.array([.5] * experiment.args.num_components))
@@ -33,6 +33,10 @@ class Imitate:
         if self._target_normalized_reduction is not None:
             self._time_increment = time_increment
             self._move_normalized_reduction_towards_target_features()
+
+    def get_target_position(self):
+        self._process_potential_new_target_features()
+        return self._target_normalized_reduction
 
     def get_reduction(self):
         return self._experiment.student.unnormalize_reduction(self._normalized_reduction)
@@ -97,13 +101,13 @@ class Imitate:
         norm = numpy.linalg.norm(difference)
         if norm > 0:
             self._direction += difference / norm * min(
-                self.params.directional_speed * self._time_increment, 1)
+                self._parameters.directional_speed * self._time_increment, 1)
 
     def _move_in_direction(self):
         norm = numpy.linalg.norm(self._direction)
         if norm > 0:
             scaled_directional_vector = self._direction / norm * \
-                min(self._time_increment * self.params.translational_speed, 1)
+                min(self._time_increment * self._parameters.translational_speed, 1)
             scaled_directional_vector_norm = numpy.linalg.norm(
                 scaled_directional_vector)
             if scaled_directional_vector_norm > self._distance_to_target_normalized_reduction:
