@@ -7,6 +7,10 @@ from parameters import *
 from interpolation import linear_interpolation
 from dimensionality_reduction.utils import PositionComparison
 import math
+import copy
+
+IDLE_IMITATION = 0.5
+IDLE_TARGET_FEATURES = numpy.array([0, 0, 0])
 
 class HybridParameters(Parameters):
     def __init__(self):
@@ -26,8 +30,9 @@ class Hybrid:
         self._create_flaneur(map_points)
         self._create_imitate(feature_matcher, sampled_reductions)
         n_dimensions = len(map_points[0])
-        self._position = numpy.random.random(size=n_dimensions)
+        self._position = None
         self._direction = None
+        self.handle_user_intensity(None)
 
     def _create_flaneur(self, map_points):
         self._flaneur_parameters = FlaneurParameters()
@@ -40,6 +45,8 @@ class Hybrid:
 
     def proceed(self, time_increment):
         self._time_increment = time_increment
+        if self._position is None:
+            self._position = copy.copy(self._imitate.get_target_position())
         self._process_direction()
         if self._parameters.imitation < 0.99 or self._distance_to_target > THRESHOLD_DISTANCE_TO_TARGET:
             self._move_in_direction()
@@ -99,7 +106,8 @@ class Hybrid:
 
     def handle_user_intensity(self, relative_intensity):
         if relative_intensity is None:
-            imitation = 0
+            self._parameters.get_parameter("imitation").set_value(IDLE_IMITATION)
+            self.set_target_features(IDLE_TARGET_FEATURES)
         else:
             imitation = 1 - math.pow(relative_intensity, 0.1)
-        self._parameters.get_parameter("imitation").set_value(imitation)
+            self._parameters.get_parameter("imitation").set_value(imitation)

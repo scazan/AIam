@@ -246,7 +246,7 @@ class ImitateMapViewRenderer(MapViewRenderer):
             self._render_target_reduction()
 
     def _render_target_reduction(self):
-        glColor3f(.8, .2, .2)
+        glColor3f(.2, .8, .2)
         glPointSize(3.0)
         glBegin(GL_POINTS)
         self.map_view.vertex(self._target_normalized_reduction[self.map_view.dimensions])
