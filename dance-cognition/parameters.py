@@ -42,6 +42,7 @@ class Parameters:
         parameter = Parameter(self, *args, **kwargs)
         self._parameters.append(parameter)
         self._parameters_by_name[parameter.name] = parameter
+        return parameter
 
     def __getattr__(self, name):
         if name in self._parameters_by_name:

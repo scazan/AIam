@@ -12,11 +12,33 @@ import copy
 IDLE_IMITATION = 0.5
 IDLE_TARGET_FEATURES = numpy.array([0, 0, 0])
 
+IDLE_FLANEUR_PARAMETERS = {
+    "translational_speed": 0.01,
+    "directional_speed": 1.1,
+    "look_ahead_distance": 0.2,
+}
+
+ACTIVE_FLANEUR_PARAMETERS = {
+    "translational_speed": 0.6,
+    "directional_speed": 1.1,
+    "look_ahead_distance": 0.2,
+}
+
 class HybridParameters(Parameters):
     def __init__(self):
         Parameters.__init__(self)
         self.add_parameter("imitation", type=float, default=0,
                            choices=ParameterFloatRange(0., 1.))
+        self._add_flaneur_parameters()
+
+    def _add_flaneur_parameters(self):
+        for flaneur_parameter in FlaneurParameters():
+            hybrid_parameter = self.add_parameter(
+                "flaneur_%s" % flaneur_parameter.name,
+                flaneur_parameter.type,
+                flaneur_parameter.default,
+                flaneur_parameter.choices)
+            hybrid_parameter.flaneur_parameter_name = flaneur_parameter.name
 
 class Hybrid:
     def __init__(self,
@@ -27,12 +49,19 @@ class Hybrid:
                  parameters):
         self._experiment = experiment
         self._parameters = parameters
+        parameters.add_listener(self._parameter_changed)
         self._create_flaneur(map_points)
         self._create_imitate(feature_matcher, sampled_reductions)
         n_dimensions = len(map_points[0])
         self._position = None
         self._direction = None
         self.handle_user_intensity(None)
+
+    def _parameter_changed(self, hybrid_parameter):
+        if hasattr(hybrid_parameter, "flaneur_parameter_name"):
+            flaneur_parameter = self._flaneur_parameters.get_parameter(
+                hybrid_parameter.flaneur_parameter_name)
+            flaneur_parameter.set_value(hybrid_parameter.value())
 
     def _create_flaneur(self, map_points):
         self._flaneur_parameters = FlaneurParameters()
@@ -108,6 +137,12 @@ class Hybrid:
         if relative_intensity is None:
             self._parameters.get_parameter("imitation").set_value(IDLE_IMITATION)
             self.set_target_features(IDLE_TARGET_FEATURES)
+            self._set_flaneur_parameters(IDLE_FLANEUR_PARAMETERS)
         else:
             imitation = 1 - math.pow(relative_intensity, 0.1)
             self._parameters.get_parameter("imitation").set_value(imitation)
+            self._set_flaneur_parameters(ACTIVE_FLANEUR_PARAMETERS)
+
+    def _set_flaneur_parameters(self, parameters_dict):
+        for name, value in parameters_dict.iteritems():
+            self._parameters.get_parameter("flaneur_%s" % name).set_value(value)
