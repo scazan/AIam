@@ -1,3 +1,9 @@
+hybrid:
+  imitate root orientation
+  degree of imitation somehow related to user's behavior
+
+optimization: don't send USER_INTENSITY from interpreter unless it has changed
+
 one-click installation stop
 
 re-create floor renderer when color scheme changed interactively
