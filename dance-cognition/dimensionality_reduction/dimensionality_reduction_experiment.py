@@ -67,12 +67,19 @@ class DimensionalityReductionExperiment(Experiment):
         handler.send_event(Event(Event.MODE, self._mode))
         if self.reduction is not None:
             handler.send_event(Event(Event.REDUCTION, self.reduction))
-        self._improvise_params.add_listener(self._send_changed_parameter)
-        self._improvise_params.notify_changed_all()
+        self._add_parameters_listener(self._improvise_params)
+        if self.args.enable_features:
+            self._add_parameters_listener(self._hybrid_params)
 
     def ui_disconnected(self, handler):
         Experiment.ui_disconnected(self, handler)
         self._improvise_params.remove_listener(self._send_changed_parameter)
+        if self.args.enable_features:
+            self._hybrid_params.remove_listener(self._send_changed_parameter)
+
+    def _add_parameters_listener(self, parameters):
+        parameters.add_listener(self._send_changed_parameter)
+        parameters.notify_changed_all()
 
     def _send_changed_parameter(self, parameter):
         self.send_event_to_ui(Event(
@@ -209,7 +216,10 @@ class DimensionalityReductionExperiment(Experiment):
         self._parameter_sets[parameters.__class__.__name__] = parameters
 
     def _handle_user_intensity(self, event):
-        self._improvise.handle_user_intensity(event.content)
+        user_intensity = event.content
+        self._improvise.handle_user_intensity(user_intensity)
+        if self.args.enable_features:
+            self._hybrid.handle_user_intensity(user_intensity)
 
     def _abort_path(self, event):
         self._improvise.select_next_move()

@@ -6,11 +6,12 @@ from event import Event
 from parameters import *
 from interpolation import linear_interpolation
 from dimensionality_reduction.utils import PositionComparison
+import math
 
 class HybridParameters(Parameters):
     def __init__(self):
         Parameters.__init__(self)
-        self.add_parameter("imitate", type=float, default=0,
+        self.add_parameter("imitation", type=float, default=0,
                            choices=ParameterFloatRange(0., 1.))
 
 class Hybrid:
@@ -40,7 +41,7 @@ class Hybrid:
     def proceed(self, time_increment):
         self._time_increment = time_increment
         self._process_direction()
-        if self._parameters.imitate < 0.99 or self._distance_to_target > THRESHOLD_DISTANCE_TO_TARGET:
+        if self._parameters.imitation < 0.99 or self._distance_to_target > THRESHOLD_DISTANCE_TO_TARGET:
             self._move_in_direction()
         self._experiment.send_event_to_ui(
             Event(Event.NEIGHBORS_CENTER, self._flaneur.get_neighbors_center()))
@@ -66,7 +67,7 @@ class Hybrid:
             return flaneur_target_position
         else:
             return linear_interpolation(
-                flaneur_target_position, imitate_target_position, self._parameters.imitate)
+                flaneur_target_position, imitate_target_position, self._parameters.imitation)
 
     def _move_towards_direction(self, target_direction):
         difference = target_direction - self._direction
@@ -75,7 +76,7 @@ class Hybrid:
             directional_speed = linear_interpolation(
                 self._flaneur_parameters.directional_speed,
                 self._imitate_parameters.directional_speed,
-                self._parameters.imitate)
+                self._parameters.imitation)
             self._direction += difference / norm * min(directional_speed * self._time_increment, 1)
 
     def _move_in_direction(self):
@@ -84,7 +85,7 @@ class Hybrid:
             translational_speed = linear_interpolation(
                 self._flaneur_parameters.translational_speed,
                 self._imitate_parameters.translational_speed,
-                self._parameters.imitate)
+                self._parameters.imitation)
             self._position += self._direction / norm * self._time_increment * translational_speed
 
     def get_reduction(self):
@@ -96,3 +97,9 @@ class Hybrid:
     def set_target_features(self, target_features):
         self._imitate.set_target_features(target_features)
 
+    def handle_user_intensity(self, relative_intensity):
+        if relative_intensity is None:
+            imitation = 0
+        else:
+            imitation = 1 - math.pow(relative_intensity, 0.1)
+        self._parameters.get_parameter("imitation").set_value(imitation)
