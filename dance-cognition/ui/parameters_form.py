@@ -41,19 +41,21 @@ class ParametersForm:
             field = LineEdit(parameter)
         else:
             raise Exception("don't know how to create field for %s" % parameter)
-        field.update()
+        field.update_to_reflect_value()
         return field
 
-    def update_field(self, name):
-        field_widget = self._field_widgets[name]
-        field_widget.update()
+    def update_field_to_reflect_changed_value(self, parameter):
+        field_widget = self._field_widgets[parameter.name]
+        field_widget.update_to_reflect_value()
+        self.value_changed(parameter)
 
     def value_changed(self, parameter):
         self._update_value_widget(parameter)
 
     def _update_value_widget(self, parameter):
-        value_widget = self._value_widgets[parameter.name]
-        value_widget.setText("%.2f" % parameter.value())
+        if parameter.name in self._value_widgets:
+            value_widget = self._value_widgets[parameter.name]
+            value_widget.setText("%.2f" % parameter.value())
 
 class Slider(QtGui.QSlider):
     def __init__(self, form, parameter):
@@ -77,7 +79,7 @@ class Slider(QtGui.QSlider):
         parameter.set_value(value)
         self._form.value_changed(parameter)
 
-    def update(self):
+    def update_to_reflect_value(self):
         self.setValue(self._parameter_value_to_slider_value(self._parameter))
 
 class ListChoice(QtGui.QComboBox):
@@ -92,7 +94,7 @@ class ListChoice(QtGui.QComboBox):
     def _edited_choice_parameter(self, parameter, index):
         parameter.set_value(parameter.choices[index])
 
-    def update(self):
+    def update_to_reflect_value(self):
         index = 0
         for value in self._parameter.choices:
             if self._parameter.value() == value:
@@ -114,5 +116,5 @@ class LineEdit(QtGui.QLineEdit):
         elif parameter.type == float:
             parameter.set_value(float(string))
 
-    def update(self):
+    def update_to_reflect_value(self):
         self.setText(str(self._parameter.value()))

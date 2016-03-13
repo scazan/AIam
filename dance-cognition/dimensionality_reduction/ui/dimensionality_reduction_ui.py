@@ -349,7 +349,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         parameter_name = event.content["name"]
         parameter = parameters.get_parameter(parameter_name)
         parameter.set_value(event.content["value"], notify=False)
-        parameter_set["form"].update_field(parameter_name)
+        parameter_set["form"].update_field_to_reflect_changed_value(parameter)
 
     def _add_reduction_tabs(self):
         self._set_exploration_ranges()
