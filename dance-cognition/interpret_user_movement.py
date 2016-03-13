@@ -21,29 +21,6 @@ from bvh.bvh_writer import BvhWriter
 from bvh.bvh import HierarchyCreator
 from feature_extraction import FeatureExtractor
 
-# WAITING_PARAMETERS = {
-#     "velocity": 0.6,
-#     "novelty": 0.3,
-#     "extension": 1.0,
-#     "location_preference": 0.5,
-# }
-
-PASSIVE_PARAMETERS = {
-    "velocity": 0.3,
-    "novelty": 0.03,
-    "extension": 0.02,
-    "location_preference": 1.0,
-}
-
-WAITING_PARAMETERS = PASSIVE_PARAMETERS
-
-INTENSE_PARAMETERS = {
-    "velocity": 1.0,
-    "novelty": 1.0,
-    "extension": 2.0,
-    "location_preference": 0.0,
-}
-
 INTENSITY_THRESHOLD = 5
 INTENSITY_CEILING = 80
 FPS = 30.0
@@ -346,13 +323,12 @@ class UserMovementInterpreter:
         self._select_user()
         system_state_changed = self._update_system_state()
 
-        parameters = self._select_parameters_in_system_state()
-        self._output_controller.send_parameters(parameters)
+        user_intensity = self._get_user_intensity()
+        self._output_controller.send_user_intensity(user_intensity)
 
         if system_state_changed:
-            self._output_controller.abort_path()
+            self._output_controller.send_system_state_changed()
             if args.with_viewer:
-                viewer.log(self._frame["timestamp"], "aborting path")
                 viewer.log(self._frame["timestamp"], self._system_state)
 
         if args.enable_features and self._selected_user is not None:
@@ -413,16 +389,12 @@ class UserMovementInterpreter:
             self._system_state = self.ADAPTING_TO_USER
         return self._system_state != self._previous_system_state
 
-    def _select_parameters_in_system_state(self):
+    def _get_user_intensity(self):
         if self._system_state == self.WAITING:
-            return WAITING_PARAMETERS
+            return None
         elif self._system_state == self.ADAPTING_TO_USER:
-            relative_intensity = self._get_relative_intensity()
-            return self._output_controller.intensity_to_output_parameters(relative_intensity)
-
-    def _get_relative_intensity(self):
-        return max(0, self._selected_user.get_intensity() - INTENSITY_THRESHOLD) / \
-            (self.intensity_ceiling - INTENSITY_THRESHOLD)
+            return max(0, self._selected_user.get_intensity() - INTENSITY_THRESHOLD) / \
+                (self.intensity_ceiling - INTENSITY_THRESHOLD)
 
     def get_users(self):
         return [user for user in self._users.values()
@@ -488,29 +460,11 @@ class OutputController:
     def __init__(self, event_sender):
         self._event_sender = event_sender
 
-    def intensity_to_output_parameters(self, relative_intensity):
-        return self._interpolate_parameters(
-            PASSIVE_PARAMETERS, INTENSE_PARAMETERS, relative_intensity)
+    def send_user_intensity(self, intensity):
+        self._event_sender.send_event(Event(Event.USER_INTENSITY, intensity))
 
-    def _interpolate_parameters(self, low_parameters, high_parameters, interpolation_value):
-        result = {}
-        for name in ["velocity", "novelty", "extension", "location_preference"]:
-            low_value = low_parameters[name]
-            high_value = high_parameters[name]
-            value = low_value + (high_value - low_value) * interpolation_value
-            result[name] = value
-        return result
-
-    def send_parameters(self, parameters):
-        for name, value in parameters.iteritems():
-            self._event_sender.send_event(
-                Event(Event.PARAMETER,
-                      {"class": "ImproviseParameters",
-                       "name": name,
-                       "value": value}))
-
-    def abort_path(self):
-        self._event_sender.send_event(Event(Event.ABORT_PATH))
+    def send_system_state_changed(self):
+        self._event_sender.send_event(Event(Event.SYSTEM_STATE_CHANGED))
 
     def send_features(self, features):
         self._event_sender.send_event(Event(Event.TARGET_FEATURES, features))

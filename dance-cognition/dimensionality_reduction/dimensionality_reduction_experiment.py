@@ -51,7 +51,8 @@ class DimensionalityReductionExperiment(Experiment):
                 Event.MODE: self._handle_mode_event,
                 Event.REDUCTION: self._handle_reduction,
                 Event.PARAMETER: self._handle_parameter_event,
-                Event.ABORT_PATH: self._abort_path,
+                Event.USER_INTENSITY: self._handle_user_intensity,
+                Event.SYSTEM_STATE_CHANGED: self._abort_path,
                 Event.TARGET_FEATURES: self._handle_target_features,
                 Event.TARGET_ROOT_Y_ORIENTATION: self._handle_target_root_y_orientation,
                 })
@@ -206,6 +207,9 @@ class DimensionalityReductionExperiment(Experiment):
 
     def _add_parameter_set(self, parameters):
         self._parameter_sets[parameters.__class__.__name__] = parameters
+
+    def _handle_user_intensity(self, event):
+        self._improvise.handle_user_intensity(event.content)
 
     def _abort_path(self, event):
         self._improvise.select_next_move()

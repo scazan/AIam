@@ -21,8 +21,7 @@ class MidiInterpreter:
 
     def _process_value(self, value):
         relative_intensity = float(value) / 127
-        parameters = self._output_controller.intensity_to_output_parameters(relative_intensity)
-        self._output_controller.send_parameters(parameters)
+        self._output_controller.send_user_intensity(relative_intensity)
         
     def main_loop(self):
         print "press ctrl-c to exit"

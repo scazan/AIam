@@ -4,6 +4,29 @@ import interpolation
 import dynamics as dynamics_module
 import numpy
 
+# WAITING_PARAMETERS = {
+#     "velocity": 0.6,
+#     "novelty": 0.3,
+#     "extension": 1.0,
+#     "location_preference": 0.5,
+# }
+
+PASSIVE_PARAMETERS = {
+    "velocity": 0.3,
+    "novelty": 0.03,
+    "extension": 0.02,
+    "location_preference": 1.0,
+}
+
+WAITING_PARAMETERS = PASSIVE_PARAMETERS
+
+INTENSE_PARAMETERS = {
+    "velocity": 1.0,
+    "novelty": 1.0,
+    "extension": 2.0,
+    "location_preference": 0.0,
+}
+
 class ImproviseParameters(Parameters):
     def __init__(self):
         Parameters.__init__(self)
@@ -96,3 +119,24 @@ class Improvise:
 
     def path(self):
         return self._path
+
+    def handle_user_intensity(self, relative_intensity):
+        if relative_intensity is None:
+            parameters_to_set = WAITING_PARAMETERS
+        else:
+            parameters_to_set = self._interpolate_parameters(
+                PASSIVE_PARAMETERS, INTENSE_PARAMETERS, relative_intensity)
+        self._set_parameters(parameters_to_set)
+
+    def _interpolate_parameters(self, low_parameters, high_parameters, interpolation_value):
+        result = {}
+        for name in ["velocity", "novelty", "extension", "location_preference"]:
+            low_value = low_parameters[name]
+            high_value = high_parameters[name]
+            value = low_value + (high_value - low_value) * interpolation_value
+            result[name] = value
+        return result
+
+    def _set_parameters(self, parameters_dict):
+        for name, value in parameters_dict.iteritems():
+            self.params.get_parameter(name).set_value(value)
