@@ -234,6 +234,7 @@ class MainWindow(Window, EventListener):
         parser.add_argument("--width", dest="preferred_width", type=int, default=1000)
         parser.add_argument("--height", dest="preferred_height", type=int, default=850)
         parser.add_argument("--fixed-size", action="store_true")
+        parser.add_argument("--maximized", action="store_true")
         parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
                             default="-3.767,-1.400,-3.485,-55.500,18.500")
         parser.add_argument("--no-toolbar", action="store_true")
@@ -299,6 +300,8 @@ class MainWindow(Window, EventListener):
 
         if args.fixed_size:
             self.setFixedSize(self.args.preferred_width, self.args.preferred_height)
+        if args.maximized:
+            self.showMaximized()
         if self.args.fullscreen:
             self.give_keyboard_focus_to_fullscreen_window()
             self._fullscreen_action.toggle()
