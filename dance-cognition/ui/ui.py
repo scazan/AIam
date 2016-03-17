@@ -231,8 +231,8 @@ class MainWindow(Window, EventListener):
     @staticmethod
     def add_parser_arguments(parser):
         Window.add_parser_arguments(parser)
-        parser.add_argument("--width", dest="preferred_width", type=int, default=1000)
-        parser.add_argument("--height", dest="preferred_height", type=int, default=850)
+        parser.add_argument("--width", dest="preferred_width", type=int, default=1440)
+        parser.add_argument("--height", dest="preferred_height", type=int, default=900)
         parser.add_argument("--fixed-size", action="store_true")
         parser.add_argument("--maximized", action="store_true")
         parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
