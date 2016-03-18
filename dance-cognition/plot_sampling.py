@@ -21,11 +21,7 @@ args = experiment.args
 selected_dimensions = [int(string) for string in args.select_dimensions.split(",")]
 
 data = experiment.student.normalized_observed_reductions[:,selected_dimensions]
-samples = sampling.NeighborhoodSampler.sample(
-    data,
-    num_neighborhoods=100,
-    samples_per_neighborhood=10,
-    neighborhood_size=0.1)
+samples = experiment._sampling_class(data, experiment._sampling_args).sample()
 
 out = open(args.output, "w")
 for sample in samples:

@@ -40,12 +40,19 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--preferred-location", type=str)
         parser.add_argument("--enable-features", action="store_true")
         parser.add_argument("--train-feature-matcher", action="store_true")
+        parser.add_argument("--sampling-method", default="KMeans")
         parser.add_argument("--num-feature-matches", type=int, default=1)
         parser.add_argument("--show-all-feature-matches", action="store_true")
         ImproviseParameters().add_parser_arguments(parser)
         FlaneurParameters().add_parser_arguments(parser)
 
     def __init__(self, parser):
+        args, _remaining_args = parser.parse_known_args()
+        if args.sampling_method:
+            self._sampling_class = getattr(sampling, "%sSampler" % args.sampling_method)
+            self._sampling_class.add_parser_arguments(parser)
+            self._sampling_args, _remaining_args = parser.parse_known_args()
+
         self.profiles_dir = "profiles/dimensionality_reduction"
         Experiment.__init__(self, parser, event_handlers={
                 Event.MODE: self._handle_mode_event,
@@ -345,7 +352,8 @@ class DimensionalityReductionExperiment(Experiment):
             n_neighbors=self.args.num_feature_matches, weights='uniform')
         print "sampling training data of size %s..." % len(
             self.student.normalized_observed_reductions)
-        sampled_normalized_reductions = self._sample_normalized_reduction_space()
+        sampled_normalized_reductions = self._sample_normalized_reduction_space(
+            self.student.normalized_observed_reductions)
         print "selected %s samples" % len(sampled_normalized_reductions)
         sampled_reductions = [
             self.student.unnormalize_reduction(normalized_reduction)
@@ -360,10 +368,11 @@ class DimensionalityReductionExperiment(Experiment):
         print "ok"
         storage.save((feature_matcher, sampled_reductions), self._feature_matcher_path)
 
-    def _sample_normalized_reduction_space(self):
-        return sampling.KMeansSampler.sample(
-            observations=self.student.normalized_observed_reductions,
-            num_samples=500)
+    def _sample_normalized_reduction_space(self, observations):
+        if self.args.sampling_method:
+            return self._sampling_class(observations, self._sampling_args).sample()
+        else:
+            return observations
 
     def _reduction_to_feature_vector(self, reduction):
         output = self.student.inverse_transform(numpy.array([reduction]))[0]
