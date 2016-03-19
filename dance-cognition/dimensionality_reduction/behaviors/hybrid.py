@@ -10,7 +10,7 @@ import math
 import copy
 
 IDLE_IMITATION = 0.5
-IDLE_TARGET_FEATURES = numpy.array([0, 0, 0])
+IDLE_TARGET_FEATURES = numpy.array([0, 0, 0, 0])
 
 # IDLE_FLANEUR_PARAMETERS = {
 #     "translational_speed": 0.01,
