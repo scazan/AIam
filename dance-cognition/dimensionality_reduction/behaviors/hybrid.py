@@ -12,6 +12,11 @@ import copy
 IDLE_IMITATION = 0.5
 IDLE_TARGET_FEATURES = numpy.array([0, 0, 0])
 
+# IDLE_FLANEUR_PARAMETERS = {
+#     "translational_speed": 0.01,
+#     "directional_speed": 1.1,
+#     "look_ahead_distance": 0.2,
+# }
 IDLE_FLANEUR_PARAMETERS = {
     "translational_speed": 0.01,
     "directional_speed": 1.1,
@@ -135,13 +140,13 @@ class Hybrid:
 
     def handle_user_intensity(self, relative_intensity):
         if relative_intensity is None:
-            self._parameters.get_parameter("imitation").set_value(IDLE_IMITATION)
+            # self._parameters.get_parameter("imitation").set_value(IDLE_IMITATION)
             self.set_target_features(IDLE_TARGET_FEATURES)
-            self._set_flaneur_parameters(IDLE_FLANEUR_PARAMETERS)
-        else:
-            imitation = 1 - math.pow(relative_intensity, 0.1)
-            self._parameters.get_parameter("imitation").set_value(imitation)
-            self._set_flaneur_parameters(ACTIVE_FLANEUR_PARAMETERS)
+            # self._set_flaneur_parameters(IDLE_FLANEUR_PARAMETERS)
+        # else:
+        #     # imitation = 1 - math.pow(relative_intensity, 0.1)
+        #     # self._parameters.get_parameter("imitation").set_value(imitation)
+        #     self._set_flaneur_parameters(ACTIVE_FLANEUR_PARAMETERS)
 
     def _set_flaneur_parameters(self, parameters_dict):
         for name, value in parameters_dict.iteritems():
