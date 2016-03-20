@@ -58,7 +58,7 @@ class BvhViewer(window.Window):
         glColor3f(0,0,0)
         glBegin(GL_POINTS)
         for vertex in vertices:
-            glVertex3f(*self._zoom_vertex(vertex))
+            self._bvh_vertex(self._zoom_vertex(vertex))
         glEnd()
 
     def _draw_edges(self, edges):
@@ -73,10 +73,16 @@ class BvhViewer(window.Window):
 
     def _draw_line(self, v1, v2):
         glBegin(GL_LINES)
-        glVertex3f(*v1)
-        glVertex3f(*v2)
+        self._bvh_vertex(v1)
+        self._bvh_vertex(v2)
         glEnd()
-        
+
+    def _bvh_vertex(self, v):
+        glVertex3f(
+            v[bvh_coordinate_left],
+            v[bvh_coordinate_up],
+            v[bvh_coordinate_far])
+
     def _draw_unit_cube(self):
         glColor4f(0,0,0,0.2)
         glutWireCube(2.0)
@@ -110,10 +116,20 @@ parser.add_argument("-zoom", type=float, default=1.0)
 parser.add_argument("-unit-cube", action="store_true")
 parser.add_argument("-loop", action="store_true")
 parser.add_argument("-vertex-size", type=float, default=0)
+parser.add_argument("--z-up", action="store_true")
 args = parser.parse_args()
 
 bvh_filenames = glob.glob(args.bvh)
 bvh_reader = BvhCollection(bvh_filenames)
 bvh_reader.read()
+
+if args.z_up:
+    bvh_coordinate_left = 0
+    bvh_coordinate_up = 2
+    bvh_coordinate_far = 1
+else:
+    bvh_coordinate_left = 0
+    bvh_coordinate_up = 1
+    bvh_coordinate_far = 2
 
 window.run(BvhViewer, args)
