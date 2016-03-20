@@ -61,7 +61,7 @@ class DimensionalityReductionExperiment(Experiment):
                 Event.USER_INTENSITY: self._handle_user_intensity,
                 Event.SYSTEM_STATE_CHANGED: self._abort_path,
                 Event.TARGET_FEATURES: self._handle_target_features,
-                Event.TARGET_ROOT_Y_ORIENTATION: self._handle_target_root_y_orientation,
+                Event.TARGET_ROOT_VERTICAL_ORIENTATION: self._handle_target_root_vertical_orientation,
                 })
         self.reduction = None
         self._mode = self.args.mode
@@ -384,8 +384,8 @@ class DimensionalityReductionExperiment(Experiment):
     def should_read_bvh_frames(self):
         return self.args.train or self.args.mode == modes.FOLLOW
 
-    def _handle_target_root_y_orientation(self, event):
-        self.entity.root_y_orientation = event.content
+    def _handle_target_root_vertical_orientation(self, event):
+        self.entity.root_vertical_orientation = event.content
 
 class StillsExporter:
     def __init__(self, experiment, stills_data_path):

@@ -26,7 +26,7 @@ class DimensionalityReductionMainWindow(MainWindow):
                 Event.FEATURES: self._handle_features,
                 Event.TARGET_FEATURES: self._handle_target_features,
                 Event.FEATURE_MATCH_RESULT: self._handle_feature_match_result,
-                Event.TARGET_ROOT_Y_ORIENTATION: self._handle_target_root_y_orientation,
+                Event.TARGET_ROOT_VERTICAL_ORIENTATION: self._handle_target_root_vertical_orientation,
                 }, **kwargs)
         self._add_toggleable_action(
             '&Plot reduction', self._start_plot_reduction,
@@ -124,11 +124,11 @@ class DimensionalityReductionMainWindow(MainWindow):
             n += 1
         self._scene.feature_match_result = feature_match_result_with_opacity
 
-    def _handle_target_root_y_orientation(self, event):
-        self.toolbar.handle_target_root_y_orientation(event.content)
+    def _handle_target_root_vertical_orientation(self, event):
+        self.toolbar.handle_target_root_vertical_orientation(event.content)
 
-    def get_root_y_orientation(self):
-        return self.toolbar.get_root_y_orientation()
+    def get_root_vertical_orientation(self):
+        return self.toolbar.get_root_vertical_orientation()
 
 class DimensionalityReductionToolbar(ExperimentToolbar):
     def __init__(self, *args):
@@ -223,7 +223,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._add_random_button()
         self._add_deviate_button()
         if self.parent().args.entity == "hierarchical":
-            self._add_root_y_orientation_form()
+            self._add_root_vertical_orientation_form()
         self._explore_tab_layout.addStretch(1)
         self.explore_tab.setLayout(self._explore_tab_layout)
         self.tabs.addTab(self.explore_tab, "Explore")
@@ -246,7 +246,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         layout.addWidget(button)
         self._explore_tab_layout.addLayout(layout)
 
-    def _add_root_y_orientation_form(self):
+    def _add_root_vertical_orientation_form(self):
         class OrientationSlider(QtGui.QDial):
             def __init__(self):
                 QtGui.QDial.__init__(self)
@@ -259,41 +259,42 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
                 return QtCore.QSize(50, 50)
 
         layout = QtGui.QHBoxLayout()
-        self._root_y_orientation_checkbox = QtGui.QCheckBox()
-        self._root_y_orientation_checkbox.stateChanged.connect(
-            self._root_y_orientation_checkbox_changed)
-        layout.addWidget(self._root_y_orientation_checkbox)
-        label = QtGui.QLabel("Lock Y orientation")
+        self._root_vertical_orientation_checkbox = QtGui.QCheckBox()
+        self._root_vertical_orientation_checkbox.stateChanged.connect(
+            self._root_vertical_orientation_checkbox_changed)
+        layout.addWidget(self._root_vertical_orientation_checkbox)
+        label = QtGui.QLabel("Lock vertical orientation")
         layout.addWidget(label)
-        self._root_y_orientation_slider = OrientationSlider()
-        self._root_y_orientation_slider.valueChanged.connect(self._root_y_orientation_changed)
-        self._root_y_orientation_slider.setEnabled(False)
-        layout.addWidget(self._root_y_orientation_slider)
+        self._root_vertical_orientation_slider = OrientationSlider()
+        self._root_vertical_orientation_slider.valueChanged.connect(
+            self._root_vertical_orientation_changed)
+        self._root_vertical_orientation_slider.setEnabled(False)
+        layout.addWidget(self._root_vertical_orientation_slider)
         layout.addStretch(1)
         self._explore_tab_layout.addLayout(layout)
 
-    def _root_y_orientation_checkbox_changed(self, event):
-        self._root_y_orientation_slider.setEnabled(
-            self._root_y_orientation_checkbox.isChecked())
+    def _root_vertical_orientation_checkbox_changed(self, event):
+        self._root_vertical_orientation_slider.setEnabled(
+            self._root_vertical_orientation_checkbox.isChecked())
         self._send_root_orientation()
 
     def _send_root_orientation(self):
         self.parent().client.send_event(
-            Event(Event.TARGET_ROOT_Y_ORIENTATION, self.get_root_y_orientation()))
+            Event(Event.TARGET_ROOT_VERTICAL_ORIENTATION, self.get_root_vertical_orientation()))
 
-    def get_root_y_orientation(self):
-        if self._root_y_orientation_checkbox.checkState() == QtCore.Qt.Checked:
+    def get_root_vertical_orientation(self):
+        if self._root_vertical_orientation_checkbox.checkState() == QtCore.Qt.Checked:
             return float(
-                self._root_y_orientation_slider.value()) / SLIDER_PRECISION * math.pi*2
+                self._root_vertical_orientation_slider.value()) / SLIDER_PRECISION * math.pi*2
         else:
             return None
 
-    def _root_y_orientation_changed(self, event):
+    def _root_vertical_orientation_changed(self, event):
         self._send_root_orientation()
 
-    def handle_target_root_y_orientation(self, unclamped_y_orientation):
+    def handle_target_root_vertical_orientation(self, unclamped_y_orientation):
         clamped_y_orientation = unclamped_y_orientation % (math.pi*2)
-        self._root_y_orientation_slider.setValue(
+        self._root_vertical_orientation_slider.setValue(
             int(clamped_y_orientation * SLIDER_PRECISION / (math.pi*2)))
 
     def _add_imitate_tab(self):

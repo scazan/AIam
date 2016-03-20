@@ -44,12 +44,14 @@ class Entity(BaseEntity):
             self.args.rotation_parametrization]
         self._create_parameter_info_table()
         if self.experiment.args.z_up:
+            self._vertical_axis = "z"
             self._coordinate_up = 2
         else:
+            self._vertical_axis = "y"
             self._coordinate_up = 1
         self._normalized_constrainers = self._create_constrainers()
         self._unnormalized_constrainers = self._create_constrainers()
-        self.root_y_orientation = None
+        self.root_vertical_orientation = None
         if self.args.enable_features:
             self.feature_extractor = FeatureExtractor(self._coordinate_up)
 
@@ -172,26 +174,33 @@ class Entity(BaseEntity):
         parameter_index += self.rotation_parametrization.num_parameters
         radians = self.rotation_parametrization.parameters_to_rotation(
             rotation_parameters, joint.definition.axes)
-        if self.root_y_orientation is not None and joint.parent is None:
-            radians = self._reorient_y(radians, joint.definition.axes)
+        if self.root_vertical_orientation is not None and joint.parent is None:
+            radians = self._reorient_around_vertical_axis(radians, joint.definition.axes)
         joint.angles = radians
         return parameter_index
 
-    def _reorient_y(self, euler_angles, axes):
-        if axes[1] == "y":
-            return self._reorient_y_with_y_first_in_axes(euler_angles)
+    def _reorient_around_vertical_axis(self, euler_angles, axes):
+        if axes[1] == self._vertical_axis:
+            return self._reorient_around_first_axis(euler_angles)
         else:
-            euler_angles_yxz = euler_from_quaternion(
+            if self._vertical_axis == "y":
+                axes_with_vertical_first = "ryxz"
+            elif self._vertical_axis == "z":
+                axes_with_vertical_first = "rzxy"
+            euler_angles_vertical_axis_first = euler_from_quaternion(
                 quaternion_from_euler(*euler_angles, axes=axes),
-                axes="ryxz")
-            euler_angles_yxz_reoriented = self._reorient_y_with_y_first_in_axes(euler_angles_yxz)
+                axes=axes_with_vertical_first)
+            euler_angles_vertical_axis_first_reoriented = self._reorient_around_first_axis(
+                euler_angles_vertical_axis_first)
             return euler_from_quaternion(
-                quaternion_from_euler(*euler_angles_yxz_reoriented, axes="ryxz"),
+                quaternion_from_euler(
+                    *euler_angles_vertical_axis_first_reoriented,
+                     axes=axes_with_vertical_first),
                 axes=axes)
 
-    def _reorient_y_with_y_first_in_axes(self, euler_angles):
+    def _reorient_around_first_axis(self, euler_angles):
         euler_angles = list(euler_angles)
-        euler_angles[0] = self.root_y_orientation
+        euler_angles[0] = self.root_vertical_orientation
         return euler_angles
 
     def parameters_to_processed_pose(self, parameters, output_pose):

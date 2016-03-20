@@ -149,7 +149,7 @@ class User:
     def _process_root_orientation(self):
         self._root_orientation_buffer.append(numpy.array(self.get_joint("torso").get_orientation()))
         smoothed_root_orientation = sum(self._root_orientation_buffer) / self._root_orientation_buffer_size
-        self._smoothed_root_y_orientation = euler_from_quaternion(
+        self._smoothed_root_vertical_orientation = euler_from_quaternion(
             smoothed_root_orientation, axes="rxyz")[1]
 
     def get_intensity(self):
@@ -192,8 +192,8 @@ class User:
         print "saving %s" % filename
         self._bvh_writer.write(filename)
 
-    def get_root_y_orientation(self):
-        return self._smoothed_root_y_orientation
+    def get_root_vertical_orientation(self):
+        return self._smoothed_root_vertical_orientation
         
 class UserMovementInterpreter:
     WAITING = "waiting"
@@ -336,8 +336,8 @@ class UserMovementInterpreter:
             self._output_controller.send_features(features)
 
         if self._selected_user is not None:
-            self._output_controller.send_root_y_orientation(
-                self._selected_user.get_root_y_orientation())
+            self._output_controller.send_root_vertical_orientation(
+                self._selected_user.get_root_vertical_orientation())
 
         if args.with_viewer:
             viewer.process_frame(self._frame)
@@ -473,8 +473,9 @@ class OutputController:
     def send_features(self, features):
         self._event_sender.send_event(Event(Event.TARGET_FEATURES, features))
 
-    def send_root_y_orientation(self, y_orientation):
-        self._event_sender.send_event(Event(Event.TARGET_ROOT_Y_ORIENTATION, y_orientation))
+    def send_root_vertical_orientation(self, vertical_orientation):
+        self._event_sender.send_event(Event(
+                Event.TARGET_ROOT_VERTICAL_ORIENTATION, vertical_orientation))
 
 class MockEventSender:
     def send_event(self, event):

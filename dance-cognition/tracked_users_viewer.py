@@ -320,7 +320,7 @@ class TrackedUsersScene(Scene):
         glColor4f(0, 1, 0, a)
         glPushMatrix()
         glTranslatef(x, y, z)
-        glRotatef(math.degrees(user.get_root_y_orientation() + math.pi/2), 0, 1, 0)
+        glRotatef(math.degrees(user.get_root_vertical_orientation() + math.pi/2), 0, 1, 0)
         glBegin(GL_LINES)
         glVertex3f(0, 0, 0)
         glVertex3f(ORIENTATION_ARROW_LENGTH, 0, 0)

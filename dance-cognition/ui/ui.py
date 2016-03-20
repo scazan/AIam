@@ -101,9 +101,9 @@ class BvhScene(Scene):
         self._update_camera_translation()
         self.render_io()
         if self._parent.orientation_action.isChecked():
-            root_y_orientation = self._parent.get_root_y_orientation()
-            if root_y_orientation is not None:
-                self.render_root_y_orientation(root_y_orientation)
+            root_vertical_orientation = self._parent.get_root_vertical_orientation()
+            if root_vertical_orientation is not None:
+                self.render_root_vertical_orientation(root_vertical_orientation)
         if self._exporting_video:
             self._exporter.export_frame()
             self._parent.send_event(Event(Event.PROCEED_TO_NEXT_FRAME))
@@ -210,7 +210,7 @@ class BvhScene(Scene):
             v[self.bvh_coordinate_up],
             v[self.bvh_coordinate_far])
 
-    def get_root_y_orientation(self):
+    def get_root_vertical_orientation(self):
         pass
 
 class ExperimentToolbar(QtGui.QWidget):
