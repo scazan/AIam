@@ -6,7 +6,7 @@ class Teacher:
         self._frame_rate = frame_rate
 
     def create_training_data(self, duration):
-        print "creating training data..."
+        print "creating training data for %.1fs with %.1f FPS..." % (duration, self._frame_rate)
         self._training_data = []
         time_increment = 1.0 / self._frame_rate
         t = 0
