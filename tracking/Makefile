@@ -1,6 +1,6 @@
 include CommonDefs.mak
 
-OSCPACK = /usr/local/include
+OSCPACK = libs
 
 BIN_DIR = Bin
 
