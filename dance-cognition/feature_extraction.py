@@ -21,7 +21,7 @@ class FeatureExtractor:
         "head"]
 
     def __init__(self, coordinate_up=1):
-        self._coordinate_up = 1
+        self._coordinate_up = coordinate_up
 
     def get_num_features(self):
         return len(self.FEATURES)
