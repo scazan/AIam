@@ -8,6 +8,7 @@ from interpolation import linear_interpolation
 from dimensionality_reduction.utils import PositionComparison
 import math
 import copy
+from dimensionality_reduction.behavior import Behavior
 
 IDLE_IMITATION = 0.5
 IDLE_TARGET_FEATURES = numpy.array([0, 0, 0, 0])
@@ -45,7 +46,7 @@ class HybridParameters(Parameters):
                 flaneur_parameter.choices)
             hybrid_parameter.flaneur_parameter_name = flaneur_parameter.name
 
-class Hybrid:
+class Hybrid(Behavior):
     def __init__(self,
                  experiment,
                  feature_matcher,
@@ -131,9 +132,6 @@ class Hybrid:
 
     def get_reduction(self):
         return self._experiment.student.unnormalize_reduction(self._position)
-
-    def set_reduction(self, reduction):
-        pass
 
     def set_target_features(self, target_features):
         self._imitate.set_target_features(target_features)

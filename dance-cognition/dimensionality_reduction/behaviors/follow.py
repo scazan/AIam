@@ -1,10 +1,8 @@
 import numpy
 from event import Event
+from dimensionality_reduction.behavior import Behavior
 
-class Follow:
-    def __init__(self, experiment):
-        self._experiment = experiment
-
+class Follow(Behavior):
     def get_input(self):
         return self._experiment.entity.adapt_value_to_model(
             self._experiment.entity.get_value())

@@ -3,6 +3,7 @@ from navigator import Navigator, PathFollower
 import interpolation
 import dynamics as dynamics_module
 import numpy
+from dimensionality_reduction.behavior import Behavior
 
 # WAITING_PARAMETERS = {
 #     "velocity": 0.6,
@@ -44,7 +45,7 @@ class ImproviseParameters(Parameters):
         self.add_parameter("location_preference", type=float, default=0,
                            choices=ParameterFloatRange(0., 1.))
 
-class Improvise:
+class Improvise(Behavior):
     def __init__(self, experiment, params, preferred_location, on_changed_path=None):
         self.experiment = experiment
         self.params = params
@@ -57,9 +58,6 @@ class Improvise:
         if preferred_location is not None:
             self._navigator.set_preferred_location(preferred_location)
         self._reduction = None
-
-    def set_reduction(self, reduction):
-        self._reduction = reduction
 
     def select_next_move(self):
         found_non_empty_path = False

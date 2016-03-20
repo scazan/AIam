@@ -2,6 +2,7 @@ import numpy
 from event import Event
 from parameters import *
 from dimensionality_reduction.utils import PositionComparison
+from dimensionality_reduction.behavior import Behavior
 
 class ImitateParameters(Parameters):
     def __init__(self):
@@ -13,7 +14,7 @@ class ImitateParameters(Parameters):
 
 THRESHOLD_DISTANCE_TO_TARGET = 0.01
 
-class Imitate:
+class Imitate(Behavior):
     def __init__(self,
                  experiment,
                  feature_matcher,
