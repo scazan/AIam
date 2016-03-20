@@ -4,8 +4,8 @@
 #include "Viewer.hpp"
 #include "NiTE.h"
 #include <map>
-#include <oscpack/osc/OscOutboundPacketStream.h>
-#include <oscpack/ip/UdpSocket.h>
+#include "oscpack/osc/OscOutboundPacketStream.h"
+#include "oscpack/ip/UdpSocket.h"
 
 #define OSC_HOST "127.0.0.1"
 #define OSC_PORT 15002
