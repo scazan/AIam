@@ -1,6 +1,12 @@
+ALLOW_WARNINGS = 1
 include CommonDefs.mak
 
 OSCPACK = libs
+
+ifeq ("$(OSTYPE)","Darwin")
+	NITE2_INCLUDE = libs/openni2/include
+	OPENNI2_INCLUDE = libs/openni2/include
+endif
 
 BIN_DIR = Bin
 
@@ -13,7 +19,7 @@ SRC_FILES = *.cpp
 
 ifeq ("$(OSTYPE)","Darwin")
 	CFLAGS += -DMACOS
-	LDFLAGS += -framework OpenGL -framework GLUT GLU
+	LDFLAGS += -framework OpenGL -framework GLUT -Llibs/openni2/lib/macosx/ -Llibs/oscpack
 else
 	CFLAGS += -DUNIX
 	USED_LIBS += glut GL GLU

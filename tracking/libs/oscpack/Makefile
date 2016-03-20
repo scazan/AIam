@@ -17,7 +17,11 @@ UNAME := $(shell uname)
 CXX := g++
 INCLUDES := -I.
 COPTS  := -Wall -Wextra -O3 -fPIC
-CDEBUG := -Wall -Wextra -g 
+CDEBUG := -Wall -Wextra -g
+ifeq ($(UNAME), Darwin)
+	COPTS  := $(COPTS) -arch i386 -arch x86_64
+	CDEBUG := $(CDEBUG) -arch i386 -arch x86_64
+endif
 CXXFLAGS := $(COPTS) $(INCLUDES) -D$(ENDIANESS)
 
 BINDIR := bin
@@ -34,8 +38,13 @@ DUMP := $(BINDIR)/OscDump
 
 INCLUDEDIR := oscpack
 LIBNAME := liboscpack
-LIBSONAME := $(LIBNAME).so
-LIBFILENAME := $(LIBSONAME).1.1.0
+ifeq ($(UNAME), Darwin)
+	LIBSONAME := $(LIBNAME).dylib
+	LIBFILENAME := $(LIBSONAME)
+else
+	LIBSONAME := $(LIBNAME).so
+	LIBFILENAME := $(LIBSONAME).1.1.0
+endif
 
 # Common source groups
 
@@ -108,7 +117,7 @@ clean:
 $(LIBFILENAME): $(LIBOBJECTS)
 ifeq ($(UNAME), Darwin)
 	#Mac OS X case
-	$(CXX) -dynamiclib -Wl,-install_name,$(LIBSONAME) -o $(LIBFILENAME) $(LIBOBJECTS) -lc
+	$(CXX) -dynamiclib -arch i386 -arch x86_64 -Wl,-install_name,$(LIBSONAME) -o $(LIBFILENAME) $(LIBOBJECTS) -lc
 else
 	#GNU/Linux case
 	$(CXX) -shared -Wl,-soname,$(LIBSONAME) -o $(LIBFILENAME) $(LIBOBJECTS) -lc
