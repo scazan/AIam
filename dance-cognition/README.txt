@@ -25,6 +25,13 @@ sudo pip-2.7 install scipy
 
 # install xquartz from http://www.xquartz.org/ on OS X > 10.7
 
+# for osc
+sudo port install liblo
+pip-2.7 install cython
+# download liblo from http://das.nasophon.de/pyliblo/
+python2.7 setup.py build
+sudo python2.7 setup.py install
+
 PREDICTION WITH BACKPROP NET
 
 python predict.py -p point_circle -train -training-duration 100
