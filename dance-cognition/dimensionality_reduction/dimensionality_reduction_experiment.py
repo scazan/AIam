@@ -43,6 +43,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--sampling-method", default="KMeans")
         parser.add_argument("--num-feature-matches", type=int, default=1)
         parser.add_argument("--show-all-feature-matches", action="store_true")
+        parser.add_argument("--robust-imitation", action="store_true")
         ImproviseParameters().add_parser_arguments(parser)
         FlaneurParameters().add_parser_arguments(parser)
 

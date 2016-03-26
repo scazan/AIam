@@ -59,15 +59,22 @@ class Imitate(Behavior):
             target_features, return_distance=True)
         distances = distances_list[0]
         sampled_reductions_indices = sampled_reductions_indices_list[0]
-        best_sampled_reductions_index = sampled_reductions_indices[0]
-        target_reduction = self._sampled_reductions[best_sampled_reductions_index]
+        sampled_reductions = [
+            self._sampled_reductions[index]
+            for index in sampled_reductions_indices]
+
+        if self._experiment.args.robust_imitation:
+            target_reduction = min(
+                sampled_reductions,
+                key=lambda reduction: self._distance_to_current_reduction(reduction))
+        else:
+            best_sampled_reductions_index = sampled_reductions_indices[0]
+            target_reduction = self._sampled_reductions[best_sampled_reductions_index]
+
         self._target_normalized_reduction = self._experiment.student.normalize_reduction(
             target_reduction)
 
-        feature_match_result = [
-            (self._sampled_reductions[sampled_reductions_index], distance)
-            for sampled_reductions_index, distance
-            in zip(sampled_reductions_indices, distances)]
+        feature_match_result = zip(sampled_reductions, distances)
         self._experiment.send_event_to_ui(Event(Event.FEATURE_MATCH_RESULT, feature_match_result))
 
         if self._experiment.args.show_all_feature_matches:
@@ -79,6 +86,9 @@ class Imitate(Behavior):
                 in zip(sampled_reductions_indices, distances)]
             self._experiment.send_event_to_ui(
                 Event(Event.FEATURE_MATCH_OUTPUT, match_result_with_output))
+
+    def _distance_to_current_reduction(self, reduction):
+        return numpy.linalg.norm(reduction - self._reduction)
 
     def _reduction_to_processed_output(self, reduction):
         output = self._experiment.student.inverse_transform(numpy.array([reduction]))[0]
