@@ -233,24 +233,38 @@ class MapViewRenderer:
 class ImitateMapViewRenderer(MapViewRenderer):
     def __init__(self, *args, **kwargs):
         MapViewRenderer.__init__(self, *args, **kwargs)
-        self._target_normalized_reduction = None
+        self._feature_match_result = None
 
     def get_event_handlers(self):
-        return {Event.TARGET_REDUCTION: self._set_target_reduction}
+        return {Event.FEATURE_MATCH_RESULT: self._set_feature_match_result}
 
-    def _set_target_reduction(self, event):
-        self._target_normalized_reduction = self.map_view.student.normalize_reduction(event.content)
+    def _set_feature_match_result(self, event):
+        self._feature_match_result = event.content
 
     def render(self):
-        if self._target_normalized_reduction is not None:
-            self._render_target_reduction()
+        if self._feature_match_result is not None:
+            self._render_feature_matches()
 
-    def _render_target_reduction(self):
-        glColor3f(.2, .8, .2)
-        glPointSize(3.0)
+    def _render_feature_matches(self):
+        glPointSize(8.0)
         glBegin(GL_POINTS)
-        self.map_view.vertex(self._target_normalized_reduction[self.map_view.dimensions])
+        reductions, distances = zip(*self._feature_match_result)
+        normalized_distances = self._normalize(distances)
+        for reduction, normalized_distance in zip(reductions, normalized_distances):
+            normalized_reduction = self.map_view.student.normalize_reduction(reduction)
+            opacity = 1 - normalized_distance * 0.7
+            glColor4f(0, .6, 0, opacity)
+            self.map_view.vertex(normalized_reduction[self.map_view.dimensions])
         glEnd()
+
+    def _normalize(self, values):
+        min_value = min(values)
+        max_value = max(values)
+        values_range = max_value - min_value
+        if values_range == 0:
+            return [.5] * len(values)
+        else:
+            return (values - min_value) / values_range
 
 class ImproviseMapViewRenderer(MapViewRenderer):
     def __init__(self, *args, **kwargs):

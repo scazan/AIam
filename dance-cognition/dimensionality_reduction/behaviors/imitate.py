@@ -59,22 +59,26 @@ class Imitate(Behavior):
             target_features, return_distance=True)
         distances = distances_list[0]
         sampled_reductions_indices = sampled_reductions_indices_list[0]
-        nearest_neighbor_index = min(range(len(distances)),
-                                     key=lambda neighbor_index: distances[neighbor_index])
-        best_sampled_reductions_index = sampled_reductions_indices[nearest_neighbor_index]
+        best_sampled_reductions_index = sampled_reductions_indices[0]
         target_reduction = self._sampled_reductions[best_sampled_reductions_index]
-        self._experiment.send_event_to_ui(Event(Event.TARGET_REDUCTION, target_reduction))
         self._target_normalized_reduction = self._experiment.student.normalize_reduction(
             target_reduction)
 
+        feature_match_result = [
+            (self._sampled_reductions[sampled_reductions_index], distance)
+            for sampled_reductions_index, distance
+            in zip(sampled_reductions_indices, distances)]
+        self._experiment.send_event_to_ui(Event(Event.FEATURE_MATCH_RESULT, feature_match_result))
+
         if self._experiment.args.show_all_feature_matches:
-            match_result_as_tuples = [
+            match_result_with_output = [
                 (self._reduction_to_processed_output(
                         self._sampled_reductions[sampled_reductions_index]),
                  distance)
                 for sampled_reductions_index, distance
                 in zip(sampled_reductions_indices, distances)]
-            self._experiment.send_event_to_ui(Event(Event.FEATURE_MATCH_RESULT, match_result_as_tuples))
+            self._experiment.send_event_to_ui(
+                Event(Event.FEATURE_MATCH_OUTPUT, match_result_with_output))
 
     def _reduction_to_processed_output(self, reduction):
         output = self._experiment.student.inverse_transform(numpy.array([reduction]))[0]

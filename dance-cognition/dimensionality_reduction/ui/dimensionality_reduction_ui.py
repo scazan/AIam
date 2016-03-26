@@ -25,7 +25,7 @@ class DimensionalityReductionMainWindow(MainWindow):
                 Event.PARAMETER: self._received_parameter,
                 Event.FEATURES: self._handle_features,
                 Event.TARGET_FEATURES: self._handle_target_features,
-                Event.FEATURE_MATCH_RESULT: self._handle_feature_match_result,
+                Event.FEATURE_MATCH_OUTPUT: self._handle_feature_match_output,
                 Event.TARGET_ROOT_VERTICAL_ORIENTATION: self._handle_target_root_vertical_orientation,
                 }, **kwargs)
         self._add_toggleable_action(
@@ -108,7 +108,7 @@ class DimensionalityReductionMainWindow(MainWindow):
     def _handle_target_features(self, event):
         self.toolbar.on_received_target_features_from_backend(event)
 
-    def _handle_feature_match_result(self, event):
+    def _handle_feature_match_output(self, event):
         feature_match_tuples = event.content
         feature_match_tuples_sorted_by_distance = sorted(
             feature_match_tuples,
