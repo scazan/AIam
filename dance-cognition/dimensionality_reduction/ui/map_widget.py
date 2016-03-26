@@ -246,16 +246,23 @@ class ImitateMapViewRenderer(MapViewRenderer):
             self._render_feature_matches()
 
     def _render_feature_matches(self):
-        glPointSize(8.0)
-        glBegin(GL_POINTS)
-        reductions, distances = zip(*self._feature_match_result)
+        distances = [
+            feature_match["distance"]
+            for feature_match in
+            self._feature_match_result]
         normalized_distances = self._normalize(distances)
-        for reduction, normalized_distance in zip(reductions, normalized_distances):
-            normalized_reduction = self.map_view.student.normalize_reduction(reduction)
+        for feature_match, normalized_distance in zip(self._feature_match_result, normalized_distances):
+            normalized_reduction = self.map_view.student.normalize_reduction(
+                feature_match["reduction"])
             opacity = 1 - normalized_distance * 0.7
+            if feature_match["is_target"]:
+                glPointSize(11.0)
+            else:
+                glPointSize(8.0)
+            glBegin(GL_POINTS)
             glColor4f(0, .6, 0, opacity)
             self.map_view.vertex(normalized_reduction[self.map_view.dimensions])
-        glEnd()
+            glEnd()
 
     def _normalize(self, values):
         min_value = min(values)

@@ -74,7 +74,11 @@ class Imitate(Behavior):
         self._target_normalized_reduction = self._experiment.student.normalize_reduction(
             target_reduction)
 
-        feature_match_result = zip(sampled_reductions, distances)
+        feature_match_result = [
+            {"reduction": reduction,
+             "distance": distance,
+             "is_target": numpy.array_equal(reduction, target_reduction)}
+            for reduction, distance in zip(sampled_reductions, distances)]
         self._experiment.send_event_to_ui(Event(Event.FEATURE_MATCH_RESULT, feature_match_result))
 
         if self._experiment.args.show_all_feature_matches:
