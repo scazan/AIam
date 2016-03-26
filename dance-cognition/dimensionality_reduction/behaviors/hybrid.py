@@ -104,6 +104,7 @@ class Hybrid(Behavior):
     def _get_target_position(self):
         flaneur_target_position = self._flaneur.get_target_position(
             self._position, self._direction)
+        self._imitate.set_reduction(self.get_reduction())
         imitate_target_position = self._imitate.get_target_position()
         if imitate_target_position is None:
             return flaneur_target_position
