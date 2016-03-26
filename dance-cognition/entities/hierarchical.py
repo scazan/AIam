@@ -57,7 +57,7 @@ class Entity(BaseEntity):
 
     def _create_constrainers(self):
         result = []
-        if self.experiment.args.friction:
+        if self.experiment.args.friction and not self.experiment.args.show_all_feature_matches:
             result.append(FrictionConstrainer(BalanceDetector(self._coordinate_up)))
         if self.experiment.args.floor:
             result.append(FloorConstrainer(self._coordinate_up))
