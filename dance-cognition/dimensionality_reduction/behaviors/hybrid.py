@@ -129,7 +129,14 @@ class Hybrid(Behavior):
                 self._flaneur_parameters.translational_speed,
                 self._imitate_parameters.translational_speed,
                 self._parameters.imitation)
-            self._position += self._direction / norm * self._time_increment * translational_speed
+            scaled_directional_vector = self._direction / norm * \
+                min(self._time_increment * translational_speed, 1)
+            scaled_directional_vector_norm = numpy.linalg.norm(
+                scaled_directional_vector)
+            if scaled_directional_vector_norm > self._distance_to_target:
+                scaled_directional_vector *= self._distance_to_target / \
+                    scaled_directional_vector_norm
+            self._position += scaled_directional_vector
 
     def get_reduction(self):
         return self._experiment.student.unnormalize_reduction(self._position)
