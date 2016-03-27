@@ -46,6 +46,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--robust-imitation", action="store_true")
         ImproviseParameters().add_parser_arguments(parser)
         FlaneurParameters().add_parser_arguments(parser)
+        HybridParameters().add_parser_arguments(parser)
 
     def __init__(self, parser):
         args, _remaining_args = parser.parse_known_args()
