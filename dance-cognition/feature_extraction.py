@@ -1,16 +1,20 @@
 import numpy
+import math
 
 class FeatureExtractor:
     FEATURES = ["left_hand_elevation",
                 "right_hand_elevation",
                 "head_elevation",
+                "leaning",
                 "knee_distance"]
     INPUT_JOINTS = [
+        "left_foot",
         "left_hand",
         "left_forearm",
         "left_shoulder",
         "left_knee",
         "left_hip",
+        "right_foot",
         "right_hand",
         "right_forearm",
         "right_shoulder",
@@ -22,16 +26,19 @@ class FeatureExtractor:
 
     def __init__(self, coordinate_up=1):
         self._coordinate_up = coordinate_up
+        self._horizontal_coordinates = list(set([0,1,2]) - set([coordinate_up]))
 
     def get_num_features(self):
         return len(self.FEATURES)
 
     def extract_features(self,
+                         left_foot_position,
                          left_hand_position,
                          left_forearm_position,
                          left_shoulder_position,
                          left_knee_position,
                          left_hip_position,
+                         right_foot_position,
                          right_hand_position,
                          right_forearm_position,
                          right_shoulder_position,
@@ -55,6 +62,13 @@ class FeatureExtractor:
         head_elevation = self._get_elevation(
             torso_position, head_position, torso_head_distance)
 
+        mid_feet_position = (left_foot_position + right_foot_position) / 2
+        feet_neck_horizontal_distance = self._get_horizontal_distance(
+            mid_feet_position, neck_position)
+        max_feet_neck_horizontal_distance = self._get_total_distance(
+            [left_foot_position, left_knee_position, left_hip_position, torso_position, neck_position])
+        leaning = feet_neck_horizontal_distance / max_feet_neck_horizontal_distance
+
         max_knee_distance = self._get_total_distance(
             [left_knee_position, left_hip_position, right_hip_position, right_knee_position])
         knee_distance = self._distance(left_knee_position, right_knee_position)
@@ -64,6 +78,7 @@ class FeatureExtractor:
             left_hand_elevation,
             right_hand_elevation,
             head_elevation,
+            leaning,
             relative_knee_distance]
 
     def _get_total_distance(self, positions):
@@ -77,3 +92,8 @@ class FeatureExtractor:
 
     def _distance(self, p1, p2):
         return numpy.linalg.norm(p1 - p2)
+
+    def _get_horizontal_distance(self, position1, position2):
+        return math.sqrt(sum([
+                    pow(position1[coordinate] - position2[coordinate], 2)
+                    for coordinate in self._horizontal_coordinates]))

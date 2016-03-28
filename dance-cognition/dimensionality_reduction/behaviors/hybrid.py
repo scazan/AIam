@@ -11,7 +11,7 @@ import copy
 from dimensionality_reduction.behavior import Behavior
 
 IDLE_IMITATION = 0.5
-IDLE_TARGET_FEATURES = numpy.array([0, 0, 0, 0])
+IDLE_TARGET_FEATURES = numpy.array([0, 0, 0, 0, 0])
 
 # IDLE_FLANEUR_PARAMETERS = {
 #     "translational_speed": 0.01,

@@ -444,11 +444,13 @@ class UserMovementInterpreter:
         positions = [
             self._selected_user.get_joint(joint_name).get_position()
             for joint_name in [
+                "left_foot",
                 "left_hand",
                 "left_elbow",
                 "left_shoulder",
                 "left_knee",
                 "left_hip",
+                "right_foot",
                 "right_hand",
                 "right_elbow",
                 "right_shoulder",
