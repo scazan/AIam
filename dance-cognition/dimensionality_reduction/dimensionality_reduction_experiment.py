@@ -43,7 +43,6 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--sampling-method", default="KMeans")
         parser.add_argument("--num-feature-matches", type=int, default=1)
         parser.add_argument("--show-all-feature-matches", action="store_true")
-        parser.add_argument("--robust-imitation", action="store_true")
         ImproviseParameters().add_parser_arguments(parser)
         FlaneurParameters().add_parser_arguments(parser)
         HybridParameters().add_parser_arguments(parser)
@@ -78,12 +77,14 @@ class DimensionalityReductionExperiment(Experiment):
             handler.send_event(Event(Event.REDUCTION, self.reduction))
         self._add_parameters_listener(self._improvise_params)
         if self.args.enable_features:
+            self._add_parameters_listener(self._imitate_params)
             self._add_parameters_listener(self._hybrid_params)
 
     def ui_disconnected(self, handler):
         Experiment.ui_disconnected(self, handler)
         self._improvise_params.remove_listener(self._send_changed_parameter)
         if self.args.enable_features:
+            self._imitate_params.remove_listener(self._send_changed_parameter)
             self._hybrid_params.remove_listener(self._send_changed_parameter)
 
     def _add_parameters_listener(self, parameters):

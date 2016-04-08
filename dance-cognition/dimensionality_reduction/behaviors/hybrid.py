@@ -35,7 +35,17 @@ class HybridParameters(Parameters):
         Parameters.__init__(self)
         self.add_parameter("imitation", type=float, default=0,
                            choices=ParameterFloatRange(0., 1.))
+        self._add_imitate_parameters()
         self._add_flaneur_parameters()
+
+    def _add_imitate_parameters(self):
+        for imitate_parameter in ImitateParameters():
+            hybrid_parameter = self.add_parameter(
+                imitate_parameter.name,
+                imitate_parameter.type,
+                imitate_parameter.default,
+                imitate_parameter.choices)
+            hybrid_parameter.imitate_parameter_name = imitate_parameter.name
 
     def _add_flaneur_parameters(self):
         for flaneur_parameter in FlaneurParameters():
@@ -68,6 +78,10 @@ class Hybrid(Behavior):
             flaneur_parameter = self._flaneur_parameters.get_parameter(
                 hybrid_parameter.flaneur_parameter_name)
             flaneur_parameter.set_value(hybrid_parameter.value())
+        elif hasattr(hybrid_parameter, "imitate_parameter_name"):
+            imitate_parameter = self._imitate_parameters.get_parameter(
+                hybrid_parameter.imitate_parameter_name)
+            imitate_parameter.set_value(hybrid_parameter.value())
 
     def _create_flaneur(self, map_points):
         self._flaneur_parameters = FlaneurParameters()
@@ -118,7 +132,7 @@ class Hybrid(Behavior):
         if norm > 0:
             directional_speed = linear_interpolation(
                 self._flaneur_parameters.directional_speed,
-                self._imitate_parameters.directional_speed,
+                self._imitate_parameters.imitation_directional_speed,
                 self._parameters.imitation)
             self._direction += difference / norm * min(directional_speed * self._time_increment, 1)
 
@@ -127,7 +141,7 @@ class Hybrid(Behavior):
         if norm > 0:
             translational_speed = linear_interpolation(
                 self._flaneur_parameters.translational_speed,
-                self._imitate_parameters.translational_speed,
+                self._imitate_parameters.imitation_translational_speed,
                 self._parameters.imitation)
             scaled_directional_vector = self._direction / norm * \
                 min(self._time_increment * translational_speed, 1)

@@ -1,4 +1,5 @@
 import numpy
+import math
 from event import Event
 from parameters import *
 from dimensionality_reduction.utils import PositionComparison
@@ -7,10 +8,15 @@ from dimensionality_reduction.behavior import Behavior
 class ImitateParameters(Parameters):
     def __init__(self):
         Parameters.__init__(self)
-        self.add_parameter("translational_speed", type=float, default=0.5,
-                           choices=ParameterFloatRange(0., 1.))
-        self.add_parameter("directional_speed", type=float, default=3,
-                           choices=ParameterFloatRange(0., 3.))
+        self.add_parameter(
+            "imitation_translational_speed", type=float, default=0.5,
+            choices=ParameterFloatRange(0., 1.))
+        self.add_parameter(
+            "imitation_directional_speed", type=float, default=3,
+            choices=ParameterFloatRange(0., 3.))
+        self.add_parameter(
+            "imitation_sensitivity", type=float, default=1.,
+            choices=ParameterFloatRange(0., 1.))
 
 THRESHOLD_DISTANCE_TO_TARGET = 0.01
 
@@ -28,6 +34,7 @@ class Imitate(Behavior):
         self._new_target_features = None
         self.set_reduction(numpy.array([.5] * experiment.args.num_components))
         self._direction = None
+        self._max_normalized_distance = math.sqrt(experiment.args.num_components)
 
     def proceed(self, time_increment):
         self._process_potential_new_target_features()
@@ -59,18 +66,19 @@ class Imitate(Behavior):
             target_features, return_distance=True)
         distances = distances_list[0]
         sampled_reductions_indices = sampled_reductions_indices_list[0]
-        sampled_reductions = [
+        matched_reductions = [
             self._sampled_reductions[index]
             for index in sampled_reductions_indices]
-
-        if self._experiment.args.robust_imitation:
-            target_reduction = min(
-                sampled_reductions,
+        matched_reductions_within_allowed_distance = [
+            reduction
+            for reduction in matched_reductions
+            if self._reduction_is_within_allowed_distance(reduction)]
+        if len(matched_reductions_within_allowed_distance) == 0:
+           target_reduction = min(
+                matched_reductions,
                 key=lambda reduction: self._distance_to_current_reduction(reduction))
         else:
-            best_sampled_reductions_index = sampled_reductions_indices[0]
-            target_reduction = self._sampled_reductions[best_sampled_reductions_index]
-
+            target_reduction = matched_reductions_within_allowed_distance[0]
         self._target_normalized_reduction = self._experiment.student.normalize_reduction(
             target_reduction)
 
@@ -78,7 +86,7 @@ class Imitate(Behavior):
             {"reduction": reduction,
              "distance": distance,
              "is_target": numpy.array_equal(reduction, target_reduction)}
-            for reduction, distance in zip(sampled_reductions, distances)]
+            for reduction, distance in zip(matched_reductions, distances)]
         self._experiment.send_event_to_ui(Event(Event.FEATURE_MATCH_RESULT, feature_match_result))
 
         if self._experiment.args.show_all_feature_matches:
@@ -90,6 +98,12 @@ class Imitate(Behavior):
                 in zip(sampled_reductions_indices, distances)]
             self._experiment.send_event_to_ui(
                 Event(Event.FEATURE_MATCH_OUTPUT, match_result_with_output))
+
+    def _reduction_is_within_allowed_distance(self, reduction):
+        normalized_reduction = self._experiment.student.normalize_reduction(reduction)
+        distance = numpy.linalg.norm(normalized_reduction - self._normalized_reduction)
+        threshold = self._max_normalized_distance * self._parameters.imitation_sensitivity
+        return distance <= threshold
 
     def _distance_to_current_reduction(self, reduction):
         return numpy.linalg.norm(reduction - self._reduction)
@@ -120,13 +134,13 @@ class Imitate(Behavior):
         norm = numpy.linalg.norm(difference)
         if norm > 0:
             self._direction += difference / norm * min(
-                self._parameters.directional_speed * self._time_increment, 1)
+                self._parameters.imitation_directional_speed * self._time_increment, 1)
 
     def _move_in_direction(self):
         norm = numpy.linalg.norm(self._direction)
         if norm > 0:
             scaled_directional_vector = self._direction / norm * \
-                min(self._time_increment * self._parameters.translational_speed, 1)
+                min(self._time_increment * self._parameters.imitation_translational_speed, 1)
             scaled_directional_vector_norm = numpy.linalg.norm(
                 scaled_directional_vector)
             if scaled_directional_vector_norm > self._distance_to_target_normalized_reduction:
