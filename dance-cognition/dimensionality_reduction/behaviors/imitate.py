@@ -4,6 +4,7 @@ from event import Event
 from parameters import *
 from dimensionality_reduction.utils import PositionComparison
 from dimensionality_reduction.behavior import Behavior
+import time
 
 class ImitateParameters(Parameters):
     def __init__(self):
@@ -19,6 +20,7 @@ class ImitateParameters(Parameters):
             choices=ParameterFloatRange(0., 1.))
 
 THRESHOLD_DISTANCE_TO_TARGET = 0.01
+TARGET_FEATURE_PROCESSING_RATE = 10
 
 class Imitate(Behavior):
     def __init__(self,
@@ -35,15 +37,17 @@ class Imitate(Behavior):
         self.set_reduction(numpy.array([.5] * experiment.args.num_components))
         self._direction = None
         self._max_normalized_distance = math.sqrt(experiment.args.num_components)
+        self._last_target_feature_processing_time = None
+        self._max_time_between_target_feature_processing = 1.0 / TARGET_FEATURE_PROCESSING_RATE
 
     def proceed(self, time_increment):
-        self._process_potential_new_target_features()
+        self._potentially_process_new_target_features()
         if self._target_normalized_reduction is not None:
             self._time_increment = time_increment
             self._move_normalized_reduction_towards_target_features()
 
     def get_target_position(self):
-        self._process_potential_new_target_features()
+        self._potentially_process_new_target_features()
         return self._target_normalized_reduction
 
     def get_reduction(self):
@@ -56,10 +60,18 @@ class Imitate(Behavior):
     def set_target_features(self, target_features):
         self._new_target_features = target_features
 
-    def _process_potential_new_target_features(self):
-        if self._new_target_features is not None:
+    def _potentially_process_new_target_features(self):
+        if self._new_target_features is not None and self._target_feature_processing_is_timely():
             self._process_target_features(self._new_target_features)
             self._new_target_features = None
+            self._last_target_feature_processing_time = time.time()
+
+    def _target_feature_processing_is_timely(self):
+        if self._last_target_feature_processing_time is None:
+            return True
+        else:
+            time_since_last_processing = time.time() - self._last_target_feature_processing_time
+            return time_since_last_processing > self._max_time_between_target_feature_processing
 
     def _process_target_features(self, target_features):
         distances_list, sampled_reductions_indices_list = self._feature_matcher.kneighbors(
