@@ -42,6 +42,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--train-feature-matcher", action="store_true")
         parser.add_argument("--sampling-method", default="KMeans")
         parser.add_argument("--num-feature-matches", type=int, default=1)
+        parser.add_argument("--show-output-features", action="store_true")
         parser.add_argument("--show-all-feature-matches", action="store_true")
         ImproviseParameters().add_parser_arguments(parser)
         FlaneurParameters().add_parser_arguments(parser)
@@ -305,7 +306,7 @@ class DimensionalityReductionExperiment(Experiment):
             self._set_reduction_from_behavior(self._hybrid)
         self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
 
-        if self.args.enable_features:
+        if self.args.enable_features and self.args.show_output_features:
             self.entity.parameters_to_processed_pose(self.output, self._pose_for_feature_extraction)
             features = self.entity.extract_features(self._pose_for_feature_extraction)
             self.send_event_to_ui(Event(Event.FEATURES, features))

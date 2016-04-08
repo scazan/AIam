@@ -442,7 +442,8 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._reduction_tabs.currentWidget().update_qgl_widgets()
 
     def _add_features_tab_widgets(self):
-        self._add_output_features_tab_widget()
+        if self.args.show_output_features:
+            self._add_output_features_tab_widget()
         self._add_input_features_tab_widget()
 
     def _add_output_features_tab_widget(self):
