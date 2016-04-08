@@ -85,7 +85,14 @@ class Hybrid(Behavior):
 
     def _create_flaneur(self, map_points):
         self._flaneur_parameters = FlaneurParameters()
+        self._flaneur_parameters.add_listener(self._flaneur_parameter_changed)
         self._flaneur = Flaneur(map_points)
+
+    def _flaneur_parameter_changed(self, parameter):
+        self._update_flaneur_from_parameter(parameter)
+
+    def _update_flaneur_from_parameter(self, parameter):
+        setattr(self._flaneur, parameter.name, parameter.value())
 
     def _create_imitate(self, feature_matcher, sampled_reductions):
         self._imitate_parameters = ImitateParameters()
