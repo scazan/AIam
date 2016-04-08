@@ -48,12 +48,6 @@ class DimensionalityReductionExperiment(Experiment):
         HybridParameters().add_parser_arguments(parser)
 
     def __init__(self, parser):
-        args, _remaining_args = parser.parse_known_args()
-        if args.sampling_method:
-            self._sampling_class = getattr(sampling, "%sSampler" % args.sampling_method)
-            self._sampling_class.add_parser_arguments(parser)
-            self._sampling_args, _remaining_args = parser.parse_known_args()
-
         self.profiles_dir = "profiles/dimensionality_reduction"
         Experiment.__init__(self, parser, event_handlers={
                 Event.MODE: self._handle_mode_event,
@@ -67,6 +61,11 @@ class DimensionalityReductionExperiment(Experiment):
         self.reduction = None
         self._mode = self.args.mode
         if self.args.enable_features:
+            if self.args.sampling_method:
+                self._sampling_class = getattr(sampling, "%sSampler" % self.args.sampling_method)
+                self._sampling_class.add_parser_arguments(parser)
+                self._sampling_args, _remaining_args = parser.parse_known_args()
+
             self._pose_for_feature_extraction = self.bvh_reader.get_hierarchy().create_pose()
             self._feature_matcher_path = "%s/%s.features" % (self.profiles_dir, self.args.profile)
 
