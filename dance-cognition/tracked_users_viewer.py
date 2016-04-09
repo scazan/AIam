@@ -441,6 +441,7 @@ class TrackedUsersViewer(Window):
                             default="59.964,-1578.000,2562.016,-188.500,16.000")
         parser.add_argument("--floor-y", type=float, default=0)
         parser.add_argument("--joint-size", type=float)
+        parser.add_argument("--show-orientation", action="store_true")
 
     def _create_menu(self):
         self._menu_bar = QtGui.QMenuBar()
@@ -511,6 +512,7 @@ class TrackedUsersViewer(Window):
         self.orientation_action = QtGui.QAction('Orientation', self)
         self.orientation_action.setCheckable(True)
         self.orientation_action.setShortcut('o')
+        self.orientation_action.setChecked(self.args.show_orientation)
         self._view_menu.addAction(self.orientation_action)
 
     def _create_replay_menu(self):
