@@ -1,6 +1,7 @@
 from flaneur import Flaneur
 from parameters import *
 from event import Event
+from dimensionality_reduction.behavior import Behavior
 
 class FlaneurParameters(Parameters):
     def __init__(self):
@@ -12,7 +13,7 @@ class FlaneurParameters(Parameters):
         self.add_parameter("look_ahead_distance", type=float, default=.2,
                            choices=ParameterFloatRange(0., 1.))
 
-class FlaneurBehavior:
+class FlaneurBehavior(Behavior):
     def __init__(self, experiment, parameters, map_points):
         self._experiment = experiment
         self._parameters = parameters

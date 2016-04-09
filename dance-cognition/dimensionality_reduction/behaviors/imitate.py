@@ -28,7 +28,7 @@ class Imitate(Behavior):
                  feature_matcher,
                  sampled_reductions,
                  parameters):
-        self._experiment = experiment
+        Behavior.__init__(self, experiment)
         self._feature_matcher = feature_matcher
         self._sampled_reductions = sampled_reductions
         self._parameters = parameters
@@ -163,3 +163,6 @@ class Imitate(Behavior):
     def showing_feature_matches(self):
         return (self._target_normalized_reduction is not None and
                 self._experiment.args.show_all_feature_matches)
+
+    def get_root_vertical_orientation(self):
+        return self._target_root_vertical_orientation

@@ -60,6 +60,7 @@ class DimensionalityReductionExperiment(Experiment):
                 Event.TARGET_ROOT_VERTICAL_ORIENTATION: self._handle_target_root_vertical_orientation,
                 })
         self.reduction = None
+        self._root_vertical_orientation = None
         self._mode = self.args.mode
         if self.args.enable_features:
             if self.args.sampling_method:
@@ -109,7 +110,11 @@ class DimensionalityReductionExperiment(Experiment):
                 behavior.set_reduction(self.reduction)
             self.send_event_to_ui(event)
 
-    def _set_reduction_from_behavior(self, behavior):
+    def _update_using_behavior(self, behavior):
+        self._potentially_update_reduction_using_behavior(behavior)
+        self._potentially_update_root_vertical_orientation_using_behavior(behavior)
+
+    def _potentially_update_reduction_using_behavior(self, behavior):
         new_reduction = behavior.get_reduction()
         if self.reduction is None or not numpy.array_equal(new_reduction, self.reduction):
             self.reduction = new_reduction
@@ -117,6 +122,12 @@ class DimensionalityReductionExperiment(Experiment):
                 if other_behavior != behavior:
                     behavior.set_reduction(self.reduction)
             self.send_event_to_ui(Event(Event.REDUCTION, self.reduction))
+
+    def _potentially_update_root_vertical_orientation_using_behavior(self, behavior):
+        new_root_vertical_orientation = behavior.get_root_vertical_orientation()
+        if new_root_vertical_orientation != self._root_vertical_orientation:
+            self.entity.root_vertical_orientation = new_root_vertical_orientation
+            self._root_vertical_orientation = new_root_vertical_orientation
 
     def add_parser_arguments_second_pass(self, parser, args):
         pca_class = getattr(pca, args.pca_type)
@@ -297,17 +308,17 @@ class DimensionalityReductionExperiment(Experiment):
     def update(self):
         if self._mode == modes.FOLLOW:
             self.input = self._follow.get_input()
-            self._set_reduction_from_behavior(self._follow)
+            self._update_using_behavior(self._follow)
         elif self._mode == modes.IMPROVISE:
-            self._set_reduction_from_behavior(self._improvise)
+            self._update_using_behavior(self._improvise)
         elif self._mode == modes.EXPLORE:
-            self._set_reduction_from_behavior(self._explore)
+            self._update_using_behavior(self._explore)
         elif self._mode == modes.IMITATE:
-            self._set_reduction_from_behavior(self._imitate)
+            self._update_using_behavior(self._imitate)
         elif self._mode == modes.FLANEUR:
-            self._set_reduction_from_behavior(self._flaneur_behavior)
+            self._update_using_behavior(self._flaneur_behavior)
         elif self._mode == modes.HYBRID:
-            self._set_reduction_from_behavior(self._hybrid)
+            self._update_using_behavior(self._hybrid)
         self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
 
         if self.args.enable_features and self.args.show_output_features:
@@ -392,7 +403,9 @@ class DimensionalityReductionExperiment(Experiment):
         return self.args.train or self.args.mode == modes.FOLLOW
 
     def _handle_target_root_vertical_orientation(self, event):
-        self.entity.root_vertical_orientation = event.content
+        orientation = event.content
+        for behavior in self._behaviors:
+            behavior.set_target_root_vertical_orientation(orientation)
 
 class StillsExporter:
     def __init__(self, experiment, stills_data_path):

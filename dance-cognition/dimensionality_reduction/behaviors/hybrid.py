@@ -63,7 +63,7 @@ class Hybrid(Behavior):
                  sampled_reductions,
                  map_points,
                  parameters):
-        self._experiment = experiment
+        Behavior.__init__(self, experiment)
         self._parameters = parameters
         parameters.add_listener(self._parameter_changed)
         self._create_flaneur(map_points)
@@ -178,3 +178,6 @@ class Hybrid(Behavior):
     def _set_flaneur_parameters(self, parameters_dict):
         for name, value in parameters_dict.iteritems():
             self._parameters.get_parameter("flaneur_%s" % name).set_value(value)
+
+    def get_root_vertical_orientation(self):
+        return self._target_root_vertical_orientation
