@@ -33,7 +33,7 @@ ACTIVE_FLANEUR_PARAMETERS = {
 class HybridParameters(Parameters):
     def __init__(self):
         Parameters.__init__(self)
-        self.add_parameter("imitation", type=float, default=0,
+        self.add_parameter("imitation", type=float, default=1.,
                            choices=ParameterFloatRange(0., 1.))
         self._add_imitate_parameters()
         self._add_flaneur_parameters()
