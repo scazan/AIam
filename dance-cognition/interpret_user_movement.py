@@ -85,6 +85,33 @@ class Joint:
     def set_orientation_confidence(self, orientation_confidence):
         self._orientation_confidence = orientation_confidence
 
+class AngleSmoother:
+    def __init__(self, smoothing_factor):
+        self._value = None
+        self._smoothing_factor = min(smoothing_factor, 1)
+
+    def get_value(self):
+        return self._value
+
+    def update(self, new_value):
+        if self._value is None:
+            self._value = new_value
+        else:
+            self._value += (new_value - self._value) * self._smoothing_factor
+
+class Clamper:
+    def __init__(self, min_value, max_value):
+        self._min_value = min_value
+        self._max_value = max_value
+
+    def clamp(self, value):
+        if value < self._min_value:
+            return self._min_value
+        elif value > self._max_value:
+            return self._max_value
+        else:
+            return value
+
 class User:
     def __init__(self, user_id, interpreter):
         self._user_id = user_id
@@ -96,10 +123,8 @@ class User:
         if args.export_bvh:
             frame_time = 1.0 / args.input_frame_rate
             self._bvh_writer = BvhWriter(interpreter.hierarchy, frame_time)
-        self._root_orientation_buffer_size = max(int(args.orientation_smoothing_factor * FPS), 1)
-        self._root_orientation_buffer = collections.deque(
-            numpy.zeros(4) * self._root_orientation_buffer_size,
-            maxlen=self._root_orientation_buffer_size)
+        self._root_orientation_smoother = AngleSmoother(args.orientation_smoothing_factor)
+        self._root_orientation_clamper = Clamper(-math.pi/2, math.pi/2)
 
     def handle_joint_data(self, joint_name, *args):
         if self._should_consider_joint(joint_name):
@@ -147,10 +172,12 @@ class User:
                 len(JOINTS_DETERMNING_INTENSITY)
 
     def _process_root_orientation(self):
-        self._root_orientation_buffer.append(numpy.array(self.get_joint("torso").get_orientation()))
-        smoothed_root_orientation = sum(self._root_orientation_buffer) / self._root_orientation_buffer_size
-        self._smoothed_root_vertical_orientation = euler_from_quaternion(
-            smoothed_root_orientation, axes="rxyz")[1]
+        vertical_orientation = euler_from_quaternion(
+            self.get_joint("torso").get_orientation(), axes="rxyz")[1]
+        clamped_vertical_orientation = self._root_orientation_clamper.clamp(
+            vertical_orientation)
+        self._root_orientation_smoother.update(clamped_vertical_orientation)
+        self._smoothed_root_vertical_orientation = self._root_orientation_smoother.get_value()
 
     def get_intensity(self):
         return self._intensity
@@ -495,7 +522,7 @@ parser.add_argument("--enable-1euro-filter", action="store_true", default=True)
 parser.add_argument("--1euro-mincutoff", dest="one_euro_mincutoff", type=float, default=0.3)
 parser.add_argument("--1euro-beta", dest="one_euro_beta", type=float, default=0.001)
 parser.add_argument("--1euro-dcutoff", dest="one_euro_dcutoff", type=float, default=1.0)
-parser.add_argument("--orientation-smoothing-factor", type=float, default=1.0)
+parser.add_argument("--orientation-smoothing-factor", type=float, default=0.1)
 parser.add_argument("--log-source")
 parser.add_argument("--log-target")
 parser.add_argument("--auto-restart-log", action="store_true")
