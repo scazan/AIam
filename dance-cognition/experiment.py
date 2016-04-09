@@ -127,6 +127,7 @@ class Experiment(EventListener):
             self._entity_scene_module.Scene.add_parser_arguments(parser)
             self.add_ui_parser_arguments(parser)
 
+        self.add_parser_arguments_second_pass(parser, args)
         args = parser.parse_args()
         if args.profile:
             args = parser.parse_args(profile_args_strings, namespace=args)
@@ -165,6 +166,9 @@ class Experiment(EventListener):
         self._exporting_output = False
 
         self._send_joint_ids()
+
+    def add_parser_arguments_second_pass(self, parser, args):
+        pass
 
     def ui_connected(self, handler):
         with self._ui_handlers_lock:

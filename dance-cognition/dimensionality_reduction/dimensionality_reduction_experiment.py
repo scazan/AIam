@@ -118,6 +118,10 @@ class DimensionalityReductionExperiment(Experiment):
                     behavior.set_reduction(self.reduction)
             self.send_event_to_ui(Event(Event.REDUCTION, self.reduction))
 
+    def add_parser_arguments_second_pass(self, parser, args):
+        pca_class = getattr(pca, args.pca_type)
+        pca_class.add_parser_arguments(parser)
+
     def run(self):
         teacher = Teacher(self.entity, self.args.training_data_frame_rate)
 
@@ -127,7 +131,7 @@ class DimensionalityReductionExperiment(Experiment):
 
         if self.args.train:
             pca_class = getattr(pca, self.args.pca_type)
-            self.student = pca_class(n_components=self.args.num_components)
+            self.student = pca_class(self.args.num_components, self.args)
             self._training_data = teacher.create_training_data(self._training_duration())
             self._train_model()
             storage.save([self.student, self.entity.model], self._model_path)
