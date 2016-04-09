@@ -6,7 +6,7 @@ class FlaneurParameters(Parameters):
     def __init__(self):
         Parameters.__init__(self)
         self.add_parameter("translational_speed", type=float, default=.6,
-                           choices=ParameterFloatRange(0., 1.))
+                           choices=ParameterFloatRange(0., 3.))
         self.add_parameter("directional_speed", type=float, default=1.1,
                            choices=ParameterFloatRange(0., 3.))
         self.add_parameter("look_ahead_distance", type=float, default=.2,
