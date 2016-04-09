@@ -48,4 +48,4 @@ class LinearPCA(DimensionalityReduction, sklearn.decomposition.PCA):
 class KernelPCA(DimensionalityReduction, sklearn.decomposition.KernelPCA):
     def __init__(self, **kwargs):
         sklearn.decomposition.KernelPCA.__init__(
-            self, kernel="poly", fit_inverse_transform=True, gamma=0.5, **kwargs)
+            self, kernel="rbf", fit_inverse_transform=True, gamma=0.5, **kwargs)
