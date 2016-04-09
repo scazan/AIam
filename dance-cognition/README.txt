@@ -119,3 +119,8 @@ IJCAI / KINETIC DIALOGUES
 Preferred location for Alex' ubuntu 12.04:
 
 python dim_reduce.py -p valencia_quaternion_7d_friction --mode=improvise --websockets --velocity=0.3 --novelty=0.03 --extension=0.02 --location_preference=1 --preferred-location=0.873942873678,0.700499395398,0.595342711165,0.225725946789,0.452013014739,0.546188528849,0.532588731088
+
+
+TRACKER VIEWER FROM SIDE (makes it possible to see leaning)
+
+python interpret_user_movement.py --with-viewer --tracker=1275.000,8.700 --camera=4305.215,-1578.000,-2604.497,-275.300,10.500 --joint-size=5
