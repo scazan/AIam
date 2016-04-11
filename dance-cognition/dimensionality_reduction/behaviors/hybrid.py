@@ -180,4 +180,7 @@ class Hybrid(Behavior):
             self._parameters.get_parameter("flaneur_%s" % name).set_value(value)
 
     def get_root_vertical_orientation(self):
-        return self._target_root_vertical_orientation
+        if self._parameters.imitation > 0.5:
+            return self._target_root_vertical_orientation
+        else:
+            return None
