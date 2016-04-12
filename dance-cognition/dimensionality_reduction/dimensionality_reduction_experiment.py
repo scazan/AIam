@@ -60,7 +60,6 @@ class DimensionalityReductionExperiment(Experiment):
                 Event.TARGET_ROOT_VERTICAL_ORIENTATION: self._handle_target_root_vertical_orientation,
                 })
         self.reduction = None
-        self._root_vertical_orientation = None
         self._mode = self.args.mode
         if self.args.enable_features:
             if self.args.sampling_method:
@@ -112,7 +111,7 @@ class DimensionalityReductionExperiment(Experiment):
 
     def _update_using_behavior(self, behavior):
         self._potentially_update_reduction_using_behavior(behavior)
-        self._potentially_update_root_vertical_orientation_using_behavior(behavior)
+        self._update_root_vertical_orientation_using_behavior(behavior)
 
     def _potentially_update_reduction_using_behavior(self, behavior):
         new_reduction = behavior.get_reduction()
@@ -123,11 +122,8 @@ class DimensionalityReductionExperiment(Experiment):
                     behavior.set_reduction(self.reduction)
             self.send_event_to_ui(Event(Event.REDUCTION, self.reduction))
 
-    def _potentially_update_root_vertical_orientation_using_behavior(self, behavior):
-        new_root_vertical_orientation = behavior.get_root_vertical_orientation()
-        if new_root_vertical_orientation != self._root_vertical_orientation:
-            self.entity.root_vertical_orientation = new_root_vertical_orientation
-            self._root_vertical_orientation = new_root_vertical_orientation
+    def _update_root_vertical_orientation_using_behavior(self, behavior):
+        self.entity.root_vertical_orientation = behavior.get_root_vertical_orientation()
 
     def add_parser_arguments_second_pass(self, parser, args):
         pca_class = getattr(pca, args.pca_type)
