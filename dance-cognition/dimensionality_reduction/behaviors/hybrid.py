@@ -13,6 +13,11 @@ from dimensionality_reduction.behavior import Behavior
 IDLE_IMITATION = 0.5
 IDLE_TARGET_FEATURES = numpy.array([0, 0, 0, 0, 0])
 
+THRESHOLD_FOR_IMITATING_ORIENTATION = 0.5
+IMITATE = "imitate"
+DONT_IMITATE = "dont_imitate"
+ORIENTATION_DIFFERENCE_THRESHOLD = math.pi / 16
+
 # IDLE_FLANEUR_PARAMETERS = {
 #     "translational_speed": 0.01,
 #     "directional_speed": 1.1,
@@ -71,6 +76,7 @@ class Hybrid(Behavior):
         n_dimensions = len(map_points[0])
         self._position = None
         self._direction = None
+        self._orientation_state = None
         self.handle_user_intensity(None)
 
     def _parameter_changed(self, hybrid_parameter):
@@ -180,7 +186,36 @@ class Hybrid(Behavior):
             self._parameters.get_parameter("flaneur_%s" % name).set_value(value)
 
     def get_root_vertical_orientation(self):
-        if self._parameters.imitation > 0.5:
+        self._process_orientation_state()
+        if self._orientation_state == IMITATE:
             return self._target_root_vertical_orientation
         else:
             return None
+
+    def _process_orientation_state(self):
+        if self._orientation_state is None:
+            if self._parameters.imitation > THRESHOLD_FOR_IMITATING_ORIENTATION:
+                self._set_orientation_state(IMITATE)
+            else:
+                self._set_orientation_state(DONT_IMITATE)
+
+        elif self._orientation_state == IMITATE and \
+                self._parameters.imitation < THRESHOLD_FOR_IMITATING_ORIENTATION and \
+                self._tracked_orientation_almost_equals_entity_orientation():
+            self._set_orientation_state(DONT_IMITATE)
+
+        elif self._orientation_state == DONT_IMITATE and \
+                self._parameters.imitation >= THRESHOLD_FOR_IMITATING_ORIENTATION and \
+                self._tracked_orientation_almost_equals_entity_orientation():
+            self._set_orientation_state(IMITATE)
+
+    def _set_orientation_state(self, new_state):
+        print "orientation state %s => %s" % (self._orientation_state, new_state)
+        self._orientation_state = new_state
+
+    def _tracked_orientation_almost_equals_entity_orientation(self):
+        entity_root_vertical_orientation = self._experiment.entity.get_last_root_vertical_orientation()
+        return self._target_root_vertical_orientation is not None and \
+            entity_root_vertical_orientation is not None and \
+            abs(self._target_root_vertical_orientation - entity_root_vertical_orientation) < \
+            ORIENTATION_DIFFERENCE_THRESHOLD

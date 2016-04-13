@@ -64,6 +64,9 @@ class BaseEntity:
     def set_cursor(self, t):
         self._t = t
 
+    def get_last_root_vertical_orientation(self):
+        return None
+
 class Experiment(EventListener):
     @staticmethod
     def add_parser_arguments(parser):

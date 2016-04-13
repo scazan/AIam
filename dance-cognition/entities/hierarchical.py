@@ -53,7 +53,8 @@ class Entity(BaseEntity):
             self._coordinate_up = 1
         self._normalized_constrainers = self._create_constrainers()
         self._unnormalized_constrainers = self._create_constrainers()
-        self.root_vertical_orientation = None
+        self.modified_root_vertical_orientation = None
+        self._last_root_vertical_orientation = None
         if self.args.enable_features:
             self.feature_extractor = FeatureExtractor(self._coordinate_up)
 
@@ -176,14 +177,17 @@ class Entity(BaseEntity):
         parameter_index += self.rotation_parametrization.num_parameters
         radians = self.rotation_parametrization.parameters_to_rotation(
             rotation_parameters, joint.definition.axes)
-        if self.root_vertical_orientation is not None and joint.parent is None:
-            radians = self._reorient_around_vertical_axis(radians, joint.definition.axes)
+        if joint.parent is None:
+            radians = self._process_root_orientation(joint, radians)
         joint.angles = radians
         return parameter_index
 
-    def _reorient_around_vertical_axis(self, euler_angles, axes):
+    def _process_root_orientation(self, root_joint, radians):
+        return self._process_vertical_axis(radians, root_joint.definition.axes)
+
+    def _process_vertical_axis(self, euler_angles, axes):
         if axes[1] == self._vertical_axis:
-            return self._reorient_around_first_axis(euler_angles)
+            return self._process_vertical_orientation_as_first_axis(euler_angles)
         else:
             if self._vertical_axis == "y":
                 axes_with_vertical_first = "ryxz"
@@ -192,7 +196,8 @@ class Entity(BaseEntity):
             euler_angles_vertical_axis_first = euler_from_quaternion(
                 quaternion_from_euler(*euler_angles, axes=axes),
                 axes=axes_with_vertical_first)
-            euler_angles_vertical_axis_first_reoriented = self._reorient_around_first_axis(
+            euler_angles_vertical_axis_first_reoriented = \
+                self._process_vertical_orientation_as_first_axis(
                 euler_angles_vertical_axis_first)
             return euler_from_quaternion(
                 quaternion_from_euler(
@@ -200,10 +205,15 @@ class Entity(BaseEntity):
                      axes=axes_with_vertical_first),
                 axes=axes)
 
-    def _reorient_around_first_axis(self, euler_angles):
+    def _process_vertical_orientation_as_first_axis(self, euler_angles):
         euler_angles = list(euler_angles)
-        euler_angles[0] = self.root_vertical_orientation
+        self._last_root_vertical_orientation = euler_angles[0]
+        if self.modified_root_vertical_orientation is not None:
+            euler_angles[0] = self.modified_root_vertical_orientation
         return euler_angles
+
+    def get_last_root_vertical_orientation(self):
+        return self._last_root_vertical_orientation
 
     def parameters_to_processed_pose(self, parameters, output_pose):
         self._set_pose_from_parameters(parameters)
