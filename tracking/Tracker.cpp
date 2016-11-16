@@ -180,6 +180,7 @@ void Tracker::processFrame() {
 
   sendBeginFrame();
   sendStatesAndSkeletonData();
+  sendCenterOfMass();
 }
 
 void Tracker::setSpeed() {
@@ -364,6 +365,19 @@ void Tracker::sendState(const nite::UserId& userId, const char *state) {
   transmitSocket->Send(stream.Data(), stream.Size());
 }
 
+void Tracker::sendCenterOfMass() {
+  const nite::Array<nite::UserData>& users = userTrackerFrame.getUsers();
+  for (int i = 0; i < users.getSize(); ++i) {
+    const nite::UserData& user = users[i];
+    const nite::Point3f& center = user.getCenterOfMass();
+    osc::OutboundPacketStream stream(oscBuffer, OSC_BUFFER_SIZE);
+    stream << osc::BeginBundleImmediate
+	   << osc::BeginMessage("/center") << user.getId() << center.x << center.y << center.z
+	   << osc::EndMessage
+	   << osc::EndBundle;
+    transmitSocket->Send(stream.Data(), stream.Size());
+  }
+}
 
 TrackerViewer::TrackerViewer(Tracker *_tracker) : Viewer() {
   tracker = _tracker;

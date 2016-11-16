@@ -48,6 +48,7 @@ private:
 		    const char *jointName);
   void sendStateIfChanged(const nite::UserData&);
   void sendState(const nite::UserId& userId, const char *state);
+  void sendCenterOfMass();
   void setSpeed();
   void stopSeeking();
   void disableFastForward();
