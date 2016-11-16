@@ -37,6 +37,7 @@ openni::Status Tracker::init(int argc, char **argv) {
   }
 
   const char* deviceUri = openni::ANY_DEVICE;
+  const char* oscHost = DEFAULT_OSC_HOST;
   for (int i = 1; i < argc; ++i) {
     if (strcmp(argv[i], "-device") == 0) {
       deviceUri = argv[++i];
@@ -73,6 +74,10 @@ openni::Status Tracker::init(int argc, char **argv) {
 
     else if(strcmp(argv[i], "-fps") == 0) {
       fps = atoi(argv[++i]);
+    }
+
+    else if(strcmp(argv[i], "-osc-host") == 0) {
+      oscHost = argv[++i];
     }
 
     else {
@@ -143,7 +148,7 @@ openni::Status Tracker::init(int argc, char **argv) {
     seekingInRecording = false;
   }
 
-  transmitSocket = new UdpTransmitSocket(IpEndpointName(OSC_HOST, OSC_PORT));
+  transmitSocket = new UdpTransmitSocket(IpEndpointName(oscHost, OSC_PORT));
 
   printf("User tracking initialized\n");
   sendBeginSession();
