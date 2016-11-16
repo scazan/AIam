@@ -31,6 +31,9 @@ pip-2.7 install cython
 # download liblo from http://das.nasophon.de/pyliblo/
 python2.7 setup.py build
 sudo python2.7 setup.py install
+# or if path issue with lo/lo.h 
+C_INCLUDE_PATH=/opt/local/include LIBRARY_PATH=/usr/local/lib python2.7 setup.py install
+
 
 PREDICTION WITH BACKPROP NET
 
