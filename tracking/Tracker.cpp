@@ -375,12 +375,14 @@ void Tracker::sendCenterOfMass() {
   for (int i = 0; i < users.getSize(); ++i) {
     const nite::UserData& user = users[i];
     const nite::Point3f& center = user.getCenterOfMass();
-    osc::OutboundPacketStream stream(oscBuffer, OSC_BUFFER_SIZE);
-    stream << osc::BeginBundleImmediate
-	   << osc::BeginMessage("/center") << user.getId() << center.x << center.y << center.z
-	   << osc::EndMessage
-	   << osc::EndBundle;
-    transmitSocket->Send(stream.Data(), stream.Size());
+    if(!user.isNew() && user.isVisible() && !user.isLost()) {
+      osc::OutboundPacketStream stream(oscBuffer, OSC_BUFFER_SIZE);
+      stream << osc::BeginBundleImmediate
+	     << osc::BeginMessage("/center") << user.getId() << center.x << center.y << center.z
+	     << osc::EndMessage
+	     << osc::EndBundle;
+      transmitSocket->Send(stream.Data(), stream.Size());
+    }
   }
 }
 
