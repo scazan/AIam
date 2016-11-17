@@ -5,6 +5,8 @@ from math import atan2, degrees, pi, sqrt
 import time
 import sys
 import subprocess
+from math import sin,cos,pi
+import threading
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../dance-cognition")
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../dance-cognition/connectivity")
@@ -12,13 +14,20 @@ from osc_receiver import OscReceiver
 
 OSC_PORT = 15002
 
-
 center = [132,4500]
-targets = [center,[1500/2,3000],[-1500/2,3000],[-1500/2,6000-1500],[1500/2,6000-1500]]
+area_radius = 1500 
+# targets = [center,[1500/2,3000],[-1500/2,3000],[-1500/2,6000-1500],[1500/2,6000-1500]]
 
-target = targets[0]
+def targets():
+	a = random.uniform(0,2*pi) 
+	t =[area_radius*sin(a),area_radius*cos(a)]
+	t = [t[0]+center[0],t[1]+center[1] ]
+	return t
+
+target = targets()
 print target
 target_reached = False
+is_within_area = True
 
 d = {
 	0: 'Windows',
@@ -35,31 +44,41 @@ d = {
 def distance(p0, p1):
     return sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)
 
+def play_error_sound():
+	def play_sound_blocking():
+		subprocess.call("afplay error.wav", shell=True)
+	threading.Thread(target=play_sound_blocking).start()
+
 def handle_center(path, values, types, src, user_data):
 
 	global time_of_last_handler
 	global target
+	global area_radius
+	global is_within_area
 	# check distance from current target
 	user_id, x, y, z = values
 	d = distance([x,z], target)
 	center_distance = distance([x,z], center)
-	print center_distance
-	if center_distance < 2000:
+	print "center_distance:", center_distance 
+	
+	if center_distance < area_radius:
+		is_within_area = True
 		if d<400 :
 			# os.system("say Target reached")
-			# os.system("say new target")
+			os.system("say new target")
 
 			target_reached = False
 			#generate new target
-			target=random.choice(targets)
-			# print "target:", target
+			target = targets()
+			print "target:", target
 		elif time_of_last_handler is None or time.time() - time_of_last_handler > 1 :
-			# print user_id, x, y, z
+			print user_id, x, y, z
 			getDir(x,z,target[0],target[1])
 			time_of_last_handler = time.time()
 			# print "distance:", d
-	else:
-		subprocess.call("afplay error.wav", shell=True)
+	elif is_within_area:
+		play_error_sound()
+		is_within_area = False
 
 time_of_last_handler = None
 osc_receiver = OscReceiver(OSC_PORT)
