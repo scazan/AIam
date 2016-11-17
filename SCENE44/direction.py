@@ -15,7 +15,8 @@ from osc_receiver import OscReceiver
 OSC_PORT = 15002
 
 center = [132,4500]
-area_radius = 1500 
+area_radius = 1000 
+out_of_area_radius = area_radius + 1000
 # targets = [center,[1500/2,3000],[-1500/2,3000],[-1500/2,6000-1500],[1500/2,6000-1500]]
 
 def targets():
@@ -61,9 +62,9 @@ def handle_center(path, values, types, src, user_data):
 	center_distance = distance([x,z], center)
 	print "center_distance:", center_distance 
 	
-	if center_distance < area_radius:
+	if center_distance < out_of_area_radius:
 		is_within_area = True
-		if d<400 :
+		if d<100 :
 			# os.system("say Target reached")
 			os.system("say new target")
 
