@@ -4,6 +4,7 @@ from math import atan2, degrees, pi, sqrt
 # import numpy as np
 import time
 import sys
+import subprocess
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../dance-cognition")
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../dance-cognition/connectivity")
@@ -58,15 +59,12 @@ def handle_center(path, values, types, src, user_data):
 			time_of_last_handler = time.time()
 			# print "distance:", d
 	else:
-		os.system("say A")
-
+		subprocess.call("afplay error.wav", shell=True)
 
 time_of_last_handler = None
 osc_receiver = OscReceiver(OSC_PORT)
 osc_receiver.add_method("/center", "ifff", handle_center)
 osc_receiver.start()
-
-
 
 def getDir(x1,y1,x2,y2):
 # osc receive from c++
