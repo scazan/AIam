@@ -12,7 +12,8 @@ from osc_receiver import OscReceiver
 OSC_PORT = 15002
 
 
-targets = [[132,4500],[1500,3000],[-1500,3000],[-1500,6000],[1500,6000]]
+center = [132,4500]
+targets = [center,[1500/2,3000],[-1500/2,3000],[-1500/2,6000-1500],[1500/2,6000-1500]]
 
 target = targets[0]
 print target
@@ -40,20 +41,25 @@ def handle_center(path, values, types, src, user_data):
 	# check distance from current target
 	user_id, x, y, z = values
 	d = distance([x,z], target)
-	
-	if d<400 :
-		# os.system("say Target reached")
-		# os.system("say new target")
+	center_distance = distance([x,z], center)
+	print center_distance
+	if center_distance < 2000:
+		if d<400 :
+			# os.system("say Target reached")
+			# os.system("say new target")
 
-		target_reached = False
-		#generate new target
-		target=random.choice(targets)
-		print "target:", target
-	elif time_of_last_handler is None or time.time() - time_of_last_handler > 1 :
-		print user_id, x, y, z
-		getDir(x,z,target[0],target[1])
-		time_of_last_handler = time.time()
-		print "distance:", d
+			target_reached = False
+			#generate new target
+			target=random.choice(targets)
+			# print "target:", target
+		elif time_of_last_handler is None or time.time() - time_of_last_handler > 1 :
+			# print user_id, x, y, z
+			getDir(x,z,target[0],target[1])
+			time_of_last_handler = time.time()
+			# print "distance:", d
+	else:
+		os.system("say A")
+
 
 time_of_last_handler = None
 osc_receiver = OscReceiver(OSC_PORT)
