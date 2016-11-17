@@ -19,18 +19,14 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     print "opened a new websocket"
     listeners.append(self)
     print listeners
-
-  def on_message(self, message):
-
-    if message == "shutdown":
-      print (message)
-      subprocess.call(['/usr/bin/osascript', '-e','tell app "System Events" to shut down'])
-    else:
-      # self.write_message(u"You Said: " + message)
-      print (message)
-      writeFile(message);
    
-     #self.write_message("re")
+  def on_message(self, message):
+    print message
+
+    # self.write_message(u"You Said: " + message)
+  
+  def send(self,msg):
+    self.write_message(msg)
 
   def on_close(self):
     print 'connection closed'
@@ -42,12 +38,6 @@ def main():
     http_server = tornado.httpserver.HTTPServer(application)
     http_server.listen(8888)
     tornado.ioloop.IOLoop.instance().start()
-
-def writeFile(content):
-  with io.open("/Users/eom-terkep/Google Drive/log/terkep/terkep_log.csv", 'a', encoding='utf-8') as myfile:
-  # test locally
-  # with io.open('/Users/gase12/Documents/xorxor_projects/evangelikus/terkep/log/test.csv', 'a', encoding='utf-8') as myfile:
-    myfile.write(content)
 
 if __name__ == "__main__":
     main()

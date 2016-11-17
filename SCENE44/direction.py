@@ -7,12 +7,52 @@ import sys
 import subprocess
 from math import sin,cos,pi
 import threading
+import json
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../dance-cognition")
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../dance-cognition/connectivity")
 from osc_receiver import OscReceiver
+sys.path.insert(0, "/Library/Python/2.7/site-packages")
+import tornado
+import tornado.httpserver
+import tornado.websocket
+import tornado.ioloop
+import tornado.web
+import io
+from tornado.options import define, options
+import subprocess
 
+
+print("scs")
+listeners = []
+
+class WSHandler(tornado.websocket.WebSocketHandler):
+
+  def check_origin(self, origin):
+    return True
+  
+  def open(self):
+    print "opened a new websocket"
+    listeners.append(self)
+    print listeners
+   
+  def on_message(self, message):
+    print message
+
+    # self.write_message(u"You Said: " + message)
+  
+  def send(self,msg):
+    self.write_message(msg)
+
+  def on_close(self):
+    print 'connection closed'
+    listeners.remove(self)
+
+# direction
 OSC_PORT = 15002
+
+# ai
+OSC_PORT = 10000
 
 center = [132,4500]
 area_radius = 1000 
@@ -60,30 +100,45 @@ def handle_center(path, values, types, src, user_data):
 	user_id, x, y, z = values
 	d = distance([x,z], target)
 	center_distance = distance([x,z], center)
-	print "center_distance:", center_distance 
-	
+	print "center_distance:", center_distance
+
+	for listener in listeners:
+		listener.send(json.dumps([x,z]))
+
 	if center_distance < out_of_area_radius:
 		is_within_area = True
 		if d<100 :
 			# os.system("say Target reached")
-			os.system("say new target")
+			# os.system("say new target")
 
 			target_reached = False
 			#generate new target
 			target = targets()
-			print "target:", target
+			# print "target:", target
 		elif time_of_last_handler is None or time.time() - time_of_last_handler > 1 :
-			print user_id, x, y, z
-			getDir(x,z,target[0],target[1])
+			# print user_id, x, y, z
+			# getDir(x,z,target[0],target[1])
 			time_of_last_handler = time.time()
 			# print "distance:", d
 	elif is_within_area:
 		play_error_sound()
 		is_within_area = False
 
+
+def handle(path, values, types, src, user_data):
+	framecount, index, x, y, z = values
+	print values
+	for listener in listeners:
+		listener.send(json.dumps([index,x,y,z]))
+
+
 time_of_last_handler = None
 osc_receiver = OscReceiver(OSC_PORT)
-osc_receiver.add_method("/center", "ifff", handle_center)
+# osc_receiver.add_method("/center", "ifff", handle_center)
+osc_receiver.add_method("/world", "iifff", handle)
+
+
+
 osc_receiver.start()
 
 def getDir(x1,y1,x2,y2):
@@ -110,7 +165,13 @@ def getDir(x1,y1,x2,y2):
 	os.system("say "+direction)
 
 
+def main():
+    tornado.options.parse_command_line()
+    application = tornado.web.Application([(r'/ws', WSHandler),])
+    http_server = tornado.httpserver.HTTPServer(application)
+    http_server.listen(8888)
+    tornado.ioloop.IOLoop.instance().start()
 
-while True:
-    time.sleep(1)
+if __name__ == "__main__":
+    main()
 
