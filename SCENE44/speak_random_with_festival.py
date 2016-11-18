@@ -1,7 +1,6 @@
 import subprocess
 import tempfile
 import random
-import time
 
 utterance = "I'm sorry"
 
@@ -37,12 +36,8 @@ def generate_utterance_as_tempfile():
     return f
 
 def speak_utterance_from_tempfile(f):
-    process = subprocess.Popen("festival", shell=True, stdin=subprocess.PIPE)
-    process.stdin.write('(tts "%s" \'sable)\n(quit)\n' % f.name)
-    process.wait()
-
+    subprocess.call("festival --tts %s" % f.name, shell=True)
 
 while True:
     f = generate_utterance_as_tempfile()
     speak_utterance_from_tempfile(f)
-    time.sleep(1)
