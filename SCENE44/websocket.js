@@ -14,12 +14,12 @@ websocket.onerror = function (error) {
 // Log messages from the server
 websocket.onmessage = function (e) {
   console.log(e.data);
-  if (e.eventType == "press") {
-    triggerKeyboardPress(document.body, parseInt(e.keyCode));
-  }
-  if (e.eventType == "release") {
-    triggerKeyboardRelease(document.body, parseInt(e.keyCode));
-  }
+  // if (e.eventType == "press") {
+  //   triggerKeyboardPress(document.body, parseInt(e.keyCode));
+  // }
+  // if (e.eventType == "release") {
+  //   triggerKeyboardRelease(document.body, parseInt(e.keyCode));
+  // }
 };
 
   sendSocketMsg = function(msg){
