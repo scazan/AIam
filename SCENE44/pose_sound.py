@@ -35,8 +35,8 @@ WEBSOCKET_HOST = "localhost"
 
 min_freq = 50
 max_freq = 500
-target_left_hand_elevation = 0.7
-target_right_hand_elevation = 0.7
+target_openness = 1.0
+target_asymmetry = 0.0
 MUTE_VOLUME = 0.0001
 
 class Joint:
@@ -509,13 +509,13 @@ class UserMovementInterpreter:
     def _update_sound_from_features(self):
         s.amp = .1
 
-        left_hand_elevation = float(feature_extractor.get_feature_by_name(self._frame["features"], "left_hand_elevation"))
-        left_freq = self._get_frequency(left_hand_elevation, target_left_hand_elevation)
-        sine_left.setFreq([left_freq, left_freq])
+        openness = float(feature_extractor.get_feature_by_name(self._frame["features"], "openness"))
+        freq = self._get_frequency(openness, target_openness)
+        sine.setFreq([freq, freq])
 
-        right_hand_elevation = float(feature_extractor.get_feature_by_name(self._frame["features"], "right_hand_elevation"))
-        right_freq = self._get_frequency(right_hand_elevation, target_right_hand_elevation)
-        sine_right.setFreq([right_freq, right_freq])
+        asymmetry = float(feature_extractor.get_feature_by_name(self._frame["features"], "asymmetry"))
+        gain = 10 * abs(asymmetry - target_asymmetry)
+        noise.setMul([gain, gain])
 
     def _get_frequency(self, elevation, target_elevation):
         relative_distance_to_target = abs(elevation - target_elevation)
@@ -574,10 +574,10 @@ args = parser.parse_args()
 
 s = Server().boot()
 s.amp = MUTE_VOLUME
-sine_left = Sine(freq=[50,50])
-sine_right = Sine(freq=[50,50])
-sine_left_out = sine_left.out()
-sine_right_out = sine_right.out()
+sine = Sine(freq=[50,50])
+noise = PinkNoise([0.1, 0.1])
+sine_out = sine.out()
+noise_out = noise.out()
 s.start()
 
 if args.without_sending:
