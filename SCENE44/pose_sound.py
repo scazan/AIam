@@ -509,11 +509,11 @@ class UserMovementInterpreter:
     def _update_sound_from_features(self):
         s.amp = .1
 
-        left_hand_elevation = float(self._frame["features"][0])
+        left_hand_elevation = float(feature_extractor.get_feature_by_name(self._frame["features"], "left_hand_elevation"))
         left_freq = self._get_frequency(left_hand_elevation, target_left_hand_elevation)
         sine_left.setFreq([left_freq, left_freq])
 
-        right_hand_elevation = float(self._frame["features"][1])
+        right_hand_elevation = float(feature_extractor.get_feature_by_name(self._frame["features"], "right_hand_elevation"))
         right_freq = self._get_frequency(right_hand_elevation, target_right_hand_elevation)
         sine_right.setFreq([right_freq, right_freq])
 

@@ -31,6 +31,9 @@ class FeatureExtractor:
     def __init__(self, coordinate_up=1):
         self._coordinate_up = coordinate_up
         self._horizontal_coordinates = list(set([0,1,2]) - set([coordinate_up]))
+        self._feature_name_to_index = dict(
+            (name, index)
+            for name, index in zip(self.FEATURES, range(len(self.FEATURES))))
 
     def get_num_features(self):
         return len(self.FEATURES)
@@ -119,3 +122,7 @@ class FeatureExtractor:
     def _get_total_horizontal_distance(self, positions):
         return sum([self._get_horizontal_distance(positions[i], positions[i+1])
                     for i in range(len(positions)-1)])
+
+    def get_feature_by_name(self, feature_values, feature_name):
+        feature_index = self._feature_name_to_index[feature_name]
+        return feature_values[feature_index]
