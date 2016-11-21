@@ -2,11 +2,14 @@ import numpy
 import math
 
 class FeatureExtractor:
-    FEATURES = ["left_hand_elevation",
-                "right_hand_elevation",
-                "head_elevation",
-                "leaning",
-                "knee_distance"]
+    FEATURES = [
+        "left_hand_elevation",
+        "right_hand_elevation",
+        "head_elevation",
+        "leaning",
+        "knee_distance",
+        "openness",
+    ]
     INPUT_JOINTS = [
         "left_foot",
         "left_hand",
@@ -74,12 +77,21 @@ class FeatureExtractor:
         knee_distance = self._distance(left_knee_position, right_knee_position)
         relative_knee_distance = knee_distance / max_knee_distance
 
+        max_hand_distance = self._get_total_distance(
+            [left_hand_position, left_forearm_position, left_shoulder_position,
+             neck_position,
+             right_shoulder_position, right_forearm_position, right_hand_position])
+        hand_horizontal_distance = self._get_total_horizontal_distance(
+            [left_hand_position, right_hand_position])
+        openness = hand_horizontal_distance / max_hand_distance
+
         return [
             left_hand_elevation,
             right_hand_elevation,
             head_elevation,
             leaning,
-            relative_knee_distance]
+            relative_knee_distance,
+            openness]
 
     def _get_total_distance(self, positions):
         return sum([self._distance(positions[i], positions[i+1])
@@ -97,3 +109,7 @@ class FeatureExtractor:
         return math.sqrt(sum([
                     pow(position1[coordinate] - position2[coordinate], 2)
                     for coordinate in self._horizontal_coordinates]))
+
+    def _get_total_horizontal_distance(self, positions):
+        return sum([self._get_horizontal_distance(positions[i], positions[i+1])
+                    for i in range(len(positions)-1)])
