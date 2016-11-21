@@ -9,6 +9,7 @@ class FeatureExtractor:
         "leaning",
         "knee_distance",
         "openness",
+        "asymmetry",
     ]
     INPUT_JOINTS = [
         "left_foot",
@@ -85,13 +86,18 @@ class FeatureExtractor:
             [left_hand_position, right_hand_position])
         openness = hand_horizontal_distance / max_hand_distance
 
+        hand_vertical_distance = abs(
+            left_hand_position[self._coordinate_up] - right_hand_position[self._coordinate_up])
+        asymmetry = hand_vertical_distance / max_hand_distance
+
         return [
             left_hand_elevation,
             right_hand_elevation,
             head_elevation,
             leaning,
             relative_knee_distance,
-            openness]
+            openness,
+            asymmetry]
 
     def _get_total_distance(self, positions):
         return sum([self._distance(positions[i], positions[i+1])
