@@ -33,11 +33,43 @@ CONSIDERED_JOINTS = JOINTS_DETERMNING_INTENSITY + ["torso"]
 OSC_PORT = 15002
 WEBSOCKET_HOST = "localhost"
 
-min_freq = 50
-max_freq = 500
-target_openness = 1.0
-target_asymmetry = 0.0
 MUTE_VOLUME = 0.0001
+
+class SineOutput:
+    MIN_FREQ = 50
+    MAX_FREQ = 500
+
+    def __init__(self, target):
+        self.target = target
+        self.sine = Sine(freq=[50,50])
+        sine_out = self.sine.out()
+
+    def update_from_feature_value(self, value):
+        freq = self._get_frequency(value)
+        self.sine.setFreq([freq, freq])
+
+    def _get_frequency(self, value):
+        relative_distance_to_target = abs(value - self.target)
+        return self.MIN_FREQ + (self.MAX_FREQ - self.MIN_FREQ) * relative_distance_to_target
+
+class NoiseOutput:
+    def __init__(self, target):
+        self.target = target
+        self.noise = PinkNoise([0.1, 0.1])
+        noise_out = self.noise.out()
+
+    def update_from_feature_value(self, value):
+        gain = 10 * abs(value - self.target)
+        self.noise.setMul([gain, gain])
+
+MAPPINGS = {
+    "openness": {
+        "class": SineOutput,
+        "target": 1.0},
+    "asymmetry": {
+        "class": NoiseOutput,
+        "target": 0.0}
+}
 
 class Joint:
     def __init__(self, interpreter):
@@ -509,17 +541,10 @@ class UserMovementInterpreter:
     def _update_sound_from_features(self):
         s.amp = .1
 
-        openness = float(feature_extractor.get_feature_by_name(self._frame["features"], "openness"))
-        freq = self._get_frequency(openness, target_openness)
-        sine.setFreq([freq, freq])
-
-        asymmetry = float(feature_extractor.get_feature_by_name(self._frame["features"], "asymmetry"))
-        gain = 10 * abs(asymmetry - target_asymmetry)
-        noise.setMul([gain, gain])
-
-    def _get_frequency(self, elevation, target_elevation):
-        relative_distance_to_target = abs(elevation - target_elevation)
-        return min_freq + (max_freq - min_freq) * relative_distance_to_target
+        for feature_name, sound_output in sound_outputs.iteritems():
+            feature_value = float(feature_extractor.get_feature_by_name(
+                self._frame["features"], feature_name))
+            sound_output.update_from_feature_value(feature_value)
 
     def _mute_sound(self):
         s.amp = MUTE_VOLUME
@@ -574,10 +599,10 @@ args = parser.parse_args()
 
 s = Server().boot()
 s.amp = MUTE_VOLUME
-sine = Sine(freq=[50,50])
-noise = PinkNoise([0.1, 0.1])
-sine_out = sine.out()
-noise_out = noise.out()
+sound_outputs = {}
+for feature_name, output_info in MAPPINGS.iteritems():
+    output_class = output_info["class"]
+    sound_outputs[feature_name] = output_class(output_info["target"])
 s.start()
 
 if args.without_sending:
