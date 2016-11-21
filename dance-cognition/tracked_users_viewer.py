@@ -8,6 +8,7 @@ import numpy
 from ui.scene import Scene
 from ui.window import Window
 from ui.floor_grid import FloorGrid
+from feature_extraction import FeatureExtractor
 text_renderer_module = __import__("text_renderer")
 
 CAMERA_Y_SPEED = 1
@@ -85,6 +86,8 @@ class TrackedUsersScene(Scene):
         self.configure_2d_projection(0.0, self.width, 0.0, self.height)
         self._render_frame_timestamp()
         self._render_system_state()
+        if self.args.enable_features:
+            self._render_features()
 
         if self.parent().show_positions_action.isChecked():
             self._print_positions()
@@ -390,6 +393,20 @@ class TrackedUsersScene(Scene):
             self._draw_text(
                 self.parent().interpreter.get_system_state(),
                 size=14, x=5, y=20, z=0)
+
+    def _render_features(self):
+        if self.parent().frame and self.parent().frame["selected_user"] is not None:
+            glColor4f(.5, 0, 0, .5)
+            i = 0
+            for name, value in zip(FeatureExtractor.FEATURES, self.parent().frame["features"]):
+                y =  5 + i * 14
+                self._draw_text(
+                    name,
+                    size=12, x=400, y=y, z=0)
+                self._draw_text(
+                    "%.2f" % value,
+                    size=12, x=500, y=y, z=0)
+                i += 1
 
 class LogWidget(QtGui.QTextEdit):
     def __init__(self, *args, **kwargs):
