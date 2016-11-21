@@ -1,8 +1,12 @@
 import subprocess
 import tempfile
 import random
+import time
 
 utterance = "I'm sorry"
+#utterance = "just let it go"
+
+# utterances = ["I am sorry","I don't know","I understand your pain", "I feel your pain","That must be tough for you","I am happy for you","That's wonderful!","You're amazing","How can I help you?","I don't care.","Actually it is your fault.","Just let it go","Don't pay attention to them"]
 
 def potentially_add_emph(word):
     if random.random() < 0.3:
@@ -11,6 +15,7 @@ def potentially_add_emph(word):
         return word
 
 def generate_utterance_as_tempfile():
+    # utterance = random.choice(utterances)
     words = utterance.split(" ")
     words = [
         potentially_add_emph(word)
@@ -41,3 +46,4 @@ def speak_utterance_from_tempfile(f):
 while True:
     f = generate_utterance_as_tempfile()
     speak_utterance_from_tempfile(f)
+    time.sleep(1)
