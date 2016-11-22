@@ -33,43 +33,10 @@ CONSIDERED_JOINTS = JOINTS_DETERMNING_INTENSITY + ["torso"]
 OSC_PORT = 15002
 WEBSOCKET_HOST = "localhost"
 
+min_freq = 50
+max_freq = 500
 MUTE_VOLUME = 0.0001
-
-class SineOutput:
-    MIN_FREQ = 50
-    MAX_FREQ = 500
-
-    def __init__(self, target):
-        self.target = target
-        self.sine = Sine(freq=[50,50])
-        sine_out = self.sine.out()
-
-    def update_from_feature_value(self, value):
-        freq = self._get_frequency(value)
-        self.sine.setFreq([freq, freq])
-
-    def _get_frequency(self, value):
-        relative_distance_to_target = abs(value - self.target)
-        return self.MIN_FREQ + (self.MAX_FREQ - self.MIN_FREQ) * relative_distance_to_target
-
-class NoiseOutput:
-    def __init__(self, target):
-        self.target = target
-        self.noise = PinkNoise([0.1, 0.1])
-        noise_out = self.noise.out()
-
-    def update_from_feature_value(self, value):
-        gain = 10 * abs(value - self.target)
-        self.noise.setMul([gain, gain])
-
-MAPPINGS = {
-    "openness": {
-        "class": SineOutput,
-        "target": 1.0},
-    "asymmetry": {
-        "class": NoiseOutput,
-        "target": 0.0}
-}
+TARGET_FEATURE_THRESHOLD = 0 # target-switching disabled
 
 class Joint:
     def __init__(self, interpreter):
@@ -301,6 +268,9 @@ class UserMovementInterpreter:
             self.hierarchy = self._create_hierarchy()
 
         self._tearing_down = False
+
+        self._pausing_sound = False
+        self._select_new_target_features()
 
     def _create_hierarchy(self):
         return HierarchyCreator().create_hiearchy_from_dict({
@@ -534,20 +504,61 @@ class UserMovementInterpreter:
 
     def _update_sound(self):
         if args.enable_features and self._selected_user is not None:
-            self._update_sound_from_features()
+            self._update_sound_state()
+            self._update_sound_within_state()
         else:
             self._mute_sound()
 
-    def _update_sound_from_features(self):
-        s.amp = .1
+    def _update_sound_state(self):
+        if self._pausing_sound:
+            paused_time = time.time() - self._pause_start_time
+            remaining_pause_time = 3.0 - paused_time
+            if remaining_pause_time <= 0:
+                self._unmute_sound()
+                self._select_new_target_features()
+                self._pausing_sound = False
 
-        for feature_name, sound_output in sound_outputs.iteritems():
-            feature_value = float(feature_extractor.get_feature_by_name(
-                self._frame["features"], feature_name))
-            sound_output.update_from_feature_value(feature_value)
+        if not self._pausing_sound:
+            self._process_features()
+            if self._reached_target_features():
+                self._pausing_sound = True
+                self._pause_start_time = time.time()
+                self._mute_sound()
+
+    def _process_features(self):
+        openness = float(feature_extractor.get_feature_by_name(self._frame["features"], "openness"))
+        relative_distance_to_target_openness = abs(openness - self._target_openness)
+
+        asymmetry = float(feature_extractor.get_feature_by_name(self._frame["features"], "asymmetry"))
+        relative_distance_to_target_asymmetry = abs(asymmetry - self._target_asymmetry)
+
+        self._relative_distance_to_targets = (
+            relative_distance_to_target_openness + relative_distance_to_target_asymmetry) / 2
+
+    def _reached_target_features(self):
+        return self._relative_distance_to_targets < TARGET_FEATURE_THRESHOLD
+
+    def _update_sound_within_state(self):
+        if not self._pausing_sound:
+            self._unmute_sound()
+            self._update_sound_from_features()
+
+    def _update_sound_from_features(self):
+        freq = min_freq + (max_freq - min_freq) * self._relative_distance_to_targets
+        sine.setFreq([freq, freq])
+
+    def _unmute_sound(self):
+        s.amp = .1
 
     def _mute_sound(self):
         s.amp = MUTE_VOLUME
+
+    def _select_new_target_features(self):
+        # self._target_openness = 1.0
+        # self._target_asymmetry = 0.0
+        self._target_openness = random.uniform(0, 1)
+        self._target_asymmetry = random.uniform(0, 1)
+        print "target openness", self._target_openness, "target asymmetry", self._target_asymmetry
 
 class OutputController:
     def __init__(self, event_sender):
@@ -599,10 +610,8 @@ args = parser.parse_args()
 
 s = Server().boot()
 s.amp = MUTE_VOLUME
-sound_outputs = {}
-for feature_name, output_info in MAPPINGS.iteritems():
-    output_class = output_info["class"]
-    sound_outputs[feature_name] = output_class(output_info["target"])
+sine = Sine(freq=[50,50])
+sine_out = sine.out()
 s.start()
 
 if args.without_sending:
