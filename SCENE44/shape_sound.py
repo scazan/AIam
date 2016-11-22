@@ -41,16 +41,25 @@ min_freq = 50
 max_freq = 500
 MUTE_VOLUME = 0.0001
 
-SHAPE_POINTS = [
-    (4000, 3000),
-    (1500, 4000),
-    (-1500, 3000),
-    (-4000, 4000),
-]
+SHAPE_END_1 = (4000, 3500)
+SHAPE_END_2 = (-4000, 3500)
+SHAPE_NEAREST = 2000
+SHAPE_FURTHEST = 5000
+SHAPE_NUM_SEGMENTS = 5
+
+MIN_DISTANCE_TO_SHAPE = 300
 MAX_DISTANCE_TO_SHAPE = 5000
 SHAPE_RESOLUTION = 100
 
-shape = interpolation.interpolate(SHAPE_POINTS, resolution=SHAPE_RESOLUTION)
+shape_width = float(SHAPE_END_2[0] - SHAPE_END_1[0])
+shape_keypoints = [SHAPE_END_1] + \
+                  [(x, random.uniform(SHAPE_NEAREST, SHAPE_FURTHEST))
+                   for x in numpy.arange(
+                           SHAPE_END_1[0] + shape_width/(SHAPE_NUM_SEGMENTS-1),
+                           SHAPE_END_2[0],
+                           shape_width/(SHAPE_NUM_SEGMENTS-1))] + \
+                  [SHAPE_END_2]
+shape = interpolation.interpolate(shape_keypoints, resolution=SHAPE_RESOLUTION)
 
 class Joint:
     def __init__(self, interpreter):
@@ -530,7 +539,8 @@ class UserMovementInterpreter:
     def _update_sound_within_state(self):
         self.nearest_point_on_shape = self._get_nearest_point_on_shape(self.center_of_mass)
         distance_to_shape = self._get_distance(self.center_of_mass, self.nearest_point_on_shape)
-        relative_distance_to_shape = min(distance_to_shape / MAX_DISTANCE_TO_SHAPE, 1)
+        relative_distance_to_shape = max(0, min(
+            (distance_to_shape - MIN_DISTANCE_TO_SHAPE) / MAX_DISTANCE_TO_SHAPE, 1))
         freq = min_freq + (max_freq - min_freq) * relative_distance_to_shape
         sine.setFreq([freq, freq])
 
