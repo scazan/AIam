@@ -66,7 +66,20 @@ class TrackedUsersScene(Scene):
         glLoadIdentity()
         self.configure_3d_projection(pixdx=-100, pixdy=0, fovy=40.0,
                                      near=PROJECTION_NEAR, far=PROJECTION_FAR)
+        self.render_3d_scene()
 
+        self.configure_2d_projection(0.0, self.width, 0.0, self.height)
+        self._render_frame_timestamp()
+        self._render_system_state()
+        if self.args.enable_features:
+            self._render_features()
+
+        if self.parent().show_positions_action.isChecked():
+            self._print_positions()
+
+        self.is_rendering = False
+
+    def render_3d_scene(self):
         self._floor.render(
             center_x=0,
             center_z=0,
@@ -82,17 +95,6 @@ class TrackedUsersScene(Scene):
 
         for user in self.parent().interpreter.get_users():
             self._draw_user(user)
-
-        self.configure_2d_projection(0.0, self.width, 0.0, self.height)
-        self._render_frame_timestamp()
-        self._render_system_state()
-        if self.args.enable_features:
-            self._render_features()
-
-        if self.parent().show_positions_action.isChecked():
-            self._print_positions()
-
-        self.is_rendering = False
 
     def _draw_field_of_view_boundary(self):
         radius = ASSUMED_VIEW_DISTANCE
@@ -422,7 +424,7 @@ class LogWidget(QtGui.QTextEdit):
         return QtCore.QSize(640, LOG_HEIGHT)
 
 class TrackedUsersViewer(Window):
-    def __init__(self, interpreter, args, enable_log_replay=False):
+    def __init__(self, interpreter, args, enable_log_replay=False, scene_class=TrackedUsersScene):
         Window.__init__(self, args)
         self.args = args
         self._enable_log_replay = enable_log_replay
@@ -435,7 +437,7 @@ class TrackedUsersViewer(Window):
         self._layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self._layout)
 
-        self._scene = TrackedUsersScene(self)
+        self._scene = scene_class(self)
         size_policy = QtGui.QSizePolicy(
             QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
         size_policy.setVerticalStretch(2)
