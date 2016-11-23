@@ -6,7 +6,7 @@ import cPickle
 import threading
 import math
 import numpy
-from pyo import *
+from audio import *
 
 import sys
 import os
@@ -608,7 +608,7 @@ parser.add_argument("--input-frame-rate", type=float, default=30)
 parser.add_argument("--enable-features", action="store_true")
 args = parser.parse_args()
 
-s = Server().boot()
+s = create_audio_server().boot()
 s.amp = MUTE_VOLUME
 sine = Sine(freq=[50,50])
 sine_out = sine.out()
