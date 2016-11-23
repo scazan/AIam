@@ -126,16 +126,16 @@ def handle_center(path, values, types, src, user_data):
 
 
 def handle(path, values, types, src, user_data):
-	framecount, index, x, y, z = values
+	framecount, orientation, x, y, z = values
 	print values
 	for listener in listeners:
-		listener.send(json.dumps([index,x,y,z]))
+		listener.send(json.dumps([orientation,x,y,z]))
 
 
 time_of_last_handler = None
 osc_receiver = OscReceiver(OSC_PORT)
 # osc_receiver.add_method("/center", "ifff", handle_center)
-osc_receiver.add_method("/world", "iifff", handle)
+osc_receiver.add_method("/orientation", "isfff", handle)
 
 
 
