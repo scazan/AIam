@@ -41,14 +41,14 @@ min_freq = 50
 max_freq = 500
 MUTE_VOLUME = 0.0001
 
-SHAPE_END_1 = (4000, 3500)
-SHAPE_END_2 = (-4000, 3500)
-SHAPE_NEAREST = 2000
-SHAPE_FURTHEST = 5000
+SHAPE_END_1 = (2500, 5500)
+SHAPE_END_2 = (-2500, 5500)
+SHAPE_NEAREST = 4000
+SHAPE_FURTHEST = 7000
 SHAPE_NUM_SEGMENTS = 5
 
 MIN_DISTANCE_TO_SHAPE = 300
-MAX_DISTANCE_TO_SHAPE = 5000
+MAX_DISTANCE_TO_SHAPE = 3000
 SHAPE_RESOLUTION = 100
 
 shape_width = float(SHAPE_END_2[0] - SHAPE_END_1[0])
@@ -377,6 +377,7 @@ class UserMovementInterpreter:
     def _handle_center(self, path, values, types, src, user_data):
 	user_id, x, y, z = values
         self.center_of_mass = (x, z)
+        print self.center_of_mass
 
     def _process_frame(self):
         for values in self._frame["user_states"]:
@@ -541,6 +542,10 @@ class UserMovementInterpreter:
         distance_to_shape = self._get_distance(self.center_of_mass, self.nearest_point_on_shape)
         relative_distance_to_shape = max(0, min(
             (distance_to_shape - MIN_DISTANCE_TO_SHAPE) / MAX_DISTANCE_TO_SHAPE, 1))
+        print relative_distance_to_shape; sys.stdout.flush()
+        if relative_distance_to_shape > 0:
+            print "relative_distance_to_shape > 0"
+            relative_distance_to_shape = pow(relative_distance_to_shape, 0.3)
         freq = min_freq + (max_freq - min_freq) * relative_distance_to_shape
         sine.setFreq([freq, freq])
 
