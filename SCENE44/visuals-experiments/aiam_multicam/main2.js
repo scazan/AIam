@@ -35,7 +35,7 @@ var params = new function() {}
 var warper = new Warper();
 var multicam = true;
 var guiVisible = false;
-var listenToIncomingData = false;
+var listenToIncomingData = true;
 
 var scale= 1000;
 var oneBall;
@@ -68,7 +68,6 @@ function init() {
 	dirlight2.position.set( 0.5, 0.5, 1 );
 	scene.add( dirlight2 );
 	
-
 	pointLight = new THREE.PointLight( 0xff3300 );
 	pointLight.position.set( 0, 0, 100 );
 	scene.add( pointLight );
@@ -161,7 +160,7 @@ function init() {
 
 	// CONTROLS
 
-	// controls = new THREE.OrbitControls( camera, renderer.domElement );
+	controls = new THREE.OrbitControls( camera, renderer.domElement );
 
     setTimeout(function () { warper.init(); }, 100);
 
@@ -236,7 +235,7 @@ function setupGui() {
 	effectController = {
 
 		speed: 0.15,
-		numBlobs: 15,
+		numBlobs: 5,
 		resolution: 22,
 		isolation: 25,
 
@@ -244,10 +243,10 @@ function setupGui() {
 		wallx: false,
 		wallz: false,
 
-		matColor: "#ff7e7d",
+		matColor: "#caaa6f",//"#ff7e7d",
 		lightColor: "#f54242",
 		backgroundColor: "#5f2b2b",
-		bgColorSingle: "#ff2b2b",
+		bgColorSingle: "#572f19",
 		lx: -0.3,
 		ly: -1,
 		lz: -.5,
@@ -326,7 +325,6 @@ function random(seed) {
     return x - Math.floor(x);
 }
 
-
 function animate() {
 
 	requestAnimationFrame( animate );
@@ -336,11 +334,13 @@ function animate() {
 function render() {
 
 	if (listenToIncomingData) {
-		effectController.isolation = Math.floor(incomingData*90)+10;
-		effectController.speed = incomingData/4 + .05;
-		effectController.numblobs = Math.floor(incomingData*8)+2;
-		// color.set(effectController.matColor)
+		// effectController.isolation = Math.floor(incomingData*90)+10;
+		effectController.speed = incomingData/2 + .05;
+		// effectController.numBlobs = Math.floor(incomingData*8)+2;
+		// color.setHex(effectController.backgroundColor)
 		// color.offsetHSL(0,incomingData,0);
+		// effectController.backgroundColor=color.getHex()
+
 	} 
 
 	var delta = clock.getDelta();
