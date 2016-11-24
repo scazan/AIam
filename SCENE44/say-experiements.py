@@ -10,7 +10,7 @@ bodyparts = ["left foot","right foot","left knee","right knee", "right hip","lef
 directions = ["up","down","forward","back","right","left"]
 orientations = ["high","low","middle"," "]
 
-t = 5; #seconds
+t = 3; #seconds
 steps = 400 
 
 # t= 0;
@@ -25,7 +25,9 @@ for x in xrange(0,steps):
 	randomDirection = directions[random.randint(0, len(directions)-1)].encode('string-escape')
 	randomOrientation = orientations[random.randint(0, len(orientations)-1)].encode('string-escape')
 	
-	os.system("say "+randomBodypart + " " + randomOrientation + " " + randomDirection)
+	# os.system("say -v Hysterical "+randomBodypart + " " + randomOrientation + " " + randomDirection)
+	os.system("say -v Hysterical Actually it is your fault")
+
 	time.sleep(t)
 
 # 	# os.system("say "+randomword)

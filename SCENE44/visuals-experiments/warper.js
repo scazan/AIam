@@ -5,6 +5,7 @@ var Warper = function() {
 	this.warpDataOriginal = {};
 	this.aspect = {};
 	this.radius = 13;
+	this.loadedWarpData = '';
 
 	getTransform = function(from, to) {
 		var A, H, b, h, i, k_i, lhs, rhs, _i, _j, _k, _ref;
@@ -108,6 +109,7 @@ var Warper = function() {
 				that.setWarpData(warpData);
 			}
 			if (event.keyCode == 82) { // r key to reset
+				that.applyTransform(that.warpDataOriginal)
 				that.setWarpData(that.warpDataOriginal);
 				var warpDataArray = that.warpDataToArray(that.warpDataOriginal);
 				applyTransform(that.warpTarget, warpDataArray, warpDataArray);
@@ -230,8 +232,10 @@ var Warper = function() {
 				$('#' + element).css(style, warpData[element][style]);
 			}
 		}
+	}
 
-		applyTransform(this.warpTarget, this.warpDataToArray(this.warpDataOriginal), this.warpDataToArray(warpData));
+	this.applyTransform = function (data) {
+		applyTransform(this.warpTarget, this.warpDataToArray(this.warpDataOriginal), this.warpDataToArray(data));
 	}
 
 	this.getWarpDataWidth = function (warpData) {
@@ -263,11 +267,13 @@ Warper.prototype.init = function () {
 	this.warpDataOriginal = this.getWarpData();
 	this.aspect = this.getWarpDataWidth(this.warpDataOriginal) / this.getWarpDataHeight(this.warpDataOriginal);
 	this.loadWarpData('warping.json', this, this.setWarpDataCallback);
+
 	document.addEventListener('keydown', this.warperKeyDownListener);
 };
 
 Warper.prototype.loadWarpData = function (fileName, _this, callback) {
 	$.getJSON(fileName, function (warpData) {
+		_this.loadedWarpData = warpData;
 		callback(_this, warpData);
 	});
 };
