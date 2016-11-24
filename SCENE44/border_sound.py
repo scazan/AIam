@@ -1,6 +1,7 @@
 from audio import *
 import time
 from math import sqrt, cos, pi
+import threading
 
 import tornado.web
 import tornado.ioloop
@@ -28,6 +29,8 @@ center = [0,4500]
 area_radius = 1000 
 max_distance_to_border = 5000
 
+websocket_lock = threading.Lock()
+
 def update_sound(relative_distance_to_border):
         freq = min_freq + (max_freq - min_freq) * relative_distance_to_border
         sine_left.setFreq(freq)
@@ -54,8 +57,9 @@ def handle_center(path, values, types, src, user_data):
         send_to_websocket_clients(str(relative_distance_to_border))
 
 def send_to_websocket_clients(string):
-        for client_handler in websocket_server.client_handlers:
-                client_handler.write_message(string)
+        with websocket_lock:
+                for client_handler in websocket_server.client_handlers:
+                        client_handler.write_message(string)
 
 osc_receiver = OscReceiver(OSC_PORT)
 osc_receiver.add_method("/center", "ifff", handle_center)
@@ -65,10 +69,12 @@ class ClientHandler(tornado.websocket.WebSocketHandler):
     def __init__(self, server, request, **kwargs):
         super(ClientHandler, self).__init__(server, request, **kwargs)
         self._server = server
-        server.client_handlers.add(self)
+        with websocket_lock:
+                server.client_handlers.add(self)
 
     def on_close(self):
-        self._server.client_handlers.remove(self)
+        with websocket_lock:
+                self._server.client_handlers.remove(self)
 
     def check_origin(self, origin):
         return True
@@ -97,6 +103,6 @@ class WebsocketServer(tornado.web.Application):
         self._loop.stop()
         self._server.stop()
 
-s.start()
 websocket_server = WebsocketServer()
+s.start()
 websocket_server.start()
