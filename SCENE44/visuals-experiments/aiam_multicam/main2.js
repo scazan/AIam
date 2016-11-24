@@ -13,11 +13,11 @@ var light, pointLight, ambientLight,dirlight2;
 
 var effect, resolution, numBlobs;
 
-var composer, effectFXAA, hblur, vblur;
-
 var effectController;
 
 var time = 0;
+var time2 = 0;
+
 var clock = new THREE.Clock();
 
 var cameras=[];
@@ -35,18 +35,23 @@ var params = new function() {}
 var warper = new Warper();
 var multicam = true;
 var guiVisible = false;
+var listenToIncomingData = false;
+
 var scale= 1000;
+var oneBall;
+
+var color = new THREE.Color();
+
 init();
 animate();
-
+    
 function init() {
-
 	container = document.createElement('div');
     document.body.appendChild(container);
 
 	// CAMERA
 
-	camera = new THREE.PerspectiveCamera( 45, SCREEN_WIDTH / SCREEN_HEIGHT, 1, 10000 );
+	camera = new THREE.PerspectiveCamera( 75, SCREEN_WIDTH / SCREEN_HEIGHT, 1, 10000 );
 	camera.position.set( -500, 500, 1500 );
 
 	// SCENE
@@ -156,24 +161,23 @@ function init() {
 
 	// CONTROLS
 
-	controls = new THREE.OrbitControls( camera, renderer.domElement );
+	// controls = new THREE.OrbitControls( camera, renderer.domElement );
 
-    // setTimeout(function () { warper.init(); }, 100);
+    setTimeout(function () { warper.init(); }, 100);
 
 	var renderTargetParameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBuffer: false };
 	renderTarget = new THREE.WebGLRenderTarget( SCREEN_WIDTH, SCREEN_HEIGHT, renderTargetParameters );
-
 
 	// EVENTS
 
 	window.addEventListener( 'resize', onWindowResize, false );
     window.addEventListener('keydown', keyPressed, false);
-
 }
 
 function keyPressed(e){
 
     var key = event.keyCode ;
+    console.log(key)
     switch (key) {
 
         case 65:    /*a*/
@@ -193,8 +197,21 @@ function keyPressed(e){
 				gui.domElement.style.display = 'block'
             }
             break;
-        case 68:    /*d*/
+        case 68:    /*d distort*/
+        	if (warp) {
+        		warp = false;
+        		warper.applyTransform(warper.warpDataOriginal)
+        	} else {
+        		warp = true;
+        		warper.applyTransform(warper.loadedWarpData)
+        	}
             break;
+         case 76: //L - listen to incoming data set
+         	if (listenToIncomingData) {
+        		listenToIncomingData = false;
+        	} else {
+        		listenToIncomingData = true;
+        	}
     }
 }
 //
@@ -245,7 +262,7 @@ function setupGui() {
 	h = gui.addFolder( "Colors" );
 	// Colors
 
-	matColor = h.addColor( effectController, "matColor");
+	matColor = h.addColor( effectController, "matColor").listen();
 	lightColor = h.addColor( effectController, "lightColor");
 	backgroundColor = h.addColor( effectController, "backgroundColor");
 	bgColorSingle = h.addColor( effectController, "bgColorSingle");
@@ -262,10 +279,10 @@ function setupGui() {
 
 	h = gui.addFolder( "Simulation" );
 
-	h.add( effectController, "speed", 0.1, 8.0, 0.05 );
-	h.add( effectController, "numBlobs", 1, 50, 1 );
+	h.add( effectController, "speed", 0, 1.0, 0.05 ).listen();
+	h.add( effectController, "numBlobs", 1, 50, 1 ).listen();
 	h.add( effectController, "resolution", 14, 100, 1 );
-	h.add( effectController, "isolation", 10, 300, 1 );
+	h.add( effectController, "isolation", 10, 300, 1 ).listen();
 
 	h.add( effectController, "floor" );
 	h.add( effectController, "wallx" );
@@ -292,7 +309,9 @@ function updateCubes( object, time, numblobs, floor, wallx, wallz ) {
 		ballz = Math.cos( i + 1.32 * time * 0.1 * Math.sin( ( 0.92 + 0.53 * i ) ) ) * 0.24 + 0.5;
 
 		object.addBall(ballx, bally, ballz, strength, subtract);
-
+		if (i==0) {
+			var radius = scale * Math.sqrt( strength / subtract )
+		}
 	}
 
 	if ( floor ) object.addPlaneY( 2, 12 );
@@ -316,16 +335,23 @@ function animate() {
 
 function render() {
 
+	if (listenToIncomingData) {
+		effectController.isolation = Math.floor(incomingData*90)+10;
+		effectController.speed = incomingData/4 + .05;
+		effectController.numblobs = Math.floor(incomingData*8)+2;
+		// color.set(effectController.matColor)
+		// color.offsetHSL(0,incomingData,0);
+	} 
+
 	var delta = clock.getDelta();
-
-	time += delta * effectController.speed * 0.5;
-
+	time += delta * effectController.speed;
+	time2 += delta*.5;
 
 	if (multicam) {
 		for (var i = 0; i < row ; i++) {
 			for (var j = 0 ; j < col; j++) {
 			    var index = j+i*col;
-			    var rot = params[String('cam'+index+"X")] + time/2
+			    var rot = params[String('cam'+index+"X")] + time2/4
 			    var y = params[String('cam'+index+'Y')]
 			    var r = params[String('cam'+index+"Z")]
 
@@ -355,13 +381,17 @@ function render() {
 	    // helpers[index].lookAt(scene.position)
 			}
 		}
+
 	} else {
-		camera.aspect= SCREEN_WIDTH / SCREEN_HEIGHT;
+		//single cam view 
+		camera.aspect = SCREEN_WIDTH / SCREEN_HEIGHT;
 		renderer.setViewport( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT );
 		renderer.setScissor( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT );
 		renderer.setScissorTest( true );
 		renderer.setClearColor(effectController.bgColorSingle)// new THREE.Color().setHSL( 0.004, 1, .5 ) );
-
+		camera.lookAt(effect.position)
+		// console.log(oneBall)
+		
 		renderer.render( scene, camera );
 
 	}
@@ -379,6 +409,8 @@ function render() {
 	}
 
 	updateCubes( effect, time, effectController.numBlobs, effectController.floor, effectController.wallx, effectController.wallz );
+
+
 
 	// materials
 
