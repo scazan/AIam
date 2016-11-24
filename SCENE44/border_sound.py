@@ -1,6 +1,6 @@
 from audio import *
 import time
-from math import sqrt
+from math import sqrt, cos, pi
 
 import tornado.web
 import tornado.ioloop
@@ -24,16 +24,16 @@ OSC_PORT = 15002
 
 min_freq = 50
 max_freq = 500
-center = [132,4500]
+center = [0,4500]
 area_radius = 1000 
-max_distance_to_border = 1000
+max_distance_to_border = 5000
 
 def update_sound(relative_distance_to_border):
         freq = min_freq + (max_freq - min_freq) * relative_distance_to_border
         sine_left.setFreq(freq)
         sine_right.setFreq(freq)
 
-update_sound(1)
+update_sound(0)
 
 def distance(p0, p1):
     return sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)
@@ -43,8 +43,12 @@ def handle_center(path, values, types, src, user_data):
         global s
 	user_id, x, y, z = values
 	center_distance = distance([x,z], center)
-        distance_to_border = abs(center_distance - area_radius)
-        relative_distance_to_border = min(distance_to_border / max_distance_to_border, 1)
+        if center_distance > area_radius:
+                distance_to_border = center_distance - area_radius
+                relative_distance_to_border = min(distance_to_border / max_distance_to_border, 1)
+        else:
+                relative_distance_to_border = (area_radius - center_distance) / area_radius
+        relative_distance_to_border = (-cos(-relative_distance_to_border*pi)+1)/2
         print relative_distance_to_border
         update_sound(relative_distance_to_border)
         send_to_websocket_clients(str(relative_distance_to_border))
