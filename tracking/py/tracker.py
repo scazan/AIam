@@ -7,6 +7,8 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from PyQt4 import QtCore, QtGui, QtOpenGL
 
+MAX_DEPTH = 10000
+
 class CameraWidget(QtOpenGL.QGLWidget):
     def __init__(self, *args, **kwargs):
         QtOpenGL.QGLWidget.__init__(self, *args, **kwargs)
@@ -20,7 +22,6 @@ class CameraWidget(QtOpenGL.QGLWidget):
         if self._depth_frame is None:
             return
         buf = self._depth_frame.get_buffer_as_uint16()
-        max_depth = max(buf)
         row_size = self._depth_frame.stride / 2
         glBegin(GL_POINTS)
         i_row = 0
@@ -29,7 +30,7 @@ class CameraWidget(QtOpenGL.QGLWidget):
             for x in range(self._depth_frame.width):
                 depth = buf[i]
                 if depth > 0:
-                    normalized_depth = 1 - float(depth) / max_depth
+                    normalized_depth = 1 - float(depth) / MAX_DEPTH
                     glColor3f(normalized_depth, normalized_depth, normalized_depth)
                     glVertex2f(x, y)
                 i += 1
