@@ -1,7 +1,7 @@
 #ifndef _VIEWER_H_
 #define _VIEWER_H_
 
-#include "NiTE.h"
+#include "OpenNI.h"
 
 #define MAX_DEPTH 10000
 

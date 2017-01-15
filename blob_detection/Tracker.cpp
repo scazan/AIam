@@ -13,7 +13,6 @@ Tracker::Tracker() {
 }
 
 Tracker::~Tracker() {
-  nite::NiTE::shutdown();
   openni::OpenNI::shutdown();
 }
 
@@ -80,8 +79,6 @@ openni::Status Tracker::init(int argc, char **argv) {
   else {
     printf("Couldn't find depth stream:\n%s\n", openni::OpenNI::getExtendedError());
   }
-
-  nite::NiTE::initialize();
 
   if(viewerEnabled) {
     viewer = new TrackerViewer(this);

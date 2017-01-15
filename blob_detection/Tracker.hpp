@@ -2,7 +2,6 @@
 #define _TRACKER_HPP_
 
 #include "Viewer.hpp"
-#include "NiTE.h"
 #include <map>
 
 class Tracker;
