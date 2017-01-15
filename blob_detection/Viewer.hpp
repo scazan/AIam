@@ -19,12 +19,8 @@ public:
 protected:
   virtual void Display();
   void ResizedWindow(int width, int height);
-
-  virtual void OnKey(unsigned char key, int x, int y);
-
   virtual openni::Status InitOpenGL(int argc, char **argv);
   void InitOpenGLHooks();
-
   virtual void processFrame() = 0;
   virtual openni::VideoFrameRef getDepthFrame() = 0;
 
@@ -36,7 +32,6 @@ private:
   static void glutIdle();
   static void glutReshape(int width, int height);
   static void glutDisplay();
-  static void glutKeyboard(unsigned char key, int x, int y);
   void updateTextureMap();
   void drawTextureMap();
   void drawTextureMapAsTexture();

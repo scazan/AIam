@@ -63,11 +63,13 @@ openni::Status Tracker::init(int argc, char **argv) {
 
   status = depthStream.create(device, openni::SENSOR_DEPTH);
   if (status == openni::STATUS_OK) {
-    openni::VideoMode depthMode = depthStream.getVideoMode();
-    depthMode.setFps(fps);
-    depthMode.setResolution(640, 480);
-    depthMode.setPixelFormat(openni::PIXEL_FORMAT_DEPTH_1_MM);
-    status = depthStream.setVideoMode(depthMode); 
+    if(deviceUri == NULL) {
+      openni::VideoMode depthMode = depthStream.getVideoMode();
+      depthMode.setFps(fps);
+      depthMode.setResolution(640, 480);
+      depthMode.setPixelFormat(openni::PIXEL_FORMAT_DEPTH_1_MM);
+      status = depthStream.setVideoMode(depthMode);
+    }
     if(status == openni::STATUS_OK){
       status = depthStream.start();
       if (status != openni::STATUS_OK) {
