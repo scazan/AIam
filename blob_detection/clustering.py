@@ -9,8 +9,6 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from PyQt4 import QtCore, QtGui, QtOpenGL
 
-MAX_DEPTH = 10000
-
 class CameraWidget(QtOpenGL.QGLWidget):
     def __init__(self, *args, **kwargs):
         QtOpenGL.QGLWidget.__init__(self, *args, **kwargs)
@@ -82,7 +80,7 @@ def process_depth_frame():
         i = i_row
         for x in range(depth_frame.width):
             depth = buf[i]
-            if depth > 0:
+            if depth > 0 and depth <= args.max_depth:
                 point = openni2.convert_depth_to_world(depth_stream, x, y, depth)
                 points.append(point)
             i += 1
@@ -91,10 +89,11 @@ def process_depth_frame():
     global kmeans
     kmeans = sklearn.cluster.KMeans(max_iter=1)
     kmeans.fit(points)
-    print kmeans.cluster_centers_
+    print "found %d clusters" % len(kmeans.cluster_centers_)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-device")
+parser.add_argument("--max-depth", type=int, default=10000)
 args = parser.parse_args()
 
 openni2.initialize()
