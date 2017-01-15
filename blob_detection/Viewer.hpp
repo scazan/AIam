@@ -38,7 +38,6 @@ private:
   void drawTextureMapAsPoints();
 
   openni::VideoFrameRef depthFrame;
-  float	m_pDepthHist[MAX_DEPTH];
   openni::RGB888Pixel* m_pTexMap;
   unsigned int m_nTexMapX;
   unsigned int m_nTexMapY;

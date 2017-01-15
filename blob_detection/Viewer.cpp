@@ -52,41 +52,6 @@ int _checkGlErrors(int line) {
   return numErrors;
 }
 
-void calculateHistogram(float* pHistogram, int histogramSize, const openni::VideoFrameRef& depthFrame)
-{
-	const openni::DepthPixel* pDepth = (const openni::DepthPixel*)depthFrame.getData();
-	int width = depthFrame.getWidth();
-	int height = depthFrame.getHeight();
-	// Calculate the accumulative histogram (the yellow display...)
-	memset(pHistogram, 0, histogramSize*sizeof(float));
-	int restOfRow = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel) - width;
-
-	unsigned int nNumberOfPoints = 0;
-	for (int y = 0; y < height; ++y)
-	{
-		for (int x = 0; x < width; ++x, ++pDepth)
-		{
-			if (*pDepth != 0)
-			{
-				pHistogram[*pDepth]++;
-				nNumberOfPoints++;
-			}
-		}
-		pDepth += restOfRow;
-	}
-	for (int nIndex=1; nIndex<histogramSize; nIndex++)
-	{
-		pHistogram[nIndex] += pHistogram[nIndex-1];
-	}
-	if (nNumberOfPoints)
-	{
-		for (int nIndex=1; nIndex<histogramSize; nIndex++)
-		{
-			pHistogram[nIndex] = (256 * (1.0f - (pHistogram[nIndex] / nNumberOfPoints)));
-		}
-	}
-}
-
 void Viewer::glutIdle()
 {
   log("glutIdle\n");
@@ -163,12 +128,6 @@ void Viewer::Display()
   glPushMatrix();
   checkGlErrors();
 
-  if (depthFrame.isValid())
-    {
-      log("calculateHistogram\n");
-      calculateHistogram(m_pDepthHist, MAX_DEPTH, depthFrame);
-    }
-
   updateTextureMap();
   g_nXRes = depthFrame.getVideoMode().getResolutionX();
   g_nYRes = depthFrame.getVideoMode().getResolutionY();
@@ -201,10 +160,10 @@ void Viewer::updateTextureMap() {
 	    {
 	      if (*pDepth != 0)
 		{
-		  int nHistValue = m_pDepthHist[*pDepth];
-		  pTex->r = nHistValue;
-		  pTex->g = nHistValue;
-		  pTex->b = nHistValue;
+		  int depth_255 = (int) (255 * (1 - float(*pDepth) / MAX_DEPTH));
+		  pTex->r = depth_255;
+		  pTex->g = depth_255;
+		  pTex->b = depth_255;
 		}
 	    }
 
