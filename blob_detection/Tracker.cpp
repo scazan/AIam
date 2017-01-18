@@ -128,6 +128,7 @@ openni::Status Tracker::init(int argc, char **argv) {
 
 void Tracker::mainLoop() {
   previousDisplayTime = 0;
+  needToInit = false;
   glutMainLoop();
 }
 
@@ -159,6 +160,10 @@ void Tracker::Display()
   previousDisplayTime = currentDisplayTime;
 
   depthFrame = getDepthFrame();
+  if(!depthFrame.isValid())
+    return;
+
+  processOpticalFlow();
 
   if (m_pTexMap == NULL)
     {
@@ -182,6 +187,8 @@ void Tracker::Display()
   g_nYRes = depthFrame.getVideoMode().getResolutionY();
   drawTextureMap();
 
+  drawOpticalFlow();
+
   glPopMatrix();
   glutSwapBuffers();
 
@@ -189,38 +196,100 @@ void Tracker::Display()
   log("Display done\n");
 }
 
+void Tracker::processOpticalFlow() {
+  if(cvFrame.empty()) {
+    cvFrame.create(depthFrame.getHeight(), depthFrame.getWidth(), CV_8UC1);
+  }
+
+  const openni::DepthPixel* pDepthRow = (const openni::DepthPixel*)depthFrame.getData();
+  int rowSize = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
+
+  for (int y = 0; y < depthFrame.getHeight(); ++y)
+    {
+      const openni::DepthPixel* pDepth = pDepthRow;
+
+      for (int x = 0; x < depthFrame.getWidth(); ++x, ++pDepth)
+	{
+	  if (*pDepth != 0 && *pDepth < MAX_DEPTH)
+	    {
+	      uchar depth_255 = (int) (255 * (1 - float(*pDepth) / MAX_DEPTH));
+	      cvFrame.at<uchar>(y, x) = depth_255; // TODO: optimize?
+	    }
+	}
+
+      pDepthRow += rowSize;
+    }
+
+  const int MAX_COUNT = 500;
+  TermCriteria termcrit(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 20, 0.03); // only once?
+  Size subPixWinSize(10,10), winSize(31,31); // only once?
+
+  if( needToInit )
+    {
+      // automatic initialization
+      goodFeaturesToTrack(cvFrame, points[1], MAX_COUNT, 0.01, 10, Mat(), 3, 0, 0.04);
+      cornerSubPix(cvFrame, points[1], subPixWinSize, Size(-1,-1), termcrit);
+    }
+  else if( !points[0].empty() )
+    {
+      vector<float> err;
+      if(cvPreviousFrame.empty())
+	cvFrame.copyTo(cvPreviousFrame);
+      calcOpticalFlowPyrLK(cvPreviousFrame, cvFrame, points[0], points[1], status, err, winSize,
+			   3, termcrit, 0, 0.001);
+    }
+
+  std::swap(points[1], points[0]);
+  cv::swap(cvPreviousFrame, cvFrame);
+
+  needToInit = false;
+}
+
+void Tracker::drawOpticalFlow() {
+  glColor3f(0, 255, 0);
+  glPointSize(3);
+  glBegin(GL_POINTS);
+  Point2f point;
+
+  for(size_t i = 0; i < points[1].size(); i++ )
+    {
+      if( !status[i] )
+	continue;
+     point = points[1][i];
+     glVertex2f(point.x / depthFrame.getWidth(), point.y / depthFrame.getHeight());
+    }
+
+  glEnd();
+}
+
 void Tracker::updateTextureMap() {
   memset(m_pTexMap, 0, m_nTexMapX*m_nTexMapY*sizeof(openni::RGB888Pixel));
 
-  // check if we need to draw depth frame to texture
-  if (depthFrame.isValid())
+  const openni::DepthPixel* pDepthRow = (const openni::DepthPixel*)depthFrame.getData();
+  openni::RGB888Pixel* pTexRow = m_pTexMap + depthFrame.getCropOriginY() * m_nTexMapX;
+  int rowSize = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
+
+  log("rowSize=%d height=%d width=%d\n", rowSize, depthFrame.getHeight(), depthFrame.getWidth());
+  for (int y = 0; y < depthFrame.getHeight(); ++y)
     {
-      const openni::DepthPixel* pDepthRow = (const openni::DepthPixel*)depthFrame.getData();
-      openni::RGB888Pixel* pTexRow = m_pTexMap + depthFrame.getCropOriginY() * m_nTexMapX;
-      int rowSize = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
+      const openni::DepthPixel* pDepth = pDepthRow;
+      openni::RGB888Pixel* pTex = pTexRow + depthFrame.getCropOriginX();
 
-      log("rowSize=%d height=%d width=%d\n", rowSize, depthFrame.getHeight(), depthFrame.getWidth());
-      for (int y = 0; y < depthFrame.getHeight(); ++y)
+      for (int x = 0; x < depthFrame.getWidth(); ++x, ++pDepth, ++pTex)
 	{
-	  const openni::DepthPixel* pDepth = pDepthRow;
-	  openni::RGB888Pixel* pTex = pTexRow + depthFrame.getCropOriginX();
-
-	  for (int x = 0; x < depthFrame.getWidth(); ++x, ++pDepth, ++pTex)
+	  if (*pDepth != 0)
 	    {
-	      if (*pDepth != 0)
-		{
-		  int depth_255 = (int) (255 * (1 - float(*pDepth) / MAX_DEPTH));
-		  pTex->r = depth_255;
-		  pTex->g = depth_255;
-		  pTex->b = depth_255;
-		}
+	      int depth_255 = (int) (255 * (1 - float(*pDepth) / MAX_DEPTH));
+	      pTex->r = depth_255;
+	      pTex->g = depth_255;
+	      pTex->b = depth_255;
 	    }
-
-	  pDepthRow += rowSize;
-	  pTexRow += m_nTexMapX;
 	}
-      log("drew frame to texture\n");
+
+      pDepthRow += rowSize;
+      pTexRow += m_nTexMapX;
     }
+  log("drew frame to texture\n");
 }
 
 void Tracker::drawTextureMap() {
@@ -306,8 +375,11 @@ void Tracker::glutReshape(int width, int height) {
 }
 
 void Tracker::glutDisplay() {
-  log("glutDisplay\n");
   Tracker::self->Display();
+}
+
+void Tracker::glutKeyboard(unsigned char key, int x, int y) {
+  Tracker::self->OnKey(key, x, y);
 }
 
 openni::Status Tracker::InitOpenGL(int argc, char **argv)
@@ -331,9 +403,20 @@ openni::Status Tracker::InitOpenGL(int argc, char **argv)
 
 void Tracker::InitOpenGLHooks()
 {
+  glutKeyboardFunc(glutKeyboard);
   glutDisplayFunc(glutDisplay);
   glutIdleFunc(glutIdle);
   glutReshapeFunc(glutReshape);
+}
+
+void Tracker::OnKey(unsigned char key, int /*x*/, int /*y*/)
+{
+  switch (key)
+    {
+    case 'r':
+      needToInit = true;
+      break;
+    }
 }
 
 int main(int argc, char **argv) {
