@@ -45,6 +45,7 @@ private:
   unsigned int m_nTexMapY;
   uint64_t previousDisplayTime;
   int windowWidth, windowHeight;
+  int depthThreshold;
 
   Mat cvFrame, cvPreviousFrame;
   bool needToInit;

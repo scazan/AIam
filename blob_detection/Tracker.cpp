@@ -62,6 +62,7 @@ Tracker::~Tracker() {
 openni::Status Tracker::init(int argc, char **argv) {
   int fps = 30;
   depthAsPoints = false;
+  depthThreshold = MAX_DEPTH;
 
   openni::Status status = openni::OpenNI::initialize();
   if(status != openni::STATUS_OK) {
@@ -85,6 +86,10 @@ openni::Status Tracker::init(int argc, char **argv) {
 
     else if(strcmp(argv[i], "-fps") == 0) {
       fps = atoi(argv[++i]);
+    }
+
+    else if(strcmp(argv[i], "-threshold") == 0) {
+      depthThreshold = atoi(argv[++i]);
     }
 
     else {
@@ -203,6 +208,7 @@ void Tracker::processOpticalFlow() {
 
   const openni::DepthPixel* pDepthRow = (const openni::DepthPixel*)depthFrame.getData();
   int rowSize = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
+  uchar depth_255;
 
   for (int y = 0; y < depthFrame.getHeight(); ++y)
     {
@@ -210,11 +216,15 @@ void Tracker::processOpticalFlow() {
 
       for (int x = 0; x < depthFrame.getWidth(); ++x, ++pDepth)
 	{
-	  if (*pDepth != 0 && *pDepth < MAX_DEPTH)
+	  if (*pDepth != 0 && *pDepth < depthThreshold)
 	    {
-	      uchar depth_255 = (int) (255 * (1 - float(*pDepth) / MAX_DEPTH));
-	      cvFrame.at<uchar>(y, x) = depth_255; // TODO: optimize?
+	      depth_255 = (int) (255 * (1 - float(*pDepth) / depthThreshold));
 	    }
+	  else {
+	    depth_255 = 0;
+	  }
+
+	  cvFrame.at<uchar>(y, x) = depth_255; // TODO: optimize?
 	}
 
       pDepthRow += rowSize;
@@ -277,9 +287,9 @@ void Tracker::updateTextureMap() {
 
       for (int x = 0; x < depthFrame.getWidth(); ++x, ++pDepth, ++pTex)
 	{
-	  if (*pDepth != 0)
+	  if (*pDepth != 0 && *pDepth < depthThreshold)
 	    {
-	      int depth_255 = (int) (255 * (1 - float(*pDepth) / MAX_DEPTH));
+	      int depth_255 = (int) (255 * (1 - float(*pDepth) / depthThreshold));
 	      pTex->r = depth_255;
 	      pTex->g = depth_255;
 	      pTex->b = depth_255;
