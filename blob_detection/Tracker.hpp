@@ -27,7 +27,7 @@ private:
   void drawTextureMapAsTexture();
   void drawTextureMapAsPoints();
 
-  static Tracker* ms_self;
+  static Tracker* self;
   openni::Device device;
   openni::VideoStream depthStream;
   openni::VideoFrameRef depthFrame;

@@ -26,7 +26,7 @@
 
 bool verbose = false;
 int g_nXRes = 0, g_nYRes = 0;
-Tracker* Tracker::ms_self = NULL;
+Tracker* Tracker::self = NULL;
 
 void log(const char *format, ...) {
   va_list args;
@@ -51,7 +51,7 @@ int _checkGlErrors(int line) {
 }
 
 Tracker::Tracker() {
-  ms_self = this;
+  self = this;
 }
 
 Tracker::~Tracker() {
@@ -302,12 +302,12 @@ void Tracker::glutIdle()
 }
 
 void Tracker::glutReshape(int width, int height) {
-  Tracker::ms_self->ResizedWindow(width, height);
+  Tracker::self->ResizedWindow(width, height);
 }
 
 void Tracker::glutDisplay() {
   log("glutDisplay\n");
-  Tracker::ms_self->Display();
+  Tracker::self->Display();
 }
 
 openni::Status Tracker::InitOpenGL(int argc, char **argv)
