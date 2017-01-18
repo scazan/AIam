@@ -1,0 +1,20 @@
+import os
+
+env = Environment(CCFLAGS = '-Wall -ffast-math -fPIC ',)
+
+DEBUG = int(ARGUMENTS.get('DEBUG', '0'))
+if DEBUG:
+	CCFLAGS = '-ggdb2 -O0 -DDEBUG=1 '
+else:
+	CCFLAGS = '-g0 -O3 '
+env.Append(CCFLAGS = CCFLAGS)
+
+env.Append(CPPPATH = os.environ['OPENNI2_INCLUDE'])
+env.Append(LIBS = ['OpenNI2', 'GL', 'GLU', 'glut'])
+env.Append(LIBPATH = os.environ['OPENNI2_REDIST'])
+
+env.Program(
+    target='Tracker',
+    source=['main.cpp',
+            'Tracker.cpp',
+            'Viewer.cpp'])
