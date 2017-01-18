@@ -1,39 +1,42 @@
 #ifndef _TRACKER_HPP_
 #define _TRACKER_HPP_
 
-#include "Viewer.hpp"
-#include <map>
+#include "OpenNI.h"
 
-class Tracker;
-
-class TrackerViewer : public Viewer {
-public:
-  TrackerViewer(Tracker *);
-  void processFrame();
-  openni::VideoFrameRef getDepthFrame();
-
-private:
-  Tracker *tracker;
-};
+#define MAX_DEPTH 10000
 
 class Tracker {
 public:
   Tracker();
-  virtual ~Tracker();
+  ~Tracker();
 
-  virtual openni::Status init(int argc, char **argv);
-  virtual openni::Status mainLoop();
-
-  openni::VideoFrameRef getDepthFrame();
-  void processFrame();
+  openni::Status init(int argc, char **argv);
+  void mainLoop();
 
 private:
+  openni::VideoFrameRef getDepthFrame();
+  void Display();
+  void ResizedWindow(int width, int height);
+  openni::Status InitOpenGL(int argc, char **argv);
+  void InitOpenGLHooks();
+  static void glutIdle();
+  static void glutReshape(int width, int height);
+  static void glutDisplay();
+  void updateTextureMap();
+  void drawTextureMap();
+  void drawTextureMapAsTexture();
+  void drawTextureMapAsPoints();
+
+  static Tracker* ms_self;
   openni::Device device;
   openni::VideoStream depthStream;
   openni::VideoFrameRef depthFrame;
-  bool viewerEnabled;
-  TrackerViewer *viewer;
   bool depthAsPoints;
+  openni::RGB888Pixel* m_pTexMap;
+  unsigned int m_nTexMapX;
+  unsigned int m_nTexMapY;
+  uint64_t previousDisplayTime;
+  int windowWidth, windowHeight;
 };
 
 
