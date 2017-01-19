@@ -6,11 +6,12 @@
 #include <GL/glut.h>
 #endif
 
-LucasKanadeOpticalFlow::LucasKanadeOpticalFlow(int depthThreshold) : ProcessingMethod(depthThreshold) {
+LucasKanadeOpticalFlow::LucasKanadeOpticalFlow(int width, int height, int depthThreshold) :
+  ProcessingMethod(width, height, depthThreshold) {
   needToInit = false;
 }
 
-void LucasKanadeOpticalFlow::OnKey(unsigned char key) {
+void LucasKanadeOpticalFlow::onKey(unsigned char key) {
   switch (key)
     {
     case 'r':

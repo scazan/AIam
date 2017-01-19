@@ -9,13 +9,12 @@ using namespace cv;
 
 class LucasKanadeOpticalFlow : public ProcessingMethod {
 public:
-  LucasKanadeOpticalFlow(int depthThreshold);
+  LucasKanadeOpticalFlow(int width, int height, int depthThreshold);
   void processDepthFrame(openni::VideoFrameRef);
   void render();
-  void OnKey(unsigned char key);
+  void onKey(unsigned char key);
 
 private:
-  int width, height;
   Mat cvFrame, cvPreviousFrame;
   bool needToInit;
   vector<Point2f> points[2];

@@ -126,9 +126,13 @@ openni::Status Tracker::init(int argc, char **argv) {
     printf("Couldn't find depth stream:\n%s\n", openni::OpenNI::getExtendedError());
   }
 
+  width = depthStream.getVideoMode().getResolutionX();
+  height = depthStream.getVideoMode().getResolutionY();
   m_pTexMap = NULL;
   InitOpenGL(argc, argv);
-  processingMethod = new LucasKanadeOpticalFlow(depthThreshold);
+  processingMethod = new LucasKanadeOpticalFlow(width,
+						height,
+						depthThreshold);
 
   return openni::STATUS_OK;
 }
@@ -209,13 +213,13 @@ void Tracker::updateTextureMap() {
   openni::RGB888Pixel* pTexRow = m_pTexMap + depthFrame.getCropOriginY() * m_nTexMapX;
   int rowSize = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
 
-  log("rowSize=%d height=%d width=%d\n", rowSize, depthFrame.getHeight(), depthFrame.getWidth());
-  for (int y = 0; y < depthFrame.getHeight(); ++y)
+  log("rowSize=%d height=%d width=%d\n", rowSize, height, width);
+  for (int y = 0; y < height; ++y)
     {
       const openni::DepthPixel* pDepth = pDepthRow;
       openni::RGB888Pixel* pTex = pTexRow + depthFrame.getCropOriginX();
 
-      for (int x = 0; x < depthFrame.getWidth(); ++x, ++pDepth, ++pTex)
+      for (int x = 0; x < width; ++x, ++pDepth, ++pTex)
 	{
 	  if (*pDepth != 0 && *pDepth < depthThreshold)
 	    {
@@ -319,7 +323,7 @@ void Tracker::glutDisplay() {
 }
 
 void Tracker::glutKeyboard(unsigned char key, int x, int y) {
-  Tracker::self->OnKey(key);
+  Tracker::self->onKey(key);
 }
 
 openni::Status Tracker::InitOpenGL(int argc, char **argv)
@@ -349,8 +353,8 @@ void Tracker::InitOpenGLHooks()
   glutReshapeFunc(glutReshape);
 }
 
-void Tracker::OnKey(unsigned char key) {
-  processingMethod->OnKey(key);
+void Tracker::onKey(unsigned char key) {
+  processingMethod->onKey(key);
 }
 
 int main(int argc, char **argv) {

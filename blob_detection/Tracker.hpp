@@ -7,14 +7,17 @@
 
 class ProcessingMethod {
 public:
-  ProcessingMethod(int depthThreshold) {
+  ProcessingMethod(int width, int height, int depthThreshold) {
+    this->width = width;
+    this->height = height;
     this->depthThreshold = depthThreshold;
   }
   virtual void processDepthFrame(openni::VideoFrameRef)=0;
   virtual void render()=0;
-  virtual void OnKey(unsigned char key)=0;
+  virtual void onKey(unsigned char key)=0;
 
 protected:
+  int width, height;
   int depthThreshold;
 };
 
@@ -30,7 +33,7 @@ private:
   openni::VideoFrameRef getDepthFrame();
   void Display();
   void ResizedWindow(int width, int height);
-  void OnKey(unsigned char key);
+  void onKey(unsigned char key);
   openni::Status InitOpenGL(int argc, char **argv);
   void InitOpenGLHooks();
   static void glutIdle();
@@ -46,6 +49,7 @@ private:
   openni::Device device;
   openni::VideoStream depthStream;
   openni::VideoFrameRef depthFrame;
+  int width, height;
   bool depthAsPoints;
   openni::RGB888Pixel* m_pTexMap;
   unsigned int m_nTexMapX;
