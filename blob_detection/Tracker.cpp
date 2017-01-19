@@ -131,6 +131,7 @@ openni::Status Tracker::init(int argc, char **argv) {
   height = depthStream.getVideoMode().getResolutionY();
   m_pTexMap = NULL;
   InitOpenGL(argc, argv);
+  processingEnabled = true;
   processingMethod = new DenseOpticalFlow(width,
 					  height,
 					  depthThreshold);
@@ -174,7 +175,8 @@ void Tracker::Display()
   if(!depthFrame.isValid())
     return;
 
-  processingMethod->processDepthFrame(depthFrame);
+  if(processingEnabled)
+    processingMethod->processDepthFrame(depthFrame);
 
   if (m_pTexMap == NULL)
     {
@@ -198,7 +200,8 @@ void Tracker::Display()
   g_nYRes = depthFrame.getVideoMode().getResolutionY();
   drawTextureMap();
 
-  processingMethod->render();
+  if(processingEnabled)
+    processingMethod->render();
 
   glPopMatrix();
   glutSwapBuffers();
@@ -355,7 +358,15 @@ void Tracker::InitOpenGLHooks()
 }
 
 void Tracker::onKey(unsigned char key) {
-  processingMethod->onKey(key);
+  const static unsigned char TAB = 9;
+  switch(key) {
+  case TAB:
+    processingEnabled = !processingEnabled;
+    break;
+  }
+
+  if(processingEnabled)
+    processingMethod->onKey(key);
 }
 
 int main(int argc, char **argv) {

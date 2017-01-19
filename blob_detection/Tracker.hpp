@@ -57,6 +57,7 @@ private:
   uint64_t previousDisplayTime;
   int windowWidth, windowHeight;
   int depthThreshold;
+  bool processingEnabled;
   ProcessingMethod *processingMethod;
 };
 
