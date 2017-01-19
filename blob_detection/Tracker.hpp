@@ -52,9 +52,9 @@ private:
   openni::VideoFrameRef depthFrame;
   int width, height;
   bool depthAsPoints;
-  openni::RGB888Pixel* m_pTexMap;
-  unsigned int m_nTexMapX;
-  unsigned int m_nTexMapY;
+  openni::RGB888Pixel* textureMap;
+  unsigned int textureMapWidth;
+  unsigned int textureMapHeight;
   uint64_t previousDisplayTime;
   int windowWidth, windowHeight;
   int depthThreshold;

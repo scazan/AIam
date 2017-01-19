@@ -27,7 +27,6 @@
 #define MIN_CHUNKS_SIZE(data_size, chunk_size)	(MIN_NUM_CHUNKS(data_size, chunk_size) * (chunk_size))
 
 bool verbose = false;
-int g_nXRes = 0, g_nYRes = 0;
 Tracker* Tracker::self = NULL;
 
 void log(const char *format, ...) {
@@ -57,7 +56,7 @@ Tracker::Tracker() {
 }
 
 Tracker::~Tracker() {
-  delete[] m_pTexMap;
+  delete[] textureMap;
   openni::OpenNI::shutdown();
 }
 
@@ -129,7 +128,7 @@ openni::Status Tracker::init(int argc, char **argv) {
 
   width = depthStream.getVideoMode().getResolutionX();
   height = depthStream.getVideoMode().getResolutionY();
-  m_pTexMap = NULL;
+  textureMap = NULL;
   InitOpenGL(argc, argv);
   histogramEnabled = false;
   processingEnabled = true;
@@ -179,13 +178,11 @@ void Tracker::Display()
   if(processingEnabled)
     processingMethod->processDepthFrame(depthFrame);
 
-  if (m_pTexMap == NULL)
-    {
-      // Texture map init
-      m_nTexMapX = MIN_CHUNKS_SIZE(depthFrame.getVideoMode().getResolutionX(), TEXTURE_SIZE);
-      m_nTexMapY = MIN_CHUNKS_SIZE(depthFrame.getVideoMode().getResolutionY(), TEXTURE_SIZE);
-      m_pTexMap = new openni::RGB888Pixel[m_nTexMapX * m_nTexMapY];
-    }
+  if(textureMap == NULL) {
+    textureMapWidth = MIN_CHUNKS_SIZE(width, TEXTURE_SIZE);
+    textureMapHeight = MIN_CHUNKS_SIZE(height, TEXTURE_SIZE);
+    textureMap = new openni::RGB888Pixel[textureMapWidth * textureMapHeight];
+  }
 
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -199,8 +196,6 @@ void Tracker::Display()
   if(histogramEnabled)
     calculateHistogram();
   updateTextureMap();
-  g_nXRes = depthFrame.getVideoMode().getResolutionX();
-  g_nYRes = depthFrame.getVideoMode().getResolutionY();
   drawTextureMap();
 
   if(processingEnabled)
@@ -245,10 +240,10 @@ void Tracker::calculateHistogram() {
 }
 
 void Tracker::updateTextureMap() {
-  memset(m_pTexMap, 0, m_nTexMapX*m_nTexMapY*sizeof(openni::RGB888Pixel));
+  memset(textureMap, 0, textureMapWidth*textureMapHeight*sizeof(openni::RGB888Pixel));
 
   const openni::DepthPixel* pDepthRow = (const openni::DepthPixel*)depthFrame.getData();
-  openni::RGB888Pixel* pTexRow = m_pTexMap + depthFrame.getCropOriginY() * m_nTexMapX;
+  openni::RGB888Pixel* textureMapRow = textureMap + depthFrame.getCropOriginY() * textureMapWidth;
   int rowSize = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
   unsigned char depth_uchar;
 
@@ -256,7 +251,7 @@ void Tracker::updateTextureMap() {
   for (int y = 0; y < height; ++y)
     {
       const openni::DepthPixel* pDepth = pDepthRow;
-      openni::RGB888Pixel* pTex = pTexRow + depthFrame.getCropOriginX();
+      openni::RGB888Pixel* pTex = textureMapRow + depthFrame.getCropOriginX();
 
       for (int x = 0; x < width; ++x, ++pDepth, ++pTex)
 	{
@@ -273,7 +268,7 @@ void Tracker::updateTextureMap() {
 	}
 
       pDepthRow += rowSize;
-      pTexRow += m_nTexMapX;
+      textureMapRow += textureMapWidth;
     }
   log("drew frame to texture\n");
 }
@@ -293,7 +288,7 @@ void Tracker::drawTextureMapAsTexture() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   checkGlErrors();
   log("glTexImage2D\n");
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_nTexMapX, m_nTexMapY, 0, GL_RGB, GL_UNSIGNED_BYTE, m_pTexMap);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureMapWidth, textureMapHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, textureMap);
   checkGlErrors();
   log("glTexImage2D ok\n");
 
@@ -308,13 +303,13 @@ void Tracker::drawTextureMapAsTexture() {
   glTexCoord2f(0, 0);
   glVertex2f(0, 0);
   // upper right
-  glTexCoord2f((float)g_nXRes/(float)m_nTexMapX, 0);
+  glTexCoord2f((float)width/(float)textureMapWidth, 0);
   glVertex2f(1, 0);
   // bottom right
-  glTexCoord2f((float)g_nXRes/(float)m_nTexMapX, (float)g_nYRes/(float)m_nTexMapY);
+  glTexCoord2f((float)width/(float)textureMapWidth, (float)height/(float)textureMapHeight);
   glVertex2f(1, 1);
   // bottom left
-  glTexCoord2f(0, (float)g_nYRes/(float)m_nTexMapY);
+  glTexCoord2f(0, (float)height/(float)textureMapHeight);
   glVertex2f(0, 1);
 
   glEnd();
@@ -323,27 +318,27 @@ void Tracker::drawTextureMapAsTexture() {
 }
 
 void Tracker::drawTextureMapAsPoints() {
-  float ratioX = (float)g_nXRes/(float)m_nTexMapX;
-  float ratioY = (float)g_nYRes/(float)m_nTexMapY;
+  float ratioX = (float)width/(float)textureMapWidth;
+  float ratioY = (float)height/(float)textureMapHeight;
 
   glPointSize(1.0);
   glBegin(GL_POINTS);
 
-  openni::RGB888Pixel* pTexRow = m_pTexMap;
+  openni::RGB888Pixel* textureMapRow = textureMap;
   float vx, vy;
-  for(unsigned int y = 0; y < m_nTexMapY; y++) {
-    openni::RGB888Pixel* pTex = pTexRow;
-    vy = (float) y / m_nTexMapY / ratioY;
-    for(unsigned int x = 0; x < m_nTexMapX; x++) {
+  for(unsigned int y = 0; y < textureMapHeight; y++) {
+    openni::RGB888Pixel* pTex = textureMapRow;
+    vy = (float) y / textureMapHeight / ratioY;
+    for(unsigned int x = 0; x < textureMapWidth; x++) {
       glColor4f((float)pTex->r / 255,
       		(float)pTex->g / 255,
       		(float)pTex->b / 255,
       		1);
-      vx = (float) x / m_nTexMapX / ratioX;
+      vx = (float) x / textureMapWidth / ratioX;
       glVertex2f(vx, vy);
       pTex++;
     }
-    pTexRow += m_nTexMapX;
+    textureMapRow += textureMapWidth;
   }
 
   glEnd();
