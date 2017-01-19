@@ -131,6 +131,7 @@ openni::Status Tracker::init(int argc, char **argv) {
   height = depthStream.getVideoMode().getResolutionY();
   m_pTexMap = NULL;
   InitOpenGL(argc, argv);
+  histogramEnabled = false;
   processingEnabled = true;
   processingMethod = new DenseOpticalFlow(width,
 					  height,
@@ -195,6 +196,8 @@ void Tracker::Display()
   glPushMatrix();
   checkGlErrors();
 
+  if(histogramEnabled)
+    calculateHistogram();
   updateTextureMap();
   g_nXRes = depthFrame.getVideoMode().getResolutionX();
   g_nYRes = depthFrame.getVideoMode().getResolutionY();
@@ -210,12 +213,44 @@ void Tracker::Display()
   log("Display done\n");
 }
 
+void Tracker::calculateHistogram() {
+  const openni::DepthPixel* pDepth = (const openni::DepthPixel*)depthFrame.getData();
+  memset(histogram, 0, MAX_DEPTH * sizeof(float));
+  int restOfRow = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel) - width;
+
+  unsigned int nNumberOfPoints = 0;
+  for (int y = 0; y < height; ++y)
+    {
+      for (int x = 0; x < width; ++x, ++pDepth)
+	{
+	  if (*pDepth != 0 && *pDepth < depthThreshold)
+	    {
+	      histogram[*pDepth]++;
+	      nNumberOfPoints++;
+	    }
+	}
+      pDepth += restOfRow;
+    }
+  for (int nIndex=1; nIndex<MAX_DEPTH; nIndex++)
+    {
+      histogram[nIndex] += histogram[nIndex-1];
+    }
+  if (nNumberOfPoints)
+    {
+      for (int nIndex=1; nIndex<MAX_DEPTH; nIndex++)
+	{
+	  histogram[nIndex] = (256 * (1.0f - (histogram[nIndex] / nNumberOfPoints)));
+	}
+    }
+}
+
 void Tracker::updateTextureMap() {
   memset(m_pTexMap, 0, m_nTexMapX*m_nTexMapY*sizeof(openni::RGB888Pixel));
 
   const openni::DepthPixel* pDepthRow = (const openni::DepthPixel*)depthFrame.getData();
   openni::RGB888Pixel* pTexRow = m_pTexMap + depthFrame.getCropOriginY() * m_nTexMapX;
   int rowSize = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
+  unsigned char depth_uchar;
 
   log("rowSize=%d height=%d width=%d\n", rowSize, height, width);
   for (int y = 0; y < height; ++y)
@@ -227,10 +262,13 @@ void Tracker::updateTextureMap() {
 	{
 	  if (*pDepth != 0 && *pDepth < depthThreshold)
 	    {
-	      int depth_255 = (int) (255 * (1 - float(*pDepth) / depthThreshold));
-	      pTex->r = depth_255;
-	      pTex->g = depth_255;
-	      pTex->b = depth_255;
+	      if(histogramEnabled)
+		depth_uchar = (unsigned char) histogram[*pDepth];
+	      else
+		depth_uchar = (unsigned char) (255 * (1 - float(*pDepth) / depthThreshold));
+	      pTex->r = depth_uchar;
+	      pTex->g = depth_uchar;
+	      pTex->b = depth_uchar;
 	    }
 	}
 
@@ -359,9 +397,14 @@ void Tracker::InitOpenGLHooks()
 
 void Tracker::onKey(unsigned char key) {
   const static unsigned char TAB = 9;
+
   switch(key) {
   case TAB:
     processingEnabled = !processingEnabled;
+    break;
+
+  case 'h':
+    histogramEnabled = !histogramEnabled;
     break;
   }
 

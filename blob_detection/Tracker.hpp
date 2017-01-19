@@ -40,6 +40,7 @@ private:
   static void glutReshape(int width, int height);
   static void glutDisplay();
   static void glutKeyboard(unsigned char key, int x, int y);
+  void calculateHistogram();
   void updateTextureMap();
   void drawTextureMap();
   void drawTextureMapAsTexture();
@@ -57,6 +58,8 @@ private:
   uint64_t previousDisplayTime;
   int windowWidth, windowHeight;
   int depthThreshold;
+  float	histogram[MAX_DEPTH];
+  float histogramEnabled;
   bool processingEnabled;
   ProcessingMethod *processingMethod;
 };
