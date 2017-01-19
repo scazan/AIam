@@ -6,13 +6,14 @@
 #endif
 
 #include "Tracker.hpp"
+#include "LucasKanade.hpp"
 #include <sys/time.h>
 #include <stdarg.h>
 
 #if (ONI_PLATFORM == ONI_PLATFORM_MACOSX)
-        #include <GLUT/glut.h>
+#include <GLUT/glut.h>
 #else
-        #include <GL/glut.h>
+#include <GL/glut.h>
 #endif
 
 #define GL_WIN_SIZE_X	640
@@ -127,13 +128,13 @@ openni::Status Tracker::init(int argc, char **argv) {
 
   m_pTexMap = NULL;
   InitOpenGL(argc, argv);
+  processingMethod = new LucasKanadeOpticalFlow(depthThreshold);
 
   return openni::STATUS_OK;
 }
 
 void Tracker::mainLoop() {
   previousDisplayTime = 0;
-  needToInit = false;
   glutMainLoop();
 }
 
@@ -168,7 +169,7 @@ void Tracker::Display()
   if(!depthFrame.isValid())
     return;
 
-  processOpticalFlow();
+  processingMethod->processDepthFrame(depthFrame);
 
   if (m_pTexMap == NULL)
     {
@@ -192,84 +193,13 @@ void Tracker::Display()
   g_nYRes = depthFrame.getVideoMode().getResolutionY();
   drawTextureMap();
 
-  drawOpticalFlow();
+  processingMethod->render();
 
   glPopMatrix();
   glutSwapBuffers();
 
   checkGlErrors();
   log("Display done\n");
-}
-
-void Tracker::processOpticalFlow() {
-  if(cvFrame.empty()) {
-    cvFrame.create(depthFrame.getHeight(), depthFrame.getWidth(), CV_8UC1);
-  }
-
-  const openni::DepthPixel* pDepthRow = (const openni::DepthPixel*)depthFrame.getData();
-  int rowSize = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
-  uchar depth_255;
-
-  for (int y = 0; y < depthFrame.getHeight(); ++y)
-    {
-      const openni::DepthPixel* pDepth = pDepthRow;
-
-      for (int x = 0; x < depthFrame.getWidth(); ++x, ++pDepth)
-	{
-	  if (*pDepth != 0 && *pDepth < depthThreshold)
-	    {
-	      depth_255 = (int) (255 * (1 - float(*pDepth) / depthThreshold));
-	    }
-	  else {
-	    depth_255 = 0;
-	  }
-
-	  cvFrame.at<uchar>(y, x) = depth_255; // TODO: optimize?
-	}
-
-      pDepthRow += rowSize;
-    }
-
-  const int MAX_COUNT = 500;
-  TermCriteria termcrit(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 20, 0.03); // only once?
-  Size subPixWinSize(10,10), winSize(31,31); // only once?
-
-  if( needToInit )
-    {
-      // automatic initialization
-      goodFeaturesToTrack(cvFrame, points[1], MAX_COUNT, 0.01, 10, Mat(), 3, 0, 0.04);
-      cornerSubPix(cvFrame, points[1], subPixWinSize, Size(-1,-1), termcrit);
-    }
-  else if( !points[0].empty() )
-    {
-      vector<float> err;
-      if(cvPreviousFrame.empty())
-	cvFrame.copyTo(cvPreviousFrame);
-      calcOpticalFlowPyrLK(cvPreviousFrame, cvFrame, points[0], points[1], status, err, winSize,
-			   3, termcrit, 0, 0.001);
-    }
-
-  std::swap(points[1], points[0]);
-  cv::swap(cvPreviousFrame, cvFrame);
-
-  needToInit = false;
-}
-
-void Tracker::drawOpticalFlow() {
-  glColor3f(0, 255, 0);
-  glPointSize(3);
-  glBegin(GL_POINTS);
-  Point2f point;
-
-  for(size_t i = 0; i < points[1].size(); i++ )
-    {
-      if( !status[i] )
-	continue;
-     point = points[1][i];
-     glVertex2f(point.x / depthFrame.getWidth(), point.y / depthFrame.getHeight());
-    }
-
-  glEnd();
 }
 
 void Tracker::updateTextureMap() {
@@ -389,7 +319,7 @@ void Tracker::glutDisplay() {
 }
 
 void Tracker::glutKeyboard(unsigned char key, int x, int y) {
-  Tracker::self->OnKey(key, x, y);
+  Tracker::self->OnKey(key);
 }
 
 openni::Status Tracker::InitOpenGL(int argc, char **argv)
@@ -419,14 +349,8 @@ void Tracker::InitOpenGLHooks()
   glutReshapeFunc(glutReshape);
 }
 
-void Tracker::OnKey(unsigned char key, int /*x*/, int /*y*/)
-{
-  switch (key)
-    {
-    case 'r':
-      needToInit = true;
-      break;
-    }
+void Tracker::OnKey(unsigned char key) {
+  processingMethod->OnKey(key);
 }
 
 int main(int argc, char **argv) {
