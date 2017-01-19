@@ -15,7 +15,7 @@ public:
   void onKey(unsigned char key);
 
 private:
-  Mat cvFrame, cvPreviousFrame;
+  Mat frame, previousFrame;
   bool needToInit;
   vector<Point2f> points[2];
   vector<uchar> status;

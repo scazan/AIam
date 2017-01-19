@@ -7,6 +7,7 @@
 
 #include "Tracker.hpp"
 #include "LucasKanade.hpp"
+#include "DenseOpticalFlow.hpp"
 #include <sys/time.h>
 #include <stdarg.h>
 
@@ -130,9 +131,9 @@ openni::Status Tracker::init(int argc, char **argv) {
   height = depthStream.getVideoMode().getResolutionY();
   m_pTexMap = NULL;
   InitOpenGL(argc, argv);
-  processingMethod = new LucasKanadeOpticalFlow(width,
-						height,
-						depthThreshold);
+  processingMethod = new DenseOpticalFlow(width,
+					  height,
+					  depthThreshold);
 
   return openni::STATUS_OK;
 }

@@ -17,4 +17,5 @@ env.Append(LIBPATH = os.environ['OPENNI2_REDIST'])
 env.Program(
     target='Tracker',
     source=['Tracker.cpp',
-	    'LucasKanade.cpp'])
+	    'LucasKanade.cpp',
+	    'DenseOpticalFlow.cpp'])
