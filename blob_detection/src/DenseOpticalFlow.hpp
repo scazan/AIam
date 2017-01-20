@@ -9,7 +9,7 @@ using namespace cv;
 class DenseOpticalFlow : public ProcessingMethod {
 public:
   DenseOpticalFlow(int width, int height, int depthThreshold);
-  void processDepthFrame(openni::VideoFrameRef);
+  void processDepthFrame(Mat&);
   void render();
   void onKey(unsigned char key);
 

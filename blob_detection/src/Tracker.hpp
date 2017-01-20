@@ -2,8 +2,11 @@
 #define _TRACKER_HPP_
 
 #include "OpenNI.h"
+#include <opencv2/imgproc/imgproc.hpp>
 
 #define MAX_DEPTH 10000
+
+using namespace cv;
 
 class ProcessingMethod {
 public:
@@ -13,7 +16,7 @@ public:
     this->depthThreshold = depthThreshold;
   }
   virtual ~ProcessingMethod() {}
-  virtual void processDepthFrame(openni::VideoFrameRef)=0;
+  virtual void processDepthFrame(Mat&)=0;
   virtual void render()=0;
   virtual void onKey(unsigned char key)=0;
 
@@ -31,7 +34,7 @@ public:
   void mainLoop();
 
 private:
-  openni::VideoFrameRef getDepthFrame();
+  void processOniDepthFrame();
   void display();
   void onWindowResized(int width, int height);
   void onKey(unsigned char key);
@@ -50,7 +53,8 @@ private:
   static Tracker* self;
   openni::Device device;
   openni::VideoStream depthStream;
-  openni::VideoFrameRef depthFrame;
+  openni::VideoFrameRef oniDepthFrame;
+  Mat depthFrame;
   int width, height;
   bool depthAsPoints;
   openni::RGB888Pixel* textureMap;

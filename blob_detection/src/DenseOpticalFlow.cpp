@@ -25,28 +25,8 @@ void DenseOpticalFlow::onKey(unsigned char key) {
   }
 }
 
-void DenseOpticalFlow::processDepthFrame(openni::VideoFrameRef depthFrame) {
-  if (frame.empty())
-    frame.create(height, width, CV_8UC1);
-
-  const openni::DepthPixel* pOniRow =
-      (const openni::DepthPixel*) depthFrame.getData();
-  int rowSize = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
-  uchar depth;
-  uchar *pCv;
-
-  for (int y = 0; y < height; ++y) {
-    const openni::DepthPixel* pOni = pOniRow;
-    pCv = frame.ptr(y);
-    for (int x = 0; x < width; ++x, ++pOni) {
-      if (*pOni != 0 && *pOni < depthThreshold)
-        depth = (int) (255 * (1 - float(*pOni) / depthThreshold));
-      else
-        depth = 0;
-      *pCv++ = depth;
-    }
-    pOniRow += rowSize;
-  }
+void DenseOpticalFlow::processDepthFrame(Mat& newFrame) {
+  newFrame.copyTo(frame);
 
   if (!previousFrame.empty()) {
     calcOpticalFlowFarneback(previousFrame, frame, flow, 0.5, 3, 15, 3, 5, 1.2,

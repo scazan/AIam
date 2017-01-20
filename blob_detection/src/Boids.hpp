@@ -15,24 +15,19 @@ public:
 		}
 	}
 
-	void processDepthFrame(openni::VideoFrameRef depthFrame) {
-	  const openni::DepthPixel* pOniRow;
-	  int rowSize = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
-	  openni::DepthPixel minDepth = MAX_DEPTH;
-	  openni::DepthPixel maxDepth = 0;
-	  openni::DepthPixel depth;
+	void processDepthFrame(Mat& frame) {
+	  uchar minDepth = 255;
+	  uchar maxDepth = 0;
+    uchar *matPtr;
+	  uchar depth;
 
-    pOniRow = (const openni::DepthPixel*) depthFrame.getData();
 	  for (int y = 0; y < height; ++y) {
-	    const openni::DepthPixel* pOni = pOniRow;
-	    for (int x = 0; x < width; ++x, ++pOni) {
-	      if (*pOni != 0) {
-	        depth = *pOni;
-	        minDepth = MIN(minDepth, depth);
-	        maxDepth = MAX(maxDepth, depth);
-	      }
+	    matPtr = frame.ptr(y);
+	    for (int x = 0; x < width; ++x, ++matPtr) {
+	      depth = *matPtr;
+        minDepth = MIN(minDepth, depth);
+        maxDepth = MAX(maxDepth, depth);
 	    }
-	    pOniRow += rowSize;
 	  }
 
 	  float relativeDepth;
@@ -42,22 +37,18 @@ public:
 		  boid->fx = 0;
 		  boid->fy = 0;
 
-      pOniRow = (const openni::DepthPixel*) depthFrame.getData();
 	    for (int py = 0; py < height; ++py) {
 	      y = (float)py / height;
-	      const openni::DepthPixel* pOni = pOniRow;
-	      for (int px = 0; px < width; ++px, ++pOni) {
+	      matPtr = frame.ptr(py);
+	      for (int px = 0; px < width; ++px, ++matPtr) {
 	        x = (float)px / width;
-	        if (*pOni != 0) {
-	          depth = *pOni;
-	          relativeDepth = ((float)depth - minDepth) / (maxDepth - minDepth);
-	          if(relativeDepth < 0.0001)
-	            relativeDepth = 0.0001;
-	          boid->fx += (x - boid->x) / relativeDepth;
-            boid->fy += (y - boid->y) / relativeDepth;
-	        }
+          depth = *matPtr;
+          relativeDepth = ((float) depth - minDepth) / (maxDepth - minDepth);
+          if (relativeDepth < 0.0001)
+            relativeDepth = 0.0001;
+          boid->fx += (x - boid->x) / relativeDepth;
+          boid->fy += (y - boid->y) / relativeDepth;
 	      }
-	      pOniRow += rowSize;
 	    }
 
 	    norm = sqrt(boid->fx*boid->fx + boid->fy*boid->fy);

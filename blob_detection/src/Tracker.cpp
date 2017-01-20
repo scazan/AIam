@@ -143,12 +143,28 @@ void Tracker::mainLoop() {
 	glutMainLoop();
 }
 
-openni::VideoFrameRef Tracker::getDepthFrame() {
-	openni::Status status = depthStream.readFrame(&depthFrame);
-	if (status != openni::STATUS_OK) {
-		printf("Couldn't read depth frame:\n%s\n", openni::OpenNI::getExtendedError());
-	}
-	return depthFrame;
+void Tracker::processOniDepthFrame() {
+  if (depthFrame.empty())
+    depthFrame.create(height, width, CV_8UC1);
+
+  const openni::DepthPixel* pOniRow =
+      (const openni::DepthPixel*) oniDepthFrame.getData();
+  int rowSize = oniDepthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
+  uchar depth;
+  uchar *matPtr;
+
+  for (int y = 0; y < height; ++y) {
+    const openni::DepthPixel* pOni = pOniRow;
+    matPtr = depthFrame.ptr(y);
+    for (int x = 0; x < width; ++x, ++pOni) {
+      if (*pOni != 0 && *pOni < depthThreshold)
+        depth = (int) (255 * (1 - float(*pOni) / depthThreshold));
+      else
+        depth = 0;
+      *matPtr++ = depth;
+    }
+    pOniRow += rowSize;
+  }
 }
 
 void Tracker::onWindowResized(int width, int height)
@@ -170,9 +186,15 @@ void Tracker::display()
 	}
 	previousDisplayTime = currentDisplayTime;
 
-	depthFrame = getDepthFrame();
-	if(!depthFrame.isValid())
+  openni::Status status = depthStream.readFrame(&oniDepthFrame);
+  if (status != openni::STATUS_OK) {
+    printf("Couldn't read depth frame:\n%s\n", openni::OpenNI::getExtendedError());
+  }
+
+	if(!oniDepthFrame.isValid())
 		return;
+
+	processOniDepthFrame();
 
 	if(processingEnabled)
 		processingMethod->processDepthFrame(depthFrame);
@@ -208,9 +230,9 @@ void Tracker::display()
 }
 
 void Tracker::calculateHistogram() {
-	const openni::DepthPixel* pDepth = (const openni::DepthPixel*)depthFrame.getData();
+	const openni::DepthPixel* pDepth = (const openni::DepthPixel*)oniDepthFrame.getData();
 	memset(histogram, 0, MAX_DEPTH * sizeof(float));
-	int restOfRow = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel) - width;
+	int restOfRow = oniDepthFrame.getStrideInBytes() / sizeof(openni::DepthPixel) - width;
 
 	unsigned int nNumberOfPoints = 0;
 	for (int y = 0; y < height; ++y)
@@ -241,16 +263,16 @@ void Tracker::calculateHistogram() {
 void Tracker::updateTextureMap() {
 	memset(textureMap, 0, textureMapWidth*textureMapHeight*sizeof(openni::RGB888Pixel));
 
-	const openni::DepthPixel* pDepthRow = (const openni::DepthPixel*)depthFrame.getData();
-	openni::RGB888Pixel* textureMapRow = textureMap + depthFrame.getCropOriginY() * textureMapWidth;
-	int rowSize = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
+	const openni::DepthPixel* pDepthRow = (const openni::DepthPixel*)oniDepthFrame.getData();
+	openni::RGB888Pixel* textureMapRow = textureMap + oniDepthFrame.getCropOriginY() * textureMapWidth;
+	int rowSize = oniDepthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
 	unsigned char depth_uchar;
 
 	log("rowSize=%d height=%d width=%d\n", rowSize, height, width);
 	for (int y = 0; y < height; ++y)
 	{
 		const openni::DepthPixel* pDepth = pDepthRow;
-		openni::RGB888Pixel* pTex = textureMapRow + depthFrame.getCropOriginX();
+		openni::RGB888Pixel* pTex = textureMapRow + oniDepthFrame.getCropOriginX();
 
 		for (int x = 0; x < width; ++x, ++pDepth, ++pTex)
 		{
