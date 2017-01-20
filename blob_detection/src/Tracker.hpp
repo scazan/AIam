@@ -31,11 +31,11 @@ public:
 
 private:
   openni::VideoFrameRef getDepthFrame();
-  void Display();
-  void ResizedWindow(int width, int height);
+  void display();
+  void onWindowResized(int width, int height);
   void onKey(unsigned char key);
-  openni::Status InitOpenGL(int argc, char **argv);
-  void InitOpenGLHooks();
+  openni::Status initOpenGL(int argc, char **argv);
+  void initOpenGLHooks();
   static void glutIdle();
   static void glutReshape(int width, int height);
   static void glutDisplay();

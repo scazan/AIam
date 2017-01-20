@@ -129,7 +129,7 @@ openni::Status Tracker::init(int argc, char **argv) {
   width = depthStream.getVideoMode().getResolutionX();
   height = depthStream.getVideoMode().getResolutionY();
   textureMap = NULL;
-  InitOpenGL(argc, argv);
+  initOpenGL(argc, argv);
   histogramEnabled = false;
   processingEnabled = true;
   processingMethod = new DenseOpticalFlow(width,
@@ -152,14 +152,14 @@ openni::VideoFrameRef Tracker::getDepthFrame() {
   return depthFrame;
 }
 
-void Tracker::ResizedWindow(int width, int height)
+void Tracker::onWindowResized(int width, int height)
 {
   windowWidth = width;
   windowHeight = height;
   glViewport(0, 0, windowWidth, windowHeight);
 }
 
-void Tracker::Display()
+void Tracker::display()
 {
   struct timeval tv;
   uint64_t currentDisplayTime, timeDiff;
@@ -352,18 +352,18 @@ void Tracker::glutIdle()
 }
 
 void Tracker::glutReshape(int width, int height) {
-  Tracker::self->ResizedWindow(width, height);
+  Tracker::self->onWindowResized(width, height);
 }
 
 void Tracker::glutDisplay() {
-  Tracker::self->Display();
+  Tracker::self->display();
 }
 
 void Tracker::glutKeyboard(unsigned char key, int x, int y) {
   Tracker::self->onKey(key);
 }
 
-openni::Status Tracker::InitOpenGL(int argc, char **argv)
+openni::Status Tracker::initOpenGL(int argc, char **argv)
 {
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
@@ -371,7 +371,7 @@ openni::Status Tracker::InitOpenGL(int argc, char **argv)
   glutCreateWindow ("Tracker");
   glutSetCursor(GLUT_CURSOR_NONE);
 
-  InitOpenGLHooks();
+  initOpenGLHooks();
 
   glDisable(GL_DEPTH_TEST);
   glEnable(GL_TEXTURE_2D);
@@ -382,7 +382,7 @@ openni::Status Tracker::InitOpenGL(int argc, char **argv)
   return openni::STATUS_OK;
 }
 
-void Tracker::InitOpenGLHooks()
+void Tracker::initOpenGLHooks()
 {
   glutKeyboardFunc(glutKeyboard);
   glutDisplayFunc(glutDisplay);
