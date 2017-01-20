@@ -63,6 +63,7 @@ Tracker::~Tracker() {
 
 openni::Status Tracker::init(int argc, char **argv) {
 	int fps = 30;
+	resolutionX = resolutionY = 0;
 	depthAsPoints = false;
 	depthThreshold = MAX_DEPTH;
 
@@ -93,6 +94,14 @@ openni::Status Tracker::init(int argc, char **argv) {
 		else if(strcmp(argv[i], "-threshold") == 0) {
 			depthThreshold = atoi(argv[++i]);
 		}
+
+    else if(strcmp(argv[i], "-rx") == 0) {
+      resolutionX = atoi(argv[++i]);
+    }
+
+    else if(strcmp(argv[i], "-ry") == 0) {
+      resolutionY = atoi(argv[++i]);
+    }
 
 		else {
 			printf("failed to parse argument: %s\n", argv[i]);
@@ -127,13 +136,18 @@ openni::Status Tracker::init(int argc, char **argv) {
 		printf("Couldn't find depth stream:\n%s\n", openni::OpenNI::getExtendedError());
 	}
 
-	width = depthStream.getVideoMode().getResolutionX();
-	height = depthStream.getVideoMode().getResolutionY();
+	oniWidth = depthStream.getVideoMode().getResolutionX();
+	oniHeight = depthStream.getVideoMode().getResolutionY();
+	if(resolutionX == 0)
+	  resolutionX = oniWidth;
+	if(resolutionY == 0)
+	  resolutionY = oniHeight;
+
 	textureMap = NULL;
 	initOpenGL(argc, argv);
 	histogramEnabled = false;
 	processingEnabled = true;
-	processingMethod = new Boids(width, height, depthThreshold);
+	processingMethod = new Boids(resolutionX, resolutionY, depthThreshold);
 
 	return openni::STATUS_OK;
 }
@@ -145,25 +159,27 @@ void Tracker::mainLoop() {
 
 void Tracker::processOniDepthFrame() {
   if (depthFrame.empty())
-    depthFrame.create(height, width, CV_8UC1);
+    depthFrame.create(resolutionX, resolutionY, CV_8UC1);
 
-  const openni::DepthPixel* pOniRow =
+  const openni::DepthPixel* oniData =
       (const openni::DepthPixel*) oniDepthFrame.getData();
-  int rowSize = oniDepthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
+  int oniRowSize = oniDepthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
   uchar depth;
   uchar *matPtr;
 
-  for (int y = 0; y < height; ++y) {
-    const openni::DepthPixel* pOni = pOniRow;
+  for (int y = 0; y < resolutionY; ++y) {
+    size_t oniY = (size_t) y * oniHeight / resolutionY;
+    const openni::DepthPixel* pOniRow = oniData + oniY * oniRowSize;
     matPtr = depthFrame.ptr(y);
-    for (int x = 0; x < width; ++x, ++pOni) {
+    for (int x = 0; x < resolutionX; ++x) {
+      size_t oniX = (size_t) x * oniWidth / resolutionX;
+      const openni::DepthPixel* pOni = pOniRow + oniX;
       if (*pOni != 0 && *pOni < depthThreshold)
         depth = (int) (255 * (1 - float(*pOni) / depthThreshold));
       else
         depth = 0;
       *matPtr++ = depth;
     }
-    pOniRow += rowSize;
   }
 }
 
@@ -200,8 +216,8 @@ void Tracker::display()
 		processingMethod->processDepthFrame(depthFrame);
 
 	if(textureMap == NULL) {
-		textureMapWidth = MIN_CHUNKS_SIZE(width, TEXTURE_SIZE);
-		textureMapHeight = MIN_CHUNKS_SIZE(height, TEXTURE_SIZE);
+		textureMapWidth = MIN_CHUNKS_SIZE(oniWidth, TEXTURE_SIZE);
+		textureMapHeight = MIN_CHUNKS_SIZE(oniHeight, TEXTURE_SIZE);
 		textureMap = new openni::RGB888Pixel[textureMapWidth * textureMapHeight];
 	}
 
@@ -232,12 +248,12 @@ void Tracker::display()
 void Tracker::calculateHistogram() {
 	const openni::DepthPixel* pDepth = (const openni::DepthPixel*)oniDepthFrame.getData();
 	memset(histogram, 0, MAX_DEPTH * sizeof(float));
-	int restOfRow = oniDepthFrame.getStrideInBytes() / sizeof(openni::DepthPixel) - width;
+	int restOfRow = oniDepthFrame.getStrideInBytes() / sizeof(openni::DepthPixel) - oniWidth;
 
 	unsigned int nNumberOfPoints = 0;
-	for (int y = 0; y < height; ++y)
+	for (int y = 0; y < oniHeight; ++y)
 	{
-		for (int x = 0; x < width; ++x, ++pDepth)
+		for (int x = 0; x < oniWidth; ++x, ++pDepth)
 		{
 			if (*pDepth != 0 && *pDepth < depthThreshold)
 			{
@@ -268,13 +284,13 @@ void Tracker::updateTextureMap() {
 	int rowSize = oniDepthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
 	unsigned char depth_uchar;
 
-	log("rowSize=%d height=%d width=%d\n", rowSize, height, width);
-	for (int y = 0; y < height; ++y)
+	log("rowSize=%d height=%d width=%d\n", rowSize, oniHeight, oniWidth);
+	for (int y = 0; y < oniHeight; ++y)
 	{
 		const openni::DepthPixel* pDepth = pDepthRow;
 		openni::RGB888Pixel* pTex = textureMapRow + oniDepthFrame.getCropOriginX();
 
-		for (int x = 0; x < width; ++x, ++pDepth, ++pTex)
+		for (int x = 0; x < oniWidth; ++x, ++pDepth, ++pTex)
 		{
 			if (*pDepth != 0 && *pDepth < depthThreshold)
 			{
@@ -324,13 +340,13 @@ void Tracker::drawTextureMapAsTexture() {
 	glTexCoord2f(0, 0);
 	glVertex2f(0, 0);
 	// upper right
-	glTexCoord2f((float)width/(float)textureMapWidth, 0);
+	glTexCoord2f((float)oniWidth/(float)textureMapWidth, 0);
 	glVertex2f(1, 0);
 	// bottom right
-	glTexCoord2f((float)width/(float)textureMapWidth, (float)height/(float)textureMapHeight);
+	glTexCoord2f((float)oniWidth/(float)textureMapWidth, (float)oniHeight/(float)textureMapHeight);
 	glVertex2f(1, 1);
 	// bottom left
-	glTexCoord2f(0, (float)height/(float)textureMapHeight);
+	glTexCoord2f(0, (float)oniHeight/(float)textureMapHeight);
 	glVertex2f(0, 1);
 
 	glEnd();
@@ -339,8 +355,8 @@ void Tracker::drawTextureMapAsTexture() {
 }
 
 void Tracker::drawTextureMapAsPoints() {
-	float ratioX = (float)width/(float)textureMapWidth;
-	float ratioY = (float)height/(float)textureMapHeight;
+	float ratioX = (float)oniWidth/(float)textureMapWidth;
+	float ratioY = (float)oniHeight/(float)textureMapHeight;
 
 	glPointSize(1.0);
 	glBegin(GL_POINTS);

@@ -55,7 +55,8 @@ private:
   openni::VideoStream depthStream;
   openni::VideoFrameRef oniDepthFrame;
   Mat depthFrame;
-  int width, height;
+  int oniWidth, oniHeight;
+  int resolutionX, resolutionY;
   bool depthAsPoints;
   openni::RGB888Pixel* textureMap;
   unsigned int textureMapWidth;
