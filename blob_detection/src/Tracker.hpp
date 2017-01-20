@@ -12,6 +12,7 @@ public:
     this->height = height;
     this->depthThreshold = depthThreshold;
   }
+  virtual ~ProcessingMethod() {}
   virtual void processDepthFrame(openni::VideoFrameRef)=0;
   virtual void render()=0;
   virtual void onKey(unsigned char key)=0;
