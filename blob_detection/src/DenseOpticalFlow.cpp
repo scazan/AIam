@@ -13,13 +13,12 @@
 #define MIN_CHUNKS_SIZE(data_size, chunk_size)	(MIN_NUM_CHUNKS(data_size, chunk_size) * (chunk_size))
 
 DenseOpticalFlow::DenseOpticalFlow(int width, int height, int depthThreshold) :
-  ProcessingMethod(width, height, depthThreshold)
-{
+    ProcessingMethod(width, height, depthThreshold) {
   gridMode = true;
 }
 
 void DenseOpticalFlow::onKey(unsigned char key) {
-  switch(key) {
+  switch (key) {
   case 'g':
     gridMode = !gridMode;
     break;
@@ -27,10 +26,11 @@ void DenseOpticalFlow::onKey(unsigned char key) {
 }
 
 void DenseOpticalFlow::processDepthFrame(openni::VideoFrameRef depthFrame) {
-  if(frame.empty())
+  if (frame.empty())
     frame.create(height, width, CV_8UC1);
 
-  const openni::DepthPixel* pOniRow = (const openni::DepthPixel*)depthFrame.getData();
+  const openni::DepthPixel* pOniRow =
+      (const openni::DepthPixel*) depthFrame.getData();
   int rowSize = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
   uchar depth;
   uchar *pCv;
@@ -40,26 +40,26 @@ void DenseOpticalFlow::processDepthFrame(openni::VideoFrameRef depthFrame) {
     pCv = frame.ptr(y);
     for (int x = 0; x < width; ++x, ++pOni) {
       if (*pOni != 0 && *pOni < depthThreshold)
-	depth = (int) (255 * (1 - float(*pOni) / depthThreshold));
+        depth = (int) (255 * (1 - float(*pOni) / depthThreshold));
       else
-	depth = 0;
+        depth = 0;
       *pCv++ = depth;
     }
     pOniRow += rowSize;
   }
 
-  if(!previousFrame.empty()) {
-    calcOpticalFlowFarneback(previousFrame, frame, flow,
-			     0.5, 3, 15, 3, 5, 1.2, 0);
+  if (!previousFrame.empty()) {
+    calcOpticalFlowFarneback(previousFrame, frame, flow, 0.5, 3, 15, 3, 5, 1.2,
+        0);
   }
 
   cv::swap(previousFrame, frame);
 }
 
 void DenseOpticalFlow::render() {
-  if(flow.empty())
+  if (flow.empty())
     return;
-  if(gridMode)
+  if (gridMode)
     renderAsGrid();
   else
     renderEntireFlow();
@@ -73,11 +73,10 @@ void DenseOpticalFlow::renderAsGrid() {
 
   const int step = 20;
 
-  for(int y = step/2; y < height; y += step) {
-    for(int x = step/2; x < width; x += step) {
+  for (int y = step / 2; y < height; y += step) {
+    for (int x = step / 2; x < width; x += step) {
       point = flow.at<Point2f>(y, x);
-      glVertex2f((float)(x + point.x) / width,
-		 (float)(y + point.y) / height);
+      glVertex2f((float) (x + point.x) / width, (float) (y + point.y) / height);
     }
   }
 
@@ -85,7 +84,7 @@ void DenseOpticalFlow::renderAsGrid() {
 }
 
 void DenseOpticalFlow::renderEntireFlow() {
-  if(textureMap == NULL) {
+  if (textureMap == NULL) {
     textureMapWidth = MIN_CHUNKS_SIZE(width, TEXTURE_SIZE);
     textureMapHeight = MIN_CHUNKS_SIZE(height, TEXTURE_SIZE);
     textureMap = new openni::RGB888Pixel[textureMapWidth * textureMapHeight];
@@ -93,24 +92,26 @@ void DenseOpticalFlow::renderEntireFlow() {
 
   Point2f point;
   float maxMovement = 0;
-  for(int y = 0; y < height; y++) {
-    for(int x = 0; x < width; x++) {
+  for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; x++) {
       point = flow.at<Point2f>(y, x); // TODO: optimize?
       maxMovement = MAX(maxMovement, sqrt(point.x*point.x + point.y*point.y));
     }
   }
 
-  if(maxMovement <= 0)
+  if (maxMovement <= 0)
     return;
 
-  memset(textureMap, 0, textureMapWidth*textureMapHeight*sizeof(openni::RGB888Pixel));
+  memset(textureMap, 0,
+      textureMapWidth * textureMapHeight * sizeof(openni::RGB888Pixel));
   unsigned char c;
   openni::RGB888Pixel* textureMapRow = textureMap;
-  for(int y = 0; y < height; y++) {
+  for (int y = 0; y < height; y++) {
     openni::RGB888Pixel* pTex = textureMapRow;
-    for(int x = 0; x < width; x++, pTex++) {
+    for (int x = 0; x < width; x++, pTex++) {
       point = flow.at<Point2f>(y, x); // TODO: optimize?
-      c = (int) (255 * sqrt(point.x*point.x + point.y*point.y) / maxMovement);
+      c =
+          (int) (255 * sqrt(point.x * point.x + point.y * point.y) / maxMovement);
       pTex->r = c;
       pTex->g = c;
       pTex->b = c;
@@ -119,12 +120,14 @@ void DenseOpticalFlow::renderEntireFlow() {
   }
 
   glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+      GL_LINEAR_MIPMAP_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureMapWidth, textureMapHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, textureMap);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureMapWidth, textureMapHeight, 0,
+      GL_RGB, GL_UNSIGNED_BYTE, textureMap);
 
   // Display the OpenGL texture map
-  glColor4f(1,1,1,1);
+  glColor4f(1, 1, 1, 1);
 
   glEnable(GL_TEXTURE_2D);
   glBegin(GL_QUADS);
@@ -133,13 +136,14 @@ void DenseOpticalFlow::renderEntireFlow() {
   glTexCoord2f(0, 0);
   glVertex2f(0, 0);
   // upper right
-  glTexCoord2f((float)width/(float)textureMapWidth, 0);
+  glTexCoord2f((float) width / (float) textureMapWidth, 0);
   glVertex2f(1, 0);
   // bottom right
-  glTexCoord2f((float)width/(float)textureMapWidth, (float)height/(float)textureMapHeight);
+  glTexCoord2f((float) width / (float) textureMapWidth,
+      (float) height / (float) textureMapHeight);
   glVertex2f(1, 1);
   // bottom left
-  glTexCoord2f(0, (float)height/(float)textureMapHeight);
+  glTexCoord2f(0, (float) height / (float) textureMapHeight);
   glVertex2f(0, 1);
 
   glEnd();
