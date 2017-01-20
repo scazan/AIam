@@ -1,5 +1,7 @@
 import os
 
+VariantDir('build', 'src')
+
 env = Environment(CCFLAGS = '-Wall -ffast-math -fPIC ',)
 
 DEBUG = int(ARGUMENTS.get('DEBUG', '0'))
@@ -16,6 +18,6 @@ env.Append(LIBPATH = os.environ['OPENNI2_REDIST'])
 
 env.Program(
     target='Tracker',
-    source=['Tracker.cpp',
-	    'LucasKanade.cpp',
-	    'DenseOpticalFlow.cpp'])
+    source=['build/Tracker.cpp',
+	    'build/LucasKanade.cpp',
+	    'build/DenseOpticalFlow.cpp'])
