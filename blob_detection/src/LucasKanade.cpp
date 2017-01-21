@@ -6,8 +6,8 @@
 #include <GL/glut.h>
 #endif
 
-LucasKanadeOpticalFlow::LucasKanadeOpticalFlow(int width, int height, int depthThreshold) :
-  ProcessingMethod(width, height, depthThreshold) {
+LucasKanadeOpticalFlow::LucasKanadeOpticalFlow(int width, int height) :
+  ProcessingMethod(width, height) {
   needToInit = false;
 }
 

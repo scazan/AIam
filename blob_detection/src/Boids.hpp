@@ -6,7 +6,7 @@
 
 class Boids : public ProcessingMethod {
 public:
-	Boids(int width, int height, int depthThreshold) : ProcessingMethod(width, height, depthThreshold) {
+	Boids(int width, int height) : ProcessingMethod(width, height) {
 		for(int i=0; i<1; i++) {
 			Boid boid;
 			boid.x = (float)rand() / RAND_MAX;

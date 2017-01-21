@@ -10,10 +10,9 @@ using namespace cv;
 
 class ProcessingMethod {
 public:
-  ProcessingMethod(int width, int height, int depthThreshold) {
+  ProcessingMethod(int width, int height) {
     this->width = width;
     this->height = height;
-    this->depthThreshold = depthThreshold;
   }
   virtual ~ProcessingMethod() {}
   virtual void processDepthFrame(Mat&)=0;
@@ -22,7 +21,6 @@ public:
 
 protected:
   int width, height;
-  int depthThreshold;
 };
 
 class Tracker {
@@ -44,7 +42,6 @@ private:
   static void glutReshape(int width, int height);
   static void glutDisplay();
   static void glutKeyboard(unsigned char key, int x, int y);
-  void calculateHistogram();
   void updateTextureMap();
   void drawTextureMap();
   void drawTextureMapAsTexture();
@@ -63,9 +60,7 @@ private:
   unsigned int textureMapHeight;
   uint64_t previousDisplayTime;
   int windowWidth, windowHeight;
-  int depthThreshold;
-  float	histogram[MAX_DEPTH];
-  float histogramEnabled;
+  int zThreshold;
   bool processingEnabled;
   ProcessingMethod *processingMethod;
 };

@@ -65,7 +65,7 @@ openni::Status Tracker::init(int argc, char **argv) {
 	int fps = 30;
 	resolutionX = resolutionY = 0;
 	depthAsPoints = false;
-	depthThreshold = MAX_DEPTH;
+	zThreshold = 0;
 
 	openni::Status status = openni::OpenNI::initialize();
 	if(status != openni::STATUS_OK) {
@@ -91,9 +91,9 @@ openni::Status Tracker::init(int argc, char **argv) {
 			fps = atoi(argv[++i]);
 		}
 
-		else if(strcmp(argv[i], "-threshold") == 0) {
-			depthThreshold = atoi(argv[++i]);
-		}
+    else if(strcmp(argv[i], "-zt") == 0) {
+      zThreshold = atoi(argv[++i]);
+    }
 
     else if(strcmp(argv[i], "-rx") == 0) {
       resolutionX = atoi(argv[++i]);
@@ -145,9 +145,8 @@ openni::Status Tracker::init(int argc, char **argv) {
 
 	textureMap = NULL;
 	initOpenGL(argc, argv);
-	histogramEnabled = false;
 	processingEnabled = true;
-	processingMethod = new Boids(resolutionX, resolutionY, depthThreshold);
+	processingMethod = new Boids(resolutionX, resolutionY);
 
 	return openni::STATUS_OK;
 }
@@ -166,6 +165,7 @@ void Tracker::processOniDepthFrame() {
   int oniRowSize = oniDepthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
   uchar depth;
   uchar *matPtr;
+  float worldX, worldY, worldZ;
 
   for (int y = 0; y < resolutionY; ++y) {
     size_t oniY = (size_t) y * oniHeight / resolutionY;
@@ -174,8 +174,14 @@ void Tracker::processOniDepthFrame() {
     for (int x = 0; x < resolutionX; ++x) {
       size_t oniX = (size_t) x * oniWidth / resolutionX;
       const openni::DepthPixel* pOni = pOniRow + oniX;
-      if (*pOni != 0 && *pOni < depthThreshold)
-        depth = (int) (255 * (1 - float(*pOni) / depthThreshold));
+      if (*pOni != 0) {
+        openni::CoordinateConverter::convertDepthToWorld(depthStream, oniX, oniY, *pOni,
+            &worldX, &worldY, &worldZ);
+        if(zThreshold > 0 && worldZ > zThreshold)
+          depth = 0;
+        else
+          depth = (int) (255 * (1 - float(*pOni) / MAX_DEPTH));
+      }
       else
         depth = 0;
       *matPtr++ = depth;
@@ -216,8 +222,8 @@ void Tracker::display()
 		processingMethod->processDepthFrame(depthFrame);
 
 	if(textureMap == NULL) {
-		textureMapWidth = MIN_CHUNKS_SIZE(oniWidth, TEXTURE_SIZE);
-		textureMapHeight = MIN_CHUNKS_SIZE(oniHeight, TEXTURE_SIZE);
+		textureMapWidth = MIN_CHUNKS_SIZE(resolutionX, TEXTURE_SIZE);
+		textureMapHeight = MIN_CHUNKS_SIZE(resolutionY, TEXTURE_SIZE);
 		textureMap = new openni::RGB888Pixel[textureMapWidth * textureMapHeight];
 	}
 
@@ -230,8 +236,6 @@ void Tracker::display()
 	glPushMatrix();
 	checkGlErrors();
 
-	if(histogramEnabled)
-		calculateHistogram();
 	updateTextureMap();
 	drawTextureMap();
 
@@ -245,68 +249,22 @@ void Tracker::display()
 	log("Display done\n");
 }
 
-void Tracker::calculateHistogram() {
-	const openni::DepthPixel* pDepth = (const openni::DepthPixel*)oniDepthFrame.getData();
-	memset(histogram, 0, MAX_DEPTH * sizeof(float));
-	int restOfRow = oniDepthFrame.getStrideInBytes() / sizeof(openni::DepthPixel) - oniWidth;
-
-	unsigned int nNumberOfPoints = 0;
-	for (int y = 0; y < oniHeight; ++y)
-	{
-		for (int x = 0; x < oniWidth; ++x, ++pDepth)
-		{
-			if (*pDepth != 0 && *pDepth < depthThreshold)
-			{
-				histogram[*pDepth]++;
-				nNumberOfPoints++;
-			}
-		}
-		pDepth += restOfRow;
-	}
-	for (int nIndex=1; nIndex<MAX_DEPTH; nIndex++)
-	{
-		histogram[nIndex] += histogram[nIndex-1];
-	}
-	if (nNumberOfPoints)
-	{
-		for (int nIndex=1; nIndex<MAX_DEPTH; nIndex++)
-		{
-			histogram[nIndex] = (256 * (1.0f - (histogram[nIndex] / nNumberOfPoints)));
-		}
-	}
-}
-
 void Tracker::updateTextureMap() {
-	memset(textureMap, 0, textureMapWidth*textureMapHeight*sizeof(openni::RGB888Pixel));
+  uchar *matPtr;
+  unsigned char c;
+  openni::RGB888Pixel* textureMapRow = textureMap;
+  for (int y = 0; y < resolutionY; y++) {
+    matPtr = depthFrame.ptr(y);
+    openni::RGB888Pixel* pTex = textureMapRow;
+    for (int x = 0; x < resolutionX; x++, pTex++, matPtr++) {
+      c = *matPtr;
+      pTex->r = c;
+      pTex->g = c;
+      pTex->b = c;
+    }
+    textureMapRow += textureMapWidth;
+  }
 
-	const openni::DepthPixel* pDepthRow = (const openni::DepthPixel*)oniDepthFrame.getData();
-	openni::RGB888Pixel* textureMapRow = textureMap + oniDepthFrame.getCropOriginY() * textureMapWidth;
-	int rowSize = oniDepthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
-	unsigned char depth_uchar;
-
-	log("rowSize=%d height=%d width=%d\n", rowSize, oniHeight, oniWidth);
-	for (int y = 0; y < oniHeight; ++y)
-	{
-		const openni::DepthPixel* pDepth = pDepthRow;
-		openni::RGB888Pixel* pTex = textureMapRow + oniDepthFrame.getCropOriginX();
-
-		for (int x = 0; x < oniWidth; ++x, ++pDepth, ++pTex)
-		{
-			if (*pDepth != 0 && *pDepth < depthThreshold)
-			{
-				if(histogramEnabled)
-					depth_uchar = (unsigned char) histogram[*pDepth];
-				else
-					depth_uchar = (unsigned char) (255 * (1 - float(*pDepth) / depthThreshold));
-				pTex->r = depth_uchar;
-				pTex->g = depth_uchar;
-				pTex->b = depth_uchar;
-			}
-		}
-
-		pDepthRow += rowSize;
-		textureMapRow += textureMapWidth;
-	}
 	log("drew frame to texture\n");
 }
 
@@ -340,13 +298,13 @@ void Tracker::drawTextureMapAsTexture() {
 	glTexCoord2f(0, 0);
 	glVertex2f(0, 0);
 	// upper right
-	glTexCoord2f((float)oniWidth/(float)textureMapWidth, 0);
+	glTexCoord2f((float)resolutionX/(float)textureMapWidth, 0);
 	glVertex2f(1, 0);
 	// bottom right
-	glTexCoord2f((float)oniWidth/(float)textureMapWidth, (float)oniHeight/(float)textureMapHeight);
+	glTexCoord2f((float)resolutionX/(float)textureMapWidth, (float)resolutionY/(float)textureMapHeight);
 	glVertex2f(1, 1);
 	// bottom left
-	glTexCoord2f(0, (float)oniHeight/(float)textureMapHeight);
+	glTexCoord2f(0, (float)resolutionY/(float)textureMapHeight);
 	glVertex2f(0, 1);
 
 	glEnd();
@@ -355,8 +313,8 @@ void Tracker::drawTextureMapAsTexture() {
 }
 
 void Tracker::drawTextureMapAsPoints() {
-	float ratioX = (float)oniWidth/(float)textureMapWidth;
-	float ratioY = (float)oniHeight/(float)textureMapHeight;
+	float ratioX = (float)resolutionX/(float)textureMapWidth;
+	float ratioY = (float)resolutionY/(float)textureMapHeight;
 
 	glPointSize(1.0);
 	glBegin(GL_POINTS);
@@ -433,10 +391,6 @@ void Tracker::onKey(unsigned char key) {
 	switch(key) {
 	case TAB:
 		processingEnabled = !processingEnabled;
-		break;
-
-	case 'h':
-		histogramEnabled = !histogramEnabled;
 		break;
 	}
 
