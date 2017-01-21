@@ -8,7 +8,7 @@ using namespace cv;
 
 class DenseOpticalFlow : public ProcessingMethod {
 public:
-  DenseOpticalFlow(int width, int height);
+  DenseOpticalFlow(Tracker *tracker);
   void processDepthFrame(Mat&);
   void render();
   void onKey(unsigned char key);

@@ -12,8 +12,7 @@
 #define MIN_NUM_CHUNKS(data_size, chunk_size)	((((data_size)-1) / (chunk_size) + 1))
 #define MIN_CHUNKS_SIZE(data_size, chunk_size)	(MIN_NUM_CHUNKS(data_size, chunk_size) * (chunk_size))
 
-DenseOpticalFlow::DenseOpticalFlow(int width, int height) :
-    ProcessingMethod(width, height) {
+DenseOpticalFlow::DenseOpticalFlow(Tracker *tracker) : ProcessingMethod(tracker) {
   gridMode = true;
 }
 

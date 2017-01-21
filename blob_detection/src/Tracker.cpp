@@ -144,12 +144,25 @@ openni::Status Tracker::init(int argc, char **argv) {
 	if(resolutionY == 0)
 	  resolutionY = oniHeight;
 
+	calculateWorldRange();
 	textureMap = NULL;
 	initOpenGL(argc, argv);
 	processingEnabled = true;
-	processingMethod = new BlobDetector(resolutionX, resolutionY);
+	processingMethod = new BlobDetector(this);
 
 	return openni::STATUS_OK;
+}
+
+void Tracker::calculateWorldRange() {
+  float x1, x2, y1, y2, worldZ;
+  openni::CoordinateConverter::convertDepthToWorld(depthStream, 0, 0, zThreshold,
+      &x1, &y1, &worldZ);
+  openni::CoordinateConverter::convertDepthToWorld(depthStream, oniWidth, oniHeight, zThreshold,
+      &x2, &y2, &worldZ);
+  worldRange.xMin = MIN(x1, x2);
+  worldRange.xMax = MAX(x1, x2);
+  worldRange.yMin = MIN(y1, y2);
+  worldRange.yMax = MAX(y1, y2);
 }
 
 void Tracker::mainLoop() {
@@ -397,6 +410,12 @@ void Tracker::onKey(unsigned char key) {
 
 	if(processingEnabled)
 		processingMethod->onKey(key);
+}
+
+ProcessingMethod::ProcessingMethod(Tracker *tracker) {
+  this->tracker = tracker;
+  width = tracker->getResolutionX();
+  height = tracker->getResolutionY();
 }
 
 int main(int argc, char **argv) {

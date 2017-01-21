@@ -9,7 +9,7 @@ using namespace cv;
 
 class LucasKanadeOpticalFlow : public ProcessingMethod {
 public:
-  LucasKanadeOpticalFlow(int width, int height);
+  LucasKanadeOpticalFlow(Tracker *tracker);
   void processDepthFrame(Mat&);
   void render();
   void onKey(unsigned char key);

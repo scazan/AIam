@@ -8,12 +8,11 @@
 
 using namespace cv;
 
+class Tracker;
+
 class ProcessingMethod {
 public:
-  ProcessingMethod(int width, int height) {
-    this->width = width;
-    this->height = height;
-  }
+  ProcessingMethod(Tracker *tracker);
   virtual ~ProcessingMethod() {}
   virtual void processDepthFrame(Mat&)=0;
   virtual void render()=0;
@@ -21,15 +20,26 @@ public:
 
 protected:
   int width, height;
+  Tracker *tracker;
+};
+
+class WorldRange {
+public:
+  float xMin;
+  float xMax;
+  float yMin;
+  float yMax;
 };
 
 class Tracker {
 public:
   Tracker();
   ~Tracker();
-
   openni::Status init(int argc, char **argv);
   void mainLoop();
+  int getResolutionX() { return resolutionX; }
+  int getResolutionY() { return resolutionY; }
+  const WorldRange& getWorldRange() { return worldRange; }
 
 private:
   void processOniDepthFrame();
@@ -46,6 +56,7 @@ private:
   void drawTextureMap();
   void drawTextureMapAsTexture();
   void drawTextureMapAsPoints();
+  void calculateWorldRange();
 
   static Tracker* self;
   openni::Device device;
@@ -63,6 +74,7 @@ private:
   int zThreshold;
   bool processingEnabled;
   ProcessingMethod *processingMethod;
+  WorldRange worldRange;
 };
 
 

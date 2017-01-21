@@ -9,14 +9,21 @@ using namespace std;
 #include <GL/glut.h>
 #endif
 
+#define MIN_BLOB_DIAMETER_MM 200
+#define MAX_BLOB_DIAMETER_MM 1000
+
 class BlobDetector : public ProcessingMethod {
 public:
-  BlobDetector(int width, int height) : ProcessingMethod(width, height) {
+  BlobDetector(Tracker *tracker) : ProcessingMethod(tracker) {
+    float worldWidth = tracker->getWorldRange().xMax - tracker->getWorldRange().xMin;
+    float minWidth = MIN_BLOB_DIAMETER_MM * width / worldWidth;
+    float maxWidth = MAX_BLOB_DIAMETER_MM * width / worldWidth;
+
     SimpleBlobDetector::Params params;
     params.filterByColor = false;
     params.filterByArea = true;
-    params.minArea = 65*65;
-    params.maxArea = 180*180;
+    params.minArea = minWidth*minWidth;
+    params.maxArea = maxWidth*maxWidth;
     params.filterByCircularity = false;
     params.filterByInertia = false;
     params.filterByConvexity = false;

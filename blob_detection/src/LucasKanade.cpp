@@ -6,8 +6,7 @@
 #include <GL/glut.h>
 #endif
 
-LucasKanadeOpticalFlow::LucasKanadeOpticalFlow(int width, int height) :
-  ProcessingMethod(width, height) {
+LucasKanadeOpticalFlow::LucasKanadeOpticalFlow(Tracker *tracker) : ProcessingMethod(tracker) {
   needToInit = false;
 }
 
