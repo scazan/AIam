@@ -159,7 +159,7 @@ void Tracker::mainLoop() {
 
 void Tracker::processOniDepthFrame() {
   if (depthFrame.empty())
-    depthFrame.create(resolutionX, resolutionY, CV_8UC1);
+    depthFrame.create(resolutionY, resolutionX, CV_8UC1);
 
   const openni::DepthPixel* oniData =
       (const openni::DepthPixel*) oniDepthFrame.getData();
