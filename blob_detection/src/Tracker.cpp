@@ -9,6 +9,7 @@
 #include "LucasKanade.hpp"
 #include "DenseOpticalFlow.hpp"
 #include "Boids.hpp"
+#include "BlobDetector.hpp"
 #include <sys/time.h>
 #include <stdarg.h>
 
@@ -146,7 +147,7 @@ openni::Status Tracker::init(int argc, char **argv) {
 	textureMap = NULL;
 	initOpenGL(argc, argv);
 	processingEnabled = true;
-	processingMethod = new Boids(resolutionX, resolutionY);
+	processingMethod = new BlobDetector(resolutionX, resolutionY);
 
 	return openni::STATUS_OK;
 }
