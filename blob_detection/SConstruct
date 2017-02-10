@@ -13,11 +13,10 @@ env.Append(CCFLAGS = CCFLAGS)
 
 env.Append(CPPPATH = os.environ['OPENNI2_INCLUDE'])
 env.Append(LIBS = ['OpenNI2', 'GL', 'GLU', 'glut',
-                   'opencv_core', 'opencv_imgproc', 'opencv_video'])
+                   'opencv_core', 'opencv_imgproc', 'opencv_video',
+		   'opencv_features2d'])
 env.Append(LIBPATH = os.environ['OPENNI2_REDIST'])
 
 env.Program(
     target='Tracker',
-    source=['build/Tracker.cpp',
-	    'build/LucasKanade.cpp',
-	    'build/DenseOpticalFlow.cpp'])
+    source=['build/Tracker.cpp'])

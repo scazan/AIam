@@ -6,9 +6,6 @@
 #endif
 
 #include "Tracker.hpp"
-#include "LucasKanade.hpp"
-#include "DenseOpticalFlow.hpp"
-#include "Boids.hpp"
 #include "BlobDetector.hpp"
 #include <sys/time.h>
 #include <stdarg.h>
