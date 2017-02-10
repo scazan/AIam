@@ -31,14 +31,22 @@ public:
     detector = new SimpleBlobDetector(params);
   }
 
-  void processDepthFrame(Mat& frame) {
-    detector->detect(frame, keyPoints);
+  void processDepthFrame(Mat& depthFrame) {
+    Mat binaryImage;
+    threshold(depthFrame, binaryImage, 1, 255, THRESH_BINARY);
+    findContours(binaryImage, contours, RETR_LIST, CHAIN_APPROX_NONE);
+    detector->detect(depthFrame, keyPoints);
   }
 
   void render() {
     glColor3f(0,1,0);
     for(vector<KeyPoint>::iterator i = keyPoints.begin(); i != keyPoints.end(); i++) {
       drawCircle(i->pt.x / width, i->pt.y / height, i->size / 2 / width);
+    }
+
+    glColor3f(0,0,1);
+    for(vector< vector<Point> >::iterator i = contours.begin(); i != contours.end(); i++) {
+      drawContour(*i);
     }
   }
 
@@ -55,9 +63,18 @@ public:
     glEnd();
   }
 
+  void drawContour(const vector<Point> contour) {
+    glBegin(GL_LINE_LOOP);
+    for(vector<Point>::const_iterator i = contour.begin(); i != contour.end(); i++) {
+      glVertex2f((float)i->x / width, (float)i->y / height);
+    }
+    glEnd();
+  }
+
   void onKey(unsigned char key) {}
 
 private:
   SimpleBlobDetector *detector;
   std::vector<KeyPoint> keyPoints;
+  std::vector < std::vector<Point> > contours;
 };
