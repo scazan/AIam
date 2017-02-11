@@ -246,14 +246,20 @@ void Tracker::display()
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	checkGlErrors();
-
 	updateTextureMap();
 	drawTextureMap();
+  glPopMatrix();
 
-	if(processingEnabled)
+  if(processingEnabled) {
+	  glMatrixMode(GL_PROJECTION);
+	  glLoadIdentity();
+	  glOrtho(0, resolutionX, resolutionY, 0, -1.0, 1.0);
+	  glMatrixMode(GL_MODELVIEW);
+	  glPushMatrix();
 		processingMethod->render();
+	  glPopMatrix();
+	}
 
-	glPopMatrix();
 	glutSwapBuffers();
 
 	checkGlErrors();

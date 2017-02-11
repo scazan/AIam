@@ -48,7 +48,7 @@ public:
   void drawContour(const vector<Point>& contour) {
     glBegin(GL_LINE_LOOP);
     for(vector<Point>::const_iterator i = contour.begin(); i != contour.end(); i++) {
-      glVertex2f((float)i->x / width, (float)i->y / height);
+      glVertex2i(i->x, i->y);
     }
     glEnd();
   }
@@ -60,7 +60,7 @@ public:
       matPtr = image.ptr(y);
       for (int x = 0; x < width; x++, matPtr++) {
         if (*matPtr) {
-          glVertex2f((float) x / width, (float) y / height);
+          glVertex2i(x, y);
         }
       }
     }
