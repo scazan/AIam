@@ -42,20 +42,13 @@ public:
   }
 
   void processContour(const vector<Point>& contour) {
-    Mat blobImage;
-    blobImage.create(height, width, CV_8UC1);
-    // for(vector<Point>::const_iterator i = contour.begin(); i != contour.end(); i++) {
-    //   blobImage.at<unsigned int>(i->y, i->x) = 1;
-    // }
-    
-    Point *points = new Point [contour.size()];
-    int n = 0;
-    for(vector<Point>::const_iterator i = contour.begin(); i != contour.end(); i++) {
-      points[n] = Point(i->y, i->x);
-      n++;
+    Mat blobImage = Mat::ones(height, width, CV_8UC1);
+    for (vector<Point>::const_iterator i = contour.begin(); i != contour.end();
+        i++) {
+      blobImage.at<unsigned char>(i->y, i->x) = 0;
     }
-    fillConvexPoly(blobImage, points, contour.size(), Scalar(1,1,1));
-    delete [] points;
+
+    floodFill(blobImage, Point(0,0), 0);
     blobImages.push_back(blobImage);
   }
 
@@ -98,12 +91,12 @@ public:
   }
 
   void drawBlobImage(Mat image) {
-    glBegin(GL_POINTS);
-    for(int y = 0; y < height; y++) {
-      for(int x = 0; x < width; x++) {
-	if(image.at<unsigned int>(y, x)) {
-	  glVertex2f((float)x / width, (float)y / height);
-	}
+    glBegin (GL_POINTS);
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        if (image.at<unsigned char>(y, x)) {
+          glVertex2f((float) x / width, (float) y / height);
+        }
       }
     }
     glEnd();
