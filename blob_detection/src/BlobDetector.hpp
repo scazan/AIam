@@ -45,7 +45,7 @@ public:
     Mat blobImage = Mat::ones(height, width, CV_8UC1);
     for (vector<Point>::const_iterator i = contour.begin(); i != contour.end();
         i++) {
-      blobImage.at<unsigned char>(i->y, i->x) = 0;
+      blobImage.at<uchar>(i->y, i->x) = 0;
     }
 
     floodFill(blobImage, Point(0,0), 0);
@@ -91,10 +91,12 @@ public:
   }
 
   void drawBlobImage(Mat image) {
+    uchar *matPtr;
     glBegin (GL_POINTS);
     for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
-        if (image.at<unsigned char>(y, x)) {
+      matPtr = image.ptr(y);
+      for (int x = 0; x < width; x++, matPtr++) {
+        if (*matPtr) {
           glVertex2f((float) x / width, (float) y / height);
         }
       }
