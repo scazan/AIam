@@ -9,7 +9,7 @@ using namespace std;
 #endif
 
 #define MIN_BLOB_AREA 50000
-#define MAX_BLOB_AREA 300000
+#define MAX_BLOB_AREA 1000000
 
 class BlobDetector: public ProcessingMethod {
 public:
