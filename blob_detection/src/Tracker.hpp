@@ -63,6 +63,7 @@ private:
   openni::VideoStream depthStream;
   openni::VideoFrameRef oniDepthFrame;
   Mat depthFrame;
+  Mat zThresholdedDepthFrame;
   int oniWidth, oniHeight;
   int resolutionX, resolutionY;
   bool depthAsPoints;
@@ -75,6 +76,7 @@ private:
   bool processingEnabled;
   ProcessingMethod *processingMethod;
   WorldRange worldRange;
+  bool displayZThresholding;
 };
 
 

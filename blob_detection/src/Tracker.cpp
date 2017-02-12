@@ -146,6 +146,9 @@ openni::Status Tracker::init(int argc, char **argv) {
 	initOpenGL(argc, argv);
 	processingEnabled = true;
 	processingMethod = new BlobDetector(this);
+  depthFrame.create(resolutionY, resolutionX, CV_8UC1);
+  zThresholdedDepthFrame.create(resolutionY, resolutionX, CV_8UC1);
+  displayZThresholding = true;
 
 	return openni::STATUS_OK;
 }
@@ -168,34 +171,36 @@ void Tracker::mainLoop() {
 }
 
 void Tracker::processOniDepthFrame() {
-  if (depthFrame.empty())
-    depthFrame.create(resolutionY, resolutionX, CV_8UC1);
-
   const openni::DepthPixel* oniData =
       (const openni::DepthPixel*) oniDepthFrame.getData();
   int oniRowSize = oniDepthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
-  uchar depth;
-  uchar *matPtr;
+  uchar depth, zThresholdedDepth;
+  uchar *depthFramePtr, *zThresholdedDepthFramePtr;
   float worldX, worldY, worldZ;
 
   for (int y = 0; y < resolutionY; ++y) {
     size_t oniY = (size_t) y * oniHeight / resolutionY;
     const openni::DepthPixel* pOniRow = oniData + oniY * oniRowSize;
-    matPtr = depthFrame.ptr(y);
+    depthFramePtr = depthFrame.ptr(y);
+    zThresholdedDepthFramePtr = zThresholdedDepthFrame.ptr(y);
     for (int x = 0; x < resolutionX; ++x) {
       size_t oniX = (size_t) x * oniWidth / resolutionX;
       const openni::DepthPixel* pOni = pOniRow + oniX;
       if (*pOni != 0) {
+        depth = (int) (255 * (1 - float(*pOni) / MAX_DEPTH));
         openni::CoordinateConverter::convertDepthToWorld(depthStream, oniX, oniY, *pOni,
             &worldX, &worldY, &worldZ);
         if(zThreshold > 0 && worldZ > zThreshold)
-          depth = 0;
+          zThresholdedDepth = 0;
         else
-          depth = (int) (255 * (1 - float(*pOni) / MAX_DEPTH));
+          zThresholdedDepth = depth;
       }
-      else
+      else {
         depth = 0;
-      *matPtr++ = depth;
+        zThresholdedDepth = 0;
+      }
+      *depthFramePtr++ = depth;
+      *zThresholdedDepthFramePtr++ = zThresholdedDepth;
     }
   }
 }
@@ -230,7 +235,7 @@ void Tracker::display()
 	processOniDepthFrame();
 
 	if(processingEnabled)
-		processingMethod->processDepthFrame(depthFrame);
+		processingMethod->processDepthFrame(zThresholdedDepthFrame);
 
 	if(textureMap == NULL) {
 		textureMapWidth = MIN_CHUNKS_SIZE(resolutionX, TEXTURE_SIZE);
@@ -267,11 +272,17 @@ void Tracker::display()
 }
 
 void Tracker::updateTextureMap() {
+  Mat sourceImage;
+  if(displayZThresholding)
+    sourceImage = zThresholdedDepthFrame;
+  else
+    sourceImage = depthFrame;
+
   uchar *matPtr;
   unsigned char c;
   openni::RGB888Pixel* textureMapRow = textureMap;
   for (int y = 0; y < resolutionY; y++) {
-    matPtr = depthFrame.ptr(y);
+    matPtr = sourceImage.ptr(y);
     openni::RGB888Pixel* pTex = textureMapRow;
     for (int x = 0; x < resolutionX; x++, pTex++, matPtr++) {
       c = *matPtr;
@@ -409,6 +420,10 @@ void Tracker::onKey(unsigned char key) {
 	case TAB:
 		processingEnabled = !processingEnabled;
 		break;
+
+	case 'z':
+	  displayZThresholding = !displayZThresholding;
+	  break;
 	}
 
 	if(processingEnabled)
