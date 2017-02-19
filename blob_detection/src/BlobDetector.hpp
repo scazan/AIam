@@ -48,7 +48,7 @@ public:
   }
 
   void processContour(const vector<Point>& contour) {
-    Mat blobImage = Mat::ones(height, width, CV_8UC1);
+    Mat blobImage(height, width, CV_8UC1, 255);
     for (vector<Point>::const_iterator i = contour.begin(); i != contour.end();
         i++) {
       blobImage.at < uchar > (i->y, i->x) = 0;
@@ -65,10 +65,10 @@ public:
       drawEstimatedOrientation(*i);
     }
 
-    glColor3f(1, 0, 0);
+    Scalar color = Scalar(1, 0, 0);
     for (vector<Mat>::iterator i = blobImages.begin(); i != blobImages.end();
         i++) {
-      drawBlobImage(*i);
+      tracker->drawCvImage(*i, color);
     }
   }
 
@@ -96,20 +96,6 @@ public:
     glBegin(GL_LINES);
     glVertex2i(0, leftY);
     glVertex2i(width-1, rightY);
-    glEnd();
-  }
-
-  void drawBlobImage(Mat image) {
-    uchar *matPtr;
-    glBegin (GL_POINTS);
-    for (int y = 0; y < height; y++) {
-      matPtr = image.ptr(y);
-      for (int x = 0; x < width; x++, matPtr++) {
-        if (*matPtr) {
-          glVertex2i(x, y);
-        }
-      }
-    }
     glEnd();
   }
 

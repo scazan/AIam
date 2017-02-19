@@ -245,24 +245,14 @@ void Tracker::display()
 
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0, 1.0, 1.0, 0, -1.0, 1.0);
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	checkGlErrors();
-	updateTextureMap();
-	drawTextureMap();
-  glPopMatrix();
+  drawDepthFrame();
 
   if(processingEnabled) {
 	  glMatrixMode(GL_PROJECTION);
 	  glLoadIdentity();
 	  glOrtho(0, resolutionX, resolutionY, 0, -1.0, 1.0);
 	  glMatrixMode(GL_MODELVIEW);
-	  glPushMatrix();
 		processingMethod->render();
-	  glPopMatrix();
 	}
 
 	glutSwapBuffers();
@@ -271,36 +261,47 @@ void Tracker::display()
 	log("Display done\n");
 }
 
-void Tracker::updateTextureMap() {
-  Mat sourceImage;
+void Tracker::drawDepthFrame() {
   if(displayZThresholding)
-    sourceImage = zThresholdedDepthFrame;
+    drawCvImage(zThresholdedDepthFrame);
   else
-    sourceImage = depthFrame;
+    drawCvImage(depthFrame);
+}
 
-  uchar *matPtr;
+void Tracker::drawCvImage(const Mat &image, const Scalar &color) {
+  const uchar *matPtr;
   unsigned char c;
   openni::RGB888Pixel* textureMapRow = textureMap;
   for (int y = 0; y < resolutionY; y++) {
-    matPtr = sourceImage.ptr(y);
+    matPtr = image.ptr(y);
     openni::RGB888Pixel* pTex = textureMapRow;
     for (int x = 0; x < resolutionX; x++, pTex++, matPtr++) {
       c = *matPtr;
-      pTex->r = c;
-      pTex->g = c;
-      pTex->b = c;
+      pTex->r = c * color[0];
+      pTex->g = c * color[1];
+      pTex->b = c * color[2];
     }
     textureMapRow += textureMapWidth;
   }
 
-	log("drew frame to texture\n");
-}
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_COLOR, GL_DST_COLOR);
 
-void Tracker::drawTextureMap() {
-	if(depthAsPoints)
+  glMatrixMode(GL_PROJECTION);
+  glPushMatrix();
+  glLoadIdentity();
+  glOrtho(0, 1.0, 1.0, 0, -1.0, 1.0);
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  checkGlErrors();
+
+  if(depthAsPoints)
 		drawTextureMapAsPoints();
 	else
 		drawTextureMapAsTexture();
+
+  glMatrixMode(GL_PROJECTION);
+  glPopMatrix();
 }
 
 void Tracker::drawTextureMapAsTexture() {

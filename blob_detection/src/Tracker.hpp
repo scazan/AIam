@@ -40,6 +40,7 @@ public:
   int getResolutionX() { return resolutionX; }
   int getResolutionY() { return resolutionY; }
   const WorldRange& getWorldRange() { return worldRange; }
+  void drawCvImage(const Mat &image, const Scalar &color=Scalar(1,1,1));
 
 private:
   void processOniDepthFrame();
@@ -52,8 +53,7 @@ private:
   static void glutReshape(int width, int height);
   static void glutDisplay();
   static void glutKeyboard(unsigned char key, int x, int y);
-  void updateTextureMap();
-  void drawTextureMap();
+  void drawDepthFrame();
   void drawTextureMapAsTexture();
   void drawTextureMapAsPoints();
   void calculateWorldRange();
