@@ -14,6 +14,8 @@ using namespace std;
 #define CROPPED_WIDTH 400
 #define CROPPED_HEIGHT 400
 
+#define TRUNCATE_THRESHOLD 10
+
 class BlobDetector: public ProcessingMethod {
 public:
   BlobDetector(Tracker *tracker) :
@@ -23,7 +25,7 @@ public:
     worldArea = worldWidth * worldHeight;
     resolutionArea = width * height;
     orientationEstimationEnabled = false;
-    croppingEnabled = false;
+    recallEnabled = false;
     croppedTextureRenderer = new TextureRenderer(CROPPED_WIDTH, CROPPED_HEIGHT, tracker->depthAsPoints);
     cropX1 = (float)(width - CROPPED_WIDTH) / 2 / width;
     cropX2 = 1 - cropX1;
@@ -39,7 +41,6 @@ public:
     filterContours(unfilteredContours);
 
     blobs.clear();
-    croppedBlobImages.clear();
     for (vector<vector<Point> >::iterator i = contours.begin();
         i != contours.end(); i++) {
       processContour(*i);
@@ -59,9 +60,12 @@ public:
   }
 
   void processContour(const vector<Point>& contour) {
+    bool isTruncated = false;
     Mat blobImage(height, width, CV_8UC1, 255);
     for (vector<Point>::const_iterator i = contour.begin(); i != contour.end();
         i++) {
+      if(i->y <= TRUNCATE_THRESHOLD || i->y >= height-TRUNCATE_THRESHOLD || i->x <= TRUNCATE_THRESHOLD  || i->x >= width-TRUNCATE_THRESHOLD)
+	isTruncated = true;
       blobImage.at < uchar > (i->y, i->x) = 0;
     }
     floodFill(blobImage, Point(0, 0), 0);
@@ -73,21 +77,23 @@ public:
     blob.centroidY = (int) (m.m01 / m.m00);
     blobs.push_back(blob);
 
-    int offsetX = blob.centroidX - CROPPED_WIDTH/2;
-    int offsetY = blob.centroidY - CROPPED_HEIGHT/2;
+    if(!isTruncated) {
+      int offsetX = blob.centroidX - CROPPED_WIDTH/2;
+      int offsetY = blob.centroidY - CROPPED_HEIGHT/2;
 
-    Mat croppedBlobImage(CROPPED_HEIGHT, CROPPED_WIDTH, CV_8UC1, 255);
-    int croppedX, croppedY;
-    for (vector<Point>::const_iterator i = contour.begin(); i != contour.end();
-        i++) {
-      croppedX = i->x - offsetX;
-      croppedY = i->y - offsetY;
-      if(croppedX >= 0 && croppedX < CROPPED_WIDTH && croppedY >= 0 && croppedY < CROPPED_HEIGHT)
-	croppedBlobImage.at < uchar > (croppedY, croppedX) = 0;
+      Mat croppedBlobImage(CROPPED_HEIGHT, CROPPED_WIDTH, CV_8UC1, 255);
+      int croppedX, croppedY;
+      for (vector<Point>::const_iterator i = contour.begin(); i != contour.end();
+	   i++) {
+	croppedX = i->x - offsetX;
+	croppedY = i->y - offsetY;
+	if(croppedX >= 0 && croppedX < CROPPED_WIDTH && croppedY >= 0 && croppedY < CROPPED_HEIGHT)
+	  croppedBlobImage.at < uchar > (croppedY, croppedX) = 0;
+      }
+
+      floodFill(croppedBlobImage, Point(0, 0), 0);
+      observations.push_back(croppedBlobImage);
     }
-
-    floodFill(croppedBlobImage, Point(0, 0), 0);
-    croppedBlobImages.push_back(croppedBlobImage);
   }
 
   void render() {
@@ -114,14 +120,12 @@ public:
       drawCentroid(i->centroidX, i->centroidY);
     }
 
-    if(croppingEnabled) {
+    if(recallEnabled && observations.size() > 0) {
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_COLOR, GL_DST_COLOR);
-
-      for (vector<Mat>::iterator i = croppedBlobImages.begin(); i != croppedBlobImages.end();
-	   i++) {
-	croppedTextureRenderer->drawCvImage(*i, cropX1, cropY1, cropX2, cropY2);
-      }
+      int randomObservationIndex = (int) ((float)random() / RAND_MAX * observations.size());
+      croppedTextureRenderer->drawCvImage(observations[randomObservationIndex],
+					  cropX1, cropY1, cropX2, cropY2);
     }
   }
 
@@ -166,8 +170,8 @@ public:
       orientationEstimationEnabled = !orientationEstimationEnabled;
       break;
 
-    case 'c':
-      croppingEnabled = !croppingEnabled;
+    case 'r':
+      recallEnabled = !recallEnabled;
       break;
     }
   }
@@ -183,9 +187,9 @@ private:
   float resolutionArea;
   std::vector<std::vector<Point> > contours;
   vector<Blob> blobs;
-  vector<Mat> croppedBlobImages;
+  vector<Mat> observations;
   bool orientationEstimationEnabled;
-  bool croppingEnabled;
+  bool recallEnabled;
   TextureRenderer *croppedTextureRenderer;
   float cropX1, cropY1, cropX2, cropY2;
 };
