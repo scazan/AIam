@@ -28,7 +28,9 @@ public:
     delete[] textureMap;
   }
 
-  void drawCvImage(const Mat &image, const Scalar &color=Scalar(1,1,1)) {
+  void drawCvImage(const Mat &image,
+		   float x1=0, float y1=0, float x2=1, float y2=1,
+		   const Scalar &color=Scalar(1,1,1)) {
     const uchar *matPtr;
     unsigned char c;
     openni::RGB888Pixel* textureMapRow = textureMap;
@@ -57,14 +59,14 @@ public:
     if(depthAsPoints)
       drawTextureMapAsPoints();
     else
-      drawTextureMapAsTexture();
+      drawTextureMapAsTexture(x1, y1, x2, y2);
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
   }
 
 private:
-  void drawTextureMapAsTexture() {
+  void drawTextureMapAsTexture(float x1, float y1, float x2, float y2) {
     glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -78,16 +80,16 @@ private:
 
     // upper left
     glTexCoord2f(0, 0);
-    glVertex2f(0, 0);
+    glVertex2f(x1, y1);
     // upper right
     glTexCoord2f((float)resolutionX/(float)textureMapWidth, 0);
-    glVertex2f(1, 0);
+    glVertex2f(x2, y1);
     // bottom right
     glTexCoord2f((float)resolutionX/(float)textureMapWidth, (float)resolutionY/(float)textureMapHeight);
-    glVertex2f(1, 1);
+    glVertex2f(x2, y2);
     // bottom left
     glTexCoord2f(0, (float)resolutionY/(float)textureMapHeight);
-    glVertex2f(0, 1);
+    glVertex2f(x1, y2);
 
     glEnd();
     glDisable(GL_TEXTURE_2D);

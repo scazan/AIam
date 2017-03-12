@@ -25,6 +25,10 @@ public:
     orientationEstimationEnabled = false;
     croppingEnabled = false;
     croppedTextureRenderer = new TextureRenderer(CROPPED_WIDTH, CROPPED_HEIGHT, tracker->depthAsPoints);
+    cropX1 = (float)(width - CROPPED_WIDTH) / 2 / width;
+    cropX2 = 1 - cropX1;
+    cropY1 = (float)(height - CROPPED_HEIGHT) / 2 / height;
+    cropY2 = 1 - cropY1;
   }
 
   void processDepthFrame(Mat& depthFrame) {
@@ -95,14 +99,14 @@ public:
     if(croppingEnabled) {
       for (vector<Mat>::iterator i = croppedBlobImages.begin(); i != croppedBlobImages.end();
 	   i++) {
-	croppedTextureRenderer->drawCvImage(*i);
+	croppedTextureRenderer->drawCvImage(*i, cropX1, cropY1, cropX2, cropY2);
       }
     }
     else {
       Scalar color = Scalar(1, 0, 0);
       for (vector<Mat>::iterator i = blobImages.begin(); i != blobImages.end();
 	   i++) {
-	tracker->getTextureRenderer()->drawCvImage(*i, color);
+	tracker->getTextureRenderer()->drawCvImage(*i, 0, 0, 1, 1, color);
       }
     }
   }
@@ -155,4 +159,5 @@ private:
   bool orientationEstimationEnabled;
   bool croppingEnabled;
   TextureRenderer *croppedTextureRenderer;
+  float cropX1, cropY1, cropX2, cropY2;
 };
