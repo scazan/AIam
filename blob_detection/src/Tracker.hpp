@@ -3,6 +3,7 @@
 
 #include "OpenNI.h"
 #include <opencv2/imgproc/imgproc.hpp>
+#include "TextureRenderer.hpp"
 
 #define MAX_DEPTH 10000
 
@@ -40,7 +41,8 @@ public:
   int getResolutionX() { return resolutionX; }
   int getResolutionY() { return resolutionY; }
   const WorldRange& getWorldRange() { return worldRange; }
-  void drawCvImage(const Mat &image, const Scalar &color=Scalar(1,1,1));
+  TextureRenderer* getTextureRenderer() { return textureRenderer; }
+  bool depthAsPoints;
 
 private:
   void processOniDepthFrame();
@@ -54,8 +56,6 @@ private:
   static void glutDisplay();
   static void glutKeyboard(unsigned char key, int x, int y);
   void drawDepthFrame();
-  void drawTextureMapAsTexture();
-  void drawTextureMapAsPoints();
   void calculateWorldRange();
 
   static Tracker* self;
@@ -66,10 +66,7 @@ private:
   Mat zThresholdedDepthFrame;
   int oniWidth, oniHeight;
   int resolutionX, resolutionY;
-  bool depthAsPoints;
-  openni::RGB888Pixel* textureMap;
-  unsigned int textureMapWidth;
-  unsigned int textureMapHeight;
+  TextureRenderer *textureRenderer;
   uint64_t previousDisplayTime;
   int windowWidth, windowHeight;
   int zThreshold;

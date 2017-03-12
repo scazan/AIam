@@ -11,6 +11,9 @@ using namespace std;
 #define MIN_BLOB_AREA 50000
 #define MAX_BLOB_AREA 1000000
 
+#define CROPPED_WIDTH 400
+#define CROPPED_HEIGHT 400
+
 class BlobDetector: public ProcessingMethod {
 public:
   BlobDetector(Tracker *tracker) :
@@ -20,6 +23,8 @@ public:
     worldArea = worldWidth * worldHeight;
     resolutionArea = width * height;
     orientationEstimationEnabled = false;
+    croppingEnabled = false;
+    croppedTextureRenderer = new TextureRenderer(CROPPED_WIDTH, CROPPED_HEIGHT, tracker->depthAsPoints);
   }
 
   void processDepthFrame(Mat& depthFrame) {
@@ -30,6 +35,7 @@ public:
     filterContours(unfilteredContours);
 
     blobImages.clear();
+    croppedBlobImages.clear();
     for (vector<vector<Point> >::iterator i = contours.begin();
         i != contours.end(); i++) {
       processContour(*i);
@@ -57,6 +63,25 @@ public:
 
     floodFill(blobImage, Point(0, 0), 0);
     blobImages.push_back(blobImage);
+
+    Moments m = moments(contour);
+    int centroidX = (int) (m.m10 / m.m00);
+    int centroidY = (int) (m.m01 / m.m00);
+    int offsetX = width/2 - centroidX;
+    int offsetY = height/2 - centroidY;
+
+    Mat croppedBlobImage(CROPPED_HEIGHT, CROPPED_WIDTH, CV_8UC1, 255);
+    int croppedX, croppedY;
+    for (vector<Point>::const_iterator i = contour.begin(); i != contour.end();
+        i++) {
+      croppedX = i->x + offsetX;
+      croppedY = i->y + offsetY;
+      if(croppedX >= 0 && croppedX < CROPPED_WIDTH && croppedY >= 0 && croppedY < CROPPED_HEIGHT)
+	croppedBlobImage.at < uchar > (croppedY, croppedX) = 0;
+    }
+
+    floodFill(croppedBlobImage, Point(0, 0), 0);
+    croppedBlobImages.push_back(croppedBlobImage);
   }
 
   void render() {
@@ -67,10 +92,18 @@ public:
 	drawEstimatedOrientation(*i);
     }
 
-    Scalar color = Scalar(1, 0, 0);
-    for (vector<Mat>::iterator i = blobImages.begin(); i != blobImages.end();
-        i++) {
-      tracker->drawCvImage(*i, color);
+    if(croppingEnabled) {
+      for (vector<Mat>::iterator i = croppedBlobImages.begin(); i != croppedBlobImages.end();
+	   i++) {
+	croppedTextureRenderer->drawCvImage(*i);
+      }
+    }
+    else {
+      Scalar color = Scalar(1, 0, 0);
+      for (vector<Mat>::iterator i = blobImages.begin(); i != blobImages.end();
+	   i++) {
+	tracker->getTextureRenderer()->drawCvImage(*i, color);
+      }
     }
   }
 
@@ -106,6 +139,10 @@ public:
     case 'o':
       orientationEstimationEnabled = !orientationEstimationEnabled;
       break;
+
+    case 'c':
+      croppingEnabled = !croppingEnabled;
+      break;
     }
   }
 
@@ -114,5 +151,8 @@ private:
   float resolutionArea;
   std::vector<std::vector<Point> > contours;
   vector<Mat> blobImages;
+  vector<Mat> croppedBlobImages;
   bool orientationEstimationEnabled;
+  bool croppingEnabled;
+  TextureRenderer *croppedTextureRenderer;
 };

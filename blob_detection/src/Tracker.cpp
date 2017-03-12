@@ -18,12 +18,8 @@
 
 #define GL_WIN_SIZE_X        640
 #define GL_WIN_SIZE_Y        480
-#define TEXTURE_SIZE        512
 
 #define DEFAULT_DISPLAY_MODE        DISPLAY_MODE_DEPTH
-
-#define MIN_NUM_CHUNKS(data_size, chunk_size)        ((((data_size)-1) / (chunk_size) + 1))
-#define MIN_CHUNKS_SIZE(data_size, chunk_size)        (MIN_NUM_CHUNKS(data_size, chunk_size) * (chunk_size))
 
 bool verbose = false;
 Tracker* Tracker::self = NULL;
@@ -49,13 +45,12 @@ int _checkGlErrors(int line) {
   }
   return numErrors;
 }
-
 Tracker::Tracker() {
   self = this;
 }
 
 Tracker::~Tracker() {
-  delete[] textureMap;
+  delete textureRenderer;
   openni::OpenNI::shutdown();
 }
 
@@ -142,7 +137,7 @@ openni::Status Tracker::init(int argc, char **argv) {
     resolutionY = oniHeight;
 
   calculateWorldRange();
-  textureMap = NULL;
+  textureRenderer = NULL;
   initOpenGL(argc, argv);
   processingEnabled = true;
   processingMethod = new BlobDetector(this);
@@ -237,10 +232,8 @@ void Tracker::display()
   if(processingEnabled)
     processingMethod->processDepthFrame(zThresholdedDepthFrame);
 
-  if(textureMap == NULL) {
-    textureMapWidth = MIN_CHUNKS_SIZE(resolutionX, TEXTURE_SIZE);
-    textureMapHeight = MIN_CHUNKS_SIZE(resolutionY, TEXTURE_SIZE);
-    textureMap = new openni::RGB888Pixel[textureMapWidth * textureMapHeight];
+  if(textureRenderer == NULL) {
+    textureRenderer = new TextureRenderer(resolutionX, resolutionY, depthAsPoints);
   }
 
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -263,110 +256,9 @@ void Tracker::display()
 
 void Tracker::drawDepthFrame() {
   if(displayZThresholding)
-    drawCvImage(zThresholdedDepthFrame);
+    textureRenderer->drawCvImage(zThresholdedDepthFrame);
   else
-    drawCvImage(depthFrame);
-}
-
-void Tracker::drawCvImage(const Mat &image, const Scalar &color) {
-  const uchar *matPtr;
-  unsigned char c;
-  openni::RGB888Pixel* textureMapRow = textureMap;
-  for (int y = 0; y < resolutionY; y++) {
-    matPtr = image.ptr(y);
-    openni::RGB888Pixel* pTex = textureMapRow;
-    for (int x = 0; x < resolutionX; x++, pTex++, matPtr++) {
-      c = *matPtr;
-      pTex->r = c * color[0];
-      pTex->g = c * color[1];
-      pTex->b = c * color[2];
-    }
-    textureMapRow += textureMapWidth;
-  }
-
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_COLOR, GL_DST_COLOR);
-
-  glMatrixMode(GL_PROJECTION);
-  glPushMatrix();
-  glLoadIdentity();
-  glOrtho(0, 1.0, 1.0, 0, -1.0, 1.0);
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-  checkGlErrors();
-
-  if(depthAsPoints)
-    drawTextureMapAsPoints();
-  else
-    drawTextureMapAsTexture();
-
-  glMatrixMode(GL_PROJECTION);
-  glPopMatrix();
-}
-
-void Tracker::drawTextureMapAsTexture() {
-  glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
-  checkGlErrors();
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-  checkGlErrors();
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  checkGlErrors();
-  log("glTexImage2D\n");
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureMapWidth, textureMapHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, textureMap);
-  checkGlErrors();
-  log("glTexImage2D ok\n");
-
-  // Display the OpenGL texture map
-  glColor4f(1,1,1,1);
-
-  glEnable(GL_TEXTURE_2D);
-  checkGlErrors();
-  glBegin(GL_QUADS);
-
-  // upper left
-  glTexCoord2f(0, 0);
-  glVertex2f(0, 0);
-  // upper right
-  glTexCoord2f((float)resolutionX/(float)textureMapWidth, 0);
-  glVertex2f(1, 0);
-  // bottom right
-  glTexCoord2f((float)resolutionX/(float)textureMapWidth, (float)resolutionY/(float)textureMapHeight);
-  glVertex2f(1, 1);
-  // bottom left
-  glTexCoord2f(0, (float)resolutionY/(float)textureMapHeight);
-  glVertex2f(0, 1);
-
-  glEnd();
-  glDisable(GL_TEXTURE_2D);
-  checkGlErrors();
-}
-
-void Tracker::drawTextureMapAsPoints() {
-  float ratioX = (float)resolutionX/(float)textureMapWidth;
-  float ratioY = (float)resolutionY/(float)textureMapHeight;
-
-  glPointSize(1.0);
-  glBegin(GL_POINTS);
-
-  openni::RGB888Pixel* textureMapRow = textureMap;
-  float vx, vy;
-  for(unsigned int y = 0; y < textureMapHeight; y++) {
-    openni::RGB888Pixel* pTex = textureMapRow;
-    vy = (float) y / textureMapHeight / ratioY;
-    for(unsigned int x = 0; x < textureMapWidth; x++) {
-      glColor4f((float)pTex->r / 255,
-		(float)pTex->g / 255,
-		(float)pTex->b / 255,
-		1);
-      vx = (float) x / textureMapWidth / ratioX;
-      glVertex2f(vx, vy);
-      pTex++;
-    }
-    textureMapRow += textureMapWidth;
-  }
-
-  glEnd();
-  checkGlErrors();
+    textureRenderer->drawCvImage(depthFrame);
 }
 
 void Tracker::glutIdle()
