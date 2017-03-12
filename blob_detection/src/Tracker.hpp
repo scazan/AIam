@@ -74,6 +74,7 @@ private:
   ProcessingMethod *processingMethod;
   WorldRange worldRange;
   bool displayZThresholding;
+  bool paused;
 };
 
 

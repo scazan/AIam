@@ -59,6 +59,7 @@ openni::Status Tracker::init(int argc, char **argv) {
   resolutionX = resolutionY = 0;
   depthAsPoints = false;
   zThreshold = 0;
+  paused = false;
 
   openni::Status status = openni::OpenNI::initialize();
   if(status != openni::STATUS_OK) {
@@ -219,18 +220,20 @@ void Tracker::display()
   }
   previousDisplayTime = currentDisplayTime;
 
-  openni::Status status = depthStream.readFrame(&oniDepthFrame);
-  if (status != openni::STATUS_OK) {
-    printf("Couldn't read depth frame:\n%s\n", openni::OpenNI::getExtendedError());
+  if(!paused) {
+    openni::Status status = depthStream.readFrame(&oniDepthFrame);
+    if (status != openni::STATUS_OK) {
+      printf("Couldn't read depth frame:\n%s\n", openni::OpenNI::getExtendedError());
+    }
+
+    if(!oniDepthFrame.isValid())
+      return;
+
+    processOniDepthFrame();
+
+    if(processingEnabled)
+      processingMethod->processDepthFrame(zThresholdedDepthFrame);
   }
-
-  if(!oniDepthFrame.isValid())
-    return;
-
-  processOniDepthFrame();
-
-  if(processingEnabled)
-    processingMethod->processDepthFrame(zThresholdedDepthFrame);
 
   if(textureRenderer == NULL) {
     textureRenderer = new TextureRenderer(resolutionX, resolutionY, depthAsPoints);
@@ -316,6 +319,10 @@ void Tracker::onKey(unsigned char key) {
 
   case 'z':
     displayZThresholding = !displayZThresholding;
+    break;
+
+  case ' ':
+    paused = !paused;
     break;
   }
 
