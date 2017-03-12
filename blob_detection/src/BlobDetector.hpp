@@ -38,7 +38,7 @@ public:
     findContours(binaryImage, unfilteredContours, RETR_LIST, CHAIN_APPROX_NONE);
     filterContours(unfilteredContours);
 
-    blobImages.clear();
+    blobs.clear();
     croppedBlobImages.clear();
     for (vector<vector<Point> >::iterator i = contours.begin();
         i != contours.end(); i++) {
@@ -64,22 +64,24 @@ public:
         i++) {
       blobImage.at < uchar > (i->y, i->x) = 0;
     }
-
     floodFill(blobImage, Point(0, 0), 0);
-    blobImages.push_back(blobImage);
 
+    Blob blob;
+    blob.image = blobImage;
     Moments m = moments(contour);
-    int centroidX = (int) (m.m10 / m.m00);
-    int centroidY = (int) (m.m01 / m.m00);
-    int offsetX = width/2 - centroidX;
-    int offsetY = height/2 - centroidY;
+    blob.centroidX = (int) (m.m10 / m.m00);
+    blob.centroidY = (int) (m.m01 / m.m00);
+    blobs.push_back(blob);
+
+    int offsetX = blob.centroidX - CROPPED_WIDTH/2;
+    int offsetY = blob.centroidY - CROPPED_HEIGHT/2;
 
     Mat croppedBlobImage(CROPPED_HEIGHT, CROPPED_WIDTH, CV_8UC1, 255);
     int croppedX, croppedY;
     for (vector<Point>::const_iterator i = contour.begin(); i != contour.end();
         i++) {
-      croppedX = i->x + offsetX;
-      croppedY = i->y + offsetY;
+      croppedX = i->x - offsetX;
+      croppedY = i->y - offsetY;
       if(croppedX >= 0 && croppedX < CROPPED_WIDTH && croppedY >= 0 && croppedY < CROPPED_HEIGHT)
 	croppedBlobImage.at < uchar > (croppedY, croppedX) = 0;
     }
@@ -89,6 +91,7 @@ public:
   }
 
   void render() {
+    glDisable(GL_BLEND);
     for (vector<vector<Point> >::iterator i = contours.begin();
         i != contours.end(); i++) {
       drawContour(*i);
@@ -96,17 +99,28 @@ public:
 	drawEstimatedOrientation(*i);
     }
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_COLOR, GL_DST_COLOR);
+
+    Scalar color = Scalar(1, 0, 0);
+    for (vector<Blob>::iterator i = blobs.begin(); i != blobs.end();
+	 i++) {
+      tracker->getTextureRenderer()->drawCvImage(i->image, 0, 0, 1, 1, color);
+    }
+
+    glDisable(GL_BLEND);
+    for (vector<Blob>::iterator i = blobs.begin(); i != blobs.end();
+	 i++) {
+      drawCentroid(i->centroidX, i->centroidY);
+    }
+
     if(croppingEnabled) {
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_COLOR, GL_DST_COLOR);
+
       for (vector<Mat>::iterator i = croppedBlobImages.begin(); i != croppedBlobImages.end();
 	   i++) {
 	croppedTextureRenderer->drawCvImage(*i, cropX1, cropY1, cropX2, cropY2);
-      }
-    }
-    else {
-      Scalar color = Scalar(1, 0, 0);
-      for (vector<Mat>::iterator i = blobImages.begin(); i != blobImages.end();
-	   i++) {
-	tracker->getTextureRenderer()->drawCvImage(*i, 0, 0, 1, 1, color);
       }
     }
   }
@@ -138,6 +152,14 @@ public:
     glEnd();
   }
 
+  void drawCentroid(int x, int y) {
+    glColor3f(0, 0, 1);
+    glPointSize(5);
+    glBegin(GL_POINTS);
+    glVertex2i(x, y);
+    glEnd();
+  }
+
   void onKey(unsigned char key) {
     switch(key) {
     case 'o':
@@ -151,10 +173,16 @@ public:
   }
 
 private:
+  class Blob {
+  public:
+    Mat image;
+    int centroidX, centroidY;
+  };
+
   float worldArea;
   float resolutionArea;
   std::vector<std::vector<Point> > contours;
-  vector<Mat> blobImages;
+  vector<Blob> blobs;
   vector<Mat> croppedBlobImages;
   bool orientationEstimationEnabled;
   bool croppingEnabled;

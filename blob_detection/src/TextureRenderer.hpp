@@ -46,9 +46,6 @@ public:
       textureMapRow += textureMapWidth;
     }
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_COLOR, GL_DST_COLOR);
-
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
