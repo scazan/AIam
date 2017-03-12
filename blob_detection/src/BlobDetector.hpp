@@ -19,6 +19,7 @@ public:
     float worldHeight = tracker->getWorldRange().yMax - tracker->getWorldRange().yMin;
     worldArea = worldWidth * worldHeight;
     resolutionArea = width * height;
+    orientationEstimationEnabled = false;
   }
 
   void processDepthFrame(Mat& depthFrame) {
@@ -62,7 +63,8 @@ public:
     for (vector<vector<Point> >::iterator i = contours.begin();
         i != contours.end(); i++) {
       drawContour(*i);
-      drawEstimatedOrientation(*i);
+      if(orientationEstimationEnabled)
+	drawEstimatedOrientation(*i);
     }
 
     Scalar color = Scalar(1, 0, 0);
@@ -100,6 +102,11 @@ public:
   }
 
   void onKey(unsigned char key) {
+    switch(key) {
+    case 'o':
+      orientationEstimationEnabled = !orientationEstimationEnabled;
+      break;
+    }
   }
 
 private:
@@ -107,4 +114,5 @@ private:
   float resolutionArea;
   std::vector<std::vector<Point> > contours;
   vector<Mat> blobImages;
+  bool orientationEstimationEnabled;
 };
