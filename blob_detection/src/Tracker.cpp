@@ -137,6 +137,8 @@ openni::Status Tracker::init(int argc, char **argv) {
   if(resolutionY == 0)
     resolutionY = oniHeight;
 
+  transmitSocket = new UdpTransmitSocket(IpEndpointName(DEFAULT_OSC_HOST, OSC_PORT));
+
   calculateWorldRange();
   textureRenderer = NULL;
   initOpenGL(argc, argv);
