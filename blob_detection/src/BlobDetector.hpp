@@ -76,6 +76,7 @@ public:
     Moments m = moments(contour);
     blob.centroidX = (int) (m.m10 / m.m00);
     blob.centroidY = (int) (m.m01 / m.m00);
+    sendCentroid(blob.centroidX, blob.centroidY);
     blobs.push_back(blob);
 
     if(!isTruncated) {
@@ -167,6 +168,21 @@ public:
     glEnd();
   }
 
+  void sendCentroid(int depthX, int depthY) {
+    int userId = 0;
+    float depthZ = 0;
+    float x, y, z;
+    openni::CoordinateConverter::convertDepthToWorld(tracker->getDepthStream(),
+						     depthX, depthY, tracker->zThreshold,
+						     &x, &y, &z);
+    osc::OutboundPacketStream stream(oscBuffer, OSC_BUFFER_SIZE);
+    stream << osc::BeginBundleImmediate
+	   << osc::BeginMessage("/center") << userId << x << y << z
+	   << osc::EndMessage
+	   << osc::EndBundle;
+    tracker->transmitSocket->Send(stream.Data(), stream.Size());
+  }
+
   void onKey(unsigned char key) {
     switch(key) {
     case 'o':
@@ -200,4 +216,5 @@ private:
   bool displayBlobs;
   TextureRenderer *croppedTextureRenderer;
   float cropX1, cropY1, cropX2, cropY2;
+  char oscBuffer[OSC_BUFFER_SIZE];
 };

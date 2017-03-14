@@ -48,7 +48,10 @@ public:
   int getResolutionY() { return resolutionY; }
   const WorldRange& getWorldRange() { return worldRange; }
   TextureRenderer* getTextureRenderer() { return textureRenderer; }
+  openni::VideoStream& getDepthStream() { return depthStream; }
+  UdpTransmitSocket* transmitSocket;
   bool depthAsPoints;
+  int zThreshold;
 
 private:
   void processOniDepthFrame();
@@ -75,15 +78,12 @@ private:
   TextureRenderer *textureRenderer;
   uint64_t previousDisplayTime;
   int windowWidth, windowHeight;
-  int zThreshold;
   bool processingEnabled;
   ProcessingMethod *processingMethod;
   WorldRange worldRange;
   bool displayDepth;
   bool displayZThresholding;
   bool paused;
-  UdpTransmitSocket* transmitSocket;
-  char oscBuffer[OSC_BUFFER_SIZE];
 };
 
 
