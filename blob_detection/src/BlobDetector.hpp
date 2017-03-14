@@ -26,6 +26,7 @@ public:
     resolutionArea = width * height;
     orientationEstimationEnabled = false;
     recallEnabled = false;
+    displayBlobs = true;
     croppedTextureRenderer = new TextureRenderer(CROPPED_WIDTH, CROPPED_HEIGHT, tracker->depthAsPoints);
     cropX1 = (float)(width - CROPPED_WIDTH) / 2 / width;
     cropX2 = 1 - cropX1;
@@ -97,27 +98,29 @@ public:
   }
 
   void render() {
-    glDisable(GL_BLEND);
-    for (vector<vector<Point> >::iterator i = contours.begin();
-        i != contours.end(); i++) {
-      drawContour(*i);
-      if(orientationEstimationEnabled)
-	drawEstimatedOrientation(*i);
-    }
+    if(displayBlobs) {
+      glDisable(GL_BLEND);
+      for (vector<vector<Point> >::iterator i = contours.begin();
+	   i != contours.end(); i++) {
+	drawContour(*i);
+	if(orientationEstimationEnabled)
+	  drawEstimatedOrientation(*i);
+      }
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_COLOR, GL_DST_COLOR);
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_COLOR, GL_DST_COLOR);
 
-    Scalar color = Scalar(1, 0, 0);
-    for (vector<Blob>::iterator i = blobs.begin(); i != blobs.end();
-	 i++) {
-      tracker->getTextureRenderer()->drawCvImage(i->image, 0, 0, 1, 1, color);
-    }
+      Scalar color = Scalar(1, 0, 0);
+      for (vector<Blob>::iterator i = blobs.begin(); i != blobs.end();
+	   i++) {
+	tracker->getTextureRenderer()->drawCvImage(i->image, 0, 0, 1, 1, color);
+      }
 
-    glDisable(GL_BLEND);
-    for (vector<Blob>::iterator i = blobs.begin(); i != blobs.end();
-	 i++) {
-      drawCentroid(i->centroidX, i->centroidY);
+      glDisable(GL_BLEND);
+      for (vector<Blob>::iterator i = blobs.begin(); i != blobs.end();
+	   i++) {
+	drawCentroid(i->centroidX, i->centroidY);
+      }
     }
 
     if(recallEnabled && observations.size() > 0) {
@@ -173,6 +176,10 @@ public:
     case 'r':
       recallEnabled = !recallEnabled;
       break;
+
+    case 'b':
+      displayBlobs = !displayBlobs;
+      break;
     }
   }
 
@@ -190,6 +197,7 @@ private:
   vector<Mat> observations;
   bool orientationEstimationEnabled;
   bool recallEnabled;
+  bool displayBlobs;
   TextureRenderer *croppedTextureRenderer;
   float cropX1, cropY1, cropX2, cropY2;
 };
