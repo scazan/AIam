@@ -73,6 +73,7 @@ private:
   bool processingEnabled;
   ProcessingMethod *processingMethod;
   WorldRange worldRange;
+  bool displayDepth;
   bool displayZThresholding;
   bool paused;
 };

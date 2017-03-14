@@ -144,6 +144,7 @@ openni::Status Tracker::init(int argc, char **argv) {
   processingMethod = new BlobDetector(this);
   depthFrame.create(resolutionY, resolutionX, CV_8UC1);
   zThresholdedDepthFrame.create(resolutionY, resolutionX, CV_8UC1);
+  displayDepth = true;
   displayZThresholding = true;
 
   return openni::STATUS_OK;
@@ -241,7 +242,8 @@ void Tracker::display()
 
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  drawDepthFrame();
+  if(displayDepth)
+    drawDepthFrame();
 
   if(processingEnabled) {
     glMatrixMode(GL_PROJECTION);
@@ -315,6 +317,10 @@ void Tracker::onKey(unsigned char key) {
   switch(key) {
   case TAB:
     processingEnabled = !processingEnabled;
+    break;
+
+  case 'd':
+    displayDepth = !displayDepth;
     break;
 
   case 'z':
