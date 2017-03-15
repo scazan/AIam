@@ -10,6 +10,7 @@ import cPickle
 from collections import defaultdict
 from bvh import Hierarchy, ScaleInfo, JointDefinition
 from geo import make_translation_matrix
+from numpy import array
 
 CHANNEL_TO_AXIS = {
     "Xrotation": "x",
@@ -111,6 +112,24 @@ class BvhReader(cgkit.bvh.BVHReader):
     def set_pose_from_time(self, pose, t):
         frame_index = self._frame_index(t)
         return self.hierarchy.set_pose_from_frame(pose, self.frames[frame_index])
+
+    def normalize_vector(self, v):
+        return self.normalize_vector_without_translation(
+            array([v[0] - self._scale_info.min_x,
+                   v[1] - self._scale_info.min_y,
+                   v[2] - self._scale_info.min_z]))
+
+    def normalize_vector_without_translation(self, v):
+        return array([
+            v[0] / self._scale_info.scale_factor * 2 - 1,
+            v[1] / self._scale_info.scale_factor * 2 - 1,
+            v[2] / self._scale_info.scale_factor * 2 - 1])
+
+    def skeleton_scale_vector(self, v):
+        return array([
+            (v[0] + 1) / 2 * self._scale_info.scale_factor + self._scale_info.min_x,
+            (v[1] + 1) / 2 * self._scale_info.scale_factor + self._scale_info.min_y,
+            (v[2] + 1) / 2 * self._scale_info.scale_factor + self._scale_info.min_z])
 
     def get_hierarchy(self):
         return self.hierarchy
