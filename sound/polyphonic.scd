@@ -1,66 +1,20 @@
 s.waitForBoot({
 	var startReceiver = {
-		var lastX = 0,
-			lastY = 0,
-			lastZ = 0,
-			maxY = 0,
-			maxX = 0;
-
-		var addEnergy = { | mag |
-			var newEnergy = (~energyX + mag);
-
-			if(newEnergy >= 1, {
-				~energyX = 1;
-			}, {
-				~energyX = newEnergy;
-			});
-		};
-
 		~energyX = 0;
 		~voiceFreqBus = Bus.control(s,1);
 		~voiceAmpBus = Bus.control(s,1);
 		~voiceAmpBus.set(1);
 
-		Tdef(\gravity, {
-			{
-				if(~energyX > 0.01, {
-					~energyX = ~energyX - 0.00027;
-					~voiceFreqBus.set(~energyX**1.15);
-					~voiceAmpBus.set(~energyX**2);
-				}, {
-					~voiceFreqBus.set(0);
-					~voiceAmpBus.set(0);
-				});
-
-				0.001.wait;
-			}.loop;
-		}).play;
-
-
 		OSCdef(\tracker, { | msg |
-			var x = msg[2].asFloat / 1800,
-				y = msg[3].asFloat / 500,
-				z = msg[4].asFloat / 7000;
-
-			var diffX = 0,
-				diffY = 0,
-				diffZ = 0;
-
-			diffX = (lastX - x).abs;
-			diffY = (lastY - y).abs;
-			diffZ = (lastZ - z).abs;
-
-			addEnergy.value(diffX);
-			z = (z-0.5).abs / (1-0.5);
-
-			if(diffX > 0.045, {
-				~synth.set(\vowel, [1,2,3,4,5].choose);
-				~synth2.set(\vowel, [1,2,3,4,5].choose);
+			~energyX = msg[1].asFloat;
+			if(~energyX > 0.01, {
+				~voiceFreqBus.set(~energyX**1.15);
+				~voiceAmpBus.set(~energyX**2);
+			}, {
+				~voiceFreqBus.set(0);
+				~voiceAmpBus.set(0);
 			});
-
-			#lastX, lastY, lastZ = [x, y, z];
-
-		}, path: \center, recvPort: 15002);
+		}, path: \energy, recvPort: 15002);
 
 	~synth = Synth(\voice, [\voiceFreqBus, ~voiceFreqBus, \voiceAmpBus, ~voiceAmpBus]);
 
