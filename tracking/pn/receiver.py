@@ -62,6 +62,11 @@ class BvhViewer(window.Window):
         self._draw_skeleton()
 
     def _draw_skeleton(self):
+        global frame
+        if frame is None:
+            return
+        bvh_reader.hierarchy.set_pose_from_frame(pose, frame)
+        bvh_reader.hierarchy.update_pose_world_positions(pose)
         vertices = pose.get_vertices()
         edges = self.reader.vertices_to_edges(vertices)
         if args.vertex_size > 0:
@@ -129,6 +134,7 @@ def readlines(sock, buffer_size=4096, delim='\n'):
 bvh_reader = BvhReader(args.bvh)
 bvh_reader.read()
 pose = bvh_reader.get_hierarchy().create_pose()
+frame = None
 
 if args.z_up:
     bvh_coordinate_left = 0
@@ -144,13 +150,19 @@ print "connecting..."
 s.connect((args.host, args.port))
 print "ok"
 
+def process_pn_bvh_line(line):
+    values_as_strings = line.split(" ")
+    # print values_as_strings
+    values_as_strings = values_as_strings[2:] # skip ID (?) and name
+    values_as_floats = [float(string)
+                        for string in values_as_strings
+                        if len(string) > 0]
+    return values_as_floats
+
 def receive():
+    global frame
     for line in readlines(s, delim='||'):
-        values = line.split(" ")
-        # print len(values)
-        frame = values[1:] # skip name
-        bvh_reader.hierarchy.set_pose_from_frame(pose, frame)
-        pose.update_pose_offsets_and_angles()
+        frame = process_pn_bvh_line(line)
 
 receiver_thread = threading.Thread(target=receive)
 receiver_thread.daemon = True
