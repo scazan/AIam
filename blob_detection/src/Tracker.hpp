@@ -44,6 +44,7 @@ public:
 
 private:
   void processOniDepthFrame();
+  void performZThresholding();
   void display();
   void onWindowResized(int width, int height);
   void onKey(unsigned char key);
@@ -63,6 +64,7 @@ private:
   openni::VideoStream depthStream;
   openni::VideoFrameRef oniDepthFrame;
   Mat depthFrame;
+  Mat smoothedDepthFrame;
   Mat zThresholdedDepthFrame;
   int oniWidth, oniHeight;
   int resolutionX, resolutionY;

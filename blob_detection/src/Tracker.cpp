@@ -29,65 +29,65 @@ bool verbose = false;
 Tracker* Tracker::self = NULL;
 
 void log(const char *format, ...) {
-	va_list args;
-	if(verbose) {
-		va_start(args, format);
-		vfprintf(stdout, format, args);
-		va_end(args);
-		fflush(stdout);
-	}
+  va_list args;
+  if(verbose) {
+    va_start(args, format);
+    vfprintf(stdout, format, args);
+    va_end(args);
+    fflush(stdout);
+  }
 }
 
 #define checkGlErrors() _checkGlErrors(__LINE__)
 
 int _checkGlErrors(int line) {
-	GLenum err;
-	int numErrors = 0;
-	while ((err = glGetError()) != GL_NO_ERROR) {
-		printf("OpenGL error at line %d: %s\n", line, gluErrorString(err));
-		numErrors++;
-	}
-	return numErrors;
+  GLenum err;
+  int numErrors = 0;
+  while ((err = glGetError()) != GL_NO_ERROR) {
+    printf("OpenGL error at line %d: %s\n", line, gluErrorString(err));
+    numErrors++;
+  }
+  return numErrors;
 }
 
 Tracker::Tracker() {
-	self = this;
+  self = this;
 }
 
 Tracker::~Tracker() {
-	delete[] textureMap;
-	openni::OpenNI::shutdown();
+  delete[] textureMap;
+  openni::OpenNI::shutdown();
 }
 
 openni::Status Tracker::init(int argc, char **argv) {
-	int fps = 30;
-	resolutionX = resolutionY = 0;
-	depthAsPoints = false;
-	zThreshold = 0;
+  int fps = 30;
+  resolutionX = resolutionY = 0;
+  depthAsPoints = false;
+  zThreshold = 0;
 
-	openni::Status status = openni::OpenNI::initialize();
-	if(status != openni::STATUS_OK) {
-		printf("Failed to initialize OpenNI\n%s\n", openni::OpenNI::getExtendedError());
-		return status;
-	}
+  openni::Status status = openni::OpenNI::initialize();
+  if(status != openni::STATUS_OK) {
+    printf("Failed to initialize OpenNI\n%s\n", openni::OpenNI::getExtendedError());
+    return status;
+  }
 
-	const char* deviceUri = openni::ANY_DEVICE;
-	for (int i = 1; i < argc; ++i) {
-		if (strcmp(argv[i], "-device") == 0) {
-			deviceUri = argv[++i];
-		}
+  const char* deviceUri = openni::ANY_DEVICE;
+  for (int i = 1; i < argc; ++i) {
+    if (strcmp(argv[i], "-device") == 0) {
+      deviceUri = argv[++i];
+    }
 
-		else if(strcmp(argv[i], "-verbose") == 0) {
-			verbose = true;
-		}
+    else if(strcmp(argv[i], "-verbose") == 0) {
+      verbose = true;
+    }
 
-		else if(strcmp(argv[i], "-depth-as-points") == 0) {
-			depthAsPoints = true;
-		}
+    else if(strcmp(argv[i], "-depth-as-points") == 0) {
+      depthAsPoints = true;
+    }
 
-		else if(strcmp(argv[i], "-fps") == 0) {
-			fps = atoi(argv[++i]);
-		}
+    else if(strcmp(argv[i], "-fps") == 0) {
+      fps = atoi(argv[++i]);
+    }
 
     else if(strcmp(argv[i], "-zt") == 0) {
       zThreshold = atoi(argv[++i]);
@@ -101,64 +101,65 @@ openni::Status Tracker::init(int argc, char **argv) {
       resolutionY = atoi(argv[++i]);
     }
 
-		else {
-			printf("failed to parse argument: %s\n", argv[i]);
-			return openni::STATUS_ERROR;
-		}
-	}
+    else {
+      printf("failed to parse argument: %s\n", argv[i]);
+      return openni::STATUS_ERROR;
+    }
+  }
 
-	status = device.open(deviceUri);
-	if(status != openni::STATUS_OK) {
-		printf("Failed to open device\n%s\n", openni::OpenNI::getExtendedError());
-		return status;
-	}
+  status = device.open(deviceUri);
+  if(status != openni::STATUS_OK) {
+    printf("Failed to open device\n%s\n", openni::OpenNI::getExtendedError());
+    return status;
+  }
 
-	status = depthStream.create(device, openni::SENSOR_DEPTH);
-	if (status == openni::STATUS_OK) {
-		if(deviceUri == NULL) {
-			openni::VideoMode depthMode = depthStream.getVideoMode();
-			depthMode.setFps(fps);
-			depthMode.setResolution(640, 480);
-			depthMode.setPixelFormat(openni::PIXEL_FORMAT_DEPTH_1_MM);
-			status = depthStream.setVideoMode(depthMode);
-		}
-		if(status == openni::STATUS_OK){
-			status = depthStream.start();
-			if (status != openni::STATUS_OK) {
-				printf("Couldn't start depth stream:\n%s\n", openni::OpenNI::getExtendedError());
-				depthStream.destroy();
-			}
-		}
-	}
-	else {
-		printf("Couldn't find depth stream:\n%s\n", openni::OpenNI::getExtendedError());
-	}
+  status = depthStream.create(device, openni::SENSOR_DEPTH);
+  if (status == openni::STATUS_OK) {
+    if(deviceUri == NULL) {
+      openni::VideoMode depthMode = depthStream.getVideoMode();
+      depthMode.setFps(fps);
+      depthMode.setResolution(640, 480);
+      depthMode.setPixelFormat(openni::PIXEL_FORMAT_DEPTH_1_MM);
+      status = depthStream.setVideoMode(depthMode);
+    }
+    if(status == openni::STATUS_OK){
+      status = depthStream.start();
+      if (status != openni::STATUS_OK) {
+        printf("Couldn't start depth stream:\n%s\n", openni::OpenNI::getExtendedError());
+        depthStream.destroy();
+      }
+    }
+  }
+  else {
+    printf("Couldn't find depth stream:\n%s\n", openni::OpenNI::getExtendedError());
+  }
 
-	oniWidth = depthStream.getVideoMode().getResolutionX();
-	oniHeight = depthStream.getVideoMode().getResolutionY();
-	if(resolutionX == 0)
-	  resolutionX = oniWidth;
-	if(resolutionY == 0)
-	  resolutionY = oniHeight;
+  oniWidth = depthStream.getVideoMode().getResolutionX();
+  oniHeight = depthStream.getVideoMode().getResolutionY();
+  if(resolutionX == 0)
+    resolutionX = oniWidth;
+  if(resolutionY == 0)
+    resolutionY = oniHeight;
 
-	calculateWorldRange();
-	textureMap = NULL;
-	initOpenGL(argc, argv);
-	processingEnabled = true;
-	processingMethod = new BlobDetector(this);
+  calculateWorldRange();
+  textureMap = NULL;
+  initOpenGL(argc, argv);
+  processingEnabled = true;
+  processingMethod = new BlobDetector(this);
   depthFrame.create(resolutionY, resolutionX, CV_8UC1);
+  smoothedDepthFrame.create(resolutionY, resolutionX, CV_8UC1);
   zThresholdedDepthFrame.create(resolutionY, resolutionX, CV_8UC1);
   displayZThresholding = true;
 
-	return openni::STATUS_OK;
+  return openni::STATUS_OK;
 }
 
 void Tracker::calculateWorldRange() {
   float x1, x2, y1, y2, worldZ;
   openni::CoordinateConverter::convertDepthToWorld(depthStream, 0, 0, zThreshold,
-      &x1, &y1, &worldZ);
+                                                   &x1, &y1, &worldZ);
   openni::CoordinateConverter::convertDepthToWorld(depthStream, oniWidth, oniHeight, zThreshold,
-      &x2, &y2, &worldZ);
+                                                   &x2, &y2, &worldZ);
   worldRange.xMin = MIN(x1, x2);
   worldRange.xMax = MAX(x1, x2);
   worldRange.yMin = MIN(y1, y2);
@@ -166,40 +167,62 @@ void Tracker::calculateWorldRange() {
 }
 
 void Tracker::mainLoop() {
-	previousDisplayTime = 0;
-	glutMainLoop();
+  previousDisplayTime = 0;
+  glutMainLoop();
 }
 
 void Tracker::processOniDepthFrame() {
   const openni::DepthPixel* oniData =
-      (const openni::DepthPixel*) oniDepthFrame.getData();
+    (const openni::DepthPixel*) oniDepthFrame.getData();
   int oniRowSize = oniDepthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
-  uchar depth, zThresholdedDepth;
-  uchar *depthFramePtr, *zThresholdedDepthFramePtr;
-  float worldX, worldY, worldZ;
+  uchar depth;
+  uchar *depthFramePtr;
 
   for (int y = 0; y < resolutionY; ++y) {
     size_t oniY = (size_t) y * oniHeight / resolutionY;
     const openni::DepthPixel* pOniRow = oniData + oniY * oniRowSize;
     depthFramePtr = depthFrame.ptr(y);
+    for (int x = 0; x < resolutionX; ++x) {
+      size_t oniX = (size_t) x * oniWidth / resolutionX;
+      const openni::DepthPixel* pOni = pOniRow + oniX;
+      if (*pOni != 0)
+        depth = (int) (255 * (1 - float(*pOni) / MAX_DEPTH));
+      else
+        depth = 0;
+      *depthFramePtr++ = depth;
+    }
+  }
+}
+
+void Tracker::performZThresholding() {
+  const openni::DepthPixel* oniData =
+    (const openni::DepthPixel*) oniDepthFrame.getData();
+  int oniRowSize = oniDepthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
+  uchar *depthFramePtr, *zThresholdedDepthFramePtr;
+  uchar depth, zThresholdedDepth;
+  float worldX, worldY, worldZ;
+
+  for (int y = 0; y < resolutionY; ++y) {
+    size_t oniY = (size_t) y * oniHeight / resolutionY;
+    const openni::DepthPixel* pOniRow = oniData + oniY * oniRowSize;
     zThresholdedDepthFramePtr = zThresholdedDepthFrame.ptr(y);
+    depthFramePtr = smoothedDepthFrame.ptr(y);
     for (int x = 0; x < resolutionX; ++x) {
       size_t oniX = (size_t) x * oniWidth / resolutionX;
       const openni::DepthPixel* pOni = pOniRow + oniX;
       if (*pOni != 0) {
-        depth = (int) (255 * (1 - float(*pOni) / MAX_DEPTH));
         openni::CoordinateConverter::convertDepthToWorld(depthStream, oniX, oniY, *pOni,
-            &worldX, &worldY, &worldZ);
+                                                         &worldX, &worldY, &worldZ);
         if(zThreshold > 0 && worldZ > zThreshold)
           zThresholdedDepth = 0;
-        else
+        else {
+          depth = *depthFramePtr;
           zThresholdedDepth = depth;
+        }
       }
-      else {
-        depth = 0;
+      else
         zThresholdedDepth = 0;
-      }
-      *depthFramePtr++ = depth;
+      depthFramePtr++;
       *zThresholdedDepthFramePtr++ = zThresholdedDepth;
     }
   }
@@ -207,65 +230,67 @@ void Tracker::processOniDepthFrame() {
 
 void Tracker::onWindowResized(int width, int height)
 {
-	windowWidth = width;
-	windowHeight = height;
-	glViewport(0, 0, windowWidth, windowHeight);
+  windowWidth = width;
+  windowHeight = height;
+  glViewport(0, 0, windowWidth, windowHeight);
 }
 
 void Tracker::display()
 {
-	struct timeval tv;
-	uint64_t currentDisplayTime, timeDiff;
-	gettimeofday(&tv, NULL);
-	currentDisplayTime = (uint64_t) (tv.tv_sec * 1000000 + tv.tv_usec);
-	if(previousDisplayTime != 0) {
-		timeDiff = currentDisplayTime - previousDisplayTime;
-		log("time diff: %ld\n", timeDiff);
-	}
-	previousDisplayTime = currentDisplayTime;
+  struct timeval tv;
+  uint64_t currentDisplayTime, timeDiff;
+  gettimeofday(&tv, NULL);
+  currentDisplayTime = (uint64_t) (tv.tv_sec * 1000000 + tv.tv_usec);
+  if(previousDisplayTime != 0) {
+    timeDiff = currentDisplayTime - previousDisplayTime;
+    log("time diff: %ld\n", timeDiff);
+  }
+  previousDisplayTime = currentDisplayTime;
 
   openni::Status status = depthStream.readFrame(&oniDepthFrame);
   if (status != openni::STATUS_OK) {
     printf("Couldn't read depth frame:\n%s\n", openni::OpenNI::getExtendedError());
   }
 
-	if(!oniDepthFrame.isValid())
-		return;
+  if(!oniDepthFrame.isValid())
+    return;
 
-	processOniDepthFrame();
+  processOniDepthFrame();
+  addWeighted(smoothedDepthFrame, 0.99, depthFrame, 0.01, 0, smoothedDepthFrame);
+  performZThresholding();
 
-	if(processingEnabled)
-		processingMethod->processDepthFrame(zThresholdedDepthFrame);
+  if(processingEnabled)
+    processingMethod->processDepthFrame(zThresholdedDepthFrame);
 
-	if(textureMap == NULL) {
-		textureMapWidth = MIN_CHUNKS_SIZE(resolutionX, TEXTURE_SIZE);
-		textureMapHeight = MIN_CHUNKS_SIZE(resolutionY, TEXTURE_SIZE);
-		textureMap = new openni::RGB888Pixel[textureMapWidth * textureMapHeight];
-	}
+  if(textureMap == NULL) {
+    textureMapWidth = MIN_CHUNKS_SIZE(resolutionX, TEXTURE_SIZE);
+    textureMapHeight = MIN_CHUNKS_SIZE(resolutionY, TEXTURE_SIZE);
+    textureMap = new openni::RGB888Pixel[textureMapWidth * textureMapHeight];
+  }
 
-	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   drawDepthFrame();
 
   if(processingEnabled) {
-	  glMatrixMode(GL_PROJECTION);
-	  glLoadIdentity();
-	  glOrtho(0, resolutionX, resolutionY, 0, -1.0, 1.0);
-	  glMatrixMode(GL_MODELVIEW);
-		processingMethod->render();
-	}
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0, resolutionX, resolutionY, 0, -1.0, 1.0);
+    glMatrixMode(GL_MODELVIEW);
+    processingMethod->render();
+  }
 
-	glutSwapBuffers();
+  glutSwapBuffers();
 
-	checkGlErrors();
-	log("Display done\n");
+  checkGlErrors();
+  log("Display done\n");
 }
 
 void Tracker::drawDepthFrame() {
   if(displayZThresholding)
     drawCvImage(zThresholdedDepthFrame);
   else
-    drawCvImage(depthFrame);
+    drawCvImage(smoothedDepthFrame);
 }
 
 void Tracker::drawCvImage(const Mat &image, const Scalar &color) {
@@ -296,139 +321,139 @@ void Tracker::drawCvImage(const Mat &image, const Scalar &color) {
   checkGlErrors();
 
   if(depthAsPoints)
-		drawTextureMapAsPoints();
-	else
-		drawTextureMapAsTexture();
+    drawTextureMapAsPoints();
+  else
+    drawTextureMapAsTexture();
 
   glMatrixMode(GL_PROJECTION);
   glPopMatrix();
 }
 
 void Tracker::drawTextureMapAsTexture() {
-	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
-	checkGlErrors();
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	checkGlErrors();
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	checkGlErrors();
-	log("glTexImage2D\n");
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureMapWidth, textureMapHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, textureMap);
-	checkGlErrors();
-	log("glTexImage2D ok\n");
+  glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
+  checkGlErrors();
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  checkGlErrors();
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  checkGlErrors();
+  log("glTexImage2D\n");
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureMapWidth, textureMapHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, textureMap);
+  checkGlErrors();
+  log("glTexImage2D ok\n");
 
-	// Display the OpenGL texture map
-	glColor4f(1,1,1,1);
+  // Display the OpenGL texture map
+  glColor4f(1,1,1,1);
 
-	glEnable(GL_TEXTURE_2D);
-	checkGlErrors();
-	glBegin(GL_QUADS);
+  glEnable(GL_TEXTURE_2D);
+  checkGlErrors();
+  glBegin(GL_QUADS);
 
-	// upper left
-	glTexCoord2f(0, 0);
-	glVertex2f(0, 0);
-	// upper right
-	glTexCoord2f((float)resolutionX/(float)textureMapWidth, 0);
-	glVertex2f(1, 0);
-	// bottom right
-	glTexCoord2f((float)resolutionX/(float)textureMapWidth, (float)resolutionY/(float)textureMapHeight);
-	glVertex2f(1, 1);
-	// bottom left
-	glTexCoord2f(0, (float)resolutionY/(float)textureMapHeight);
-	glVertex2f(0, 1);
+  // upper left
+  glTexCoord2f(0, 0);
+  glVertex2f(0, 0);
+  // upper right
+  glTexCoord2f((float)resolutionX/(float)textureMapWidth, 0);
+  glVertex2f(1, 0);
+  // bottom right
+  glTexCoord2f((float)resolutionX/(float)textureMapWidth, (float)resolutionY/(float)textureMapHeight);
+  glVertex2f(1, 1);
+  // bottom left
+  glTexCoord2f(0, (float)resolutionY/(float)textureMapHeight);
+  glVertex2f(0, 1);
 
-	glEnd();
-	glDisable(GL_TEXTURE_2D);
-	checkGlErrors();
+  glEnd();
+  glDisable(GL_TEXTURE_2D);
+  checkGlErrors();
 }
 
 void Tracker::drawTextureMapAsPoints() {
-	float ratioX = (float)resolutionX/(float)textureMapWidth;
-	float ratioY = (float)resolutionY/(float)textureMapHeight;
+  float ratioX = (float)resolutionX/(float)textureMapWidth;
+  float ratioY = (float)resolutionY/(float)textureMapHeight;
 
-	glPointSize(1.0);
-	glBegin(GL_POINTS);
+  glPointSize(1.0);
+  glBegin(GL_POINTS);
 
-	openni::RGB888Pixel* textureMapRow = textureMap;
-	float vx, vy;
-	for(unsigned int y = 0; y < textureMapHeight; y++) {
-		openni::RGB888Pixel* pTex = textureMapRow;
-		vy = (float) y / textureMapHeight / ratioY;
-		for(unsigned int x = 0; x < textureMapWidth; x++) {
-			glColor4f((float)pTex->r / 255,
-					(float)pTex->g / 255,
-					(float)pTex->b / 255,
-					1);
-			vx = (float) x / textureMapWidth / ratioX;
-			glVertex2f(vx, vy);
-			pTex++;
-		}
-		textureMapRow += textureMapWidth;
-	}
+  openni::RGB888Pixel* textureMapRow = textureMap;
+  float vx, vy;
+  for(unsigned int y = 0; y < textureMapHeight; y++) {
+    openni::RGB888Pixel* pTex = textureMapRow;
+    vy = (float) y / textureMapHeight / ratioY;
+    for(unsigned int x = 0; x < textureMapWidth; x++) {
+      glColor4f((float)pTex->r / 255,
+                (float)pTex->g / 255,
+                (float)pTex->b / 255,
+                1);
+      vx = (float) x / textureMapWidth / ratioX;
+      glVertex2f(vx, vy);
+      pTex++;
+    }
+    textureMapRow += textureMapWidth;
+  }
 
-	glEnd();
-	checkGlErrors();
+  glEnd();
+  checkGlErrors();
 }
 
 void Tracker::glutIdle()
 {
-	log("glutIdle\n");
-	glutPostRedisplay();
+  log("glutIdle\n");
+  glutPostRedisplay();
 }
 
 void Tracker::glutReshape(int width, int height) {
-	Tracker::self->onWindowResized(width, height);
+  Tracker::self->onWindowResized(width, height);
 }
 
 void Tracker::glutDisplay() {
-	Tracker::self->display();
+  Tracker::self->display();
 }
 
 void Tracker::glutKeyboard(unsigned char key, int x, int y) {
-	Tracker::self->onKey(key);
+  Tracker::self->onKey(key);
 }
 
 openni::Status Tracker::initOpenGL(int argc, char **argv)
 {
-	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
-	glutInitWindowSize(GL_WIN_SIZE_X, GL_WIN_SIZE_Y);
-	glutCreateWindow ("Tracker");
-	glutSetCursor(GLUT_CURSOR_NONE);
+  glutInit(&argc, argv);
+  glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
+  glutInitWindowSize(GL_WIN_SIZE_X, GL_WIN_SIZE_Y);
+  glutCreateWindow ("Tracker");
+  glutSetCursor(GLUT_CURSOR_NONE);
 
-	initOpenGLHooks();
+  initOpenGLHooks();
 
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_TEXTURE_2D);
+  glDisable(GL_DEPTH_TEST);
+  glEnable(GL_TEXTURE_2D);
 
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_COLOR_ARRAY);
+  glEnableClientState(GL_VERTEX_ARRAY);
+  glDisableClientState(GL_COLOR_ARRAY);
 
-	return openni::STATUS_OK;
+  return openni::STATUS_OK;
 }
 
 void Tracker::initOpenGLHooks()
 {
-	glutKeyboardFunc(glutKeyboard);
-	glutDisplayFunc(glutDisplay);
-	glutIdleFunc(glutIdle);
-	glutReshapeFunc(glutReshape);
+  glutKeyboardFunc(glutKeyboard);
+  glutDisplayFunc(glutDisplay);
+  glutIdleFunc(glutIdle);
+  glutReshapeFunc(glutReshape);
 }
 
 void Tracker::onKey(unsigned char key) {
-	const static unsigned char TAB = 9;
+  const static unsigned char TAB = 9;
 
-	switch(key) {
-	case TAB:
-		processingEnabled = !processingEnabled;
-		break;
+  switch(key) {
+  case TAB:
+    processingEnabled = !processingEnabled;
+    break;
 
-	case 'z':
-	  displayZThresholding = !displayZThresholding;
-	  break;
-	}
+  case 'z':
+    displayZThresholding = !displayZThresholding;
+    break;
+  }
 
-	if(processingEnabled)
-		processingMethod->onKey(key);
+  if(processingEnabled)
+    processingMethod->onKey(key);
 }
 
 ProcessingMethod::ProcessingMethod(Tracker *tracker) {
@@ -438,9 +463,9 @@ ProcessingMethod::ProcessingMethod(Tracker *tracker) {
 }
 
 int main(int argc, char **argv) {
-	Tracker tracker;
-	openni::Status status = tracker.init(argc, argv);
-	if (status != openni::STATUS_OK)
-		return 1;
-	tracker.mainLoop();
+  Tracker tracker;
+  openni::Status status = tracker.init(argc, argv);
+  if (status != openni::STATUS_OK)
+    return 1;
+  tracker.mainLoop();
 }
