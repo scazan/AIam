@@ -64,6 +64,7 @@ openni::Status Tracker::init(int argc, char **argv) {
   resolutionX = resolutionY = 0;
   depthAsPoints = false;
   zThreshold = 0;
+  smoothing = 0;
 
   openni::Status status = openni::OpenNI::initialize();
   if(status != openni::STATUS_OK) {
@@ -99,6 +100,10 @@ openni::Status Tracker::init(int argc, char **argv) {
 
     else if(strcmp(argv[i], "-ry") == 0) {
       resolutionY = atoi(argv[++i]);
+    }
+
+    else if(strcmp(argv[i], "-smoothing") == 0) {
+      smoothing = atof(argv[++i]);
     }
 
     else {
@@ -256,7 +261,7 @@ void Tracker::display()
     return;
 
   processOniDepthFrame();
-  addWeighted(smoothedDepthFrame, 0.99, depthFrame, 0.01, 0, smoothedDepthFrame);
+  addWeighted(smoothedDepthFrame, smoothing, depthFrame, 1 - smoothing, 0, smoothedDepthFrame);
   performZThresholding();
 
   if(processingEnabled)

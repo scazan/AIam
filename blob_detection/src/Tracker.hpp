@@ -79,6 +79,7 @@ private:
   ProcessingMethod *processingMethod;
   WorldRange worldRange;
   bool displayZThresholding;
+  float smoothing;
 };
 
 
