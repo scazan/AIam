@@ -11,7 +11,7 @@ using namespace std;
 #endif
 
 #define MIN_BLOB_AREA 50000
-#define MAX_BLOB_AREA 1000000
+#define MAX_BLOB_AREA 10000000
 
 #define CROPPED_WIDTH 400
 #define CROPPED_HEIGHT 400
@@ -21,8 +21,10 @@ using namespace std;
 #define NUM_SAMPLES_IN_INITIAL_TRAINING 100
 #define INITIAL_NEIGHBOURHOOD_PARAMETER 1.0
 #define INITIAL_LEARNING_PARAMETER 0.03
-#define NORMAL_NEIGHBOURHOOD_PARAMETER 0.1
-#define NORMAL_LEARNING_PARAMETER 0.03
+#define IDLE_NEIGHBOURHOOD_PARAMETER 0.1
+#define IDLE_LEARNING_PARAMETER 0.03
+#define ACTIVE_NEIGHBOURHOOD_PARAMETER 0.01
+#define ACTIVE_LEARNING_PARAMETER 0.1
 
 class BlobDetector: public ProcessingMethod {
 public:
@@ -34,7 +36,7 @@ public:
     resolutionArea = width * height;
     orientationEstimationEnabled = false;
     recallEnabled = false;
-    displayBlobs = true;
+    displayBlobs = false;
     croppedTextureRenderer = new TextureRenderer(CROPPED_WIDTH, CROPPED_HEIGHT, tracker->depthAsPoints);
     cropX1 = (float)(width - CROPPED_WIDTH) / 2 / width;
     cropX2 = 1 - cropX1;
@@ -53,17 +55,33 @@ public:
     numSamples = 0;
   }
 
-  void updateTrainingParameters() {
+  void setActiveTrainingParameters() {
     float neighbourhoodParameter;
     float learningParameter;
     if(numSamples < NUM_SAMPLES_IN_INITIAL_TRAINING) {
       float relativeTime = (float)numSamples / NUM_SAMPLES_IN_INITIAL_TRAINING;
-      neighbourhoodParameter = INITIAL_NEIGHBOURHOOD_PARAMETER + (NORMAL_NEIGHBOURHOOD_PARAMETER - INITIAL_NEIGHBOURHOOD_PARAMETER) * relativeTime;
-      learningParameter = INITIAL_LEARNING_PARAMETER + (NORMAL_LEARNING_PARAMETER - INITIAL_LEARNING_PARAMETER) * relativeTime;
+      neighbourhoodParameter = INITIAL_NEIGHBOURHOOD_PARAMETER + (ACTIVE_NEIGHBOURHOOD_PARAMETER - INITIAL_NEIGHBOURHOOD_PARAMETER) * relativeTime;
+      learningParameter = INITIAL_LEARNING_PARAMETER + (ACTIVE_LEARNING_PARAMETER - INITIAL_LEARNING_PARAMETER) * relativeTime;
     }
     else {
-      neighbourhoodParameter = NORMAL_NEIGHBOURHOOD_PARAMETER;
-      learningParameter = NORMAL_LEARNING_PARAMETER;
+      neighbourhoodParameter = ACTIVE_NEIGHBOURHOOD_PARAMETER;
+      learningParameter = ACTIVE_LEARNING_PARAMETER;
+    }
+    gridMap->getSOM()->setNeighbourhoodParameter(neighbourhoodParameter);
+    gridMap->getSOM()->setLearningParameter(learningParameter);
+  }
+
+  void setIdleTrainingParameters() {
+    float neighbourhoodParameter;
+    float learningParameter;
+    if(numSamples < NUM_SAMPLES_IN_INITIAL_TRAINING) {
+      float relativeTime = (float)numSamples / NUM_SAMPLES_IN_INITIAL_TRAINING;
+      neighbourhoodParameter = INITIAL_NEIGHBOURHOOD_PARAMETER + (IDLE_NEIGHBOURHOOD_PARAMETER - INITIAL_NEIGHBOURHOOD_PARAMETER) * relativeTime;
+      learningParameter = INITIAL_LEARNING_PARAMETER + (IDLE_LEARNING_PARAMETER - INITIAL_LEARNING_PARAMETER) * relativeTime;
+    }
+    else {
+      neighbourhoodParameter = IDLE_NEIGHBOURHOOD_PARAMETER;
+      learningParameter = IDLE_LEARNING_PARAMETER;
     }
     gridMap->getSOM()->setNeighbourhoodParameter(neighbourhoodParameter);
     gridMap->getSOM()->setLearningParameter(learningParameter);
@@ -76,10 +94,17 @@ public:
     findContours(binaryImage, unfilteredContours, RETR_LIST, CHAIN_APPROX_NONE);
     filterContours(unfilteredContours);
 
+    activeBlobs = false;
     blobs.clear();
     for (vector<vector<Point> >::iterator i = contours.begin();
         i != contours.end(); i++) {
       processContour(*i);
+    }
+ 
+    if(!activeBlobs && observations.size() > 0) {
+      setIdleTrainingParameters();
+      int randomObservationIndex = (int) ((float)random() / RAND_MAX * observations.size());
+      trainMap(observations[randomObservationIndex]);
     }
   }
 
@@ -128,6 +153,7 @@ public:
       }
 
       floodFill(croppedBlobImage, Point(0, 0), 0);
+      activeBlobs = true;
       trainMap(croppedBlobImage);
       observations.push_back(croppedBlobImage);
     }
@@ -135,7 +161,7 @@ public:
 
   void trainMap(const Mat &image) {
     convertImageToMapInput(image);
-    updateTrainingParameters();
+    setActiveTrainingParameters();
     gridMap->train(mapInput);
     numSamples++;
   }
@@ -292,4 +318,5 @@ private:
   Mat mapImage;
   SOM::Sample mapInput;
   int numSamples;
+  bool activeBlobs;
 };
