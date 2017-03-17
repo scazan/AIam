@@ -1,4 +1,6 @@
 #include <vector>
+#include "GridMapParameters.hpp"
+#include "GridMap.hpp"
 
 using namespace std;
 
@@ -32,6 +34,12 @@ public:
     cropX2 = 1 - cropX1;
     cropY1 = (float)(height - CROPPED_HEIGHT) / 2 / height;
     cropY2 = 1 - cropY1;
+
+    gridMapParameters.gridWidth = 5;
+    gridMapParameters.gridHeight = 5;
+    gridMap = new GridMap(CROPPED_WIDTH*CROPPED_HEIGHT, gridMapParameters);
+    gridMap->setRandomModelValues();
+    mapImage = Mat(CROPPED_HEIGHT, CROPPED_WIDTH, CV_8UC1, 255);
   }
 
   void processDepthFrame(Mat& depthFrame) {
@@ -98,6 +106,8 @@ public:
   }
 
   void render() {
+    renderMapContents();
+
     if(displayBlobs) {
       glDisable(GL_BLEND);
       for (vector<vector<Point> >::iterator i = contours.begin();
@@ -129,6 +139,35 @@ public:
       int randomObservationIndex = (int) ((float)random() / RAND_MAX * observations.size());
       croppedTextureRenderer->drawCvImage(observations[randomObservationIndex],
 					  cropX1, cropY1, cropX2, cropY2);
+    }
+  }
+
+  void renderMapContents() {
+    const float *mapContent;
+    glDisable(GL_BLEND);
+    for(int y = 0; y < gridMapParameters.gridHeight; y++) {
+      float ty1 = (float)y / (gridMapParameters.gridHeight-1);
+      float ty2 = (float)(y+1) / (gridMapParameters.gridHeight-1);
+      for(int x = 0; x < gridMapParameters.gridWidth; x++) {
+	float tx1 = (float)x / (gridMapParameters.gridWidth-1);
+	float tx2 = (float)(x+1) / (gridMapParameters.gridWidth-1);
+	mapContent = gridMap->getModel(x, y);
+	convertMapContentToImage(mapContent, mapImage);
+	croppedTextureRenderer->drawCvImage(mapImage, tx1, ty1, tx2, ty2);
+      }
+    }
+  }
+
+  void convertMapContentToImage(const float *content, Mat &image) {
+    const float *contentPtr = content;
+    uchar *imagePtr;
+    for(int y = 0; y < image.rows; y++) {
+      imagePtr = image.ptr(y);
+      for(int x = 0; x < image.cols; x++) {
+	*imagePtr = (uchar) (*contentPtr * 255);
+	contentPtr++;
+	imagePtr++;
+      }
     }
   }
 
@@ -200,4 +239,7 @@ private:
   bool displayBlobs;
   TextureRenderer *croppedTextureRenderer;
   float cropX1, cropY1, cropX2, cropY2;
+  GridMapParameters gridMapParameters;
+  GridMap *gridMap;
+  Mat mapImage;
 };

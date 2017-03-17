@@ -18,4 +18,4 @@ env.Append(LIBPATH = os.environ['OPENNI2_REDIST'])
 
 env.Program(
     target='Tracker',
-    source=['build/Tracker.cpp'])
+    source=Glob('build/*.cpp'))
