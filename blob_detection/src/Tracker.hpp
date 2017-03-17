@@ -57,6 +57,10 @@ private:
   static void glutKeyboard(unsigned char key, int x, int y);
   void drawDepthFrame();
   void calculateWorldRange();
+  void setSpeed();
+  void stopSeeking();
+  void disableFastForward();
+  void enableFastForward();
 
   static Tracker* self;
   openni::Device device;
@@ -76,6 +80,9 @@ private:
   bool displayDepth;
   bool displayZThresholding;
   bool paused;
+  bool seekingInRecording;
+  bool fastForwarding;
+  int startFrameIndex;
 };
 
 

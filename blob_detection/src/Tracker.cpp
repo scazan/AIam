@@ -60,6 +60,8 @@ openni::Status Tracker::init(int argc, char **argv) {
   depthAsPoints = false;
   zThreshold = 0;
   paused = false;
+  float startTimeSecs = 0;
+  fastForwarding = false;
 
   openni::Status status = openni::OpenNI::initialize();
   if(status != openni::STATUS_OK) {
@@ -97,6 +99,10 @@ openni::Status Tracker::init(int argc, char **argv) {
       resolutionY = atoi(argv[++i]);
     }
 
+    else if(strcmp(argv[i], "-start") == 0) {
+      startTimeSecs = atof(argv[++i]);
+    }
+
     else {
       printf("failed to parse argument: %s\n", argv[i]);
       return openni::STATUS_ERROR;
@@ -107,6 +113,16 @@ openni::Status Tracker::init(int argc, char **argv) {
   if(status != openni::STATUS_OK) {
     printf("Failed to open device\n%s\n", openni::OpenNI::getExtendedError());
     return status;
+  }
+
+  if(startTimeSecs > 0) {
+    startFrameIndex = (int) (startTimeSecs * fps);
+    printf("Total number of frames: %d\n", device.getPlaybackControl()->getNumberOfFrames(depthStream));
+    printf("Fast-forwarding to frame %d\n", startFrameIndex);
+    seekingInRecording = true;
+  }
+  else {
+    seekingInRecording = false;
   }
 
   status = depthStream.create(device, openni::SENSOR_DEPTH);
@@ -148,6 +164,37 @@ openni::Status Tracker::init(int argc, char **argv) {
   displayZThresholding = true;
 
   return openni::STATUS_OK;
+}
+
+void Tracker::setSpeed() {
+  if(seekingInRecording) {
+    if(fastForwarding && oniDepthFrame.getFrameIndex() >= startFrameIndex)
+      stopSeeking();
+    else if(!fastForwarding)
+      enableFastForward();
+  }
+}
+
+void Tracker::stopSeeking() {
+  printf("Stopping fast-forward after having reached frame %d\n", oniDepthFrame.getFrameIndex());
+  disableFastForward();
+  seekingInRecording = false;
+}
+
+void Tracker::disableFastForward() {
+  printf("resuming normal speed\n");
+  openni::Status status = device.getPlaybackControl()->setSpeed(1.0);
+  if(status != openni::STATUS_OK)
+    printf("setSpeed failed\n");
+  fastForwarding = false;
+}
+
+void Tracker::enableFastForward() {
+  printf("fast-forwarding\n");
+  openni::Status status = device.getPlaybackControl()->setSpeed(100.0);
+  if(status != openni::STATUS_OK)
+    printf("setSpeed failed\n");
+  fastForwarding = true;
 }
 
 void Tracker::calculateWorldRange() {
@@ -226,6 +273,7 @@ void Tracker::display()
     if (status != openni::STATUS_OK) {
       printf("Couldn't read depth frame:\n%s\n", openni::OpenNI::getExtendedError());
     }
+    setSpeed();
 
     if(!oniDepthFrame.isValid())
       return;
