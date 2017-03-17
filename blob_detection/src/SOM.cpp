@@ -183,6 +183,11 @@ void SOM::getActivationPattern(ActivationPattern *activationPattern) const {
   }
 }
 
+void SOM::addNoiseToModels(float amount) {
+  for(vector<Model*>::iterator i = models.begin(); i != models.end(); ++i)
+    (*i)->addNoise(amount);
+}
+
 void SOM::writeModelData(ostream &f) const {
   f << inputSize << endl;
   for(vector<Model*>::const_iterator i = models.begin(); i != models.end(); ++i)
@@ -258,6 +263,18 @@ void SOM::Model::updateNeighbourList() {
       neighbours.push_back(neighbour);
     }
     neighbourhoodParameter = parent->neighbourhoodParameter;
+  }
+}
+
+void SOM::Model::addNoise(float amount) {
+  float *valuePtr = values;
+  for(uint k = 0; k < inputSize; k++) {
+    *valuePtr += randomInRange(-amount, amount);
+    if(*valuePtr < 0)
+      *valuePtr = 0;
+    else if(*valuePtr > 1)
+      *valuePtr = 1;
+    valuePtr++;
   }
 }
 

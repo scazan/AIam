@@ -18,12 +18,12 @@ using namespace std;
 
 #define TRUNCATE_THRESHOLD 10
 
-#define NUM_SAMPLES_IN_INITIAL_TRAINING 100
+#define NUM_SAMPLES_IN_INITIAL_TRAINING 30
 #define INITIAL_NEIGHBOURHOOD_PARAMETER 1.0
 #define INITIAL_LEARNING_PARAMETER 0.03
 #define IDLE_NEIGHBOURHOOD_PARAMETER 0.1
 #define IDLE_LEARNING_PARAMETER 0.03
-#define ACTIVE_NEIGHBOURHOOD_PARAMETER 0.01
+#define ACTIVE_NEIGHBOURHOOD_PARAMETER 0.03
 #define ACTIVE_LEARNING_PARAMETER 0.1
 
 class BlobDetector: public ProcessingMethod {
@@ -52,12 +52,13 @@ public:
     mapImage = Mat(CROPPED_HEIGHT, CROPPED_WIDTH, CV_8UC1, 255);
     for(int i=0; i<CROPPED_WIDTH*CROPPED_HEIGHT; i++)
       mapInput.push_back(0);
-    numSamples = 0;
+    state = IDLE;
   }
 
   void setActiveTrainingParameters() {
     float neighbourhoodParameter;
     float learningParameter;
+    int numSamples = observations.size();
     if(numSamples < NUM_SAMPLES_IN_INITIAL_TRAINING) {
       float relativeTime = (float)numSamples / NUM_SAMPLES_IN_INITIAL_TRAINING;
       neighbourhoodParameter = INITIAL_NEIGHBOURHOOD_PARAMETER + (ACTIVE_NEIGHBOURHOOD_PARAMETER - INITIAL_NEIGHBOURHOOD_PARAMETER) * relativeTime;
@@ -74,6 +75,7 @@ public:
   void setIdleTrainingParameters() {
     float neighbourhoodParameter;
     float learningParameter;
+    int numSamples = observations.size();
     if(numSamples < NUM_SAMPLES_IN_INITIAL_TRAINING) {
       float relativeTime = (float)numSamples / NUM_SAMPLES_IN_INITIAL_TRAINING;
       neighbourhoodParameter = INITIAL_NEIGHBOURHOOD_PARAMETER + (IDLE_NEIGHBOURHOOD_PARAMETER - INITIAL_NEIGHBOURHOOD_PARAMETER) * relativeTime;
@@ -101,10 +103,33 @@ public:
       processContour(*i);
     }
  
+    updateState();
+
     if(!activeBlobs && observations.size() > 0) {
       setIdleTrainingParameters();
       int randomObservationIndex = (int) ((float)random() / RAND_MAX * observations.size());
       trainMap(observations[randomObservationIndex]);
+    }
+
+    if(state == IDLE) {
+      gridMap->getSOM()->addNoiseToModels(0.5);
+    }
+  }
+
+  void updateState() {
+    switch(state) {
+    case IDLE:
+      if(activeBlobs) {
+	state = ACTIVE;
+      }
+      break;
+
+    case ACTIVE:
+      if(!activeBlobs) {
+	state = IDLE;
+	observations.clear();
+      }
+      break;
     }
   }
 
@@ -138,6 +163,7 @@ public:
     blob.centroidY = (int) (m.m01 / m.m00);
     blobs.push_back(blob);
 
+    isTruncated = false; // TODO: enable flag for this
     if(!isTruncated) {
       int offsetX = blob.centroidX - CROPPED_WIDTH/2;
       int offsetY = blob.centroidY - CROPPED_HEIGHT/2;
@@ -163,7 +189,6 @@ public:
     convertImageToMapInput(image);
     setActiveTrainingParameters();
     gridMap->train(mapInput);
-    numSamples++;
   }
 
   void convertImageToMapInput(const Mat &image) {
@@ -297,6 +322,8 @@ public:
   }
 
 private:
+  enum State { IDLE, ACTIVE };
+
   class Blob {
   public:
     Mat image;
@@ -319,4 +346,5 @@ private:
   SOM::Sample mapInput;
   int numSamples;
   bool activeBlobs;
+  State state;
 };

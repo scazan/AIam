@@ -31,6 +31,7 @@ public:
   void setModel(uint modelIndex, const Sample &);
   void setAllModels(const Sample &);
   void setRandomModelValues(float min = 0, float max = 1);
+  void addNoiseToModels(float amount);
   void writeModelData(std::ostream &) const;
 
 protected:
@@ -52,6 +53,7 @@ protected:
     void setRandomValues(float min, float max);
     void updateNeighbourList();
     const float* getValues() { return values; }
+    void addNoise(float amount);
     void writeData(std::ostream &) const;
   private:
     const SOM *parent;
