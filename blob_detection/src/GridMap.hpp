@@ -10,6 +10,7 @@ public:
   void setRandomModelValues();
   const float* getModel(unsigned int x, unsigned int y) const;
   void train(const SOM::Sample &);
+  SOM *getSOM() { return som; }
 
 protected:
   GridMapParameters gridMapParameters;

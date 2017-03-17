@@ -11,8 +11,6 @@ GridMap::GridMap(int _inputSize, const GridMapParameters &_gridMapParameters) {
   createSom();
   createSomInput();
   createSomOutput();
-  som->setNeighbourhoodParameter(gridMapParameters.neighbourhoodParameter);
-  som->setLearningParameter(gridMapParameters.learningParameter);
 }
 
 void GridMap::setRandomModelValues() {

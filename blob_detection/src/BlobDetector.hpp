@@ -18,6 +18,12 @@ using namespace std;
 
 #define TRUNCATE_THRESHOLD 10
 
+#define NUM_SAMPLES_IN_INITIAL_TRAINING 100
+#define INITIAL_NEIGHBOURHOOD_PARAMETER 1.0
+#define INITIAL_LEARNING_PARAMETER 0.03
+#define NORMAL_NEIGHBOURHOOD_PARAMETER 0.1
+#define NORMAL_LEARNING_PARAMETER 0.03
+
 class BlobDetector: public ProcessingMethod {
 public:
   BlobDetector(Tracker *tracker) :
@@ -44,6 +50,23 @@ public:
     mapImage = Mat(CROPPED_HEIGHT, CROPPED_WIDTH, CV_8UC1, 255);
     for(int i=0; i<CROPPED_WIDTH*CROPPED_HEIGHT; i++)
       mapInput.push_back(0);
+    numSamples = 0;
+  }
+
+  void updateTrainingParameters() {
+    float neighbourhoodParameter;
+    float learningParameter;
+    if(numSamples < NUM_SAMPLES_IN_INITIAL_TRAINING) {
+      float relativeTime = (float)numSamples / NUM_SAMPLES_IN_INITIAL_TRAINING;
+      neighbourhoodParameter = INITIAL_NEIGHBOURHOOD_PARAMETER + (NORMAL_NEIGHBOURHOOD_PARAMETER - INITIAL_NEIGHBOURHOOD_PARAMETER) * relativeTime;
+      learningParameter = INITIAL_LEARNING_PARAMETER + (NORMAL_LEARNING_PARAMETER - INITIAL_LEARNING_PARAMETER) * relativeTime;
+    }
+    else {
+      neighbourhoodParameter = NORMAL_NEIGHBOURHOOD_PARAMETER;
+      learningParameter = NORMAL_LEARNING_PARAMETER;
+    }
+    gridMap->getSOM()->setNeighbourhoodParameter(neighbourhoodParameter);
+    gridMap->getSOM()->setLearningParameter(learningParameter);
   }
 
   void processDepthFrame(Mat& depthFrame) {
@@ -112,7 +135,9 @@ public:
 
   void trainMap(const Mat &image) {
     convertImageToMapInput(image);
+    updateTrainingParameters();
     gridMap->train(mapInput);
+    numSamples++;
   }
 
   void convertImageToMapInput(const Mat &image) {
@@ -266,4 +291,5 @@ private:
   GridMap *gridMap;
   Mat mapImage;
   SOM::Sample mapInput;
+  int numSamples;
 };
