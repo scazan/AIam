@@ -11,6 +11,8 @@ GridMap::GridMap(int _inputSize, const GridMapParameters &_gridMapParameters) {
   createSom();
   createSomInput();
   createSomOutput();
+  som->setNeighbourhoodParameter(gridMapParameters.neighbourhoodParameter);
+  som->setLearningParameter(gridMapParameters.learningParameter);
 }
 
 void GridMap::setRandomModelValues() {
@@ -34,4 +36,8 @@ void GridMap::createSomOutput() {
 const float* GridMap::getModel(unsigned int x, unsigned int y) const {
   unsigned int nodeId = ((RectGridTopology*) topology)->gridCoordinatesToId(x, y);
   return som->getModel(nodeId);
+}
+
+void GridMap::train(const SOM::Sample &sample) {
+  som->train(sample);
 }

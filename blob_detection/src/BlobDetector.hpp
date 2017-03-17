@@ -35,11 +35,15 @@ public:
     cropY1 = (float)(height - CROPPED_HEIGHT) / 2 / height;
     cropY2 = 1 - cropY1;
 
-    gridMapParameters.gridWidth = 5;
-    gridMapParameters.gridHeight = 5;
+    gridMapParameters.gridWidth = 6;
+    gridMapParameters.gridHeight = 4;
+    gridMapParameters.learningParameter = 0.03f;
+    gridMapParameters.neighbourhoodParameter = 0.1f;
     gridMap = new GridMap(CROPPED_WIDTH*CROPPED_HEIGHT, gridMapParameters);
     gridMap->setRandomModelValues();
     mapImage = Mat(CROPPED_HEIGHT, CROPPED_WIDTH, CV_8UC1, 255);
+    for(int i=0; i<CROPPED_WIDTH*CROPPED_HEIGHT; i++)
+      mapInput.push_back(0);
   }
 
   void processDepthFrame(Mat& depthFrame) {
@@ -101,7 +105,26 @@ public:
       }
 
       floodFill(croppedBlobImage, Point(0, 0), 0);
+      trainMap(croppedBlobImage);
       observations.push_back(croppedBlobImage);
+    }
+  }
+
+  void trainMap(const Mat &image) {
+    convertImageToMapInput(image);
+    gridMap->train(mapInput);
+  }
+
+  void convertImageToMapInput(const Mat &image) {
+    SOM::Sample::iterator mapInputPtr = mapInput.begin();
+    const uchar *imagePtr;
+    for(int y = 0; y < image.rows; y++) {
+      imagePtr = image.ptr(y);
+      for(int x = 0; x < image.cols; x++) {
+	*mapInputPtr = (float)*imagePtr / 255;
+	imagePtr++;
+	mapInputPtr++;
+      }
     }
   }
 
@@ -242,4 +265,5 @@ private:
   GridMapParameters gridMapParameters;
   GridMap *gridMap;
   Mat mapImage;
+  SOM::Sample mapInput;
 };

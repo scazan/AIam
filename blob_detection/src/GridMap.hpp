@@ -9,6 +9,7 @@ public:
   GridMap(int inputSize, const GridMapParameters &);
   void setRandomModelValues();
   const float* getModel(unsigned int x, unsigned int y) const;
+  void train(const SOM::Sample &);
 
 protected:
   GridMapParameters gridMapParameters;

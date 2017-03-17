@@ -7,7 +7,7 @@ public:
   int gridWidth;
   int gridHeight;
   float neighbourhoodParameter;
-  float updateParameter;
+  float learningParameter;
 };
 
 #endif // GRIDMAPPARAMETERS_HPP
