@@ -62,6 +62,7 @@ openni::Status Tracker::init(int argc, char **argv) {
   paused = false;
   float startTimeSecs = 0;
   fastForwarding = false;
+  const char *recordingFilename = NULL;
 
   openni::Status status = openni::OpenNI::initialize();
   if(status != openni::STATUS_OK) {
@@ -73,6 +74,10 @@ openni::Status Tracker::init(int argc, char **argv) {
   for (int i = 1; i < argc; ++i) {
     if (strcmp(argv[i], "-device") == 0) {
       deviceUri = argv[++i];
+    }
+
+    else if(strcmp(argv[i], "-record") == 0) {
+      recordingFilename = argv[++i];
     }
 
     else if(strcmp(argv[i], "-verbose") == 0) {
@@ -144,6 +149,18 @@ openni::Status Tracker::init(int argc, char **argv) {
   }
   else {
     printf("Couldn't find depth stream:\n%s\n", openni::OpenNI::getExtendedError());
+  }
+
+
+  if(recordingFilename != NULL) {
+    if(access(recordingFilename, F_OK) == 0) {
+      printf("file '%s' already exists\n", recordingFilename);
+      return openni::STATUS_ERROR;
+    }
+
+    recorder.create(recordingFilename);
+    recorder.attach(depthStream);
+    recorder.start();
   }
 
   oniWidth = depthStream.getVideoMode().getResolutionX();

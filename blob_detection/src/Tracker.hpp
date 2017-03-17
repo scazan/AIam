@@ -64,6 +64,7 @@ private:
 
   static Tracker* self;
   openni::Device device;
+  openni::Recorder recorder;
   openni::VideoStream depthStream;
   openni::VideoFrameRef oniDepthFrame;
   Mat depthFrame;
