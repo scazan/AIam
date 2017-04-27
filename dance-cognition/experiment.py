@@ -14,7 +14,6 @@ from event_listener import EventListener
 from bvh.bvh_writer import BvhWriter
 import glob
 import subprocess
-import yappi
 
 from connectivity.websocket_server import WebsocketServer, ClientHandler
 from connectivity.websocket_client import WebsocketClient
