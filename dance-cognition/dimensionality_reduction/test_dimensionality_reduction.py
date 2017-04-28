@@ -93,20 +93,18 @@ plot_colors = ["#ff8080"] * len(training_data) + ["#ff0000"] * len(training_data
     
 # output_data = sess.run(autoencoder['decoded'], feed_dict={input_layer: training_data})
 
-# plot_data = np.append(training_data, output_data, axis=0)
-# plot_colors = np.append(training_colors, output_colors, axis=0)
 
-# plt.scatter(plot_data[:,0], plot_data[:,1], c=plot_colors, alpha=0.3)
-# plt.show()
+def plot(training_data, output_data, title=None):
+    plot_data = np.append(training_data, output_data, axis=0)
+    plt.clf()
+    plt.scatter(plot_data[:,0], plot_data[:,1], c=plot_colors, alpha=0.3)
+    if title:
+            plt.title(title)
+    plt.show(False)
+    plt.pause(0.0001)
 
 for i in range(1000):
     sess.run(train_step, feed_dict={input_layer: training_data})
     output_data = sess.run(autoencoder['decoded'], feed_dict={input_layer: training_data})
-
-    plot_data = np.append(training_data, output_data, axis=0)
-
-    plt.clf()
-    plt.scatter(plot_data[:,0], plot_data[:,1], c=plot_colors, alpha=0.3)
-    plt.title('batch %d' % i)
-    plt.show(False)
-    plt.pause(0.0001)
+    plot(training_data, output_data, title='batch %d' % i)
+    
