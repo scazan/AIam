@@ -70,9 +70,6 @@ parser = argparse.ArgumentParser()
 KernelPCA.add_parser_arguments(parser)
 args = parser.parse_args()
 
-c1 = np.array([0.1, 0.4])
-c2 = np.array([0.4, 0.1])
-
 training_data = []
 training_colors = []
 output_colors = []
@@ -87,12 +84,11 @@ for j in range(1000):
     output_colors.append(output_color)
 
 
-
-
-pca = KernelPCA(n_components=num_reduced_dimensions, args=args)
-pca.fit(training_data)
+# pca = KernelPCA(n_components=num_reduced_dimensions, args=args)
+# pca.fit(training_data)
 
 training_data = np.array(training_data)
+
 # output_data = pca.inverse_transform(pca.transform(training_data))
 
 # for i in range(5000):
