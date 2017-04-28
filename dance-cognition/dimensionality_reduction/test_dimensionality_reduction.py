@@ -57,24 +57,20 @@ def create(input_layer, layer_sizes):
 		'cost' : tf.sqrt(tf.reduce_mean(tf.square(input_layer-reconstructed_input)))
 	}
 
-sess = tf.Session()
-input_layer = tf.placeholder("float", [None, num_input_dimensions])
-autoencoder = create(input_layer, [num_hidden_nodes, num_reduced_dimensions])
-init = tf.initialize_all_variables()
-sess.run(init)
-train_step = tf.train.GradientDescentOptimizer(0.5).minimize(autoencoder['cost'])
-
-
-    
 parser = argparse.ArgumentParser()
 parser.add_argument("type", choices=["pca", "nn"])
 parser.add_argument("--pca-type", choices=["LinearPCA", "KernelPCA"], default="LinearPCA")
+parser.add_argument("--batch-size", type=int, default=1000)
+parser.add_argument("--num-training-epochs", type=int, default=1000)
+parser.add_argument("--learning-rate", type=float, default=0.5)
+parser.add_argument("--animate", action="store_true")
 KernelPCA.add_parser_arguments(parser)
 args = parser.parse_args()
 
+   
 def create_training_data(num_samples):
         training_data = []
-        for j in range(1000):
+        for j in range(num_samples):
             x = random.uniform(-1, 1)
             y = x*x
             vec = np.array([x, y])
@@ -83,14 +79,13 @@ def create_training_data(num_samples):
         return training_data
 
 def plot(training_data, output_data):
-    plot_data = np.append(training_data, output_data, axis=0)
-    plt.clf()
-    plt.scatter(plot_data[:,0], plot_data[:,1], c=plot_colors, alpha=0.3)
-
-training_data = create_training_data(1000)
-plot_colors = ["#ff8080"] * len(training_data) + ["#ff0000"] * len(training_data)
+        plot_colors = ["#ff8080"] * len(training_data) + ["#ff0000"] * len(output_data)
+        plot_data = np.append(training_data, output_data, axis=0)
+        plt.clf()
+        plt.scatter(plot_data[:,0], plot_data[:,1], c=plot_colors, alpha=0.3)
 
 if args.type == "pca":
+        training_data = create_training_data(args.batch_size)
         if args.pca_type == "KernelPCA":
                 pca = KernelPCA(n_components=num_reduced_dimensions, args=args)
         elif args.pca_type == "LinearPCA":
@@ -101,10 +96,29 @@ if args.type == "pca":
         plt.show()
         
 elif args.type == "nn":
-        for i in range(1000):
-            sess.run(train_step, feed_dict={input_layer: training_data})
-            output_data = sess.run(autoencoder['decoded'], feed_dict={input_layer: training_data})
-            plot(training_data, output_data)
-            plt.title('batch %d' % i)
-            plt.show(False)
-            plt.pause(0.0001)
+        sess = tf.Session()
+        input_layer = tf.placeholder("float", [None, num_input_dimensions])
+        autoencoder = create(input_layer, [num_hidden_nodes, num_reduced_dimensions])
+        init = tf.initialize_all_variables()
+        sess.run(init)
+        train_step = tf.train.GradientDescentOptimizer(args.learning_rate).minimize(autoencoder['cost'])
+
+        if args.animate:
+                for i in range(args.num_training_epochs):
+                        training_data = create_training_data(1)
+                        sess.run(train_step, feed_dict={input_layer: training_data})
+                        test_data = create_training_data(args.batch_size)
+                        output_data = sess.run(autoencoder['decoded'], feed_dict={input_layer: test_data})
+                        plot(test_data, output_data)
+                        plt.title('batch %d' % i)
+                        plt.show(False)
+                        plt.pause(0.0001)
+        else:
+                for i in range(args.num_training_epochs):
+                        training_data = create_training_data(1)
+                        sess.run(train_step, feed_dict={input_layer: training_data})
+                test_data = create_training_data(args.batch_size)
+                output_data = sess.run(autoencoder['decoded'], feed_dict={input_layer: test_data})
+                plot(test_data, output_data)
+                plt.show()
+
