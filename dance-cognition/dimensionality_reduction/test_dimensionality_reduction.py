@@ -7,7 +7,7 @@ import tensorflow as tf
 import math
 
 num_input_dimensions = 2
-num_reduced_dimensions = 2
+num_reduced_dimensions = 1
 num_hidden_nodes = 3
 
 def create(input_layer, layer_sizes):
@@ -62,7 +62,7 @@ input_layer = tf.placeholder("float", [None, num_input_dimensions])
 autoencoder = create(input_layer, [num_hidden_nodes, num_reduced_dimensions])
 init = tf.initialize_all_variables()
 sess.run(init)
-train_step = tf.train.GradientDescentOptimizer(0.05).minimize(autoencoder['cost'])
+train_step = tf.train.GradientDescentOptimizer(0.5).minimize(autoencoder['cost'])
 
 
     
@@ -77,14 +77,11 @@ training_data = []
 training_colors = []
 output_colors = []
 for j in range(1000):
-    if (random.random() > 0.5):
-        vec = c1
-        training_color = "#ff8080"
-        output_color = "#ff0000"
-    else:
-        vec = c2
-        training_color = "#80ff80"
-        output_color = "#00ff00"
+    x = random.uniform(-1, 1)
+    y = x*x
+    vec = np.array([x, y])
+    training_color = "#ff8080"
+    output_color = "#ff0000"
     training_data.append(np.random.normal(vec, 0.1))
     training_colors.append(training_color)
     output_colors.append(output_color)
