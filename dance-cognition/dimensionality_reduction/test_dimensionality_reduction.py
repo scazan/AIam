@@ -67,6 +67,8 @@ train_step = tf.train.GradientDescentOptimizer(0.5).minimize(autoencoder['cost']
 
     
 parser = argparse.ArgumentParser()
+parser.add_argument("type", choices=["pca", "nn"])
+parser.add_argument("--pca-type", choices=["LinearPCA", "KernelPCA"], default="LinearPCA")
 KernelPCA.add_parser_arguments(parser)
 args = parser.parse_args()
 
@@ -80,31 +82,29 @@ def create_training_data(num_samples):
         training_data = np.array(training_data)
         return training_data
 
-training_data = create_training_data(1000)
-plot_colors = ["#ff8080"] * len(training_data) + ["#ff0000"] * len(training_data)
-
-# pca = KernelPCA(n_components=num_reduced_dimensions, args=args)
-# pca.fit(training_data)
-
-# output_data = pca.inverse_transform(pca.transform(training_data))
-
-# for i in range(5000):
-#     sess.run(train_step, feed_dict={input_layer: training_data})
-    
-# output_data = sess.run(autoencoder['decoded'], feed_dict={input_layer: training_data})
-
-
-def plot(training_data, output_data, title=None):
+def plot(training_data, output_data):
     plot_data = np.append(training_data, output_data, axis=0)
     plt.clf()
     plt.scatter(plot_data[:,0], plot_data[:,1], c=plot_colors, alpha=0.3)
-    if title:
-            plt.title(title)
-    plt.show(False)
-    plt.pause(0.0001)
 
-for i in range(1000):
-    sess.run(train_step, feed_dict={input_layer: training_data})
-    output_data = sess.run(autoencoder['decoded'], feed_dict={input_layer: training_data})
-    plot(training_data, output_data, title='batch %d' % i)
-    
+training_data = create_training_data(1000)
+plot_colors = ["#ff8080"] * len(training_data) + ["#ff0000"] * len(training_data)
+
+if args.type == "pca":
+        if args.pca_type == "KernelPCA":
+                pca = KernelPCA(n_components=num_reduced_dimensions, args=args)
+        elif args.pca_type == "LinearPCA":
+                pca = LinearPCA(n_components=num_reduced_dimensions, args=args)
+        pca.fit(training_data)
+        output_data = pca.inverse_transform(pca.transform(training_data))
+        plot(training_data, output_data)
+        plt.show()
+        
+elif args.type == "nn":
+        for i in range(1000):
+            sess.run(train_step, feed_dict={input_layer: training_data})
+            output_data = sess.run(autoencoder['decoded'], feed_dict={input_layer: training_data})
+            plot(training_data, output_data)
+            plt.title('batch %d' % i)
+            plt.show(False)
+            plt.pause(0.0001)
