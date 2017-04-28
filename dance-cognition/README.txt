@@ -1,7 +1,8 @@
 BACKEND REQUIREMENTS
 
-sudo apt-get install python-numpy python-sklearn
+sudo apt-get install python-numpy python-scipy
 sudo pip install tornado==2.4.1
+sudo pip install scikit-learn==0.14
 
 UI REQUIREMENTS
 
@@ -19,20 +20,22 @@ sudo pip-2.7 install PyOpenGL
 sudo pip-2.7 install tornado==2.4.1
 sudo pip-2.7 install ws4py==0.3.2
 sudo pip-2.7 install yappi
-sudo pip-2.7 install scikit-learn==0.14
 sudo pip-2.7 install numpy
 sudo pip-2.7 install scipy
+sudo pip-2.7 install scikit-learn==0.14
 
 # install xquartz from http://www.xquartz.org/ on OS X > 10.7
 
 # for osc
 sudo port install liblo
-pip-2.7 install cython
+sudo pip-2.7 install cython
 # download liblo from http://das.nasophon.de/pyliblo/
+# assuming that it was extracted to Downloads:
+cd ~/Downloads/pyliblo-0.10.0
 python2.7 setup.py build
 sudo python2.7 setup.py install
 # or if path issue with lo/lo.h 
-C_INCLUDE_PATH=/opt/local/include LIBRARY_PATH=/usr/local/lib python2.7 setup.py install
+C_INCLUDE_PATH=/opt/local/include LIBRARY_PATH=/usr/local/lib sudo python2.7 setup.py install
 
 
 PREDICTION WITH BACKPROP NET

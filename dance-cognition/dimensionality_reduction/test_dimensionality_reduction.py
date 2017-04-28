@@ -11,31 +11,30 @@ args = parser.parse_args()
 c1 = np.array([0.1, 0.4])
 c2 = np.array([0.4, 0.1])
 
-batch = []
-colors = []
+training_data = []
+training_colors = []
+output_colors = []
 for j in range(1000):
     if (random.random() > 0.5):
         vec = c1
-        color = "red"
+        training_color = "#ff8080"
+        output_color = "#ff0000"
     else:
         vec = c2
-        color = "green"
-    batch.append(np.random.normal(vec, 0.1))
-    colors.append(color)
+        training_color = "#80ff80"
+        output_color = "#00ff00"
+    training_data.append(np.random.normal(vec, 0.1))
+    training_colors.append(training_color)
+    output_colors.append(output_color)
 
 pca = KernelPCA(n_components=2, args=args)
-pca.fit(batch)
+pca.fit(training_data)
 
-batch = np.array(batch)
-output = pca.inverse_transform(pca.transform(batch))
+training_data = np.array(training_data)
+output_data = pca.inverse_transform(pca.transform(training_data))
 
-while True:
-    plt.clf()
-    plt.scatter(batch[:,0], batch[:,1], c=colors)
-    plt.show(False)
-    plt.pause(0.5)
+plot_data = np.append(training_data, output_data, axis=0)
+plot_colors = np.append(training_colors, output_colors, axis=0)
 
-    plt.clf()
-    plt.scatter(output[:,0], output[:,1], c=colors)
-    plt.show(False)
-    plt.pause(0.5)
+plt.scatter(plot_data[:,0], plot_data[:,1], c=plot_colors, alpha=0.3)
+plt.show()
