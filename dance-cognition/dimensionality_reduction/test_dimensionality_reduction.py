@@ -70,24 +70,21 @@ parser = argparse.ArgumentParser()
 KernelPCA.add_parser_arguments(parser)
 args = parser.parse_args()
 
-training_data = []
-training_colors = []
-output_colors = []
-for j in range(1000):
-    x = random.uniform(-1, 1)
-    y = x*x
-    vec = np.array([x, y])
-    training_color = "#ff8080"
-    output_color = "#ff0000"
-    training_data.append(np.random.normal(vec, 0.1))
-    training_colors.append(training_color)
-    output_colors.append(output_color)
+def create_training_data(num_samples):
+        training_data = []
+        for j in range(1000):
+            x = random.uniform(-1, 1)
+            y = x*x
+            vec = np.array([x, y])
+            training_data.append(np.random.normal(vec, 0.1))
+        training_data = np.array(training_data)
+        return training_data
 
+training_data = create_training_data(1000)
+plot_colors = ["#ff8080"] * len(training_data) + ["#ff0000"] * len(training_data)
 
 # pca = KernelPCA(n_components=num_reduced_dimensions, args=args)
 # pca.fit(training_data)
-
-training_data = np.array(training_data)
 
 # output_data = pca.inverse_transform(pca.transform(training_data))
 
@@ -107,7 +104,6 @@ for i in range(1000):
     output_data = sess.run(autoencoder['decoded'], feed_dict={input_layer: training_data})
 
     plot_data = np.append(training_data, output_data, axis=0)
-    plot_colors = np.append(training_colors, output_colors, axis=0)
 
     plt.clf()
     plt.scatter(plot_data[:,0], plot_data[:,1], c=plot_colors, alpha=0.3)
