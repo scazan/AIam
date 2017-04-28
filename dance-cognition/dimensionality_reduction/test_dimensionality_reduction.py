@@ -10,10 +10,10 @@ num_input_dimensions = 2
 num_reduced_dimensions = 2
 num_hidden_nodes = 3
 
-def create(x, layer_sizes):
+def create(input_layer, layer_sizes):
 
 	# Build the encoding layers
-	next_layer_input = x
+	next_layer_input = input_layer
 
 	encoding_matrices = []
 	for dim in layer_sizes:
@@ -41,25 +41,25 @@ def create(x, layer_sizes):
 	encoding_matrices.reverse()
 
 
-	for i, dim in enumerate(layer_sizes[1:] + [ int(x.get_shape()[1])]) :
+	for i, dim in enumerate(layer_sizes[1:] + [ int(input_layer.get_shape()[1])]) :
 		# we are using tied weights, so just lookup the encoding matrix for this step and transpose it
 		W = tf.transpose(encoding_matrices[i])
 		b = tf.Variable(tf.zeros([dim]))
 		output = tf.nn.tanh(tf.matmul(next_layer_input,W) + b)
 		next_layer_input = output
 
-	# the fully encoded and reconstructed value of x is here:
-	reconstructed_x = next_layer_input
+	# the fully encoded and reconstructed value of input_layer is here:
+	reconstructed_input = next_layer_input
 
 	return {
 		'encoded': encoded_x,
-		'decoded': reconstructed_x,
-		'cost' : tf.sqrt(tf.reduce_mean(tf.square(x-reconstructed_x)))
+		'decoded': reconstructed_input,
+		'cost' : tf.sqrt(tf.reduce_mean(tf.square(input_layer-reconstructed_input)))
 	}
 
 sess = tf.Session()
-x = tf.placeholder("float", [None, num_input_dimensions])
-autoencoder = create(x, [num_hidden_nodes, num_reduced_dimensions])
+input_layer = tf.placeholder("float", [None, num_input_dimensions])
+autoencoder = create(input_layer, [num_hidden_nodes, num_reduced_dimensions])
 init = tf.initialize_all_variables()
 sess.run(init)
 train_step = tf.train.GradientDescentOptimizer(0.05).minimize(autoencoder['cost'])
@@ -99,9 +99,9 @@ training_data = np.array(training_data)
 # output_data = pca.inverse_transform(pca.transform(training_data))
 
 # for i in range(5000):
-#     sess.run(train_step, feed_dict={x: training_data})
+#     sess.run(train_step, feed_dict={input_layer: training_data})
     
-# output_data = sess.run(autoencoder['decoded'], feed_dict={x: training_data})
+# output_data = sess.run(autoencoder['decoded'], feed_dict={input_layer: training_data})
 
 # plot_data = np.append(training_data, output_data, axis=0)
 # plot_colors = np.append(training_colors, output_colors, axis=0)
@@ -110,8 +110,8 @@ training_data = np.array(training_data)
 # plt.show()
 
 for i in range(1000):
-    sess.run(train_step, feed_dict={x: training_data})
-    output_data = sess.run(autoencoder['decoded'], feed_dict={x: training_data})
+    sess.run(train_step, feed_dict={input_layer: training_data})
+    output_data = sess.run(autoencoder['decoded'], feed_dict={input_layer: training_data})
 
     plot_data = np.append(training_data, output_data, axis=0)
     plot_colors = np.append(training_colors, output_colors, axis=0)
