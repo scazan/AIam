@@ -1,6 +1,7 @@
 BACKEND REQUIREMENTS
 
-sudo apt-get install python-numpy python-scipy
+sudo apt-get install python-numpy cython
+sudo pip install scikit-learn==0.14
 sudo pip install tornado==2.4.1
 sudo pip install scikit-learn==0.14
 
@@ -33,9 +34,9 @@ sudo pip-2.7 install cython
 # assuming that it was extracted to Downloads:
 cd ~/Downloads/pyliblo-0.10.0
 python2.7 setup.py build
-sudo python2.7 setup.py install
 # or if path issue with lo/lo.h 
-C_INCLUDE_PATH=/opt/local/include LIBRARY_PATH=/usr/local/lib sudo python2.7 setup.py install
+C_INCLUDE_PATH=/opt/local/include LIBRARY_PATH=/usr/local/lib python2.7 setup.py build
+sudo python2.7 setup.py install
 
 
 PREDICTION WITH BACKPROP NET
