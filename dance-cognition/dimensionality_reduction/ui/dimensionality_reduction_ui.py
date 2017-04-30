@@ -355,7 +355,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
     def _add_reduction_tabs(self):
         self._set_exploration_ranges()
         self._reduction_tabs = QtGui.QTabWidget()
-        if self.parent().student.n_components >= 2:
+        if self.parent().student.num_reduced_dimensions >= 2:
             self._add_map_tab()
         else:
             self.map_tab = None
@@ -372,7 +372,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._reduction_tabs.addTab(self.map_tab, "2D map")
 
     def _set_random_reduction(self):
-        for n in range(self.parent().student.n_components):
+        for n in range(self.parent().student.num_reduced_dimensions):
             self._set_random_reduction_n(
                 n, self.parent().student.reduction_range[n])
 
@@ -391,7 +391,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
 
     def _random_deviation(self):
         return [self._random_deviation_n(n)
-                for n in range(self.parent().student.n_components)]
+                for n in range(self.parent().student.num_reduced_dimensions)]
     
     def _random_deviation_n(self, n):
         reduction_range = self.parent().student.reduction_range[n]
@@ -427,7 +427,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
             self._reduction_tabs.currentWidget().get_normalized_reduction())
         
     def _set_exploration_ranges(self):
-        for n in range(self.parent().student.n_components):
+        for n in range(self.parent().student.num_reduced_dimensions):
             self._set_exploration_range(self.parent().student.reduction_range[n])
 
     def _set_exploration_range(self, reduction_range):

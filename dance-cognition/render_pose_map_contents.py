@@ -86,7 +86,7 @@ class PoseMapRenderer:
         self._render_pose(px, py, stroke_width, opacity)
 
     def _get_normalized_reduction(self, grid_x, grid_y):
-        normalized_reduction = [0.5] * self._experiment.student.n_components
+        normalized_reduction = [0.5] * self._experiment.student.num_reduced_dimensions
         normalized_reduction[0] = float(grid_x) / (self._args.grid_resolution - 1) \
             * self._explored_range + self._explored_min
         normalized_reduction[1] = float(grid_y) / (self._args.grid_resolution - 1) \

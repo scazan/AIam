@@ -2,6 +2,7 @@ from experiment import *
 from dimensionality_reduction_teacher import *
 from component_analysis import ComponentAnalysis
 import pca
+from autoencoder import AutoEncoder
 import random
 import modes
 from parameters import *
@@ -22,6 +23,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--pca-type",
                             choices=["LinearPCA", "KernelPCA"],
                             default="LinearPCA")
+        parser.add_argument("--incremental", action="store_true")
         parser.add_argument("--num-components", "-n", type=int, default=4)
         parser.add_argument("--explore-beyond-observations", type=float, default=0.2)
         parser.add_argument("--mode",
@@ -126,22 +128,34 @@ class DimensionalityReductionExperiment(Experiment):
         self.entity.modified_root_vertical_orientation = behavior.get_root_vertical_orientation()
 
     def add_parser_arguments_second_pass(self, parser, args):
-        pca_class = getattr(pca, args.pca_type)
-        pca_class.add_parser_arguments(parser)
+        if args.incremental:
+            dimensionality_reduction_class = AutoEncoder
+        else:
+            dimensionality_reduction_class = getattr(pca, args.pca_type)
+        dimensionality_reduction_class.add_parser_arguments(parser)
 
     def run(self):
         teacher = Teacher(self.entity, self.args.training_data_frame_rate)
 
+        if self.args.incremental:
+            dimensionality_reduction_class = AutoEncoder
+        else:
+            dimensionality_reduction_class = getattr(pca, self.args.pca_type)
+        num_input_dimensions = len(self.entity.get_value())
+        self.student = dimensionality_reduction_class(
+            num_input_dimensions, self.args.num_components, self.args)
+            
         if self.args.training_data_stats:
             self._training_data = storage.load(self._training_data_path)
             self._print_training_data_stats()
 
         if self.args.train:
-            pca_class = getattr(pca, self.args.pca_type)
-            self.student = pca_class(self.args.num_components, self.args)
             self._training_data = teacher.create_training_data(self._training_duration())
             self._train_model()
-            storage.save([self.student, self.entity.model], self._model_path)
+            print "saving %s..." % self._student_model_path
+            self.student.save(self._student_model_path)
+            print "ok"
+            storage.save(self.entity.model, self._entity_model_path)
             storage.save(self._training_data, self._training_data_path)
 
         elif self.args.analyze_components:
@@ -269,8 +283,10 @@ class DimensionalityReductionExperiment(Experiment):
             DimensionalityReductionToolbar, self.args)
 
     def _load_model(self):
-        self.student, entity_model = storage.load(self._model_path)
-        self.entity.model = entity_model
+        print "loading %s..." % self._student_model_path
+        self.student.load(self._student_model_path)
+        print "ok"
+        entity_model = storage.load(self._entity_model_path)
 
     def _train_model(self):
         if hasattr(self.entity, "probe"):
@@ -280,7 +296,10 @@ class DimensionalityReductionExperiment(Experiment):
             print "ok"
 
         print "training model..."
-        self.student.fit(self._training_data)
+        if self.args.incremental:
+            self.student.train(self._training_data, self.args.num_training_epochs)
+        else:
+            self.student.fit(self._training_data)
         print "ok"
 
         print "probing model..."
@@ -396,7 +415,7 @@ class DimensionalityReductionExperiment(Experiment):
         return features
 
     def should_read_bvh_frames(self):
-        return self.args.train or self.args.mode == modes.FOLLOW
+        return self.args.train or self.args.mode == modes.FOLLOW or self.args.incremental
 
     def _handle_target_root_vertical_orientation(self, event):
         orientation = event.content

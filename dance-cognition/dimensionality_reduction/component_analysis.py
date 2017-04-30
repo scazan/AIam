@@ -7,7 +7,7 @@ class ComponentAnalysis:
         self._num_output_components = num_output_components
 
     def analyze(self):
-        for n in range(self._pca.n_components):
+        for n in range(self._pca.num_reduced_dimensions):
             self._analyze_component(n)
 
     def _analyze_component(self, n, resolution=10, group_by_parameter_category=True):

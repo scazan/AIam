@@ -87,9 +87,9 @@ def plot(training_data, output_data):
 if args.type == "pca":
         training_data = create_training_data(args.batch_size)
         if args.pca_type == "KernelPCA":
-                pca = KernelPCA(n_components=num_reduced_dimensions, args=args)
+                pca = KernelPCA(num_reduced_dimensions=num_reduced_dimensions, args=args)
         elif args.pca_type == "LinearPCA":
-                pca = LinearPCA(n_components=num_reduced_dimensions, args=args)
+                pca = LinearPCA(num_reduced_dimensions=num_reduced_dimensions, args=args)
         pca.fit(training_data)
         output_data = pca.inverse_transform(pca.transform(training_data))
         plot(training_data, output_data)

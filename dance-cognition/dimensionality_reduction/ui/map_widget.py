@@ -39,7 +39,7 @@ class MapTab(ReductionTab, QtGui.QWidget):
     def _add_map_dimension_checkboxes(self):
         layout = QtGui.QHBoxLayout()
         self._map_dimension_checkboxes = []
-        for n in range(self.student.n_components):
+        for n in range(self.student.num_reduced_dimensions):
             checkbox = QtGui.QCheckBox()
             if n in self._dimensions:
                 checkbox.setCheckState(QtCore.Qt.Checked)
@@ -51,7 +51,7 @@ class MapTab(ReductionTab, QtGui.QWidget):
     def _dimensions_changed(self):
         checked_dimensions = filter(
             lambda n: self._map_dimension_checkboxes[n].checkState() == QtCore.Qt.Checked,
-            range(self.student.n_components))
+            range(self.student.num_reduced_dimensions))
         if len(checked_dimensions) == 2:
             self._map_widget.dimensions_changed(checked_dimensions)
             self._map_widget.set_reduction(self._reduction)

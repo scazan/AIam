@@ -115,7 +115,8 @@ class Experiment(EventListener):
             profile_args_string = open(profile_path).read()
             profile_args_strings = profile_args_string.split()
             args, _remaining_args = parser.parse_known_args(profile_args_strings, namespace=args)
-            self._model_path = "%s/%s.model" % (self.profiles_dir, args.profile)
+            self._student_model_path = "%s/%s.model" % (self.profiles_dir, args.profile)
+            self._entity_model_path = "%s/%s.entity.model" % (self.profiles_dir, args.profile)
             self._training_data_path = "%s/%s.data" % (self.profiles_dir, args.profile)
 
         entity_module = imp.load_source("entity", "entities/%s.py" % args.entity)
