@@ -166,8 +166,8 @@ class DimensionalityReductionExperiment(Experiment):
                 parameter_info_getter=self.entity.parameter_info).analyze()
 
         elif self.args.analyze_accuracy:
-            self._load_model()
             self._training_data = storage.load(self._training_data_path)
+            self._train_model()
             self.student.analyze_accuracy(self._training_data)
 
         elif self.args.export_stills:

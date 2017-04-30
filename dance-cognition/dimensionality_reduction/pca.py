@@ -9,7 +9,8 @@ class PCADimensionalityReduction(DimensionalityReduction):
     def load_model(self, path):
         model = joblib.load(path)
         for attribute in self.ATTRIBUTES:
-            setattr(self, attribute, getattr(model, attribute))
+            if hasattr(model, attribute):
+                setattr(self, attribute, getattr(model, attribute))
         
 class LinearPCA(sklearn.decomposition.PCA, PCADimensionalityReduction):
     ATTRIBUTES = ["components_", "explained_variance_", "explained_variance_ratio_",

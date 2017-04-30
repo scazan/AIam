@@ -2,6 +2,10 @@ import numpy
 import cPickle
 
 class DimensionalityReduction:
+    @staticmethod
+    def add_parser_arguments(parser):
+        pass
+    
     def __init__(self, num_input_dimensions, num_reduced_dimensions, args):
         self.num_input_dimensions = num_input_dimensions
         self.num_reduced_dimensions = num_reduced_dimensions
