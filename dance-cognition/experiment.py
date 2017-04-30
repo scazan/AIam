@@ -66,6 +66,9 @@ class BaseEntity:
     def get_last_root_vertical_orientation(self):
         return None
 
+    def get_value_length(self):
+        return len(self.get_value())
+    
 class Experiment(EventListener):
     @staticmethod
     def add_parser_arguments(parser):

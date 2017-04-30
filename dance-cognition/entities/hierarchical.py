@@ -90,6 +90,9 @@ class Entity(BaseEntity):
     def parameter_info(self, index):
         return self._parameter_info[index]
 
+    def get_value_length(self):
+        return len(self._parameter_info)
+
     def get_value(self):
         self.bvh_reader.set_pose_from_time(self.pose, self._t * self.args.bvh_speed)
         return self._joint_to_parameters(self.pose.get_root_joint())

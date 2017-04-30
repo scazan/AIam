@@ -7,9 +7,14 @@ class PCADimensionalityReduction(DimensionalityReduction):
         joblib.dump(self, path)
 
     def load_model(self, path):
-        self = joblib.load(path)
+        model = joblib.load(path)
+        for attribute in self.ATTRIBUTES:
+            setattr(self, attribute, getattr(model, attribute))
         
 class LinearPCA(sklearn.decomposition.PCA, PCADimensionalityReduction):
+    ATTRIBUTES = ["components_", "explained_variance_", "explained_variance_ratio_",
+                  "mean_", "n_components_", "noise_variance_"]
+    
     def __init__(self, num_input_dimensions, num_reduced_dimensions, args):
         DimensionalityReduction.__init__(self, num_input_dimensions, num_reduced_dimensions, args)
         sklearn.decomposition.PCA.__init__(self, n_components=num_reduced_dimensions)
@@ -20,6 +25,8 @@ class LinearPCA(sklearn.decomposition.PCA, PCADimensionalityReduction):
         DimensionalityReduction.analyze_accuracy(self, observations)
 
 class KernelPCA(sklearn.decomposition.KernelPCA, PCADimensionalityReduction):
+    ATTRIBUTES = ["lambdas_", "alphas_", "dual_coef_", "X_transformed_fit_", "X_fit_"]
+    
     @staticmethod
     def add_parser_arguments(parser):
         parser.add_argument("--pca-kernel", default="poly")

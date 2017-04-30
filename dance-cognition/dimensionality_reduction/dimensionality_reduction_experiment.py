@@ -141,7 +141,7 @@ class DimensionalityReductionExperiment(Experiment):
             dimensionality_reduction_class = AutoEncoder
         else:
             dimensionality_reduction_class = getattr(pca, self.args.pca_type)
-        num_input_dimensions = len(self.entity.get_value())
+        num_input_dimensions = self.entity.get_value_length()
         self.student = dimensionality_reduction_class(
             num_input_dimensions, self.args.num_components, self.args)
             
@@ -415,7 +415,7 @@ class DimensionalityReductionExperiment(Experiment):
         return features
 
     def should_read_bvh_frames(self):
-        return self.args.train or self.args.mode == modes.FOLLOW or self.args.incremental
+        return self.args.train or self.args.mode == modes.FOLLOW
 
     def _handle_target_root_vertical_orientation(self, event):
         orientation = event.content
