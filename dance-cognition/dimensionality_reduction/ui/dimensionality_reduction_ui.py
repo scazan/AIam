@@ -162,8 +162,9 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._parameter_sets = {}
         self.tabs = QtGui.QTabWidget()
         self._mode_tabs = {}
-        if self.args.mode == modes.FOLLOW:
+        if self.args.mode in [modes.FOLLOW, modes.LEARN]:
             self._add_follow_tab()
+            self._add_learn_tab()
         self._add_explore_tab()
         self._add_improvise_tab()
         self._add_flaneur_tab()
@@ -509,6 +510,19 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self.flaneur_tab.setLayout(self._flaneur_tab_layout)
         self.tabs.addTab(self.flaneur_tab, "Flaneur")
         self._mode_tabs[modes.FLANEUR] = self.flaneur_tab
+
+    def _add_learn_tab(self):
+        self.learn_tab = ModeTab(modes.LEARN)
+        self._learn_tab_layout = QtGui.QVBoxLayout()
+        self._learn_params = FlaneurParameters()
+        self._learn_params.add_listener(self._send_changed_parameter)
+        self._learn_params_form = self.add_parameter_fields(
+            self._learn_params, self._learn_tab_layout)
+        self._add_parameter_set(self._learn_params, self._learn_params_form)
+        self._learn_tab_layout.addStretch(1)
+        self.learn_tab.setLayout(self._learn_tab_layout)
+        self.tabs.addTab(self.learn_tab, "Learn")
+        self._mode_tabs[modes.LEARN] = self.learn_tab
 
     def _add_parameter_set(self, parameters, form):
         self._parameter_sets[parameters.__class__.__name__] = {

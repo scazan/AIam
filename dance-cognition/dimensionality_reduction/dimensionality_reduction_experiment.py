@@ -32,7 +32,8 @@ class DimensionalityReductionExperiment(Experiment):
                                      modes.EXPLORE,
                                      modes.IMITATE,
                                      modes.FLANEUR,
-                                     modes.HYBRID],
+                                     modes.HYBRID,
+                                     modes.LEARN],
                             default=modes.EXPLORE)
         parser.add_argument("--max-novelty", type=float, default=1.)
         parser.add_argument("--analyze-components", action="store_true")
@@ -334,6 +335,11 @@ class DimensionalityReductionExperiment(Experiment):
             self._update_using_behavior(self._flaneur_behavior)
         elif self._mode == modes.HYBRID:
             self._update_using_behavior(self._hybrid)
+        elif self._mode == modes.LEARN:
+            self.input = self._follow.get_input()
+            self._update_using_behavior(self._flaneur_behavior)
+            if self.args.incremental:
+                self.student.train([self.input], num_training_epochs=1)
         self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
 
         if self.args.enable_features and self.args.show_output_features:
@@ -357,6 +363,9 @@ class DimensionalityReductionExperiment(Experiment):
             self._flaneur_behavior.proceed(self.time_increment)
         elif self._mode == modes.HYBRID:
             self._hybrid.proceed(self.time_increment)
+        elif self._mode == modes.LEARN:
+            self._follow.proceed(self.time_increment)
+            self._flaneur_behavior.proceed(self.time_increment)
 
     def update_cursor(self, cursor):
         Experiment.update_cursor(self, cursor)
@@ -415,7 +424,7 @@ class DimensionalityReductionExperiment(Experiment):
         return features
 
     def should_read_bvh_frames(self):
-        return self.args.train or self.args.mode == modes.FOLLOW
+        return self.args.train or self.args.mode in [modes.FOLLOW, modes.LEARN]
 
     def _handle_target_root_vertical_orientation(self, event):
         orientation = event.content
