@@ -98,7 +98,11 @@ if args.type == "pca":
 elif args.type == "nn":
         sess = tf.Session()
         input_layer = tf.placeholder("float", [None, num_input_dimensions])
-        autoencoder = create(input_layer, [num_hidden_nodes, num_reduced_dimensions])
+        if num_hidden_nodes > 0:
+                layer_sizes = [num_hidden_nodes, num_reduced_dimensions]
+        else:
+                layer_sizes = [num_reduced_dimensions]
+        autoencoder = create(input_layer, layer_sizes)
         init = tf.initialize_all_variables()
         sess.run(init)
         train_step = tf.train.GradientDescentOptimizer(args.learning_rate).minimize(autoencoder['cost'])
@@ -108,9 +112,11 @@ elif args.type == "nn":
                         training_data = create_training_data(1)
                         sess.run(train_step, feed_dict={input_layer: training_data})
                         test_data = create_training_data(args.batch_size)
-                        output_data = sess.run(autoencoder['decoded'], feed_dict={input_layer: test_data})
+                        loss, output_data = sess.run(
+                                [autoencoder['cost'], autoencoder['decoded']],
+                                feed_dict={input_layer: test_data})
                         plot(test_data, output_data)
-                        plt.title('batch %d' % i)
+                        plt.title('batch %d, loss %g' % (i, loss))
                         plt.show(False)
                         plt.pause(0.0001)
         else:
@@ -118,7 +124,10 @@ elif args.type == "nn":
                         training_data = create_training_data(1)
                         sess.run(train_step, feed_dict={input_layer: training_data})
                 test_data = create_training_data(args.batch_size)
-                output_data = sess.run(autoencoder['decoded'], feed_dict={input_layer: test_data})
+                loss, output_data = sess.run(
+                        [autoencoder['cost'], autoencoder['decoded']],
+                        feed_dict={input_layer: test_data})
+                print "loss %g" % loss
                 plot(test_data, output_data)
                 plt.show()
 
