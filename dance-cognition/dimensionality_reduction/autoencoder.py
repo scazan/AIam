@@ -20,17 +20,18 @@ class AutoEncoder(DimensionalityReduction):
         self._sess.run(init)
         self._train_step = tf.train.GradientDescentOptimizer(self.args.learning_rate).minimize(self._cost)
 
-    def train(self, training_data, num_training_epochs):
+    def batch_train(self, training_data, num_training_epochs):
         try:
             for i in range(num_training_epochs):
-                # training_datum = [random.choice(training_data)]
-                # self._sess.run(self._train_step, feed_dict={self._input_layer: training_data})
                 loss, _ = self._sess.run(
                     [self._cost, self._train_step], feed_dict={self._input_layer: training_data})
-                print i, loss
+                print "epoch %d, loss %g" % (i, loss)
         except KeyboardInterrupt:
             print "Training stopped at epoch %d" % i
-            
+
+    def train(self, training_data):
+        self._sess.run(self._train_step, feed_dict={self._input_layer: training_data})
+        
     def _create_layers(self, num_input_dimensions):
         self._input_layer = tf.placeholder("float", [None, num_input_dimensions])
         # Build the encoding layers

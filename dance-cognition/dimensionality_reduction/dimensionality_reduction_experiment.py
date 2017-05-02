@@ -298,7 +298,7 @@ class DimensionalityReductionExperiment(Experiment):
 
         print "training model..."
         if self.args.incremental:
-            self.student.train(self._training_data, self.args.num_training_epochs)
+            self.student.batch_train(self._training_data, self.args.num_training_epochs)
         else:
             self.student.fit(self._training_data)
         print "ok"
@@ -339,7 +339,7 @@ class DimensionalityReductionExperiment(Experiment):
             self.input = self._follow.get_input()
             self._update_using_behavior(self._flaneur_behavior)
             if self.args.incremental:
-                self.student.train([self.input], num_training_epochs=1)
+                self.student.train([self.input])
         self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
 
         if self.args.enable_features and self.args.show_output_features:
