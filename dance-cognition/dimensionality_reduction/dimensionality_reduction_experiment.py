@@ -32,8 +32,7 @@ class DimensionalityReductionExperiment(Experiment):
                                      modes.EXPLORE,
                                      modes.IMITATE,
                                      modes.FLANEUR,
-                                     modes.HYBRID,
-                                     modes.LEARN],
+                                     modes.HYBRID],
                             default=modes.EXPLORE)
         parser.add_argument("--max-novelty", type=float, default=1.)
         parser.add_argument("--analyze-components", action="store_true")
@@ -322,8 +321,12 @@ class DimensionalityReductionExperiment(Experiment):
                 stats[3])
 
     def update(self):
-        if self._mode == modes.FOLLOW:
+        if self._mode == modes.FOLLOW or self.args.incremental:
             self.input = self._follow.get_input()
+            if self.args.incremental:
+                self.student.train([self.input])
+            
+        if self._mode == modes.FOLLOW:
             self._update_using_behavior(self._follow)
         elif self._mode == modes.IMPROVISE:
             self._update_using_behavior(self._improvise)
@@ -335,11 +338,6 @@ class DimensionalityReductionExperiment(Experiment):
             self._update_using_behavior(self._flaneur_behavior)
         elif self._mode == modes.HYBRID:
             self._update_using_behavior(self._hybrid)
-        elif self._mode == modes.LEARN:
-            self.input = self._follow.get_input()
-            self._update_using_behavior(self._flaneur_behavior)
-            if self.args.incremental:
-                self.student.train([self.input])
         self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
 
         if self.args.enable_features and self.args.show_output_features:
@@ -353,9 +351,10 @@ class DimensionalityReductionExperiment(Experiment):
             Experiment.process_and_broadcast_output(self)
 
     def proceed(self):
-        if self._mode == modes.FOLLOW:
+        if self._mode == modes.FOLLOW or self.args.incremental:
             self._follow.proceed(self.time_increment)
-        elif self._mode == modes.IMITATE:
+
+        if self._mode == modes.IMITATE:
             self._imitate.proceed(self.time_increment)
         elif self._mode == modes.IMPROVISE:
             self._improvise.proceed(self.time_increment)
@@ -363,9 +362,6 @@ class DimensionalityReductionExperiment(Experiment):
             self._flaneur_behavior.proceed(self.time_increment)
         elif self._mode == modes.HYBRID:
             self._hybrid.proceed(self.time_increment)
-        elif self._mode == modes.LEARN:
-            self._follow.proceed(self.time_increment)
-            self._flaneur_behavior.proceed(self.time_increment)
 
     def update_cursor(self, cursor):
         Experiment.update_cursor(self, cursor)
@@ -424,7 +420,7 @@ class DimensionalityReductionExperiment(Experiment):
         return features
 
     def should_read_bvh_frames(self):
-        return self.args.train or self.args.mode in [modes.FOLLOW, modes.LEARN]
+        return self.args.train or self.args.mode or self.args.incremental
 
     def _handle_target_root_vertical_orientation(self, event):
         orientation = event.content
