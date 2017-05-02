@@ -47,6 +47,7 @@ class BvhScene(Scene):
             self.view_floor = True
         else:
             self.view_floor = False
+        self.view_input = True
         self._focus = None
         self.processed_input = None
         self.processed_output = None
@@ -109,7 +110,8 @@ class BvhScene(Scene):
             self._parent.send_event(Event(Event.PROCEED_TO_NEXT_FRAME))
 
     def render_io(self):
-        self._draw_io(self.processed_input, self.draw_input, self.args.input_y_offset)
+        if self.view_input:
+            self._draw_io(self.processed_input, self.draw_input, self.args.input_y_offset)
         self._draw_io(self.processed_output, self.draw_output, self.args.output_y_offset)
 
     def _draw_floor(self):
@@ -396,9 +398,10 @@ class MainWindow(Window, EventListener):
         self._view_menu = self._menu_bar.addMenu("View")
         self._add_toolbar_action()
         self._add_fullscreen_action()
-        self._add_follow_action()
-        self._add_focus_action()
+        self._add_follow_output_action()
+        self._add_assumed_focus_action()
         self._add_floor_action()
+        self._add_input_action()
         if self.args.entity == "hierarchical":
             self._add_orientation_action()
 
@@ -435,7 +438,7 @@ class MainWindow(Window, EventListener):
         else:
             self.leave_fullscreen()
 
-    def _add_follow_action(self):
+    def _add_follow_output_action(self):
         self._follow_action = QtGui.QAction('&Follow output', self)
         self._follow_action.setCheckable(True)
         self._follow_action.setChecked(True)
@@ -450,7 +453,7 @@ class MainWindow(Window, EventListener):
     def following_output(self):
         return self._follow_action.isChecked()
 
-    def _add_focus_action(self):
+    def _add_assumed_focus_action(self):
         self.focus_action = QtGui.QAction("Assumed focus", self)
         self.focus_action.setCheckable(True)
         self.focus_action.setShortcut('Ctrl+G')
@@ -466,6 +469,17 @@ class MainWindow(Window, EventListener):
 
     def _toggled_floor(self):
         self._scene.view_floor = self._floor_action.isChecked()
+
+    def _add_input_action(self):
+        self._input_action = QtGui.QAction("Input", self)
+        self._input_action.setCheckable(True)
+        self._input_action.setChecked(self._scene.view_input)
+        self._input_action.setShortcut("i")
+        self._input_action.toggled.connect(self._toggled_input)
+        self._view_menu.addAction(self._input_action)
+
+    def _toggled_input(self):
+        self._scene.view_input = self._input_action.isChecked()
 
     def _add_orientation_action(self):
         self.orientation_action = QtGui.QAction("Orientation", self)
