@@ -15,6 +15,9 @@ config.log
 *.mov
 *.pyc
 
+*.model*
+*.features
+
 AIInput/*.exe
 AIInput/*.dll
 AIInput/assets/params.xml
