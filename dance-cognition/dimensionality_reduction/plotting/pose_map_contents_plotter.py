@@ -51,7 +51,7 @@ class PoseMapContentsPlotter:
             frame_path = "%s.%04d.svg" % (base_path, i)
             self._plot_frame(frame_path)
             entity_value = self._experiment.entity.adapt_value_to_model(
-                self._experiment.entity.get_value())
+                self._experiment.entity.get_random_value())
             self._experiment.student.train([entity_value])
             i += 1
 
