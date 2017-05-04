@@ -2,39 +2,41 @@
 
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/bvh/bvhplay")
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../../bvh/bvhplay")
 
-from dimensionality_reduction.dimensionality_reduction_experiment import *
 from svg_exporter import SvgExporter
+from bvh.bvh_writer import BvhWriter
 import os
 import sklearn.neighbors
+import numpy
 
-parser = ArgumentParser()
-parser.add_argument("--output", "-o", default="pose_map.svg")
-parser.add_argument("--plot-size", type=float, default=500)
-parser.add_argument("--padding", type=float, default=5)
-parser.add_argument("--camera-x", "-cx", type=float, default=0)
-parser.add_argument("--camera-y", "-cy", type=float, default=10)
-parser.add_argument("--camera-z", "-cz", type=float, default=1500)
-parser.add_argument("--grid-resolution", type=int, default=10)
-parser.add_argument("--stroke-width", type=float, default=2.0)
-parser.add_argument("--min-stroke-width", type=float, default=2.0)
-parser.add_argument("--stroke-width-contrast", type=float, default=.5)
-parser.add_argument("--min-opacity", type=float, default=.6)
-parser.add_argument("--opacity-contrast", type=float, default=1)
-parser.add_argument("--background-color")
-
-class PoseMapRenderer:
+class PoseMapContentsPlotter:
     _bvh_tempfile_path = "_temp.bvh"
 
-    def __init__(self, experiment):
+    @staticmethod
+    def add_parser_arguments(parser):
+        parser.add_argument("--output", "-o", default="pose_map.svg")
+        parser.add_argument("--plot-size", type=float, default=500)
+        parser.add_argument("--padding", type=float, default=5)
+        parser.add_argument("--camera-x", "-cx", type=float, default=0)
+        parser.add_argument("--camera-y", "-cy", type=float, default=10)
+        parser.add_argument("--camera-z", "-cz", type=float, default=1500)
+        parser.add_argument("--grid-resolution", type=int, default=10)
+        parser.add_argument("--stroke-width", type=float, default=2.0)
+        parser.add_argument("--min-stroke-width", type=float, default=2.0)
+        parser.add_argument("--stroke-width-contrast", type=float, default=.5)
+        parser.add_argument("--min-opacity", type=float, default=.6)
+        parser.add_argument("--opacity-contrast", type=float, default=1)
+        parser.add_argument("--background-color")
+    
+    def __init__(self, experiment, args):
         self._experiment = experiment
-        self._args = experiment.args
-        self._explored_range = 1.0 + self._args.explore_beyond_observations
+        self._args = args
+        self._explored_range = 1.0 + experiment.args.explore_beyond_observations
         self._explored_min = .5 - self._explored_range/2
         self._explored_max = .5 + self._explored_range/2
 
-    def render(self):
+    def plot(self):
         self._out = open(self._args.output, "w")
         self._outer_cell_size = self._args.plot_size / self._args.grid_resolution
         self._inner_cell_size = self._outer_cell_size - 2 * self._args.padding
@@ -141,11 +143,3 @@ class PoseMapRenderer:
 
     def _write(self, string):
         print >>self._out, string
-
-
-DimensionalityReductionExperiment.add_parser_arguments(parser)
-experiment = DimensionalityReductionExperiment(parser)
-experiment._load_model()
-renderer = PoseMapRenderer(experiment)
-renderer.render()
-

@@ -47,6 +47,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--show-output-features", action="store_true")
         parser.add_argument("--show-all-feature-matches", action="store_true")
         parser.add_argument("--plot-model", action="store_true")
+        parser.add_argument("--plot-pose-map-contents", action="store_true")
         parser.add_argument("--plot-args")
         ImproviseParameters().add_parser_arguments(parser)
         FlaneurParameters().add_parser_arguments(parser)
@@ -183,6 +184,9 @@ class DimensionalityReductionExperiment(Experiment):
 
         elif self.args.plot_model:
             self._plot_model()
+
+        elif self.args.plot_pose_map_contents:
+            self._plot_pose_map_contents()
             
         else:
             self._load_model()
@@ -443,6 +447,19 @@ class DimensionalityReductionExperiment(Experiment):
         args = parser.parse_args(strings)
         self._load_model()
         plotter = ModelPlotter(self, args)
+        plotter.plot()
+
+    def _plot_pose_map_contents(self):
+        from plotting.pose_map_contents_plotter import PoseMapContentsPlotter
+        parser = ArgumentParser()
+        PoseMapContentsPlotter.add_parser_arguments(parser)
+        if self.args.plot_args:
+            strings = self.args.plot_args.split(" ")
+        else:
+            strings = []
+        args = parser.parse_args(strings)
+        self._load_model()
+        plotter = PoseMapContentsPlotter(self, args)
         plotter.plot()
         
 class StillsExporter:
