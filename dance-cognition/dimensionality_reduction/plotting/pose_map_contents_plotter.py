@@ -28,6 +28,7 @@ class PoseMapContentsPlotter:
         parser.add_argument("--min-opacity", type=float, default=.6)
         parser.add_argument("--opacity-contrast", type=float, default=1)
         parser.add_argument("--background-color")
+        parser.add_argument("--animate-learning", action="store_true")
     
     def __init__(self, experiment, args):
         self._experiment = experiment
@@ -37,10 +38,27 @@ class PoseMapContentsPlotter:
         self._explored_max = .5 + self._explored_range/2
 
     def plot(self):
-        self._out = open(self._args.output, "w")
+        self._approximate_model_values()
+        if self._args.animate_learning:
+            self._plot_learning_animation()
+        else:
+            self._plot_frame(self._args.output)
+
+    def _plot_learning_animation(self):
+        base_path = self._args.output[:-len(".svg")]
+        i = 0
+        while True:
+            frame_path = "%s.%04d.svg" % (base_path, i)
+            self._plot_frame(frame_path)
+            entity_value = self._experiment.entity.adapt_value_to_model(
+                self._experiment.entity.get_value())
+            self._experiment.student.train([entity_value])
+            i += 1
+
+    def _plot_frame(self, path):
+        self._out = open(path, "w")
         self._outer_cell_size = self._args.plot_size / self._args.grid_resolution
         self._inner_cell_size = self._outer_cell_size - 2 * self._args.padding
-        self._approximate_model_values()
         self._generate_header()
         for grid_y in xrange(self._args.grid_resolution):
             for grid_x in xrange(self._args.grid_resolution):
