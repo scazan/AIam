@@ -1,26 +1,27 @@
 #!/usr/bin/env python
 
-from dimensionality_reduction.dimensionality_reduction_experiment import *
 from PIL import Image
-
-parser = ArgumentParser()
-parser.add_argument("--output", "-o", default="model.png")
-parser.add_argument("--plot-size", type=int, default=500)
-parser.add_argument("--plot-dimensions", help="e.g. 0,3 (x as 1st dimension and y as 4th)")
-parser.add_argument("--novelty", type=float, default=0)
-parser.add_argument("--radial-resolution", type=int, default=100)
+import numpy
 
 class ModelPlotter:
-    def __init__(self, experiment):
+    @staticmethod
+    def add_parser_arguments(parser):
+        parser.add_argument("--output", "-o", default="model.png")
+        parser.add_argument("--plot-size", type=int, default=500)
+        parser.add_argument("--plot-dimensions", help="e.g. 0,3 (x as 1st dimension and y as 4th)")
+        parser.add_argument("--novelty", type=float, default=0)
+        parser.add_argument("--radial-resolution", type=int, default=100)
+        
+    def __init__(self, experiment, args):
         self._experiment = experiment
-        self._args = experiment.args
+        self._args = args
         self._size = self._args.plot_size
         if self._args.plot_dimensions:
             self._dimensions = [int(string) for string in self._args.plot_dimensions.split(",")]
         else:
             self._dimensions = [0, 1]
 
-        self._explored_range = 1.0 + self._args.explore_beyond_observations
+        self._explored_range = 1.0 + experiment.args.explore_beyond_observations
         self._explored_min = .5 - self._explored_range/2
         self._explored_max = .5 + self._explored_range/2
 
@@ -60,8 +61,8 @@ class ModelPlotter:
 
     def _save_bitmap_to_file(self):
         print "saving bitmap..."
-        image = Image.fromstring("RGB", (self._size, self._size),
-                                 data=self._array_to_string(self._rgb_bitmap))
+        image = Image.frombytes("RGB", (self._size, self._size),
+                                data=self._array_to_string(self._rgb_bitmap))
         image.save(self._args.output)
 
     def _add_observation_region_to_buffer(self, observation):
@@ -93,10 +94,3 @@ class ModelPlotter:
 
     def _array_to_string(self, xs):
         return "".join([chr(int(x)) for x in xs])
-        
-
-DimensionalityReductionExperiment.add_parser_arguments(parser)
-experiment = DimensionalityReductionExperiment(parser)
-experiment._load_model()
-plotter = ModelPlotter(experiment)
-plotter.plot()

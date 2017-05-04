@@ -46,6 +46,8 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--num-feature-matches", type=int, default=1)
         parser.add_argument("--show-output-features", action="store_true")
         parser.add_argument("--show-all-feature-matches", action="store_true")
+        parser.add_argument("--plot-model", action="store_true")
+        parser.add_argument("--plot-args")
         ImproviseParameters().add_parser_arguments(parser)
         FlaneurParameters().add_parser_arguments(parser)
         HybridParameters().add_parser_arguments(parser)
@@ -179,6 +181,9 @@ class DimensionalityReductionExperiment(Experiment):
             self._training_data = storage.load(self._training_data_path)
             self._train_feature_matcher()
 
+        elif self.args.plot_model:
+            self._plot_model()
+            
         else:
             self._load_model()
             if not self.args.ui_only:
@@ -427,6 +432,19 @@ class DimensionalityReductionExperiment(Experiment):
         for behavior in self._behaviors:
             behavior.set_target_root_vertical_orientation(orientation)
 
+    def _plot_model(self):
+        from plotting.model_plotter import ModelPlotter
+        parser = ArgumentParser()
+        ModelPlotter.add_parser_arguments(parser)
+        if self.args.plot_args:
+            strings = self.args.plot_args.split(" ")
+        else:
+            strings = []
+        args = parser.parse_args(strings)
+        self._load_model()
+        plotter = ModelPlotter(self, args)
+        plotter.plot()
+        
 class StillsExporter:
     def __init__(self, experiment, stills_data_path):
         self.experiment = experiment
