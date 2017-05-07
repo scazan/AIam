@@ -186,6 +186,7 @@ class DimensionalityReductionExperiment(Experiment):
             self._plot_model()
 
         elif self.args.plot_pose_map_contents:
+            self._training_data = storage.load(self._training_data_path)
             self._plot_pose_map_contents()
             
         else:
@@ -458,7 +459,6 @@ class DimensionalityReductionExperiment(Experiment):
         else:
             strings = []
         args = parser.parse_args(strings)
-        self._load_model()
         plotter = PoseMapContentsPlotter(self, args)
         plotter.plot()
         

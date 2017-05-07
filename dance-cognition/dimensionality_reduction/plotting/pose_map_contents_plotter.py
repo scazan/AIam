@@ -23,12 +23,14 @@ class PoseMapContentsPlotter:
         parser.add_argument("--camera-z", "-cz", type=float, default=1500)
         parser.add_argument("--grid-resolution", type=int, default=10)
         parser.add_argument("--stroke-width", type=float, default=2.0)
+        parser.add_argument("--reflect-observed-regions", action="store_true")
         parser.add_argument("--min-stroke-width", type=float, default=2.0)
         parser.add_argument("--stroke-width-contrast", type=float, default=.5)
         parser.add_argument("--min-opacity", type=float, default=.6)
         parser.add_argument("--opacity-contrast", type=float, default=1)
         parser.add_argument("--background-color")
         parser.add_argument("--animate-learning", action="store_true")
+        parser.add_argument("--training-epochs-per-frame", type=int, default=1)
     
     def __init__(self, experiment, args):
         self._experiment = experiment
@@ -38,24 +40,33 @@ class PoseMapContentsPlotter:
         self._explored_max = .5 + self._explored_range/2
 
     def plot(self):
-        self._approximate_model_values()
+        if self._experiment.student.num_reduced_dimensions > 2:
+            print "WARNING: model has %d dimensions, but %s only considers the first 2" % \
+                (self._experiment.student.num_reduced_dimensions, self.__class__.__name__)
+        if len(self._experiment.entity._unnormalized_constrainers) > 0:
+            print "WARNING: constrainers applied in entity, but this may not be handled properly by %s " \
+                "since a single pose object is used throughout the grid" % self.__class__.__name__
+
         if self._args.animate_learning:
             self._plot_learning_animation()
         else:
+            self._experiment._load_model()
             self._plot_frame(self._args.output)
 
     def _plot_learning_animation(self):
         base_path = self._args.output[:-len(".svg")]
         i = 0
         while True:
-            frame_path = "%s.%04d.svg" % (base_path, i)
-            self._plot_frame(frame_path)
-            entity_value = self._experiment.entity.adapt_value_to_model(
-                self._experiment.entity.get_random_value())
-            self._experiment.student.train([entity_value])
+            if i % self._args.training_epochs_per_frame == 0:
+                frame_path = "%s.%04d.svg" % (base_path, i)
+                self._experiment.student.probe(self._experiment._training_data)
+                self._plot_frame(frame_path)
+            self._experiment.student.train(self._experiment._training_data)
             i += 1
 
     def _plot_frame(self, path):
+        if self._args.reflect_observed_regions:
+            self._approximate_distances_to_nearest_observation()
         self._out = open(path, "w")
         self._outer_cell_size = self._args.plot_size / self._args.grid_resolution
         self._inner_cell_size = self._outer_cell_size - 2 * self._args.padding
@@ -66,23 +77,24 @@ class PoseMapContentsPlotter:
         self._generate_footer()
         self._out.close()
 
-    def _approximate_model_values(self):
+    def _approximate_distances_to_nearest_observation(self):
         self._nearest_neighbor_classifier = sklearn.neighbors.KNeighborsClassifier(
             n_neighbors=1, weights='uniform')
         self._nearest_neighbor_classifier.fit(
             self._experiment.student.normalized_observed_reductions,
             self._experiment.student.normalized_observed_reductions)
 
-        self._model_values = numpy.zeros((self._args.grid_resolution, self._args.grid_resolution))
+        self._distances_to_nearest_observation = numpy.zeros(
+            (self._args.grid_resolution, self._args.grid_resolution))
 
         for grid_y in xrange(self._args.grid_resolution):
             for grid_x in xrange(self._args.grid_resolution):
                 normalized_reduction = self._get_normalized_reduction(grid_x, grid_y)
-                self._model_values[grid_x, grid_y] = self._distance_to_nearest_observation(
+                self._distances_to_nearest_observation[grid_x, grid_y] = self._distance_to_nearest_observation(
                     normalized_reduction)
 
-        self._model_values -= numpy.amin(self._model_values)
-        self._model_values /= numpy.amax(self._model_values)
+        self._distances_to_nearest_observation -= numpy.amin(self._distances_to_nearest_observation)
+        self._distances_to_nearest_observation /= numpy.amax(self._distances_to_nearest_observation)
 
     def _distance_to_nearest_observation(self, normalized_reduction):
         nearest_observation = self._nearest_neighbor_classifier.predict(normalized_reduction)[0]
@@ -94,23 +106,30 @@ class PoseMapContentsPlotter:
         px = float(grid_x) / self._args.grid_resolution * self._args.plot_size + self._args.padding
         py = float(grid_y) / self._args.grid_resolution * self._args.plot_size + self._args.padding
 
-        stroke_width = self._args.min_stroke_width + (
-            (1 - pow(self._model_values[grid_x, grid_y], self._args.stroke_width_contrast))
-            * (self._args.stroke_width - self._args.min_stroke_width))
+        if self._args.reflect_observed_regions:
+            stroke_width = self._args.min_stroke_width + (
+                (1 - pow(self._distances_to_nearest_observation[grid_x, grid_y],
+                         self._args.stroke_width_contrast))
+                * (self._args.stroke_width - self._args.min_stroke_width))
 
-        opacity = self._args.min_opacity + (
-            (1 - pow(self._model_values[grid_x, grid_y], self._args.opacity_contrast))
-            * (1 - self._args.min_opacity))
-
+            opacity = self._args.min_opacity + (
+                (1 - pow(self._distances_to_nearest_observation[grid_x, grid_y],
+                         self._args.opacity_contrast))
+                * (1 - self._args.min_opacity))
+        else:
+            stroke_width = self._args.stroke_width
+            opacity = 1
+            
         self._get_pose(normalized_reduction)
         self._render_pose(px, py, stroke_width, opacity)
 
     def _get_normalized_reduction(self, grid_x, grid_y):
         normalized_reduction = [0.5] * self._experiment.student.num_reduced_dimensions
-        normalized_reduction[0] = float(grid_x) / (self._args.grid_resolution - 1) \
-            * self._explored_range + self._explored_min
-        normalized_reduction[1] = float(grid_y) / (self._args.grid_resolution - 1) \
-            * self._explored_range + self._explored_min
+        if self._args.grid_resolution > 1:
+            normalized_reduction[0] = float(grid_x) / (self._args.grid_resolution - 1) \
+                                      * self._explored_range + self._explored_min
+            normalized_reduction[1] = float(grid_y) / (self._args.grid_resolution - 1) \
+                                      * self._explored_range + self._explored_min
         return normalized_reduction
         
     def _get_pose(self, normalized_reduction):
