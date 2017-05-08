@@ -19,16 +19,19 @@ CHANNEL_TO_AXIS = {
 }
 
 class BvhReader(cgkit.bvh.BVHReader):
-    def read(self, read_frames=True):
-        if self._cache_exists():
-            self._read(read_frames)
-            self._load_from_cache()
+    def read(self, read_frames=True, use_cache=True):
+        if use_cache:
+            if self._cache_exists():
+                self._read(read_frames)
+                self._load_from_cache()
+            else:
+                self._read(read_frames)
+                self._probe_static_rotations()
+                self._save_to_cache()
+            self._set_static_rotations()
         else:
             self._read(read_frames)
-            self._probe_static_rotations()
             self._probe_vertex_range()
-            self._save_to_cache()
-        self._set_static_rotations()
 
     def _cache_exists(self):
         return os.path.exists(self._cache_filename())

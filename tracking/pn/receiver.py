@@ -156,7 +156,7 @@ def receive():
 
 if __name__ == "__main__":
     bvh_reader = BvhReader(args.bvh)
-    bvh_reader.read()
+    bvh_reader.read(use_cache=False)
     pose = bvh_reader.get_hierarchy().create_pose()
     frame = None
 
