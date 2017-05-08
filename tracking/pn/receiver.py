@@ -25,9 +25,9 @@ from bvh.bvh_reader import BvhReader
 
 parser = argparse.ArgumentParser()
 window.Window.add_parser_arguments(parser)
+parser.add_argument("bvh")
 parser.add_argument("--host", default="localhost")
-parser.add_argument("--port", default=SERVER_PORT_BVH)
-parser.add_argument("-bvh")
+parser.add_argument("--port", type=int, default=SERVER_PORT_BVH)
 parser.add_argument("-speed", type=float, default=1.0)
 parser.add_argument("-zoom", type=float, default=1.0)
 parser.add_argument("-unit-cube", action="store_true")
@@ -131,11 +131,6 @@ def readlines(sock, buffer_size=4096, delim='\n'):
             yield line
     return
 
-bvh_reader = BvhReader(args.bvh)
-bvh_reader.read()
-pose = bvh_reader.get_hierarchy().create_pose()
-frame = None
-
 if args.z_up:
     bvh_coordinate_left = 0
     bvh_coordinate_up = 2
@@ -144,11 +139,6 @@ else:
     bvh_coordinate_left = 0
     bvh_coordinate_up = 1
     bvh_coordinate_far = 2
-
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-print "connecting..."
-s.connect((args.host, args.port))
-print "ok"
 
 def process_pn_bvh_line(line):
     values_as_strings = line.split(" ")
@@ -164,8 +154,19 @@ def receive():
     for line in readlines(s, delim='||'):
         frame = process_pn_bvh_line(line)
 
-receiver_thread = threading.Thread(target=receive)
-receiver_thread.daemon = True
-receiver_thread.start()
+if __name__ == "__main__":
+    bvh_reader = BvhReader(args.bvh)
+    bvh_reader.read()
+    pose = bvh_reader.get_hierarchy().create_pose()
+    frame = None
 
-window.run(BvhViewer, args)
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    print "connecting..."
+    s.connect((args.host, args.port))
+    print "ok"
+
+    receiver_thread = threading.Thread(target=receive)
+    receiver_thread.daemon = True
+    receiver_thread.start()
+
+    window.run(BvhViewer, args)
