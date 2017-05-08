@@ -16,16 +16,23 @@ class AutoEncoder(DimensionalityReduction):
         self._sess = tf.Session()
         self._create_layers(self.num_input_dimensions)
         self._saver = tf.train.Saver()
+        self._set_up_logging()
         init = tf.initialize_all_variables()
         self._sess.run(init)
         self._train_step = tf.train.GradientDescentOptimizer(self.args.learning_rate).minimize(self._cost)
 
+    def _set_up_logging(self):
+        with tf.name_scope("summaries"):
+            tf.summary.scalar("cost", self._cost)
+        self._merged = tf.summary.merge_all()
+        self._train_writer = tf.summary.FileWriter("logs/train", self._sess.graph)
+
     def batch_train(self, training_data, num_training_epochs):
         try:
             for i in range(num_training_epochs):
-                loss, _ = self._sess.run(
-                    [self._cost, self._train_step], feed_dict={self._input_layer: training_data})
-                print "epoch %d, loss %g" % (i, loss)
+                summary, _ = self._sess.run(
+                    [self._merged, self._train_step], feed_dict={self._input_layer: training_data})
+                self._train_writer.add_summary(summary, i)
         except KeyboardInterrupt:
             print "Training stopped at epoch %d" % i
 
