@@ -8,7 +8,10 @@ class Follow(Behavior):
             self._experiment.entity.get_value())
 
     def get_reduction(self):
-        return self._experiment.student.transform(numpy.array([self._experiment.input]))[0]
+        if self._experiment.input is None:
+            return None
+        else:
+            return self._experiment.student.transform(numpy.array([self._experiment.input]))[0]
 
     def proceed(self, time_increment):
         self._experiment.entity.proceed(time_increment)

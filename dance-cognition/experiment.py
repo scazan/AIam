@@ -14,6 +14,7 @@ from event_listener import EventListener
 from bvh.bvh_writer import BvhWriter
 import glob
 import subprocess
+import tracking.pn.receiver
 
 from connectivity.websocket_server import WebsocketServer, ClientHandler
 from connectivity.websocket_client import WebsocketClient
@@ -100,6 +101,9 @@ class Experiment(EventListener):
         parser.add_argument("--with-profiler", action="store_true")
         parser.add_argument("--z-up", action="store_true", help="Use Z-up for BVHs")
         parser.add_argument("--show-fps", action="store_true")
+        parser.add_argument("--receive-from-pn", action="store_true")
+        parser.add_argument("--pn-host", default="localhost")
+        parser.add_argument("--pn-port", type=int, default=tracking.pn.receiver.SERVER_PORT_BVH)
 
     def __init__(self, parser, event_handlers={}):
         event_handlers.update({
@@ -170,6 +174,16 @@ class Experiment(EventListener):
         self._ui_handlers = set()
         self._ui_handlers_lock = threading.Lock()
         self._exporting_output = False
+
+        if args.receive_from_pn:
+            self._pn_receiver = tracking.pn.receiver.PnReceiver()
+            print "connecting to PN server..."
+            self._pn_receiver.connect(args.pn_host, args.pn_port)
+            print "ok"
+            self._input_from_pn = None
+            pn_receiver_thread = threading.Thread(target=self._receive_from_pn)
+            pn_receiver_thread.daemon = True
+            pn_receiver_thread.start()
 
         self._send_joint_ids()
 
@@ -398,6 +412,10 @@ class Experiment(EventListener):
                 "/world", self._frame_count, index,
                 worldpos[0], worldpos[1], worldpos[2])
 
+    def _receive_from_pn(self):
+        for frame in self._pn_receiver.get_frames():
+            self._input_from_pn = self.entity.get_value_from_frame(frame)
+        
 class SingleProcessUiHandler:
     def __init__(self, client, experiment):
         self._client = client

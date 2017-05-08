@@ -19,19 +19,16 @@ CHANNEL_TO_AXIS = {
 }
 
 class BvhReader(cgkit.bvh.BVHReader):
-    def read(self, read_frames=True, use_cache=True):
-        if use_cache:
-            if self._cache_exists():
-                self._read(read_frames)
-                self._load_from_cache()
-            else:
-                self._read(read_frames)
-                self._probe_static_rotations()
-                self._save_to_cache()
-            self._set_static_rotations()
+    def read(self, read_frames=True):
+        if self._cache_exists():
+            self._read(read_frames)
+            self._load_from_cache()
         else:
             self._read(read_frames)
+            self._probe_static_rotations()
             self._probe_vertex_range()
+            self._save_to_cache()
+        self._set_static_rotations()
 
     def _cache_exists(self):
         return os.path.exists(self._cache_filename())
@@ -114,7 +111,10 @@ class BvhReader(cgkit.bvh.BVHReader):
 
     def set_pose_from_time(self, pose, t):
         frame_index = self._frame_index(t)
-        return self.hierarchy.set_pose_from_frame(pose, self.frames[frame_index])
+        return self.set_pose_from_frame(pose, self.frames[frame_index])
+
+    def set_pose_from_frame(self, pose, frame):
+        return self.hierarchy.set_pose_from_frame(pose, frame)
 
     def normalize_vector(self, v):
         return self.normalize_vector_without_translation(
@@ -177,14 +177,15 @@ class BvhReader(cgkit.bvh.BVHReader):
         print "ok"
 
     def _probe_static_rotations(self):
-        print "probing static rotations..."
         self._unique_rotations = defaultdict(set)
-        pose = self.hierarchy.create_pose()
-        for n in range(self._num_frames):
-            self.hierarchy.set_pose_from_frame(pose, self.frames[n])
-            root_joint = pose.get_root_joint()
-            self._process_static_rotations_recurse(root_joint)
-        print "ok"
+        if self._num_frames > 1:
+            print "probing static rotations..."
+            pose = self.hierarchy.create_pose()
+            for n in range(self._num_frames):
+                self.hierarchy.set_pose_from_frame(pose, self.frames[n])
+                root_joint = pose.get_root_joint()
+                self._process_static_rotations_recurse(root_joint)
+            print "ok"
 
     def _process_static_rotations_recurse(self, joint):
         if joint.definition.has_rotation:
@@ -198,11 +199,12 @@ class BvhReader(cgkit.bvh.BVHReader):
             self._unique_rotations[joint.definition.name].add(tuple(joint.angles))
 
     def _set_static_rotations(self):
-        for name, unique_rotations in self._unique_rotations.iteritems():
-            if len(unique_rotations) == 1:
-                joint_definition = self.hierarchy.get_joint_definition(name)
-                joint_definition.has_static_rotation = True
-                joint_definition.static_angles = list(unique_rotations)[0]
+        if self._num_frames > 1:
+            for name, unique_rotations in self._unique_rotations.iteritems():
+                if len(unique_rotations) == 1:
+                    joint_definition = self.hierarchy.get_joint_definition(name)
+                    joint_definition.has_static_rotation = True
+                    joint_definition.static_angles = list(unique_rotations)[0]
 
     def delete_joints_from_hierarchy(self, joint_names):
         self.hierarchy.delete_joints(joint_names)

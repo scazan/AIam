@@ -68,6 +68,9 @@ class BvhCollection:
     def get_frame_time(self):
         return self._base_reader.get_frame_time()
 
+    def set_pose_from_frame(self, pose, frame):
+        return self._base_reader.set_pose_from_frame(pose, frame)
+
     def get_duration(self):
         return self._duration
 

@@ -120,7 +120,8 @@ class DimensionalityReductionExperiment(Experiment):
 
     def _potentially_update_reduction_using_behavior(self, behavior):
         new_reduction = behavior.get_reduction()
-        if self.reduction is None or not numpy.array_equal(new_reduction, self.reduction):
+        if new_reduction is not None and (
+                self.reduction is None or not numpy.array_equal(new_reduction, self.reduction)):
             self.reduction = new_reduction
             for other_behavior in self._behaviors:
                 if other_behavior != behavior:
@@ -332,8 +333,12 @@ class DimensionalityReductionExperiment(Experiment):
 
     def update(self):
         if self._mode == modes.FOLLOW or self.args.incremental:
-            self.input = self._follow.get_input()
-            if self.args.incremental:
+            if self.args.receive_from_pn:
+                self.input = self._input_from_pn
+            else:
+                self.input = self._follow.get_input()
+                
+            if self.input is not None and self.args.incremental:
                 self.student.train([self.input])
             
         if self._mode == modes.FOLLOW:
@@ -348,13 +353,15 @@ class DimensionalityReductionExperiment(Experiment):
             self._update_using_behavior(self._flaneur_behavior)
         elif self._mode == modes.HYBRID:
             self._update_using_behavior(self._hybrid)
-        self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
+
+        if self.reduction is not None:
+            self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
 
         if self.args.enable_features and self.args.show_output_features:
             self.entity.parameters_to_processed_pose(self.output, self._pose_for_feature_extraction)
             features = self.entity.extract_features(self._pose_for_feature_extraction)
             self.send_event_to_ui(Event(Event.FEATURES, features))
-
+    
     def process_and_broadcast_output(self):
         if not (self._mode == modes.IMITATE and
                 self._imitate.showing_feature_matches()):

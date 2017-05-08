@@ -16,9 +16,15 @@ class DimensionalityReduction:
         self.reduction_range = []
         for n in range(self.num_reduced_dimensions):
             reductions_n = observed_reductions[:,n]
+            min_reduction = min(reductions_n)
+            max_reduction = max(reductions_n)
+            range_n = max_reduction - min_reduction
+            if range_n == 0:
+                range_n = 1
             self.reduction_range.append({
-                "min": min(reductions_n),
-                "max": max(reductions_n)
+                "min": min_reduction,
+                "max": max_reduction,
+                "range": range_n
                 })
         self.normalized_observed_reductions = numpy.array([
                 self.normalize_reduction(observed_reduction)
@@ -35,12 +41,10 @@ class DimensionalityReduction:
                 for n in range(self.num_reduced_dimensions)])
 
     def _normalize_component(self, component, reduction_range):
-        return (component - reduction_range["min"]) / (
-            reduction_range["max"] - reduction_range["min"])
+        return (component - reduction_range["min"]) / reduction_range["range"]
 
     def _unnormalize_component(self, normalized_component, reduction_range):
-        return normalized_component * (
-            reduction_range["max"] - reduction_range["min"]) + reduction_range["min"]
+        return normalized_component * reduction_range["range"] + reduction_range["min"]
 
     def analyze_accuracy(self, observations):
         reductions = self.transform(observations)
