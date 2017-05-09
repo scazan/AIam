@@ -180,6 +180,8 @@ class Experiment(EventListener):
             print "connecting to PN server..."
             self._pn_receiver.connect(args.pn_host, args.pn_port)
             print "ok"
+            self._pn_entity = entity_class(self)
+            self._pn_entity.pose = self.bvh_reader.get_hierarchy().create_pose()
             self._input_from_pn = None
             pn_receiver_thread = threading.Thread(target=self._receive_from_pn)
             pn_receiver_thread.daemon = True
@@ -414,7 +416,7 @@ class Experiment(EventListener):
 
     def _receive_from_pn(self):
         for frame in self._pn_receiver.get_frames():
-            self._input_from_pn = self.entity.get_value_from_frame(frame)
+            self._input_from_pn = self._pn_entity.get_value_from_frame(frame)
         
 class SingleProcessUiHandler:
     def __init__(self, client, experiment):
