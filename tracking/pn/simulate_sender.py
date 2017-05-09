@@ -18,18 +18,13 @@ bvh_reader.read()
 
 class PnSimulatorHandler(SocketServer.BaseRequestHandler):
     def handle(self):
-        previous_frame_index = None
-        start_time = time.time()
+        frame_index = 0
         while True:
-            frame_index = int((time.time() - start_time) / bvh_reader.get_frame_time()) % \
-                          bvh_reader.get_num_frames()
-            if frame_index != previous_frame_index:
-                frame = bvh_reader.get_frame_by_index(frame_index)
-                line = "mock_ID mock_name " + " ".join([str(value) for value in frame])
-                self.request.sendall("%s||\n" % line)
-                previous_frame_index = frame
-            else:
-                time.sleep(bvh_reader.get_frame_time() / 10)
+            frame = bvh_reader.get_frame_by_index(frame_index)
+            line = "mock_ID mock_name " + " ".join([str(value) for value in frame])
+            self.request.sendall("%s||\n" % line)
+            frame_index = (frame_index + 1) % bvh_reader.get_num_frames()
+            time.sleep(bvh_reader.get_frame_time())
         
 server = SocketServer.TCPServer(("localhost", args.port), PnSimulatorHandler)
 server.serve_forever()

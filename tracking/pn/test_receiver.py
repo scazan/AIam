@@ -125,7 +125,7 @@ else:
     bvh_coordinate_far = 2
 
 bvh_reader = BvhReader(args.bvh)
-bvh_reader.read(read_frames=False)
+bvh_reader.read()
 pose = bvh_reader.get_hierarchy().create_pose()
 frame = None
 
