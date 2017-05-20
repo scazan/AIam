@@ -55,7 +55,7 @@ class Entity(BaseEntity):
         self._unnormalized_constrainers = self._create_constrainers()
         self.modified_root_vertical_orientation = None
         self._last_root_vertical_orientation = None
-        if self.args.enable_features:
+        if hasattr(self.args, "enable_features") and self.args.enable_features:
             self.feature_extractor = FeatureExtractor(self._coordinate_up)
 
     def _create_constrainers(self):

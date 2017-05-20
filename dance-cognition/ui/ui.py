@@ -101,7 +101,7 @@ class BvhScene(Scene):
             self._draw_focus()
         self._update_camera_translation()
         self.render_io()
-        if self._parent.orientation_action.isChecked():
+        if hasattr(self._parent, "orientation_action") and self._parent.orientation_action.isChecked():
             root_vertical_orientation = self._parent.get_root_vertical_orientation()
             if root_vertical_orientation is not None:
                 self.render_root_vertical_orientation(root_vertical_orientation)

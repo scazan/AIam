@@ -27,10 +27,10 @@ class PredictionExperiment(Experiment):
                 num_parameters * 2,
                 num_parameters)
             self._train_model()
-            storage.save(self.student, self._model_path)
+            storage.save(self.student, self._student_model_path)
 
         else:
-            self.student = storage.load(self._model_path)
+            self.student = storage.load(self._student_model_path)
 
             if self.args.plot:
                 LearningPlotter(student, teacher, self.args.plot_duration).plot(self.args.plot)
