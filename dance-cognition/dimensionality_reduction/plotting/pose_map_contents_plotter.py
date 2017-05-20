@@ -58,7 +58,7 @@ class PoseMapContentsPlotter:
         i = 0
         while True:
             if i % self._args.training_epochs_per_frame == 0:
-                frame_path = "%s.%04d.svg" % (base_path, i)
+                frame_path = "%s.%08d.svg" % (base_path, i)
                 self._experiment.student.probe(self._experiment._training_data)
                 self._plot_frame(frame_path)
             self._experiment.student.train(self._experiment._training_data)
