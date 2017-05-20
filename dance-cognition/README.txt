@@ -4,6 +4,7 @@ sudo apt-get install python-numpy cython
 sudo pip install scikit-learn==0.14
 sudo pip install tornado==2.4.1
 sudo pip install scikit-learn==0.14
+sudo pip install tensorflow
 
 UI REQUIREMENTS
 
@@ -24,6 +25,7 @@ sudo pip-2.7 install yappi
 sudo pip-2.7 install numpy
 sudo pip-2.7 install scipy
 sudo pip-2.7 install scikit-learn==0.14
+sudo pip-2.7 install tensorflow
 
 # install xquartz from http://www.xquartz.org/ on OS X > 10.7
 
