@@ -107,13 +107,15 @@ class Experiment(EventListener):
 
     def __init__(self, parser, event_handlers={}):
         event_handlers.update({
-                Event.START: self._start,
-                Event.STOP: self._stop,
-                Event.START_EXPORT_BVH: self._start_export_bvh,
-                Event.STOP_EXPORT_BVH: self._stop_export_bvh,
-                Event.SET_CURSOR: lambda event: self.update_cursor(event.content),
-                Event.PROCEED_TO_NEXT_FRAME: self._proceed_to_next_frame,
-                })
+            Event.START: self._start,
+            Event.STOP: self._stop,
+            Event.START_EXPORT_BVH: self._start_export_bvh,
+            Event.STOP_EXPORT_BVH: self._stop_export_bvh,
+            Event.SET_CURSOR: lambda event: self.update_cursor(event.content),
+            Event.PROCEED_TO_NEXT_FRAME: self._proceed_to_next_frame,
+            Event.SAVE_STUDENT: self._save_student,
+            Event.LOAD_STUDENT: self._load_student,
+        })
         EventListener.__init__(self, handlers=event_handlers)
 
         args, _remaining_args = parser.parse_known_args()
@@ -189,6 +191,18 @@ class Experiment(EventListener):
 
         self._send_joint_ids()
 
+    def _save_student(self, event):
+        filename = event.content
+        print "saving %s..." % filename
+        self.student.save(filename)
+        print "ok"
+
+    def _load_student(self, event):
+        filename = event.content
+        print "loading %s..." % filename
+        self.student.load(filename)
+        print "ok"
+        
     def add_parser_arguments_second_pass(self, parser, args):
         pass
 

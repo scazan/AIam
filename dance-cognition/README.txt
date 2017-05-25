@@ -5,6 +5,7 @@ sudo pip install scikit-learn==0.14
 sudo pip install tornado==2.4.1
 sudo pip install scikit-learn==0.14
 sudo pip install tensorflow
+sudo pip install backports.tempfile
 
 UI REQUIREMENTS
 
@@ -26,6 +27,7 @@ sudo pip-2.7 install numpy
 sudo pip-2.7 install scipy
 sudo pip-2.7 install scikit-learn==0.14
 sudo pip-2.7 install tensorflow
+sudo pip-2.7 install backports.tempfile
 
 # install xquartz from http://www.xquartz.org/ on OS X > 10.7
 

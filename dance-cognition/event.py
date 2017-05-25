@@ -24,6 +24,8 @@ class Event:
     NEIGHBORS_CENTER = "NEIGHBORS_CENTER"
     USER_INTENSITY = "USER_INTENSITY"
     SYSTEM_STATE_CHANGED = "SYSTEM_STATE_CHANGED"
+    SAVE_STUDENT = "SAVE_STUDENT"
+    LOAD_STUDENT = "LOAD_STUDENT"
 
     def __init__(self, type_, content=None):
         self.type = type_

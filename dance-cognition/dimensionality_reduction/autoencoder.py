@@ -3,6 +3,9 @@ import numpy as np
 import tensorflow as tf
 import math
 import random
+from backports import tempfile
+from zipfile import ZipFile
+import os
 
 class AutoEncoder(DimensionalityReduction):
     @staticmethod
@@ -92,8 +95,15 @@ class AutoEncoder(DimensionalityReduction):
         return self._sess.run(self._reconstructed_input, feed_dict={self._encoded_x: reductions})
     
     def save_model(self, path):
-        self._saver.save(self._sess, path)
-
-    def load_model(self, path):
-        self._saver.restore(self._sess, path)
+        with tempfile.TemporaryDirectory() as tempdir:
+            self._saver.save(self._sess, "%s/model" % tempdir)
+            with ZipFile(path, "w") as zipfile:
+                for root, dirs, files in os.walk(tempdir):
+                    for filename in files:
+                        zipfile.write(os.path.join(root, filename), filename)
         
+    def load_model(self, path):
+        with tempfile.TemporaryDirectory() as tempdir:
+            zipfile = ZipFile(path, "r")
+            zipfile.extractall(tempdir)
+            self._saver.restore(self._sess, "%s/model" % tempdir)

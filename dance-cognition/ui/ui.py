@@ -341,6 +341,8 @@ class MainWindow(Window, EventListener):
             "Start", self._start,
             "Stop", self._stop,
             True, " ")
+        self._add_save_student_action()
+        self._add_load_student_action()
         self._add_toggleable_action(
             '&Export BVH', lambda: self.send_event(Event(Event.START_EXPORT_BVH)),
             '&Stop export BVH', lambda: self.send_event(Event(Event.STOP_EXPORT_BVH)),
@@ -348,7 +350,7 @@ class MainWindow(Window, EventListener):
         self._add_toggleable_action(
             '&Export video', self._scene.start_export_video,
             '&Stop export video', self._scene.stop_export_video,
-            False, 'Ctrl+O')
+            False, 'F9')
         self._add_show_camera_settings_action()
         self._add_quit_action()
 
@@ -393,6 +395,26 @@ class MainWindow(Window, EventListener):
         action = QtGui.QAction("&Quit", self)
         action.triggered.connect(QtGui.QApplication.exit)
         self._main_menu.addAction(action)
+
+    def _add_save_student_action(self):
+        action = QtGui.QAction("Save model...", self)
+        action.setShortcut('Ctrl+S')
+        action.triggered.connect(self._save_student)
+        self._main_menu.addAction(action)
+
+    def _save_student(self):
+        filename = QtGui.QFileDialog.getSaveFileName(self, "Save model", filter="Model (*.model)")
+        self.send_event(Event(Event.SAVE_STUDENT, str(filename)))
+
+    def _add_load_student_action(self):
+        action = QtGui.QAction("Load model...", self)
+        action.setShortcut('Ctrl+O')
+        action.triggered.connect(self._load_student)
+        self._main_menu.addAction(action)
+
+    def _load_student(self):
+        filename = QtGui.QFileDialog.getOpenFileName(self, "Load model", filter="Model (*.model)")
+        self.send_event(Event(Event.LOAD_STUDENT, str(filename)))
 
     def _create_view_menu(self):
         self._view_menu = self._menu_bar.addMenu("View")
