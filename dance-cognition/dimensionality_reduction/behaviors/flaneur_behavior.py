@@ -14,11 +14,11 @@ class FlaneurParameters(Parameters):
                            choices=ParameterFloatRange(0., 1.))
 
 class FlaneurBehavior(Behavior):
-    def __init__(self, experiment, parameters, map_points):
+    def __init__(self, experiment, parameters, normalized_observed_reductions):
         self._experiment = experiment
         self._parameters = parameters
         parameters.add_listener(self._parameter_changed)
-        self._flaneur = Flaneur(map_points)
+        self._flaneur = Flaneur(normalized_observed_reductions)
         self._update_flaneur_from_parameters()
 
     def _update_flaneur_from_parameters(self):
@@ -42,3 +42,7 @@ class FlaneurBehavior(Behavior):
 
     def set_reduction(self, reduction):
         pass
+
+    def set_normalized_observed_reductions(self, normalized_observed_reductions):
+        self._flaneur.set_map_points(normalized_observed_reductions)
+        

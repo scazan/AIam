@@ -4,14 +4,14 @@ from event import merge_event_handler_dicts
 SPLIT_SENSITIVITY = .2
 
 class MapTab(ReductionTab, QtGui.QWidget):
-    def __init__(self, parent, dimensions):
+    def __init__(self, parent, dimensions, normalized_observed_reductions):
         ReductionTab.__init__(self, parent)
         QtGui.QWidget.__init__(self)
         self.student = parent.parent().student
         self._dimensions = dimensions
         self._map_layout = QtGui.QVBoxLayout()
         self._add_map_dimension_checkboxes()
-        self._add_map_widget()
+        self._add_map_widget(normalized_observed_reductions)
         self._map_layout.addStretch(1)
         self.setLayout(self._map_layout)
 
@@ -31,8 +31,8 @@ class MapTab(ReductionTab, QtGui.QWidget):
     def set_enabled(self, enabled):
         self._map_widget.set_enabled(enabled)
 
-    def _add_map_widget(self):
-        self._map_widget = MapWidget(self, self._dimensions)
+    def _add_map_widget(self, normalized_observed_reductions):
+        self._map_widget = MapWidget(self, self._dimensions, normalized_observed_reductions)
         self._map_widget.setFixedSize(270, 270)
         self._map_layout.addWidget(self._map_widget)
 
@@ -43,17 +43,17 @@ class MapTab(ReductionTab, QtGui.QWidget):
             checkbox = QtGui.QCheckBox()
             if n in self._dimensions:
                 checkbox.setCheckState(QtCore.Qt.Checked)
-            checkbox.stateChanged.connect(self._dimensions_changed)
+            checkbox.stateChanged.connect(self._updated_dimensions)
             self._map_dimension_checkboxes.append(checkbox)
             layout.addWidget(checkbox)
         self._map_layout.addLayout(layout)
 
-    def _dimensions_changed(self):
+    def _updated_dimensions(self):
         checked_dimensions = filter(
             lambda n: self._map_dimension_checkboxes[n].checkState() == QtCore.Qt.Checked,
             range(self.student.num_reduced_dimensions))
         if len(checked_dimensions) == 2:
-            self._map_widget.dimensions_changed(checked_dimensions)
+            self._map_widget.updated_dimensions(checked_dimensions)
             self._map_widget.set_reduction(self._reduction)
 
     def reduction_changed_interactively(self):
@@ -63,11 +63,15 @@ class MapTab(ReductionTab, QtGui.QWidget):
     def update_qgl_widgets(self):
         self._map_widget.updateGL()
 
+    def set_normalized_observed_reductions(self, normalized_observed_reductions):
+        self._map_widget.set_normalized_observed_reductions(normalized_observed_reductions)
+
 class MapWidget(QtOpenGL.QGLWidget):
-    def __init__(self, parent, dimensions):
+    def __init__(self, parent, dimensions, normalized_observed_reductions):
         QtOpenGL.QGLWidget.__init__(self, parent)
         self._parent = parent
         self.student = parent.student
+        self.normalized_observed_reductions = normalized_observed_reductions
         self._observations_layer = Layer(self._render_observations)
         self.set_dimensions(dimensions)
         self._dragging = False
@@ -84,18 +88,20 @@ class MapWidget(QtOpenGL.QGLWidget):
                 renderer.get_event_handlers()
                 for renderer in self._mode_specific_renderers.values()])
 
-    def dimensions_changed(self, dimensions):
+    def updated_dimensions(self, dimensions):
         self.set_dimensions(dimensions)
         mode_specific_renderer = self._get_mode_specific_renderer()
         if mode_specific_renderer is not None:
-            mode_specific_renderer.dimensions_changed()
+            mode_specific_renderer.updated_dimensions()
 
     def set_dimensions(self, dimensions):
         self.dimensions = dimensions
-        observations = self.student.normalized_observed_reductions[
-            :,dimensions]
-        self._split_into_segments(observations)
         self._reduction = None
+        self._update_observations_layer()
+
+    def _update_observations_layer(self):
+        observations = self.normalized_observed_reductions[:,self.dimensions]
+        self._split_into_segments(observations)
         self._observations_layer.refresh()
 
     def _split_into_segments(self, observations):
@@ -112,6 +118,13 @@ class MapWidget(QtOpenGL.QGLWidget):
         if len(segment) > 0:
             self._segments.append(segment)
 
+    def set_normalized_observed_reductions(self, normalized_observed_reductions):
+        self.normalized_observed_reductions = normalized_observed_reductions
+        self._update_observations_layer()
+        mode_specific_renderer = self._get_mode_specific_renderer()
+        if mode_specific_renderer is not None:
+            mode_specific_renderer.updated_normalized_observed_reductions()
+        
     def set_reduction(self, reduction_all_dimensions):
         self._reduction_all_dimensions = reduction_all_dimensions
         self._reduction = reduction_all_dimensions[self.dimensions]
@@ -227,7 +240,10 @@ class MapViewRenderer:
     def should_render_observations(self):
         return True
 
-    def dimensions_changed(self):
+    def updated_dimensions(self):
+        pass
+
+    def updated_normalized_observed_reductions(self):
         pass
 
 class ImitateMapViewRenderer(MapViewRenderer):
@@ -318,7 +334,7 @@ class FlaneurMapViewRenderer(MapViewRenderer):
         glColor3f(.5, .5, .5)
         glPointSize(1.0)
         glBegin(GL_POINTS)
-        for map_point in self.map_view.student.flaneur_map_points:
+        for map_point in self.map_view.normalized_observed_reductions:
             self.map_view.vertex(map_point[self.map_view.dimensions])
         glEnd()
 
@@ -332,7 +348,10 @@ class FlaneurMapViewRenderer(MapViewRenderer):
     def should_render_observations(self):
         return False
 
-    def dimensions_changed(self):
+    def updated_dimensions(self):
+        self._map_points_layer.refresh()
+
+    def updated_normalized_observed_reductions(self):
         self._map_points_layer.refresh()
 
 class HybridMapViewRenderer(FlaneurMapViewRenderer, ImitateMapViewRenderer):

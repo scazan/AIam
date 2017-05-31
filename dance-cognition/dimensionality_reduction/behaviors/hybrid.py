@@ -66,18 +66,21 @@ class Hybrid(Behavior):
                  experiment,
                  feature_matcher,
                  sampled_reductions,
-                 map_points,
+                 normalized_observed_reductions,
                  parameters):
         Behavior.__init__(self, experiment)
         self._parameters = parameters
         parameters.add_listener(self._parameter_changed)
-        self._create_flaneur(map_points)
+        self._create_flaneur(normalized_observed_reductions)
         self._create_imitate(feature_matcher, sampled_reductions)
-        n_dimensions = len(map_points[0])
+        n_dimensions = len(normalized_observed_reductions[0])
         self._position = None
         self._direction = None
         self._orientation_state = None
         self.handle_user_intensity(None)
+
+    def set_normalized_observed_reductions(self, normalized_observed_reductions):
+        self._flaneur.set_normalized_observed_reductions(normalized_observed_reductions)
 
     def _parameter_changed(self, hybrid_parameter):
         if hasattr(hybrid_parameter, "flaneur_parameter_name"):

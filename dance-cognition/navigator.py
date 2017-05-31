@@ -9,15 +9,18 @@ NUM_DESTINATION_CANDIDATES = 50
 
 class Navigator:
     def __init__(self, map_points):
-        self.map_points = map_points
-        self._n_dimensions = len(map_points[0])
-        self._max_distance = math.sqrt(self._n_dimensions) / 2
         self._nearest_neighbor_classifier = sklearn.neighbors.KNeighborsClassifier(
             n_neighbors=1, weights='uniform')
-        self._nearest_neighbor_classifier.fit(map_points, map_points)
+        self.set_map_points(map_points)
+        self._n_dimensions = len(map_points[0])
+        self._max_distance = math.sqrt(self._n_dimensions) / 2
         self._departure = None
         self._preferred_location = None
 
+    def set_map_points(self, map_points):
+        self.map_points = map_points
+        self._nearest_neighbor_classifier.fit(map_points, map_points)
+        
     def set_preferred_location(self, location):
         self._preferred_location = location
 

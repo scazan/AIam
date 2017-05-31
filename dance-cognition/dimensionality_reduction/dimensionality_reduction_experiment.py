@@ -4,6 +4,7 @@ from component_analysis import ComponentAnalysis
 import pca
 from autoencoder import AutoEncoder
 import random
+import collections
 import modes
 from parameters import *
 from behaviors.follow import Follow
@@ -49,6 +50,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--plot-model", action="store_true")
         parser.add_argument("--plot-pose-map-contents", action="store_true")
         parser.add_argument("--plot-args")
+        parser.add_argument("--memory-size", type=int, default=1000)
         ImproviseParameters().add_parser_arguments(parser)
         FlaneurParameters().add_parser_arguments(parser)
         HybridParameters().add_parser_arguments(parser)
@@ -193,7 +195,10 @@ class DimensionalityReductionExperiment(Experiment):
         else:
             self._load_model()
             if not self.args.ui_only:
-                self._training_data = storage.load(self._training_data_path)
+                if self.args.incremental:
+                    self._training_data = collections.deque([], maxlen=self.args.memory_size)
+                else:
+                    self._training_data = storage.load(self._training_data_path)
 
                 self._parameter_sets = {}
                 self._follow = self._create_follow_behavior()
@@ -233,7 +238,7 @@ class DimensionalityReductionExperiment(Experiment):
         self._add_parameter_set(self._hybrid_params)
         return Hybrid(
             self, self._feature_matcher, self._sampled_reductions,
-            self.student.flaneur_map_points,
+            self.student.normalized_observed_reductions,
             self._hybrid_params)
 
     def _create_improvise_behavior(self):
@@ -255,8 +260,7 @@ class DimensionalityReductionExperiment(Experiment):
         self._flaneur_params = FlaneurParameters()
         self._flaneur_params.set_values_from_args(self.args)
         self._add_parameter_set(self._flaneur_params)
-        self.student.flaneur_map_points = self.student.normalized_observed_reductions
-        return FlaneurBehavior(self, self._flaneur_params, self.student.flaneur_map_points)
+        return FlaneurBehavior(self, self._flaneur_params, self.student.normalized_observed_reductions)
 
     def _add_parameter_set(self, parameters):
         self._parameter_sets[parameters.__class__.__name__] = parameters
@@ -340,6 +344,15 @@ class DimensionalityReductionExperiment(Experiment):
                 
             if self.input is not None and self.args.incremental:
                 self.student.train([self.input])
+                self._training_data.append(self.input)
+                self.student.probe(self._training_data)
+                self._improvise.set_normalized_observed_reductions(self.student.normalized_observed_reductions)
+                self._flaneur_behavior.set_normalized_observed_reductions(self.student.normalized_observed_reductions)
+                if self.args.enable_features:
+                    self._hybrid.set_normalized_observed_reductions(self.student.normalized_observed_reductions)
+                self.send_event_to_ui(Event(Event.REDUCTION_RANGE, self.student.reduction_range))
+                self.send_event_to_ui(
+                    Event(Event.NORMALIZED_OBSERVED_REDUCTIONS, self.student.normalized_observed_reductions))
             
         if self._mode == modes.FOLLOW:
             self._update_using_behavior(self._follow)
@@ -368,7 +381,7 @@ class DimensionalityReductionExperiment(Experiment):
             Experiment.process_and_broadcast_output(self)
 
     def proceed(self):
-        if self._mode == modes.FOLLOW or self.args.incremental:
+        if self._mode == modes.FOLLOW and not self.args.incremental:
             self._follow.proceed(self.time_increment)
 
         if self._mode == modes.IMITATE:

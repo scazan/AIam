@@ -9,16 +9,19 @@ class Flaneur:
                  translational_speed=0.2,
                  directional_speed=0.7,
                  look_ahead_distance=0.1):
-        self.map_points = map_points
         self.translational_speed = translational_speed
         self.directional_speed = directional_speed
         self.look_ahead_distance = look_ahead_distance
         self._n_dimensions = len(map_points[0])
         self._nearest_neighbor_classifier = sklearn.neighbors.KNeighborsClassifier(
             n_neighbors=NUM_NEIGHBORS, weights='uniform')
-        self._nearest_neighbor_classifier.fit(map_points, range(len(map_points)))
+        self.set_map_points(map_points)
         self.reset()
 
+    def set_map_points(self, map_points):
+        self.map_points = map_points
+        self._nearest_neighbor_classifier.fit(map_points, range(len(map_points)))
+        
     def reset(self):
         self._position = numpy.random.random(size=self._n_dimensions)
         self._direction = None

@@ -13,7 +13,7 @@ class DimensionalityReduction:
 
     def probe(self, observations):
         observed_reductions = self.transform(observations)
-        self.reduction_range = []
+        reduction_range = []
         for n in range(self.num_reduced_dimensions):
             reductions_n = observed_reductions[:,n]
             min_reduction = min(reductions_n)
@@ -21,11 +21,12 @@ class DimensionalityReduction:
             range_n = max_reduction - min_reduction
             if range_n == 0:
                 range_n = 1
-            self.reduction_range.append({
+            reduction_range.append({
                 "min": min_reduction,
                 "max": max_reduction,
                 "range": range_n
                 })
+        self.reduction_range = reduction_range
         self.normalized_observed_reductions = numpy.array([
                 self.normalize_reduction(observed_reduction)
                 for observed_reduction in observed_reductions])

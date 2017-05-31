@@ -18,16 +18,18 @@ class DimensionalityReductionMainWindow(MainWindow):
 
     def __init__(self, *args, **kwargs):
         MainWindow.__init__(self, *args, event_handlers={
-                Event.REDUCTION: self._handle_reduction,
-                Event.MODE: self._set_mode,
-                Event.CURSOR: self._set_cursor,
-                Event.BVH_INDEX: self._update_bvh_selector,
-                Event.PARAMETER: self._received_parameter,
-                Event.FEATURES: self._handle_features,
-                Event.TARGET_FEATURES: self._handle_target_features,
-                Event.FEATURE_MATCH_OUTPUT: self._handle_feature_match_output,
-                Event.TARGET_ROOT_VERTICAL_ORIENTATION: self._handle_target_root_vertical_orientation,
-                }, **kwargs)
+            Event.REDUCTION: self._handle_reduction,
+            Event.MODE: self._set_mode,
+            Event.CURSOR: self._set_cursor,
+            Event.BVH_INDEX: self._update_bvh_selector,
+            Event.PARAMETER: self._received_parameter,
+            Event.FEATURES: self._handle_features,
+            Event.TARGET_FEATURES: self._handle_target_features,
+            Event.FEATURE_MATCH_OUTPUT: self._handle_feature_match_output,
+            Event.TARGET_ROOT_VERTICAL_ORIENTATION: self._handle_target_root_vertical_orientation,
+            Event.REDUCTION_RANGE: self._handle_reduction_range,
+            Event.NORMALIZED_OBSERVED_REDUCTIONS: self._handle_normalized_observed_reductions,
+        }, **kwargs)
         self._add_toggleable_action(
             '&Plot reduction', self._start_plot_reduction,
             '&Stop plot', self._stop_plot_reduction,
@@ -130,9 +132,16 @@ class DimensionalityReductionMainWindow(MainWindow):
     def get_root_vertical_orientation(self):
         return self.toolbar.get_root_vertical_orientation()
 
+    def _handle_reduction_range(self, event):
+        self.toolbar.set_reduction_range(event.content)
+
+    def _handle_normalized_observed_reductions(self, event):
+        self.toolbar.set_normalized_observed_reductions(event.content)
+
 class DimensionalityReductionToolbar(ExperimentToolbar):
     def __init__(self, *args):
         ExperimentToolbar.__init__(self, *args)
+        self.set_reduction_range(self.parent().student.reduction_range)
         self._layout = QtGui.QHBoxLayout()
         self._add_mode_tabs()
         self._add_reduction_tabs()
@@ -141,6 +150,22 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self.setLayout(self._layout)
         self.set_mode(self.args.mode)
         self._activate_current_mode()
+
+    def set_reduction_range(self, reduction_range):
+        self.reduction_range = reduction_range
+        self._set_exploration_ranges()
+        
+    def _set_exploration_ranges(self):
+        for n in range(self.parent().student.num_reduced_dimensions):
+            self._set_exploration_range(self.reduction_range[n])
+
+    def _set_exploration_range(self, reduction_range):
+        reduction_range["explored_range"] = (1.0 + self.parent().args.explore_beyond_observations)
+        reduction_range["explored_min"] = .5 - reduction_range["explored_range"]/2
+        reduction_range["explored_max"] = .5 + reduction_range["explored_range"]/2
+
+    def set_normalized_observed_reductions(self, normalized_observed_reductions):
+        self.map_tab.set_normalized_observed_reductions(normalized_observed_reductions)
 
     def get_event_handlers(self):
         if self.map_tab:
@@ -188,13 +213,14 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
 
     def _add_follow_tab(self):
         self.follow_tab = ModeTab(modes.FOLLOW)
-        self._follow_tab_layout = QtGui.QVBoxLayout()
-        if hasattr(self.parent().entity, "get_duration"):
-            self._add_cursor_slider()
-        if self.args.bvh:
-            self._add_bvh_selector()
-        self._follow_tab_layout.addStretch(1)
-        self.follow_tab.setLayout(self._follow_tab_layout)
+        if not self.args.receive_from_pn:
+            self._follow_tab_layout = QtGui.QVBoxLayout()
+            if hasattr(self.parent().entity, "get_duration"):
+                self._add_cursor_slider()
+            if self.args.bvh:
+                self._add_bvh_selector()
+            self._follow_tab_layout.addStretch(1)
+            self.follow_tab.setLayout(self._follow_tab_layout)
         self.tabs.addTab(self.follow_tab, "Follow")
         self._mode_tabs[modes.FOLLOW] = self.follow_tab
 
@@ -352,8 +378,10 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         parameter.set_value(event.content["value"], notify=False)
         parameter_set["form"].update_field_to_reflect_changed_value(parameter)
 
+    def get_num_reduced_dimensions(self):
+        return self.parent().student.num_reduced_dimensions
+    
     def _add_reduction_tabs(self):
-        self._set_exploration_ranges()
         self._reduction_tabs = QtGui.QTabWidget()
         if self.parent().student.num_reduced_dimensions >= 2:
             self._add_map_tab()
@@ -368,13 +396,13 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
 
     def _add_map_tab(self):
         self._map_dimensions = [0,1]
-        self.map_tab = MapTab(self, self._map_dimensions)
+        self.map_tab = MapTab(self, self._map_dimensions, self.parent().student.normalized_observed_reductions)
         self._reduction_tabs.addTab(self.map_tab, "2D map")
 
     def _set_random_reduction(self):
         for n in range(self.parent().student.num_reduced_dimensions):
             self._set_random_reduction_n(
-                n, self.parent().student.reduction_range[n])
+                n, self.reduction_range[n])
 
     def _set_random_reduction_n(self, n, reduction_range):
         self.reduction_sliders_tab.slider(n).setValue(
@@ -394,7 +422,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
                 for n in range(self.parent().student.num_reduced_dimensions)]
     
     def _random_deviation_n(self, n):
-        reduction_range = self.parent().student.reduction_range[n]
+        reduction_range = self.reduction_range[n]
         max_deviation = float(self.deviation_slider.value()) / SLIDER_PRECISION \
             * (reduction_range["max"] - reduction_range["min"])
         return random.uniform(-max_deviation, max_deviation)
@@ -425,15 +453,6 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
     def get_reduction(self):
         return self.parent().student.unnormalize_reduction(
             self._reduction_tabs.currentWidget().get_normalized_reduction())
-        
-    def _set_exploration_ranges(self):
-        for n in range(self.parent().student.num_reduced_dimensions):
-            self._set_exploration_range(self.parent().student.reduction_range[n])
-
-    def _set_exploration_range(self, reduction_range):
-        reduction_range["explored_range"] = (1.0 + self.parent().args.explore_beyond_observations)
-        reduction_range["explored_min"] = .5 - reduction_range["explored_range"]/2
-        reduction_range["explored_max"] = .5 + reduction_range["explored_range"]/2
 
     def on_received_reduction_from_backend(self, reduction):
         self._set_reduction(reduction)
