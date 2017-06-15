@@ -27,4 +27,5 @@ class PnSimulatorHandler(SocketServer.BaseRequestHandler):
             time.sleep(bvh_reader.get_frame_time())
         
 server = SocketServer.TCPServer(("localhost", args.port), PnSimulatorHandler)
+print "OK serving"
 server.serve_forever()
