@@ -1,39 +1,47 @@
 from dimensionality_reduction import DimensionalityReduction
 import sklearn.decomposition
-from sklearn.externals import joblib
+import cPickle
 
 class PCADimensionalityReduction(DimensionalityReduction):
+    def fit(self, *args, **kwargs):
+        return self.pca.fit(*args, **kwargs)
+
+    def transform(self, *args, **kwargs):
+        return self.pca.transform(*args, **kwargs)
+        
+    def fit_transform(self, *args, **kwargs):
+        return self.pca.fit_transform(*args, **kwargs)
+
+    def inverse_transform(self, *args, **kwargs):
+        return self.pca.inverse_transform(*args, **kwargs)
+        
     def save_model(self, path):
-        joblib.dump(self, path)
+        f = open(path, "w")
+        cPickle.dump(self.pca, f)
+        f.close()
 
     def load_model(self, path):
-        model = joblib.load(path)
-        for attribute in self.ATTRIBUTES:
-            if hasattr(model, attribute):
-                setattr(self, attribute, getattr(model, attribute))
+        f = open(path)
+        self.pca = cPickle.load(f)
+        f.close()
         
-class LinearPCA(sklearn.decomposition.PCA, PCADimensionalityReduction):
-    ATTRIBUTES = ["components_", "explained_variance_", "explained_variance_ratio_",
-                  "mean_", "n_components_", "noise_variance_"]
-    
+class LinearPCA(PCADimensionalityReduction):
     def __init__(self, num_input_dimensions, num_reduced_dimensions, args):
         DimensionalityReduction.__init__(self, num_input_dimensions, num_reduced_dimensions, args)
-        sklearn.decomposition.PCA.__init__(self, n_components=num_reduced_dimensions)
+        self.pca = sklearn.decomposition.PCA(n_components=num_reduced_dimensions)
 
     def analyze_accuracy(self, observations):
         print "explained variance ratio: %s (sum %s)" % (
             self.explained_variance_ratio_, sum(self.explained_variance_ratio_))
         DimensionalityReduction.analyze_accuracy(self, observations)
 
-class KernelPCA(sklearn.decomposition.KernelPCA, PCADimensionalityReduction):
-    ATTRIBUTES = ["lambdas_", "alphas_", "dual_coef_", "X_transformed_fit_", "X_fit_"]
-    
+class KernelPCA(PCADimensionalityReduction):
     @staticmethod
     def add_parser_arguments(parser):
         parser.add_argument("--pca-kernel", default="poly")
 
     def __init__(self, num_input_dimensions, num_reduced_dimensions, args):
         DimensionalityReduction.__init__(self, num_input_dimensions, num_reduced_dimensions, args)
-        sklearn.decomposition.KernelPCA.__init__(
-            self, n_components=num_reduced_dimensions,
+        self.pca = sklearn.decomposition.KernelPCA(
+            n_components=num_reduced_dimensions,
             kernel=args.pca_kernel, fit_inverse_transform=True, gamma=0.5)
