@@ -336,7 +336,7 @@ class DimensionalityReductionExperiment(Experiment):
                 stats[3])
 
     def update(self):
-        if self._mode == modes.FOLLOW or self.args.incremental:
+        if self._mode == modes.FOLLOW or self.args.receive_from_pn:
             if self.args.receive_from_pn:
                 self.input = self._input_from_pn
             else:
