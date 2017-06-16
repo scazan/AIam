@@ -51,6 +51,7 @@ class BvhScene(Scene):
         self._focus = None
         self.processed_input = None
         self.processed_output = None
+        self.processed_io_blend = None
         Scene.__init__(self, parent, args,
                        camera_y_speed=CAMERA_Y_SPEED,
                        camera_key_speed=CAMERA_KEY_SPEED,
@@ -91,6 +92,9 @@ class BvhScene(Scene):
             self.centralize_output(processed_output)
             self._set_focus()
 
+    def received_io_blend(self, processed_io_blend):
+        self.processed_io_blend = processed_io_blend
+        
     def render(self):
         if self.args.image:
             self._render_image()
@@ -113,6 +117,7 @@ class BvhScene(Scene):
         if self.view_input:
             self._draw_io(self.processed_input, self.draw_input, self.args.input_y_offset)
         self._draw_io(self.processed_output, self.draw_output, self.args.output_y_offset)
+        self._draw_io(self.processed_io_blend, self.draw_io_blend, self.args.output_y_offset)
 
     def _draw_floor(self):
         if self.processed_output is not None:
@@ -259,9 +264,10 @@ class MainWindow(Window, EventListener):
 
         self.toolbar = toolbar_class(self, args)
         event_handlers.update({
-                Event.INPUT: self._handle_input,
-                Event.OUTPUT: self._handle_output,
-                })
+            Event.INPUT: self._handle_input,
+            Event.OUTPUT: self._handle_output,
+            Event.IO_BLEND: self._handle_io_blend,
+        })
         event_handlers.update(self.toolbar.get_event_handlers())
         EventListener.__init__(self, handlers=event_handlers)
 
@@ -552,6 +558,9 @@ class MainWindow(Window, EventListener):
 
     def _handle_output(self, event):
         self._scene.received_output(event.content)
+
+    def _handle_io_blend(self, event):
+        self._scene.received_io_blend(event.content)
 
     def send_event(self, event):
         event.source = "PythonUI"

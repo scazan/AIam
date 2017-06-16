@@ -9,6 +9,7 @@ color_schemes["white"] = {
     "focus": (0, 0, 0, 0.2),
     "input": (0, 1, 0),
     "output": (0, 0, 0),
+    "io_blend": (0, 0, 1),
     "shadow": (.9, .9, .9),
     }
 
@@ -19,5 +20,6 @@ color_schemes["black"] = {
     "focus": (1, 1, 1, 0.2),
     "input": (0, 1, 0),
     "output": (1, 1, 1),
+    "io_blend": (0, 0, 1),
     "shadow": (0, 0, 0),
     }

@@ -28,6 +28,8 @@ class Event:
     LOAD_STUDENT = "LOAD_STUDENT"
     REDUCTION_RANGE = "REDUCTION_RANGE"
     NORMALIZED_OBSERVED_REDUCTIONS = "NORMALIZED_OBSERVED_REDUCTIONS"
+    SET_IO_BLENDING = "SET_IO_BLENDING"
+    IO_BLEND = "IO_BLEND"
 
     def __init__(self, type_, content=None):
         self.type = type_

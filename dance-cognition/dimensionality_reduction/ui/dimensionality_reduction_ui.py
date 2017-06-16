@@ -145,6 +145,8 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._layout = QtGui.QHBoxLayout()
         self._add_mode_tabs()
         self._add_reduction_tabs()
+        if self.args.enable_io_blending:
+            self._add_io_blending_tab_widget()
         if self.args.enable_features:
             self._add_features_tab_widgets()
         self.setLayout(self._layout)
@@ -460,6 +462,30 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
     def update_qgl_widgets(self):
         self._reduction_tabs.currentWidget().update_qgl_widgets()
 
+    def _add_io_blending_tab_widget(self):
+        io_blending_tab_widget = QtGui.QTabWidget()
+        io_blending_tab = QtGui.QWidget()
+        layout = QtGui.QVBoxLayout()
+        layout.setSpacing(0)
+        layout.setMargin(0)
+        io_blending_tab.setLayout(layout)
+        slider = self._create_io_blending_slider()
+        layout.addWidget(slider)
+        layout.addStretch(1)
+        io_blending_tab_widget.addTab(io_blending_tab, "Blending")
+        self._layout.addWidget(io_blending_tab_widget)
+
+    def _create_io_blending_slider(self):
+        slider = QtGui.QSlider(QtCore.Qt.Horizontal)
+        slider.setRange(0, SLIDER_PRECISION)
+        slider.setSingleStep(1)
+        slider.setValue(0.0)
+        slider.valueChanged.connect(self._io_blending_changed)
+        return slider
+
+    def _io_blending_changed(self, value):
+        self.parent().send_event(Event(Event.SET_IO_BLENDING, float(value) / SLIDER_PRECISION))
+                
     def _add_features_tab_widgets(self):
         if self.args.show_output_features:
             self._add_output_features_tab_widget()

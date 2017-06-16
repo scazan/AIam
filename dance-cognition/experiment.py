@@ -130,10 +130,10 @@ class Experiment(EventListener):
 
         entity_module = imp.load_source("entity", "entities/%s.py" % args.entity)
         if hasattr(entity_module, "Entity"):
-            entity_class = entity_module.Entity
+            self.entity_class = entity_module.Entity
         else:
-            entity_class = BaseEntity
-        entity_class.add_parser_arguments(parser)
+            self.entity_class = BaseEntity
+        self.entity_class.add_parser_arguments(parser)
         if not args.backend_only:
             self._entity_scene_module = imp.load_source("entity", "entities/%s_scene.py" % args.entity)
             self._entity_scene_module.Scene.add_parser_arguments(parser)
@@ -167,7 +167,7 @@ class Experiment(EventListener):
             self.pose = None
         self.input = None
         self.output = None
-        self.entity = entity_class(self)
+        self.entity = self.entity_class(self)
         self._running = True
         self.stopwatch = Stopwatch()
         if self.args.show_fps:
@@ -176,13 +176,13 @@ class Experiment(EventListener):
         self._ui_handlers = set()
         self._ui_handlers_lock = threading.Lock()
         self._exporting_output = False
-
+            
         if args.receive_from_pn:
             self._pn_receiver = tracking.pn.receiver.PnReceiver()
             print "connecting to PN server..."
             self._pn_receiver.connect(args.pn_host, args.pn_port)
             print "ok"
-            self._pn_entity = entity_class(self)
+            self._pn_entity = self.entity_class(self)
             self._pn_entity.pose = self.bvh_reader.get_hierarchy().create_pose()
             self._input_from_pn = None
             pn_receiver_thread = threading.Thread(target=self._receive_from_pn)

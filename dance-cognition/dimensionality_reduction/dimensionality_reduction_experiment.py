@@ -51,6 +51,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--plot-pose-map-contents", action="store_true")
         parser.add_argument("--plot-args")
         parser.add_argument("--memory-size", type=int, default=1000)
+        parser.add_argument("--enable-io-blending", action="store_true")
         ImproviseParameters().add_parser_arguments(parser)
         FlaneurParameters().add_parser_arguments(parser)
         HybridParameters().add_parser_arguments(parser)
@@ -58,16 +59,23 @@ class DimensionalityReductionExperiment(Experiment):
     def __init__(self, parser):
         self.profiles_dir = "profiles/dimensionality_reduction"
         Experiment.__init__(self, parser, event_handlers={
-                Event.MODE: self._handle_mode_event,
-                Event.REDUCTION: self._handle_reduction,
-                Event.PARAMETER: self._handle_parameter_event,
-                Event.USER_INTENSITY: self._handle_user_intensity,
-                Event.SYSTEM_STATE_CHANGED: self._abort_path,
-                Event.TARGET_FEATURES: self._handle_target_features,
-                Event.TARGET_ROOT_VERTICAL_ORIENTATION: self._handle_target_root_vertical_orientation,
+            Event.MODE: self._handle_mode_event,
+            Event.REDUCTION: self._handle_reduction,
+            Event.PARAMETER: self._handle_parameter_event,
+            Event.USER_INTENSITY: self._handle_user_intensity,
+            Event.SYSTEM_STATE_CHANGED: self._abort_path,
+            Event.TARGET_FEATURES: self._handle_target_features,
+            Event.TARGET_ROOT_VERTICAL_ORIENTATION: self._handle_target_root_vertical_orientation,
+            Event.SET_IO_BLENDING: self._set_io_blending,
                 })
         self.reduction = None
         self._mode = self.args.mode
+
+        if self.args.enable_io_blending:
+            self._io_blending_entity = self.entity_class(self)
+            self._io_blending_entity.pose = self.bvh_reader.get_hierarchy().create_pose()
+            self._io_blending = 0
+
         if self.args.enable_features:
             if self.args.sampling_method:
                 self._sampling_class = getattr(sampling, "%sSampler" % self.args.sampling_method)
@@ -336,12 +344,18 @@ class DimensionalityReductionExperiment(Experiment):
                 stats[3])
 
     def update(self):
-        if self._mode == modes.FOLLOW or self.args.receive_from_pn:
+        if self.args.enable_io_blending or self._mode == modes.FOLLOW or self.args.receive_from_pn:
             if self.args.receive_from_pn:
                 self.input = self._input_from_pn
             else:
                 self.input = self._follow.get_input()
-                
+
+            if self.args.enable_io_blending and self.input is not None and self.output is not None:
+                io_blend = numpy.array(self.output) * self._io_blending + \
+                           numpy.array(self.input) * (1-self._io_blending)
+                processed_io_blend = self._io_blending_entity.process_output(io_blend)
+                self.send_event_to_ui(Event(Event.IO_BLEND, processed_io_blend))
+            
             if self.input is not None and self.args.incremental:
                 self.student.train([self.input])
                 self._training_data.append(self.input)
@@ -457,6 +471,9 @@ class DimensionalityReductionExperiment(Experiment):
         for behavior in self._behaviors:
             behavior.set_target_root_vertical_orientation(orientation)
 
+    def _set_io_blending(self, event):
+        self._io_blending = event.content
+        
     def _plot_model(self):
         from plotting.model_plotter import ModelPlotter
         parser = ArgumentParser()

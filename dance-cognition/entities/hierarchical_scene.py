@@ -45,6 +45,10 @@ class Scene(BvhScene):
         color = self._get_color_by_opacity(self._parent.color_scheme["output"], opacity)
         self._draw_vertices(color)
 
+    def draw_io_blend(self, vertices):
+        self._process_vertices(vertices)
+        self._draw_vertices(self._parent.color_scheme["io_blend"])
+        
     def _get_color_by_opacity(self, foreground_color, opacity):
         fg_r, fg_g, fg_b = foreground_color
         bg_r, bg_g, bg_b, bg_a = self._parent.color_scheme["background"]
