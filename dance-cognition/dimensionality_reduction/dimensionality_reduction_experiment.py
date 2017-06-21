@@ -52,6 +52,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--plot-args")
         parser.add_argument("--memory-size", type=int, default=1000)
         parser.add_argument("--enable-io-blending", action="store_true")
+        parser.add_argument("--io-blending", type=float)
         ImproviseParameters().add_parser_arguments(parser)
         FlaneurParameters().add_parser_arguments(parser)
         HybridParameters().add_parser_arguments(parser)
@@ -74,7 +75,7 @@ class DimensionalityReductionExperiment(Experiment):
         if self.args.enable_io_blending:
             self._io_blending_entity = self.entity_class(self)
             self._io_blending_entity.pose = self.bvh_reader.get_hierarchy().create_pose()
-            self._io_blending = 0
+            self._io_blending = self.args.io_blending
 
         if self.args.enable_features:
             if self.args.sampling_method:
@@ -90,6 +91,8 @@ class DimensionalityReductionExperiment(Experiment):
         handler.send_event(Event(Event.MODE, self._mode))
         if self.reduction is not None:
             handler.send_event(Event(Event.REDUCTION, self.reduction))
+        if self.args.enable_io_blending:
+            handler.send_event(Event(Event.IO_BLENDING, self._io_blending))
         self._add_parameters_listener(self._improvise_params)
         if self.args.enable_features:
             self._add_parameters_listener(self._imitate_params)

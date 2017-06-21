@@ -29,6 +29,7 @@ class DimensionalityReductionMainWindow(MainWindow):
             Event.TARGET_ROOT_VERTICAL_ORIENTATION: self._handle_target_root_vertical_orientation,
             Event.REDUCTION_RANGE: self._handle_reduction_range,
             Event.NORMALIZED_OBSERVED_REDUCTIONS: self._handle_normalized_observed_reductions,
+            Event.IO_BLENDING: self._set_io_blending,
         }, **kwargs)
         self._add_toggleable_action(
             '&Plot reduction', self._start_plot_reduction,
@@ -137,6 +138,9 @@ class DimensionalityReductionMainWindow(MainWindow):
 
     def _handle_normalized_observed_reductions(self, event):
         self.toolbar.set_normalized_observed_reductions(event.content)
+
+    def _set_io_blending(self, event):
+        self.toolbar.io_blending_slider.setValue(event.content * SLIDER_PRECISION)
 
 class DimensionalityReductionToolbar(ExperimentToolbar):
     def __init__(self, *args):
@@ -469,8 +473,8 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         layout.setSpacing(0)
         layout.setMargin(0)
         io_blending_tab.setLayout(layout)
-        slider = self._create_io_blending_slider()
-        layout.addWidget(slider)
+        self.io_blending_slider = self._create_io_blending_slider()
+        layout.addWidget(self.io_blending_slider)
         layout.addStretch(1)
         io_blending_tab_widget.addTab(io_blending_tab, "Blending")
         self._layout.addWidget(io_blending_tab_widget)
@@ -480,12 +484,12 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         slider.setRange(0, SLIDER_PRECISION)
         slider.setSingleStep(1)
         slider.setValue(0.0)
-        slider.valueChanged.connect(self._io_blending_changed)
+        slider.valueChanged.connect(self._io_blending_changed_interactively)
         return slider
 
-    def _io_blending_changed(self, value):
+    def _io_blending_changed_interactively(self, value):
         self.parent().send_event(Event(Event.SET_IO_BLENDING, float(value) / SLIDER_PRECISION))
-                
+
     def _add_features_tab_widgets(self):
         if self.args.show_output_features:
             self._add_output_features_tab_widget()
