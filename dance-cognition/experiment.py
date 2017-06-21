@@ -15,6 +15,7 @@ from bvh.bvh_writer import BvhWriter
 import glob
 import subprocess
 import tracking.pn.receiver
+import random
 
 from connectivity.websocket_server import WebsocketServer, ClientHandler
 from connectivity.websocket_client import WebsocketClient
@@ -104,6 +105,7 @@ class Experiment(EventListener):
         parser.add_argument("--receive-from-pn", action="store_true")
         parser.add_argument("--pn-host", default="localhost")
         parser.add_argument("--pn-port", type=int, default=tracking.pn.receiver.SERVER_PORT_BVH)
+        parser.add_argument("--random-seed", type=int)
 
     def __init__(self, parser, event_handlers={}):
         event_handlers.update({
@@ -119,6 +121,10 @@ class Experiment(EventListener):
         EventListener.__init__(self, handlers=event_handlers)
 
         args, _remaining_args = parser.parse_known_args()
+
+        if args.random_seed is not None:
+            random.seed(args.random_seed)
+            
         if args.profile:
             profile_path = "%s/%s.profile" % (self.profiles_dir, args.profile)
             profile_args_string = open(profile_path).read()
