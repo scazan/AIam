@@ -347,6 +347,7 @@ class MainWindow(Window, EventListener):
             "Start", self._start,
             "Stop", self._stop,
             True, " ")
+        self._add_next_frame_action()
         self._add_save_student_action()
         self._add_load_student_action()
         self._add_toggleable_action(
@@ -392,6 +393,15 @@ class MainWindow(Window, EventListener):
         enable_action.setEnabled(True)
         handler()
 
+    def _add_next_frame_action(self):
+        action = QtGui.QAction("Next frame", self)
+        action.setShortcut("n")
+        action.triggered.connect(self._proceed_to_next_frame)
+        self._main_menu.addAction(action)
+
+    def _proceed_to_next_frame(self):
+        self.send_event(Event(Event.PROCEED_TO_NEXT_FRAME))
+        
     def _add_show_camera_settings_action(self):
         action = QtGui.QAction('Show camera settings', self)
         action.triggered.connect(self._scene.print_camera_settings)

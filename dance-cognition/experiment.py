@@ -321,6 +321,8 @@ class Experiment(EventListener):
 
         self.processed_output = self.entity.process_output(self.output)
         self.send_event_to_ui(Event(Event.OUTPUT, self.processed_output))
+        if self.entity.processed_input is not None:
+            self.send_event_to_ui(Event(Event.INPUT, self.entity.processed_input))
 
     def send_event_to_ui(self, event):
         with self._ui_handlers_lock:
