@@ -29,3 +29,10 @@ AIamCaptureTest/*.dll
 AIamCaptureTest/assets/params.xml
 AIamCaptureTest/scons/AIamCaptureTest
 AIamCaptureTest/scons/AIamCaptureTest.app/
+
+logs
+
+tracking/Bin
+tracking/NiTE2
+tracking/libs/oscpack/bin
+tracking/libs/oscpack/liboscpack.so.*
