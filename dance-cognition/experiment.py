@@ -34,6 +34,7 @@ class BaseEntity:
         self.args = experiment.args
         self.model = None
         self.pose = experiment.pose
+        self.processed_input = None
 
     def adapt_value_to_model(self, value):
         return value
@@ -106,6 +107,11 @@ class Experiment(EventListener):
         parser.add_argument("--pn-host", default="localhost")
         parser.add_argument("--pn-port", type=int, default=tracking.pn.receiver.SERVER_PORT_BVH)
         parser.add_argument("--random-seed", type=int)
+        parser.add_argument("--start-frame", type=int)
+        parser.add_argument("--deterministic", action="store_true",
+                            help="Handle time deterministically (fixed time interval between updates) rather than taking " +
+                            "real time into account. May cause latency.")
+        parser.add_argument("--stopped", action="store_true", help="Start in stopped mode")
 
     def __init__(self, parser, event_handlers={}):
         event_handlers.update({
@@ -174,10 +180,11 @@ class Experiment(EventListener):
         self.input = None
         self.output = None
         self.entity = self.entity_class(self)
-        self._running = True
+        self._running = not args.stopped
         self.stopwatch = Stopwatch()
         if self.args.show_fps:
             self._fps_meter = FpsMeter()
+        self.now = None
         self._frame_count = 0
         self._ui_handlers = set()
         self._ui_handlers_lock = threading.Lock()
@@ -215,6 +222,11 @@ class Experiment(EventListener):
     def ui_connected(self, handler):
         with self._ui_handlers_lock:
             self._ui_handlers.add(handler)
+        if self.entity.processed_input is not None:
+            self.send_event_to_ui(Event(Event.INPUT, self.entity.processed_input))
+        if self.output is not None:
+            self.process_and_broadcast_output()
+        self.send_event_to_ui(Event(Event.FRAME_COUNT, self._frame_count))
 
     def ui_disconnected(self, handler):
         with self._ui_handlers_lock:
@@ -229,6 +241,16 @@ class Experiment(EventListener):
         MainWindow.add_parser_arguments(parser)
 
     def run_backend_and_or_ui(self):
+        if self.args.start_frame is not None:
+            print "fast-forwarding to frame %d..." % self.args.start_frame
+            self.time_increment = 1. / self.args.frame_rate
+            for n in range(self.args.start_frame):
+                self._proceed_and_update()
+            print "ok"
+        else:
+            self.entity.update()
+            self.update()
+                
         run_backend = not self.args.ui_only
         run_ui = not self.args.backend_only
 
@@ -279,18 +301,20 @@ class Experiment(EventListener):
         pass
 
     def _update_and_refresh_uis(self):
-        self.now = self.current_time()
-        if self._frame_count == 0:
+        if self.now is None:
+            self.now = 0
             self.stopwatch.start()
         else:
+            self.now = self.current_time()
             if self.is_running():
-                self.time_increment = self.now - self.previous_frame_time
+                if self.args.deterministic:
+                    self.time_increment = 1. / self.args.frame_rate
+                else:
+                    self.time_increment = self.now - self.previous_frame_time
                 if self.args.show_fps:
                     self._fps_meter.update()
-                self.proceed()
 
-                self.entity.update()
-                self.update()
+                self._proceed_and_update()
 
                 if self.entity.processed_input is not None:
                     self.send_event_to_ui(Event(Event.INPUT, self.entity.processed_input))
@@ -299,13 +323,19 @@ class Experiment(EventListener):
                     self.process_and_broadcast_output()
 
         self.previous_frame_time = self.now
-        self._frame_count += 1
 
         if self._exporting_output:
             self._export_bvh()
         if self._output_sender:
             self._send_output()
 
+    def _proceed_and_update(self):
+        self.proceed()
+        self.entity.update()
+        self.update()
+        self._frame_count += 1
+        self.send_event_to_ui(Event(Event.FRAME_COUNT, self._frame_count))
+            
     def process_and_broadcast_output(self):
         if (self._server.client_subscribes_to(Event.OUTPUT) or
             self._output_sender and self.args.output_receiver_type == "world"):
@@ -314,13 +344,10 @@ class Experiment(EventListener):
 
     def _proceed_to_next_frame(self, event):
         self.time_increment = 1. / self.args.frame_rate
-        self.proceed()
+        self._proceed_and_update()
 
-        self.entity.update()
-        self.update()
-
-        self.processed_output = self.entity.process_output(self.output)
-        self.send_event_to_ui(Event(Event.OUTPUT, self.processed_output))
+        if self.output is not None:
+            self.process_and_broadcast_output()
         if self.entity.processed_input is not None:
             self.send_event_to_ui(Event(Event.INPUT, self.entity.processed_input))
 

@@ -15,6 +15,7 @@ from window import Window
 from floor_grid import FloorGrid
 from floor_spots import FloorSpots
 from floor_checkerboard import FloorCheckerboard
+from text_renderer import GlutTextRenderer
 import shutil
 
 TOOLBAR_HEIGHT = 350
@@ -48,6 +49,7 @@ class BvhScene(Scene):
         else:
             self.view_floor = False
         self.view_input = True
+        self.view_frame_count = False
         self._focus = None
         self.processed_input = None
         self.processed_output = None
@@ -56,6 +58,7 @@ class BvhScene(Scene):
                        camera_y_speed=CAMERA_Y_SPEED,
                        camera_key_speed=CAMERA_KEY_SPEED,
                        camera_drag_speed=CAMERA_DRAG_SPEED)
+        self.frame_count = None
         if args.image:
             self._image = QtGui.QImage(args.image)
         self._exporting_video = False
@@ -112,6 +115,20 @@ class BvhScene(Scene):
         if self._exporting_video:
             self._exporter.export_frame()
             self._parent.send_event(Event(Event.PROCEED_TO_NEXT_FRAME))
+
+        if self.view_frame_count and self.frame_count is not None:
+            self.configure_2d_projection(0.0, self.width, 0.0, self.height)
+            glColor3f(*self._parent.color_scheme["input"])
+            self._draw_text(
+                "%d" % self.frame_count,
+                size=14, x=5, y=20, z=0)
+
+    def _draw_text(self, text, size, x, y, z, font=GLUT_STROKE_ROMAN, spacing=None,
+                  v_align="left", h_align="top", three_d=False):
+        self._text_renderer(text, size, font).render(x, y, z, v_align, h_align, three_d)
+
+    def _text_renderer(self, text, size, font):
+        return GlutTextRenderer(self, text, size, font)
 
     def render_io(self):
         if self.view_input:
@@ -267,6 +284,7 @@ class MainWindow(Window, EventListener):
             Event.INPUT: self._handle_input,
             Event.OUTPUT: self._handle_output,
             Event.IO_BLEND: self._handle_io_blend,
+            Event.FRAME_COUNT: self._handle_frame_count,
         })
         event_handlers.update(self.toolbar.get_event_handlers())
         EventListener.__init__(self, handlers=event_handlers)
@@ -440,6 +458,7 @@ class MainWindow(Window, EventListener):
         self._add_assumed_focus_action()
         self._add_floor_action()
         self._add_input_action()
+        self._add_frame_count_action()
         if self.args.entity == "hierarchical":
             self._add_orientation_action()
 
@@ -519,6 +538,17 @@ class MainWindow(Window, EventListener):
     def _toggled_input(self):
         self._scene.view_input = self._input_action.isChecked()
 
+    def _add_frame_count_action(self):
+        self._frame_count_action = QtGui.QAction("Frame count", self)
+        self._frame_count_action.setCheckable(True)
+        self._frame_count_action.setChecked(self._scene.view_frame_count)
+        self._frame_count_action.setShortcut("c")
+        self._frame_count_action.toggled.connect(self._toggled_frame_count)
+        self._view_menu.addAction(self._frame_count_action)
+
+    def _toggled_frame_count(self):
+        self._scene.view_frame_count = self._frame_count_action.isChecked()
+
     def _add_orientation_action(self):
         self.orientation_action = QtGui.QAction("Orientation", self)
         self.orientation_action.setCheckable(True)
@@ -572,6 +602,9 @@ class MainWindow(Window, EventListener):
     def _handle_io_blend(self, event):
         self._scene.received_io_blend(event.content)
 
+    def _handle_frame_count(self, event):
+        self._scene.frame_count = event.content
+        
     def send_event(self, event):
         event.source = "PythonUI"
         self.client.send_event(event)

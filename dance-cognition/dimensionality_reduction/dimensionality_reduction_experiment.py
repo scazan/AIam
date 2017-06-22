@@ -352,9 +352,6 @@ class DimensionalityReductionExperiment(Experiment):
                 self.input = self._input_from_pn
             else:
                 self.input = self._follow.get_input()
-
-            if self.args.enable_io_blending and self.input is not None and self.output is not None:
-                self._update_io_blend_and_broadcast_it_to_ui()
             
             if self.input is not None and self.args.incremental:
                 self.student.train([self.input])
@@ -384,16 +381,21 @@ class DimensionalityReductionExperiment(Experiment):
         if self.reduction is not None:
             self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
 
+        if self.args.enable_io_blending:
+            self._update_io_blend_and_broadcast_it_to_ui()
+        
         if self.args.enable_features and self.args.show_output_features:
             self.entity.parameters_to_processed_pose(self.output, self._pose_for_feature_extraction)
             features = self.entity.extract_features(self._pose_for_feature_extraction)
             self.send_event_to_ui(Event(Event.FEATURES, features))
 
     def _update_io_blend_and_broadcast_it_to_ui(self):
-        io_blend = numpy.array(self.output) * self._io_blending + \
-                   numpy.array(self.input) * (1-self._io_blending)
-        processed_io_blend = self._io_blending_entity.process_output(io_blend)
-        self.send_event_to_ui(Event(Event.IO_BLEND, processed_io_blend))
+        if self.input is not None and self.output is not None:
+            io_blend = numpy.array(self.output) * self._io_blending + \
+                       numpy.array(self.input) * (1-self._io_blending)
+
+            processed_io_blend = self._io_blending_entity.process_output(io_blend)
+            self.send_event_to_ui(Event(Event.IO_BLEND, processed_io_blend))
                 
     def process_and_broadcast_output(self):
         if not (self._mode == modes.IMITATE and

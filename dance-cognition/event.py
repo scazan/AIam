@@ -31,6 +31,7 @@ class Event:
     SET_IO_BLENDING = "SET_IO_BLENDING"
     IO_BLENDING = "IO_BLENDING"
     IO_BLEND = "IO_BLEND"
+    FRAME_COUNT = "FRAME_COUNT"
 
     def __init__(self, type_, content=None):
         self.type = type_

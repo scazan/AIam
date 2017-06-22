@@ -9,7 +9,7 @@ from ui.scene import Scene
 from ui.window import Window
 from ui.floor_grid import FloorGrid
 from feature_extraction import FeatureExtractor
-text_renderer_module = __import__("text_renderer")
+from text_renderer import GlutTextRenderer
 
 CAMERA_Y_SPEED = 1
 CAMERA_KEY_SPEED = 40
@@ -35,7 +35,6 @@ class TrackedUsersScene(Scene):
                        camera_y_speed=CAMERA_Y_SPEED,
                        camera_key_speed=CAMERA_KEY_SPEED,
                        camera_drag_speed=CAMERA_DRAG_SPEED)
-        self._text_renderer_class = getattr(text_renderer_module, "GlutTextRenderer")
         self._dragging_tracker_y_position = False
         self._dragging_tracker_pitch = False
         self.is_rendering = False
@@ -292,7 +291,7 @@ class TrackedUsersScene(Scene):
         self._text_renderer(text, size, font).render(x, y, z, v_align, h_align, three_d)
 
     def _text_renderer(self, text, size, font):
-        return self._text_renderer_class(self, text, size, font)
+        return GlutTextRenderer(self, text, size, font)
 
     def _draw_center_position(self):
         glLineWidth(1)
