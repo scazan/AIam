@@ -32,6 +32,10 @@ def vector6d_to_euler(vector6d):
 class RotationParameterization:
     @staticmethod
     def interpolate(x, y, amount):
+        return RotationParameterization.interpolate_linearly(x, y, amount)
+
+    @staticmethod
+    def interpolate_linearly(x, y, amount):
         return list(numpy.array(y) * amount + numpy.array(x) * (1-amount))
         
 class EulerTo3Vectors(RotationParameterization):
@@ -62,12 +66,14 @@ class EulerToQuaternion(RotationParameterization):
     def interpolate(q0, q1, amount):
         q0_norm = numpy.linalg.norm(q0)
         if q0_norm == 0:
+            print "WARNING: q0_norm == 0"
             return q1
 
         q0 /= q0_norm
 
         q1_norm = numpy.linalg.norm(q1)
         if q1_norm == 0:
+            print "WARNING: q1_norm == 0"
             return q0
         
         q1 /= q1_norm
@@ -87,8 +93,8 @@ class EulerToQuaternion(RotationParameterization):
         so = math.sin(o)
 
         if (abs(so)<EPSILON):
-            return q0
-
+            return RotationParameterization.interpolate_linearly(q0, q1, amount)
+        
         a = math.sin(o*(1.0-amount)) / so
         b = math.sin(o*amount) / so
         if neg_q1:
