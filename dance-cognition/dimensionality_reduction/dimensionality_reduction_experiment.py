@@ -68,6 +68,7 @@ class DimensionalityReductionExperiment(Experiment):
             Event.TARGET_FEATURES: self._handle_target_features,
             Event.TARGET_ROOT_VERTICAL_ORIENTATION: self._handle_target_root_vertical_orientation,
             Event.SET_IO_BLENDING: self._set_io_blending,
+            Event.SET_IO_BLENDING_USE_ENTITY_SPECIFIC_INTERPOLATION: self._set_io_blending_use_entity_specific_interpolation,
                 })
         self.reduction = None
         self._mode = self.args.mode
@@ -76,6 +77,7 @@ class DimensionalityReductionExperiment(Experiment):
             self._io_blending_entity = self.entity_class(self)
             self._io_blending_entity.pose = self.bvh_reader.get_hierarchy().create_pose()
             self._io_blending = self.args.io_blending
+            self._io_blending_use_entity_specific_interpolation = True
 
         if self.args.enable_features:
             if self.args.sampling_method:
@@ -391,12 +393,17 @@ class DimensionalityReductionExperiment(Experiment):
 
     def _update_io_blend_and_broadcast_it_to_ui(self):
         if self.input is not None and self.output is not None:
-            io_blend = numpy.array(self.output) * self._io_blending + \
-                       numpy.array(self.input) * (1-self._io_blending)
-
+            if self._io_blending_use_entity_specific_interpolation:
+                io_blend = self.entity.interpolate(self.input, self.output, self._io_blending)
+            else:
+                io_blend = self._linear_interpolation(self.input, self.output, self._io_blending)
             processed_io_blend = self._io_blending_entity.process_output(io_blend)
             self.send_event_to_ui(Event(Event.IO_BLEND, processed_io_blend))
-                
+
+    def _linear_interpolation(self, x, y, amount):
+        return numpy.array(y) * amount + \
+            numpy.array(x) * (1-amount)
+                       
     def process_and_broadcast_output(self):
         if not (self._mode == modes.IMITATE and
                 self._imitate.showing_feature_matches()):
@@ -481,6 +488,10 @@ class DimensionalityReductionExperiment(Experiment):
 
     def _set_io_blending(self, event):
         self._io_blending = event.content
+        self._update_io_blend_and_broadcast_it_to_ui()
+
+    def _set_io_blending_use_entity_specific_interpolation(self, event):
+        self._io_blending_use_entity_specific_interpolation = event.content
         self._update_io_blend_and_broadcast_it_to_ui()
         
     def _plot_model(self):

@@ -236,3 +236,40 @@ class Entity(BaseEntity):
             pose.get_joint(getattr(self.args, joint_name)).worldpos
             for joint_name in self.feature_extractor.INPUT_JOINTS]
         return self.feature_extractor.extract_features(*positions)
+
+    def interpolate(self, parameters1, parameters2, amount):
+        result = []
+        self._interpolate_recurse(
+            parameters1, parameters2, amount, self.pose.get_root_joint(), result)
+        return result
+
+    def _interpolate_recurse(self, parameters1, parameters2, amount, joint, result, parameter_index=0):
+        if not joint.definition.has_parent and self.args.translate:
+            interpolated_translation, parameter_index = self._interpolate_translation(
+                parameters1, parameters2, amount, joint, parameter_index)
+            result += interpolated_translation
+
+        if joint.definition.has_rotation and not joint.definition.has_static_rotation:
+            interpolated_rotation, parameter_index = self._interpolate_rotation(
+                parameters1, parameters2, amount, joint, parameter_index)
+            result += interpolated_rotation
+
+        for child in joint.children:
+            parameter_index = self._interpolate_recurse(
+                parameters1, parameters2, amount, child, result, parameter_index)
+
+        return parameter_index
+
+    def _interpolate_translation(self, parameters1, parameters2, amount, joint, parameter_index):
+        vector1 = parameters1[parameter_index:parameter_index+3]
+        vector2 = parameters2[parameter_index:parameter_index+3]
+        parameter_index += 3
+        result = list(numpy.array(vector2) * amount + numpy.array(vector1) * (1-amount))
+        return result, parameter_index
+
+    def _interpolate_rotation(self, parameters1, parameters2, amount, joint, parameter_index):        
+        vector1 = parameters1[parameter_index:parameter_index + self.rotation_parametrization.num_parameters]
+        vector2 = parameters2[parameter_index:parameter_index + self.rotation_parametrization.num_parameters]
+        parameter_index += self.rotation_parametrization.num_parameters
+        result = list(self.rotation_parametrization.interpolate(vector1, vector2, amount))
+        return result, parameter_index

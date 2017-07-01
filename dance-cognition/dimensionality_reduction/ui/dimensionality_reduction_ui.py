@@ -475,6 +475,8 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         io_blending_tab.setLayout(layout)
         self.io_blending_slider = self._create_io_blending_slider()
         layout.addWidget(self.io_blending_slider)
+        use_entity_specific_interpolation_layout = self._create_io_blending_use_entity_specific_interpolation_checkbox_layout()
+        layout.addLayout(use_entity_specific_interpolation_layout)
         layout.addStretch(1)
         io_blending_tab_widget.addTab(io_blending_tab, "Blending")
         self._layout.addWidget(io_blending_tab_widget)
@@ -490,6 +492,23 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
     def _io_blending_changed_interactively(self, value):
         self.parent().send_event(Event(Event.SET_IO_BLENDING, float(value) / SLIDER_PRECISION))
 
+    def _create_io_blending_use_entity_specific_interpolation_checkbox_layout(self):
+        layout = QtGui.QHBoxLayout()
+        layout.setMargin(5)
+        self._io_blending_use_entity_specific_interpolation_checkbox = QtGui.QCheckBox()
+        self._io_blending_use_entity_specific_interpolation_checkbox.setChecked(True)
+        self._io_blending_use_entity_specific_interpolation_checkbox.stateChanged.connect(
+            self._io_blending_use_entity_specific_interpolation_checkbox_changed)
+        label = QtGui.QLabel("Entity specific interpolation")
+        layout.addWidget(self._io_blending_use_entity_specific_interpolation_checkbox)
+        layout.addWidget(label)
+        layout.addStretch(1)
+        return layout
+
+    def _io_blending_use_entity_specific_interpolation_checkbox_changed(self, event):
+        self.parent().send_event(Event(Event.SET_IO_BLENDING_USE_ENTITY_SPECIFIC_INTERPOLATION,
+                                       self._io_blending_use_entity_specific_interpolation_checkbox.isChecked()))
+        
     def _add_features_tab_widgets(self):
         if self.args.show_output_features:
             self._add_output_features_tab_widget()

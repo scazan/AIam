@@ -16,6 +16,7 @@ import glob
 import subprocess
 import tracking.pn.receiver
 import random
+import numpy
 
 from connectivity.websocket_server import WebsocketServer, ClientHandler
 from connectivity.websocket_client import WebsocketClient
@@ -71,6 +72,10 @@ class BaseEntity:
 
     def get_value_length(self):
         return len(self.get_value())
+
+    def interpolate(self, x, y, amount):
+        return numpy.array(y) * amount + \
+            numpy.array(x) * (1-amount)
     
 class Experiment(EventListener):
     @staticmethod
