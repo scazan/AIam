@@ -477,6 +477,8 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         layout.addWidget(self.io_blending_slider)
         use_entity_specific_interpolation_layout = self._create_io_blending_use_entity_specific_interpolation_checkbox_layout()
         layout.addLayout(use_entity_specific_interpolation_layout)
+        split_output_and_io_blend_layout = self._create_split_output_and_io_blend_checkbox_layout()
+        layout.addLayout(split_output_and_io_blend_layout)
         layout.addStretch(1)
         io_blending_tab_widget.addTab(io_blending_tab, "Blending")
         self._layout.addWidget(io_blending_tab_widget)
@@ -508,6 +510,21 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
     def _io_blending_use_entity_specific_interpolation_checkbox_changed(self, event):
         self.parent().send_event(Event(Event.SET_IO_BLENDING_USE_ENTITY_SPECIFIC_INTERPOLATION,
                                        self._io_blending_use_entity_specific_interpolation_checkbox.isChecked()))
+
+    def _create_split_output_and_io_blend_checkbox_layout(self):
+        layout = QtGui.QHBoxLayout()
+        layout.setMargin(5)
+        self._split_output_and_io_blend_checkbox = QtGui.QCheckBox()
+        self._split_output_and_io_blend_checkbox.setChecked(self.parent().split_output_and_io_blend)
+        self._split_output_and_io_blend_checkbox.stateChanged.connect(self._split_output_and_io_blend_checkbox_changed)
+        label = QtGui.QLabel("Split output and blend")
+        layout.addWidget(self._split_output_and_io_blend_checkbox)
+        layout.addWidget(label)
+        layout.addStretch(1)
+        return layout
+
+    def _split_output_and_io_blend_checkbox_changed(self):
+        self.parent().split_output_and_io_blend = self._split_output_and_io_blend_checkbox.isChecked()
         
     def _add_features_tab_widgets(self):
         if self.args.show_output_features:

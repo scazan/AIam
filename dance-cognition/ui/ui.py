@@ -133,8 +133,15 @@ class BvhScene(Scene):
     def render_io(self):
         if self.view_input:
             self._draw_io(self.processed_input, self.draw_input, self.args.input_y_offset)
-        self._draw_io(self.processed_output, self.draw_output, self.args.output_y_offset)
-        self._draw_io(self.processed_io_blend, self.draw_io_blend, self.args.output_y_offset)
+
+        if self._parent.split_output_and_io_blend:
+            self._draw_io(self.processed_output, self.draw_output, self.args.output_y_offset)
+            self._draw_io(self.processed_io_blend, self.draw_io_blend, self.args.output_y_offset)
+        else:
+            if self.processed_io_blend is None:
+                self._draw_io(self.processed_output, self.draw_output, self.args.output_y_offset)
+            else:
+                self._draw_io(self.processed_io_blend, self.draw_output, self.args.output_y_offset)
 
     def _draw_floor(self):
         if self.processed_output is not None:
@@ -279,6 +286,7 @@ class MainWindow(Window, EventListener):
         self.student = student
         self.args = args
 
+        self.split_output_and_io_blend = False
         self.toolbar = toolbar_class(self, args)
         event_handlers.update({
             Event.INPUT: self._handle_input,
