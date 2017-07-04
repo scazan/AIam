@@ -137,12 +137,15 @@ class Entity(BaseEntity):
         return self._parameters_to_scaled_normalized_vertices(parameters)
 
     def process_output(self, parameters):
-        return self._constrained_output_vertices(parameters)
+        return self._constrained_output_vertices(parameters, 1)
 
-    def _constrained_output_vertices(self, parameters):
+    def process_io_blend(self, parameters, amount):
+        return self._constrained_output_vertices(parameters, amount)
+    
+    def _constrained_output_vertices(self, parameters, amount):
         vertices = self._parameters_to_scaled_normalized_vertices(parameters)
         for constrainer in self._normalized_constrainers:
-            vertices = constrainer.constrain(vertices)
+            vertices = constrainer.constrain(vertices, amount)
         return vertices
 
     def _parameters_to_scaled_normalized_vertices(self, parameters):

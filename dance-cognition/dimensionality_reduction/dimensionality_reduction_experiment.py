@@ -397,7 +397,7 @@ class DimensionalityReductionExperiment(Experiment):
                 io_blend = self.entity.interpolate(self.input, self.output, self._io_blending)
             else:
                 io_blend = self._linear_interpolation(self.input, self.output, self._io_blending)
-            processed_io_blend = self._io_blending_entity.process_output(io_blend)
+            processed_io_blend = self._io_blending_entity.process_io_blend(io_blend, self._io_blending)
             self.send_event_to_ui(Event(Event.IO_BLEND, processed_io_blend))
 
     def _linear_interpolation(self, x, y, amount):

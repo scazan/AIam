@@ -49,6 +49,9 @@ class BaseEntity:
     def process_output(self, value):
         return self.process_io(value)
 
+    def process_io_blend(self, value, amount):
+        return self.process_io(value)
+    
     def process_io(self, value):
         return value
 
