@@ -258,6 +258,40 @@ class ExperimentToolbar(QtGui.QWidget):
     def get_event_handlers(self):
         return {}
 
+    def add_physics_tab_widget(self, parent):
+        if self.args.entity == "hierarchical":
+            physics_tab_widget = QtGui.QTabWidget()
+            physics_tab = QtGui.QWidget()
+            layout = QtGui.QVBoxLayout()
+            layout.setSpacing(0)
+            layout.setMargin(0)
+            physics_tab.setLayout(layout)
+
+            enable_friction_layout = self._create_enable_friction_checkbox_layout()
+            layout.addLayout(enable_friction_layout)
+            
+            layout.addStretch(1)
+            physics_tab_widget.addTab(physics_tab, "Physics")
+            parent.addWidget(physics_tab_widget)
+
+    def _create_enable_friction_checkbox_layout(self):
+        layout = QtGui.QHBoxLayout()
+        layout.setMargin(5)
+        self.enable_friction_checkbox = QtGui.QCheckBox()
+        self.enable_friction_checkbox.setEnabled(not self.args.enable_io_blending)
+        self.enable_friction_checkbox.setChecked(self.args.friction)
+        self.enable_friction_checkbox.stateChanged.connect(
+            self._enable_friction_checkbox_changed)
+        label = QtGui.QLabel("Friction")
+        layout.addWidget(self.enable_friction_checkbox)
+        layout.addWidget(label)
+        layout.addStretch(1)
+        return layout
+
+    def _enable_friction_checkbox_changed(self, event):
+        self.parent().send_event(Event(Event.SET_FRICTION,
+                                       self.enable_friction_checkbox.isChecked()))
+
 class MainWindow(Window, EventListener):
     @staticmethod
     def add_parser_arguments(parser):
@@ -293,6 +327,7 @@ class MainWindow(Window, EventListener):
             Event.OUTPUT: self._handle_output,
             Event.IO_BLEND: self._handle_io_blend,
             Event.FRAME_COUNT: self._handle_frame_count,
+            Event.SET_FRICTION: self._update_enable_friction,
         })
         event_handlers.update(self.toolbar.get_event_handlers())
         EventListener.__init__(self, handlers=event_handlers)
@@ -617,6 +652,10 @@ class MainWindow(Window, EventListener):
         event.source = "PythonUI"
         self.client.send_event(event)
 
+    def _update_enable_friction(self, event):
+        self.toolbar.enable_friction_checkbox.setChecked(event.content)
+        
+        
 class Layer:
     def __init__(self, rendering_function):
         self._rendering_function = rendering_function

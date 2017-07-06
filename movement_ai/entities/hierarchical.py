@@ -3,7 +3,7 @@ from angle_parameters import EulerTo3Vectors, EulerToQuaternion
 from numpy import array, dot
 from transformations import euler_matrix, quaternion_from_euler, euler_from_quaternion
 import random
-from physics import *
+from physics import Constrainers
 from feature_extraction import FeatureExtractor
 
 ASSUME_NO_TRANSLATIONAL_OFFSETS_IN_NON_ROOT = True
@@ -22,7 +22,7 @@ class Entity(BaseEntity):
         parser.add_argument("--translation-weight", type=float, default=1.)
         parser.add_argument("--friction", action="store_true")
         parser.add_argument("--pose-scale", type=float, default=.5)
-        parser.add_argument("--random-slide", type=float)
+        parser.add_argument("--random-slide", type=float, default=0.0)
         parser.add_argument("--circle-slide", action="store_true")
         parser.add_argument("--left-foot")
         parser.add_argument("--left-hand")
@@ -59,16 +59,13 @@ class Entity(BaseEntity):
             self.feature_extractor = FeatureExtractor(self._coordinate_up)
 
     def _create_constrainers(self):
-        result = []
-        if self.experiment.args.friction and not self.experiment.args.show_all_feature_matches:
-            result.append(FrictionConstrainer(BalanceDetector(self._coordinate_up)))
-        if self.experiment.args.floor:
-            result.append(FloorConstrainer(self._coordinate_up))
-        if self.experiment.args.random_slide > 0:
-            result.append(RandomSlide(self.experiment.args.random_slide))
-        if self.experiment.args.circle_slide:
-            result.append(CircleSlide())
-        return result
+        return Constrainers(
+            self._coordinate_up,
+            enable_friction=(self.experiment.args.friction and not self.experiment.args.show_all_feature_matches),
+            enable_floor=self.experiment.args.floor,
+            enable_random_slide=(self.experiment.args.random_slide > 0),
+            random_slide=self.experiment.args.random_slide,
+            enable_circle_slide=self.experiment.args.circle_slide)
 
     def _create_parameter_info_table(self):
         self._parameter_info = []
@@ -137,15 +134,14 @@ class Entity(BaseEntity):
         return self._parameters_to_scaled_normalized_vertices(parameters)
 
     def process_output(self, parameters):
-        return self._constrained_output_vertices(parameters, 1)
+        return self._constrained_output_vertices(parameters)
 
-    def process_io_blend(self, parameters, amount):
-        return self._constrained_output_vertices(parameters, amount)
+    def process_io_blend(self, parameters):
+        return self._constrained_output_vertices(parameters)
     
-    def _constrained_output_vertices(self, parameters, amount):
+    def _constrained_output_vertices(self, parameters):
         vertices = self._parameters_to_scaled_normalized_vertices(parameters)
-        for constrainer in self._normalized_constrainers:
-            vertices = constrainer.constrain(vertices, amount)
+        vertices = self._normalized_constrainers.constrain(vertices)
         return vertices
 
     def _parameters_to_scaled_normalized_vertices(self, parameters):
@@ -229,8 +225,7 @@ class Entity(BaseEntity):
         self._set_pose_from_parameters(parameters)
         root_joint = self.pose.get_root_joint()
         vertices = root_joint.get_vertices()
-        for constrainer in self._unnormalized_constrainers:
-            vertices = constrainer.constrain(vertices)
+        vertices =  self._unnormalized_constrainers.constrain(vertices)
         self.bvh_reader.get_hierarchy().set_pose_vertices(
             output_pose, vertices, not ASSUME_NO_TRANSLATIONAL_OFFSETS_IN_NON_ROOT)
 
@@ -276,3 +271,8 @@ class Entity(BaseEntity):
         parameter_index += self.rotation_parametrization.num_parameters
         result = list(self.rotation_parametrization.interpolate(vector1, vector2, amount))
         return result, parameter_index
+
+    def set_friction(self, enable_friction):
+        self._normalized_constrainers.set_friction(enable_friction)
+        self._unnormalized_constrainers.set_friction(enable_friction)
+        

@@ -69,6 +69,7 @@ class DimensionalityReductionExperiment(Experiment):
             Event.TARGET_ROOT_VERTICAL_ORIENTATION: self._handle_target_root_vertical_orientation,
             Event.SET_IO_BLENDING: self._set_io_blending,
             Event.SET_IO_BLENDING_USE_ENTITY_SPECIFIC_INTERPOLATION: self._set_io_blending_use_entity_specific_interpolation,
+            Event.SET_IO_BLENDING_CONTROL_FRICTION: self._set_io_blending_control_friction,
                 })
         self.reduction = None
         self._mode = self.args.mode
@@ -78,6 +79,8 @@ class DimensionalityReductionExperiment(Experiment):
             self._io_blending_entity.pose = self.bvh_reader.get_hierarchy().create_pose()
             self._io_blending = self.args.io_blending
             self._io_blending_use_entity_specific_interpolation = True
+            if self.args.entity == "hierarchical" and self.args.friction:
+                self._io_blending_control_friction = True
 
         if self.args.enable_features:
             if self.args.sampling_method:
@@ -393,11 +396,13 @@ class DimensionalityReductionExperiment(Experiment):
 
     def _update_io_blend_and_broadcast_it_to_ui(self):
         if self.input is not None and self.output is not None:
+            if self.args.entity == "hierarchical" and self.args.friction and self._io_blending_control_friction:
+                self.set_friction(self._io_blending > 0.5, inform_ui=True)
             if self._io_blending_use_entity_specific_interpolation:
                 io_blend = self.entity.interpolate(self.input, self.output, self._io_blending)
             else:
                 io_blend = self._linear_interpolation(self.input, self.output, self._io_blending)
-            processed_io_blend = self._io_blending_entity.process_io_blend(io_blend, self._io_blending)
+            processed_io_blend = self._io_blending_entity.process_io_blend(io_blend)
             self.send_event_to_ui(Event(Event.IO_BLEND, processed_io_blend))
 
     def _linear_interpolation(self, x, y, amount):
@@ -493,6 +498,9 @@ class DimensionalityReductionExperiment(Experiment):
     def _set_io_blending_use_entity_specific_interpolation(self, event):
         self._io_blending_use_entity_specific_interpolation = event.content
         self._update_io_blend_and_broadcast_it_to_ui()
+
+    def _set_io_blending_control_friction(self, event):
+        self._io_blending_control_friction = event.content
         
     def _plot_model(self):
         from plotting.model_plotter import ModelPlotter

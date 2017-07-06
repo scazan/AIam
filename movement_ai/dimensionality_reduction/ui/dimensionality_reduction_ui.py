@@ -153,6 +153,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
             self._add_io_blending_tab_widget()
         if self.args.enable_features:
             self._add_features_tab_widgets()
+        self.add_physics_tab_widget(self._layout)
         self.setLayout(self._layout)
         self.set_mode(self.args.mode)
         self._activate_current_mode()
@@ -479,6 +480,8 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         layout.addLayout(use_entity_specific_interpolation_layout)
         split_output_and_io_blend_layout = self._create_split_output_and_io_blend_checkbox_layout()
         layout.addLayout(split_output_and_io_blend_layout)
+        control_friction_layout = self._create_control_friction_checkbox_layout()
+        layout.addLayout(control_friction_layout)
         layout.addStretch(1)
         io_blending_tab_widget.addTab(io_blending_tab, "Blending")
         self._layout.addWidget(io_blending_tab_widget)
@@ -525,6 +528,22 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
 
     def _split_output_and_io_blend_checkbox_changed(self):
         self.parent().split_output_and_io_blend = self._split_output_and_io_blend_checkbox.isChecked()
+
+    def _create_control_friction_checkbox_layout(self):
+        layout = QtGui.QHBoxLayout()
+        layout.setMargin(5)
+        self._control_friction_checkbox = QtGui.QCheckBox()
+        self._control_friction_checkbox.setChecked(True)
+        self._control_friction_checkbox.stateChanged.connect(self._control_friction_checkbox_changed)
+        label = QtGui.QLabel("Control friction")
+        layout.addWidget(self._control_friction_checkbox)
+        layout.addWidget(label)
+        layout.addStretch(1)
+        return layout
+
+    def _control_friction_checkbox_changed(self):
+        self.parent().send_event(Event(Event.SET_IO_BLENDING_CONTROL_FRICTION, self._control_friction_checkbox.isChecked()))
+        self.enable_friction_checkbox.setEnabled(not self._control_friction_checkbox.isChecked())
         
     def _add_features_tab_widgets(self):
         if self.args.show_output_features:

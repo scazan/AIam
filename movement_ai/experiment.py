@@ -131,6 +131,7 @@ class Experiment(EventListener):
             Event.PROCEED_TO_NEXT_FRAME: self._proceed_to_next_frame,
             Event.SAVE_STUDENT: self._save_student,
             Event.LOAD_STUDENT: self._load_student,
+            Event.SET_FRICTION: lambda event: self.set_friction(event.content),
         })
         EventListener.__init__(self, handlers=event_handlers)
 
@@ -198,6 +199,9 @@ class Experiment(EventListener):
         self._ui_handlers_lock = threading.Lock()
         self._exporting_output = False
             
+        if self.args.entity == "hierarchical" and self.args.friction:
+            self._enable_friction = True
+            
         if args.receive_from_pn:
             self._pn_receiver = tracking.pn.receiver.PnReceiver()
             print "connecting to PN server..."
@@ -223,6 +227,15 @@ class Experiment(EventListener):
         print "loading %s..." % filename
         self.student.load(filename)
         print "ok"
+
+    def set_friction(self, enabled, inform_ui=False):
+        if enabled != self._enable_friction:
+            self._enable_friction = enabled
+            self.entity.set_friction(enabled)
+            if self.args.enable_io_blending:
+                self._io_blending_entity.set_friction(enabled)
+            if inform_ui:
+                self.send_event_to_ui(Event(Event.SET_FRICTION, enabled))
         
     def add_parser_arguments_second_pass(self, parser, args):
         pass
@@ -487,7 +500,7 @@ class SingleProcessUiHandler:
 
     def received_event(self, event):
         self._experiment.handle_event(event)
-
+                      
 class WebsocketUiHandler(ClientHandler):
     def __init__(self, *args, **kwargs):
         print "UI connected"
