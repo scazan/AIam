@@ -410,7 +410,7 @@ class DimensionalityReductionExperiment(Experiment):
             Experiment.process_and_broadcast_output(self)
 
     def proceed(self):
-        if self._mode == modes.FOLLOW and not self.args.incremental:
+        if self._mode == modes.FOLLOW and not self.args.receive_from_pn:
             self._follow.proceed(self.time_increment)
 
         if self._mode == modes.IMITATE:
