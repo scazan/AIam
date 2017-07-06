@@ -13,10 +13,9 @@ from OpenGL.GLU import *
 
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../dance-cognition")
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../dance-cognition/connectivity")
-from osc_receiver import OscReceiver
-from websocket_client import WebsocketClient
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../movement_ai")
+from connectivity.osc_receiver import OscReceiver
+from connectivity.websocket_client import WebsocketClient
 from event_listener import EventListener
 from event import Event
 from tracked_users_viewer import TrackedUsersViewer, TrackedUsersScene

@@ -9,9 +9,8 @@ from math import sin,cos,pi
 import threading
 import json
 
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../dance-cognition")
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../dance-cognition/connectivity")
-from osc_receiver import OscReceiver
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../movement_ai")
+from connectivity.osc_receiver import OscReceiver
 sys.path.insert(0, "/Library/Python/2.7/site-packages")
 import tornado
 import tornado.httpserver

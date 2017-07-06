@@ -10,7 +10,7 @@ from receiver import PnReceiver, SERVER_PORT_BVH
 
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../../dance-cognition")
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../../movement_ai")
 
 import window
 from bvh.bvh_reader import BvhReader

@@ -21,9 +21,8 @@ sine_right = Sine()
 left = sine_left.out()
 right = sine_right.out(1)
 
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../dance-cognition")
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../dance-cognition/connectivity")
-from osc_receiver import OscReceiver
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../movement_ai")
+from connectivity.osc_receiver import OscReceiver
 
 WEBSOCKET_APPLICATION = "/ifself"
 WEBSOCKET_PORT = 15001
