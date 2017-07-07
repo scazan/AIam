@@ -1,1 +1,1 @@
--entity hierarchical --pca-type=KernelPCA -r quaternion -bvh scenes/valencia_kinect/*.bvh -training-data-frame-rate 30 -n 3 --translate
+-entity hierarchical --reduction-type=KernelPCA -r quaternion -bvh scenes/valencia_kinect/*.bvh -training-data-frame-rate 30 -n 3 --translate

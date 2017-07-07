@@ -107,3 +107,7 @@ class AutoEncoder(DimensionalityReduction):
             zipfile = ZipFile(path, "r")
             zipfile.extractall(tempdir)
             self._saver.restore(self._sess, "%s/model" % tempdir)
+
+    def supports_incremental_learning(self):
+        return True
+    

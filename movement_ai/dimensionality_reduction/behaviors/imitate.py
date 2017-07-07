@@ -24,19 +24,24 @@ TARGET_FEATURE_PROCESSING_RATE = 10
 
 class Imitate(Behavior):
     def __init__(self,
-                 experiment,
+                 student,
+                 entity,
                  feature_matcher,
                  sampled_reductions,
-                 parameters):
-        Behavior.__init__(self, experiment)
+                 num_components,
+                 parameters,
+                 show_all_feature_matches):
+        Behavior.__init__(self)
+        self._student = student
         self._feature_matcher = feature_matcher
         self._sampled_reductions = sampled_reductions
         self._parameters = parameters
+        self._show_all_feature_matches = show_all_feature_matches
         self._target_normalized_reduction = None
         self._new_target_features = None
-        self.set_reduction(numpy.array([.5] * experiment.args.num_components))
+        self.set_reduction(numpy.array([.5] * num_components))
         self._direction = None
-        self._max_normalized_distance = math.sqrt(experiment.args.num_components)
+        self._max_normalized_distance = math.sqrt(num_components)
         self._last_target_feature_processing_time = None
         self._max_time_between_target_feature_processing = 1.0 / TARGET_FEATURE_PROCESSING_RATE
 
@@ -50,12 +55,12 @@ class Imitate(Behavior):
         self._potentially_process_new_target_features()
         return self._target_normalized_reduction
 
-    def get_reduction(self):
-        return self._experiment.student.unnormalize_reduction(self._normalized_reduction)
+    def get_reduction(self, _input):
+        return self._student.unnormalize_reduction(self._normalized_reduction)
 
     def set_reduction(self, reduction):
         self._reduction = reduction
-        self._normalized_reduction = self._experiment.student.normalize_reduction(reduction)
+        self._normalized_reduction = self._student.normalize_reduction(reduction)
 
     def set_target_features(self, target_features):
         self._new_target_features = target_features
@@ -91,7 +96,7 @@ class Imitate(Behavior):
                 key=lambda reduction: self._distance_to_current_reduction(reduction))
         else:
             target_reduction = matched_reductions_within_allowed_distance[0]
-        self._target_normalized_reduction = self._experiment.student.normalize_reduction(
+        self._target_normalized_reduction = self._student.normalize_reduction(
             target_reduction)
 
         feature_match_result = [
@@ -99,20 +104,19 @@ class Imitate(Behavior):
              "distance": distance,
              "is_target": numpy.array_equal(reduction, target_reduction)}
             for reduction, distance in zip(matched_reductions, distances)]
-        self._experiment.send_event_to_ui(Event(Event.FEATURE_MATCH_RESULT, feature_match_result))
+        self.notify(Event(Event.FEATURE_MATCH_RESULT, feature_match_result))
 
-        if self._experiment.args.show_all_feature_matches:
+        if self._show_all_feature_matches:
             match_result_with_output = [
                 (self._reduction_to_processed_output(
                         self._sampled_reductions[sampled_reductions_index]),
                  distance)
                 for sampled_reductions_index, distance
                 in zip(sampled_reductions_indices, distances)]
-            self._experiment.send_event_to_ui(
-                Event(Event.FEATURE_MATCH_OUTPUT, match_result_with_output))
+            self.notify(Event(Event.FEATURE_MATCH_OUTPUT, match_result_with_output))
 
     def _reduction_is_within_allowed_distance(self, reduction):
-        normalized_reduction = self._experiment.student.normalize_reduction(reduction)
+        normalized_reduction = self._student.normalize_reduction(reduction)
         distance = numpy.linalg.norm(normalized_reduction - self._normalized_reduction)
         threshold = self._max_normalized_distance * self._parameters.imitation_sensitivity
         return distance <= threshold
@@ -121,8 +125,8 @@ class Imitate(Behavior):
         return numpy.linalg.norm(reduction - self._reduction)
 
     def _reduction_to_processed_output(self, reduction):
-        output = self._experiment.student.inverse_transform(numpy.array([reduction]))[0]
-        return self._experiment.entity.process_output(output)
+        output = self._student.inverse_transform(numpy.array([reduction]))[0]
+        return self._entity.process_output(output)
 
     def _move_normalized_reduction_towards_target_features(self):
         self._process_direction()
@@ -161,8 +165,7 @@ class Imitate(Behavior):
             self._normalized_reduction += scaled_directional_vector
 
     def showing_feature_matches(self):
-        return (self._target_normalized_reduction is not None and
-                self._experiment.args.show_all_feature_matches)
+        return (self._target_normalized_reduction is not None and self._show_all_feature_matches)
 
     def get_root_vertical_orientation(self):
         return self._target_root_vertical_orientation

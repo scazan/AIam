@@ -63,12 +63,19 @@ class HybridParameters(Parameters):
 
 class Hybrid(Behavior):
     def __init__(self,
-                 experiment,
+                 student,
+                 entity,
                  feature_matcher,
                  sampled_reductions,
+                 num_components,
                  normalized_observed_reductions,
-                 parameters):
-        Behavior.__init__(self, experiment)
+                 parameters,
+                 show_all_feature_matches):
+        Behavior.__init__(self)
+        self._student = student
+        self._entity = entity
+        self._num_components = num_components
+        self._show_all_feature_matches
         self._parameters = parameters
         parameters.add_listener(self._parameter_changed)
         self._create_flaneur(normalized_observed_reductions)
@@ -106,7 +113,13 @@ class Hybrid(Behavior):
     def _create_imitate(self, feature_matcher, sampled_reductions):
         self._imitate_parameters = ImitateParameters()
         self._imitate = Imitate(
-            self._experiment, feature_matcher, sampled_reductions, self._imitate_parameters)
+            self._student,
+            self._entity,
+            feature_matcher,
+            sampled_reductions,
+            self._num_components,
+            self._imitate_parameters,
+            self._show_all_feature_matches)
 
     def proceed(self, time_increment):
         self._time_increment = time_increment
@@ -115,8 +128,7 @@ class Hybrid(Behavior):
         self._process_direction()
         if self._parameters.imitation < 0.99 or self._distance_to_target > THRESHOLD_DISTANCE_TO_TARGET:
             self._move_in_direction()
-        self._experiment.send_event_to_ui(
-            Event(Event.NEIGHBORS_CENTER, self._flaneur.get_neighbors_center()))
+        self.notify(Event(Event.NEIGHBORS_CENTER, self._flaneur.get_neighbors_center()))
 
     def _process_direction(self):
         target_position = self._get_target_position()
@@ -134,7 +146,7 @@ class Hybrid(Behavior):
     def _get_target_position(self):
         flaneur_target_position = self._flaneur.get_target_position(
             self._position, self._direction)
-        self._imitate.set_reduction(self.get_reduction())
+        self._imitate.set_reduction(self.get_reduction(None))
         imitate_target_position = self._imitate.get_target_position()
         if imitate_target_position is None:
             return flaneur_target_position
@@ -168,8 +180,8 @@ class Hybrid(Behavior):
                     scaled_directional_vector_norm
             self._position += scaled_directional_vector
 
-    def get_reduction(self):
-        return self._experiment.student.unnormalize_reduction(self._position)
+    def get_reduction(self, _input):
+        return self._student.unnormalize_reduction(self._position)
 
     def set_target_features(self, target_features):
         self._imitate.set_target_features(target_features)
@@ -217,7 +229,7 @@ class Hybrid(Behavior):
         self._orientation_state = new_state
 
     def _tracked_orientation_almost_equals_entity_orientation(self):
-        entity_root_vertical_orientation = self._experiment.entity.get_last_root_vertical_orientation()
+        entity_root_vertical_orientation = self._entity.get_last_root_vertical_orientation()
         return self._target_root_vertical_orientation is not None and \
             entity_root_vertical_orientation is not None and \
             abs(self._target_root_vertical_orientation - entity_root_vertical_orientation) < \

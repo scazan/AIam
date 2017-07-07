@@ -28,13 +28,14 @@ class BaseEntity:
     def add_parser_arguments(parser):
         pass
 
-    def __init__(self, experiment):
+    def __init__(self, bvh_reader, pose, floor, z_up, args):
         self._t = 0
-        self.experiment = experiment
-        self.bvh_reader = experiment.bvh_reader
-        self.args = experiment.args
+        self.bvh_reader = bvh_reader
+        self.args = args
         self.model = None
-        self.pose = experiment.pose
+        self.pose = pose
+        self.floor = floor
+        self.z_up = z_up
         self.processed_input = None
 
     def adapt_value_to_model(self, value):
@@ -55,11 +56,11 @@ class BaseEntity:
     def process_io(self, value):
         return value
 
-    def update(self):
-        if self.experiment.input is None:
+    def update(self, input=None):
+        if input is None:
             self.processed_input = None
         else:
-            self.processed_input = self.process_input(self.experiment.input)
+            self.processed_input = self.process_input(input)
 
     def get_cursor(self):
         if hasattr(self, "get_duration"):
@@ -188,7 +189,7 @@ class Experiment(EventListener):
             self.pose = None
         self.input = None
         self.output = None
-        self.entity = self.entity_class(self)
+        self.entity = self.entity_class(self.bvh_reader, self.pose, self.args.floor, self.args.z_up, self.args)
         self._running = not args.stopped
         self.stopwatch = Stopwatch()
         if self.args.show_fps:
@@ -207,8 +208,8 @@ class Experiment(EventListener):
             print "connecting to PN server..."
             self._pn_receiver.connect(args.pn_host, args.pn_port)
             print "ok"
-            self._pn_entity = self.entity_class(self)
-            self._pn_entity.pose = self.bvh_reader.get_hierarchy().create_pose()
+            pn_pose = self.bvh_reader.get_hierarchy().create_pose()
+            self._pn_entity = self.entity_class(self.bvh_reader, pn_pose, self.args.floor, self.args.z_up, self.args)
             self._input_from_pn = None
             pn_receiver_thread = threading.Thread(target=self._receive_from_pn)
             pn_receiver_thread.daemon = True
@@ -269,7 +270,7 @@ class Experiment(EventListener):
                 self._proceed_and_update()
             print "ok"
         else:
-            self.entity.update()
+            self.entity.update(self.input)
             self.update()
                 
         run_backend = not self.args.ui_only
@@ -352,7 +353,7 @@ class Experiment(EventListener):
 
     def _proceed_and_update(self):
         self.proceed()
-        self.entity.update()
+        self.entity.update(self.input)
         self.update()
         self._frame_count += 1
         self.send_event_to_ui(Event(Event.FRAME_COUNT, self._frame_count))
