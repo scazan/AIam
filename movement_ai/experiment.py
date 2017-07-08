@@ -446,8 +446,8 @@ class Experiment(EventListener):
 
     def _send_output(self):
         if self.output is not None:
-            self.entity.parameters_to_processed_pose(self.output, self.pose)
             if self.args.output_receiver_type == "bvh":
+                self.entity.parameters_to_processed_pose(self.output, self.pose)
                 self._send_output_bvh_recurse(self.pose.get_root_joint())
             elif self.args.output_receiver_type == "world":
                 self._send_output_world()
