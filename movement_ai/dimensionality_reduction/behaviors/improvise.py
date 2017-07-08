@@ -117,12 +117,8 @@ class Improvise(Behavior):
         if self._path_follower.reached_destination():
             self.select_next_move()
         self._path_follower.proceed(time_increment * self.params.velocity)
-
-    def get_reduction(self, _input):
-        if self._path_follower is None:
-            return None
         normalized_position = self._path_follower.current_position()
-        return self._student.unnormalize_reduction(normalized_position)
+        self._reduction = self._student.unnormalize_reduction(normalized_position)
 
     def path(self):
         return self._path
