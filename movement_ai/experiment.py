@@ -446,11 +446,14 @@ class Experiment(EventListener):
 
     def _send_output(self):
         if self.output is not None:
+            avatar_index = 0
+            self._output_sender.send("/avatar_begin", avatar_index)
             if self.args.output_receiver_type == "bvh":
                 self.entity.parameters_to_processed_pose(self.output, self.pose)
                 self._send_output_bvh_recurse(self.pose.get_root_joint())
             elif self.args.output_receiver_type == "world":
                 self._send_output_world()
+            self._output_sender.send("/avatar_end")
 
     def _send_output_bvh_recurse(self, joint):
         if not joint.definition.has_parent:
