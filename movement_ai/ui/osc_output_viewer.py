@@ -19,6 +19,9 @@ FLOOR_ARGS = {"num_cells": 26, "size": 26,
               "board_color2": (.3, .3, .3, 1),
               "floor_color": None,
               "background_color": (0.0, 0.0, 0.0, 0.0)}
+CAMERA_Y_SPEED = .01
+CAMERA_KEY_SPEED = .1
+CAMERA_DRAG_SPEED = .1
 FRAME_RATE = 50
 
 class MainWindow(QtOpenGL.QGLWidget):
@@ -32,7 +35,10 @@ class MainWindow(QtOpenGL.QGLWidget):
         self._next_frame = self._new_frame()
         self._frame = None
         self._frame_count = None
+        self._dragging_orientation = False
+        self._dragging_y_position = False
         QtOpenGL.QGLWidget.__init__(self)
+        self.setMouseTracking(True)
         self._floor = FloorCheckerboard(**FLOOR_ARGS)
 
         self._osc_receiver = OscReceiver(args.port)
@@ -96,6 +102,32 @@ class MainWindow(QtOpenGL.QGLWidget):
         self._camera_y_orientation = y_orientation
         self._camera_x_orientation = x_orientation
 
+    def keyPressEvent(self, event):
+        r = math.radians(self._camera_y_orientation)
+        new_position = self._camera_position
+        key = event.key()
+        if key == QtCore.Qt.Key_A:
+            new_position[0] += CAMERA_KEY_SPEED * math.cos(r)
+            new_position[2] += CAMERA_KEY_SPEED * math.sin(r)
+            self._set_camera_position(new_position)
+            return
+        elif key == QtCore.Qt.Key_D:
+            new_position[0] -= CAMERA_KEY_SPEED * math.cos(r)
+            new_position[2] -= CAMERA_KEY_SPEED * math.sin(r)
+            self._set_camera_position(new_position)
+            return
+        elif key == QtCore.Qt.Key_W:
+            new_position[0] += CAMERA_KEY_SPEED * math.cos(r + math.pi/2)
+            new_position[2] += CAMERA_KEY_SPEED * math.sin(r + math.pi/2)
+            self._set_camera_position(new_position)
+            return
+        elif key == QtCore.Qt.Key_S:
+            new_position[0] -= CAMERA_KEY_SPEED * math.cos(r + math.pi/2)
+            new_position[2] -= CAMERA_KEY_SPEED * math.sin(r + math.pi/2)
+            self._set_camera_position(new_position)
+            return
+        QtGui.QWidget.keyPressEvent(self, event)
+
     def sizeHint(self):
         return QtCore.QSize(800, 600)
 
@@ -154,7 +186,9 @@ class MainWindow(QtOpenGL.QGLWidget):
 
     def render(self):
         self.configure_3d_projection(-100, 0)
-        self._floor.render(0, 0, 0, 0)
+        camera_x = self._camera_position[0]
+        camera_z = self._camera_position[2]
+        self._floor.render(0, 0, camera_x, camera_z)
         if self._frame is not None:
             self._render_frame()
 
@@ -187,6 +221,30 @@ class MainWindow(QtOpenGL.QGLWidget):
         else:
             glVertex3f(worldpos[0], worldpos[1], worldpos[2])
 
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self._dragging_orientation = True
+        elif event.button() == QtCore.Qt.RightButton:
+            self._dragging_y_position = True
+
+    def mouseReleaseEvent(self, event):
+        self._dragging_orientation = False
+        self._dragging_y_position = False
+        self._drag_x_previous = event.x()
+        self._drag_y_previous = event.y()
+
+    def mouseMoveEvent(self, event):
+        x = event.x()
+        y = event.y()
+        if self._dragging_orientation:
+            self._set_camera_orientation(
+                self._camera_y_orientation + CAMERA_DRAG_SPEED * (x - self._drag_x_previous),
+                self._camera_x_orientation + CAMERA_DRAG_SPEED * (y - self._drag_y_previous))
+        elif self._dragging_y_position:
+            self._camera_position[1] += CAMERA_Y_SPEED * (y - self._drag_y_previous)
+        self._drag_x_previous = x
+        self._drag_y_previous = y
+        
 parser = ArgumentParser()
 parser.add_argument("bvh", type=str)
 parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
