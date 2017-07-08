@@ -9,7 +9,6 @@ class FloorCheckerboard:
                  board_color1, board_color2, y=0):
         self._num_cells = num_cells
         self._size = size
-        self._floor_color = floor_color
         self._board_color1 = board_color1
         self._board_color2 = board_color2
         self._y = y

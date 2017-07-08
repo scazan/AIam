@@ -12,7 +12,13 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/..")
 from bvh import bvh_reader as bvh_reader_module
 from connectivity.simple_osc_receiver import OscReceiver
+from floor_checkerboard import FloorCheckerboard
 
+FLOOR_ARGS = {"num_cells": 26, "size": 26,
+              "board_color1": (.2, .2, .2, 1),
+              "board_color2": (.3, .3, .3, 1),
+              "floor_color": None,
+              "background_color": (0.0, 0.0, 0.0, 0.0)}
 FRAME_RATE = 50
 
 class MainWindow(QtOpenGL.QGLWidget):
@@ -27,6 +33,7 @@ class MainWindow(QtOpenGL.QGLWidget):
         self._frame = None
         self._frame_count = None
         QtOpenGL.QGLWidget.__init__(self)
+        self._floor = FloorCheckerboard(**FLOOR_ARGS)
 
         self._osc_receiver = OscReceiver(args.port)
         if args.type == "world":
@@ -93,7 +100,7 @@ class MainWindow(QtOpenGL.QGLWidget):
         return QtCore.QSize(800, 600)
 
     def initializeGL(self):
-        glClearColor(1.0, 1.0, 1.0, 0.0)
+        glClearColor(0.0, 0.0, 0.0, 0.0)
         glClearAccum(0.0, 0.0, 0.0, 0.0)
         glClearDepth(1.0)
         glShadeModel(GL_SMOOTH)
@@ -147,6 +154,7 @@ class MainWindow(QtOpenGL.QGLWidget):
 
     def render(self):
         self.configure_3d_projection(-100, 0)
+        self._floor.render(0, 0, 0, 0)
         if self._frame is not None:
             self._render_frame()
 
@@ -158,7 +166,7 @@ class MainWindow(QtOpenGL.QGLWidget):
         self._render_pose()
         
     def _render_pose(self):
-        glColor3f(0, 0, 0)
+        glColor3f(1, 1, 1)
         glLineWidth(2.0)
         self._render_joint(self._pose.get_root_joint())
 
