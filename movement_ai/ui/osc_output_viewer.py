@@ -48,11 +48,7 @@ class MainWindow(QtOpenGL.QGLWidget):
         self._osc_receiver = OscReceiver(args.port)
         self._osc_receiver.add_method("/avatar_begin", "i", self._handle_avatar_begin)
         self._osc_receiver.add_method("/avatar_end", "", self._handle_avatar_end)
-        if args.type == "world":
-            self._osc_receiver.add_method("/world", "iifff", self._received_worldpos)
-        elif args.type == "bvh":
-            self._osc_receiver.add_method("/translation", "iifff", self._received_translation)
-            self._osc_receiver.add_method("/orientation", "iifff", self._received_orientation)
+        self._osc_receiver.add_method("/world", "iifff", self._received_worldpos)
         self._osc_receiver.start(auto_serve=True)
 
         timer = QtCore.QTimer(self)
@@ -61,10 +57,7 @@ class MainWindow(QtOpenGL.QGLWidget):
         timer.start()
 
     def _new_frame(self):
-        if self.args.type == "world":
-            return {}
-        elif self.args.type == "bvh":
-            return defaultdict(dict)
+        return [None] * self._hierarchy.get_num_joints()
 
     def _handle_avatar_begin(self, path, args, types, src, user_data):
         index = args[0]
@@ -76,10 +69,7 @@ class MainWindow(QtOpenGL.QGLWidget):
     def _handle_avatar_end(self, path, args, types, src, user_data):
         if self._current_avatar is None:
             return
-        if self.args.type == "world":
-            self._hierarchy.set_pose_vertices(self._current_avatar.pose, self._current_avatar.frame)
-        elif self.args.type == "bvh":
-            self._hierarchy.set_pose_from_joint_dicts(self._current_avatar.pose, self._current_avatar.frame)
+        self._current_avatar.vertices = copy.copy(self._current_avatar.frame)
         self._current_avatar.is_renderable = True
         self._current_avatar.frame = None
         self._current_avatar = None
@@ -209,22 +199,19 @@ class MainWindow(QtOpenGL.QGLWidget):
         self._floor.render(0, 0, camera_x, camera_z)
         for avatar in self._avatars.values():
             if avatar.is_renderable:
-                self._render_pose(avatar.pose)
+                self._render_avatar(avatar)
         
-    def _render_pose(self, pose):
+    def _render_avatar(self, avatar):
         glColor3f(1, 1, 1)
         glLineWidth(2.0)
-        self._render_joint(pose.get_root_joint())
+        edges = self.bvh_reader.vertices_to_edges(avatar.vertices) # TODO: what if type==bvh?
+        for edge in edges:
+            self._render_edge(edge.v1, edge.v2)
 
-    def _render_joint(self, joint):
-        for child in joint.children:
-            self._render_edge(joint, child)
-            self._render_joint(child)
-
-    def _render_edge(self, joint1, joint2):
+    def _render_edge(self, v1, v2):
         glBegin(GL_LINES)
-        self._vertex(joint1.worldpos)
-        self._vertex(joint2.worldpos)
+        self._vertex(v1)
+        self._vertex(v2)
         glEnd()
 
     def _vertex(self, worldpos):
@@ -263,7 +250,7 @@ parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
                     default="-3.767,-1.400,-3.485,-55.500,18.500")
 parser.add_argument("--port", type=int, default=10000)
 parser.add_argument("--z-up", action="store_true")
-parser.add_argument("--type", choices=["bvh", "world"], default="bvh")
+parser.add_argument("--type", choices=["world"], default="world")
 args = parser.parse_args()
 
 bvh_reader = bvh_reader_module.BvhReader(args.bvh)
