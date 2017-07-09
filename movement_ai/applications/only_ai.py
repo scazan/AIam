@@ -18,7 +18,6 @@ FLOOR = True
 MAX_NOVELTY = 1.4
 
 from argparse import ArgumentParser
-import sched
 import time
 import numpy
 import random
@@ -29,9 +28,9 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/..")
 
 from entities.hierarchical import Entity
 from bvh.bvh_reader import BvhReader
-from stopwatch import Stopwatch
 from dimensionality_reduction.behaviors.improvise import ImproviseParameters, Improvise
 from dimensionality_reduction.factory import DimensionalityReductionFactory
+from fps_meter import FpsMeter
 
 class Avatar:
     def __init__(self, index, student, entity, behavior):
@@ -49,37 +48,30 @@ class Application:
     def run(self):
         self._input = None
         self._now = None
-        self._stopwatch = Stopwatch()
-        self._scheduler = sched.scheduler(time.time, time.sleep)
-        self._add_periodic_callback(self._update, 1000. / self._args.frame_rate)
+        self._desired_frame_duration = 1.0 / self._args.frame_rate
+        self._frame_count = 0
+        if self._args.show_fps:
+            self._fps_meter = FpsMeter()
         while True:
-            self._scheduler.run()
+            self._frame_start_time = time.time()
+            self._update_and_send_output()
+            self._wait_until_next_frame_is_timely()
 
-    def _add_periodic_callback(self, action, delay_msecs):
-        delay = float(delay_msecs) / 1000
-        callback = PeriodicCallback(self._scheduler, action, delay)
-        callback.schedule()
-
-    def _update(self):
-        if self._now is None:
-            self._now = 0
-            self._frame_count = 0
-            self._stopwatch.start()
-        else:
-            self._now = self._stopwatch.get_elapsed_time()
-            self._time_increment = self._now - self.previous_frame_time
-            for avatar in avatars:
-                avatar.behavior.proceed(self._time_increment)
-                avatar.entity.update()
-                reduction = avatar.behavior.get_reduction(self._input)
-                if reduction is not None:
-                    output = avatar.student.inverse_transform(numpy.array([reduction]))[0]
-                    processed_output = avatar.entity.process_output(output)
-                    if self._output_sender is not None:
-                        self._send_output(avatar.index, processed_output)
+    def _update_and_send_output(self):
+        for avatar in avatars:
+            avatar.behavior.proceed(self._desired_frame_duration)
+            avatar.entity.update()
+            reduction = avatar.behavior.get_reduction(self._input)
+            if reduction is not None:
+                output = avatar.student.inverse_transform(numpy.array([reduction]))[0]
+                processed_output = avatar.entity.process_output(output)
+                if self._output_sender is not None:
+                    self._send_output(avatar.index, processed_output)
 
         self.previous_frame_time = self._now
         self._frame_count += 1
+        if self._args.show_fps:
+            self._fps_meter.update()
 
     def _send_output(self, avatar_index, processed_output):
         self._output_sender.send("/avatar_begin", avatar_index)
@@ -89,23 +81,15 @@ class Application:
                 worldpos[0], worldpos[1], worldpos[2])
         self._output_sender.send("/avatar_end")
 
-class PeriodicCallback:
-    def __init__(self, scheduler, action, delay):
-        self.scheduler = scheduler
-        self.action = action
-        self.delay = delay
-
-    def schedule(self):
-        self.scheduler.enter(self.delay, 1, self._fire, [])
-
-    def _fire(self):
-        self.action()
-        self.schedule()
-
+    def _wait_until_next_frame_is_timely(self):
+        frame_duration = time.time() - self._frame_start_time
+        if frame_duration < self._desired_frame_duration:
+            time.sleep(self._desired_frame_duration - frame_duration)
         
 parser = ArgumentParser()
 parser.add_argument("--num-avatars", type=int, default=1)
 parser.add_argument("--frame-rate", type=float, default=50.0)
+parser.add_argument("--show-fps", action="store_true")
 parser.add_argument("--output-receiver-host")
 parser.add_argument("--output-receiver-port", type=int, default=10000)
 parser.add_argument("--random-seed", type=int)
