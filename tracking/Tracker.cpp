@@ -261,12 +261,24 @@ float Tracker::getTimestamp() {
 }
 
 void Tracker::sendStatesAndSkeletonData() {
+  bool previousVisibility;
   const nite::Array<nite::UserData>& users = userTrackerFrame.getUsers();
   for(int i = 0; i < users.getSize(); ++i) {
     const nite::UserData& userData = users[i];
+    
+    if(previousVisibilities.find(userData.getId()) == previousVisibilities.end()) {
+      previousVisibility = false;
+    }
+    else {
+      previousVisibility = previousVisibilities[userData.getId()];
+    }
+    
     if(userData.isNew()) {
       sendState(userData.getId(), "new");
       userTracker->startSkeletonTracking(userData.getId());
+    }
+    else if(userData.isVisible() != previousVisibility) {
+      sendChangedVisibility(userData);
     }
     else if(userData.isLost()) {
       sendState(userData.getId(), "lost");
@@ -277,6 +289,8 @@ void Tracker::sendStatesAndSkeletonData() {
       }
       sendStateIfChanged(userData);
     }
+
+    previousVisibilities[userData.getId()] = userData.isVisible();
   }
 }
 
@@ -309,6 +323,15 @@ void Tracker::sendStateIfChanged(const nite::UserData& userData) {
       sendState(userData.getId(), "calibration_failed");
       break;
     }
+  }
+}
+
+void Tracker::sendChangedVisibility(const nite::UserData& userData) {
+  if(userData.isVisible()) {
+    sendState(userData.getId(), "visible");
+  }
+  else {
+    sendState(userData.getId(), "out_of_scene");
   }
 }
 

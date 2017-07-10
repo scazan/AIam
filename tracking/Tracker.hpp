@@ -48,6 +48,7 @@ private:
 		    const char *jointName);
   void sendStateIfChanged(const nite::UserData&);
   void sendState(const nite::UserId& userId, const char *state);
+  void sendChangedVisibility(const nite::UserData&);
   void sendCenterOfMass();
   void setSpeed();
   void stopSeeking();
@@ -61,6 +62,7 @@ private:
   openni::VideoStream depthStream;
   nite::UserTracker* userTracker;
   nite::UserTrackerFrameRef userTrackerFrame;
+  std::map<nite::UserId, bool> previousVisibilities;
   std::map<nite::UserId, nite::SkeletonState> previousStates;
   UdpTransmitSocket* transmitSocket;
   char oscBuffer[OSC_BUFFER_SIZE];
