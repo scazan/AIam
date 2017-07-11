@@ -1,1 +1,1 @@
--entity hierarchical --incremental -r quaternion -bvh scenes/HDM_bk_03-01_01_120.bvh -training-data-frame-rate 10 -n 3 --num-hidden-nodes=10 -bvh-speed 5
+-entity hierarchical --reduction-type=AutoEncoder -r quaternion -bvh scenes/HDM_bk_03-01_01_120.bvh -training-data-frame-rate 10 -n 3 --num-hidden-nodes=10 -bvh-speed 5

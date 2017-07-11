@@ -45,7 +45,7 @@ class Entity(BaseEntity):
         self.rotation_parametrization = rotation_parametrizations[
             self.args.rotation_parametrization]
         self._create_parameter_info_table()
-        if self.experiment.args.z_up:
+        if self.z_up:
             self._vertical_axis = "z"
             self._coordinate_up = 2
         else:
@@ -61,11 +61,12 @@ class Entity(BaseEntity):
     def _create_constrainers(self):
         return Constrainers(
             self._coordinate_up,
-            enable_friction=(self.experiment.args.friction and not self.experiment.args.show_all_feature_matches),
-            enable_floor=self.experiment.args.floor,
-            enable_random_slide=(self.experiment.args.random_slide > 0),
-            random_slide=self.experiment.args.random_slide,
-            enable_circle_slide=self.experiment.args.circle_slide)
+            enable_friction=(self.args.friction and not (
+                hasattr(self.args, "show_all_feature_matches") and self.args.show_all_feature_matches)),
+            enable_floor=self.floor,
+            enable_random_slide=(self.args.random_slide > 0),
+            random_slide=self.args.random_slide,
+            enable_circle_slide=self.args.circle_slide)
 
     def _create_parameter_info_table(self):
         self._parameter_info = []

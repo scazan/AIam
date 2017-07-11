@@ -12,28 +12,43 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/..")
 from bvh import bvh_reader as bvh_reader_module
 from connectivity.simple_osc_receiver import OscReceiver
+from floor_checkerboard import FloorCheckerboard
 
+FLOOR_ARGS = {"num_cells": 26, "size": 26,
+              "board_color1": (.2, .2, .2, 1),
+              "board_color2": (.3, .3, .3, 1),
+              "floor_color": None,
+              "background_color": (0.0, 0.0, 0.0, 0.0)}
+CAMERA_Y_SPEED = .01
+CAMERA_KEY_SPEED = .1
+CAMERA_DRAG_SPEED = .1
 FRAME_RATE = 50
 
+class Avatar:
+    def __init__(self):
+        self.pose = bvh_reader.create_pose()
+        self.frame = None
+        self.is_renderable = False
+        
 class MainWindow(QtOpenGL.QGLWidget):
     def __init__(self, bvh_reader, args):
         self.bvh_reader = bvh_reader
         self._hierarchy = bvh_reader.get_hierarchy()
-        self._pose = bvh_reader.create_pose()
+        self._avatars = {}
         self.args = args
         self.margin = 0
         self._set_camera_from_arg(args.camera)
-        self._next_frame = self._new_frame()
-        self._frame = None
-        self._frame_count = None
+        self._current_avatar = None
+        self._dragging_orientation = False
+        self._dragging_y_position = False
         QtOpenGL.QGLWidget.__init__(self)
+        self.setMouseTracking(True)
+        self._floor = FloorCheckerboard(**FLOOR_ARGS)
 
         self._osc_receiver = OscReceiver(args.port)
-        if args.type == "world":
-            self._osc_receiver.add_method("/world", "iifff", self._received_worldpos)
-        elif args.type == "bvh":
-            self._osc_receiver.add_method("/translation", "iifff", self._received_translation)
-            self._osc_receiver.add_method("/orientation", "iifff", self._received_orientation)
+        self._osc_receiver.add_method("/avatar_begin", "i", self._handle_avatar_begin)
+        self._osc_receiver.add_method("/avatar_end", "", self._handle_avatar_end)
+        self._osc_receiver.add_method("/world", "iifff", self._received_worldpos)
         self._osc_receiver.start(auto_serve=True)
 
         timer = QtCore.QTimer(self)
@@ -42,37 +57,43 @@ class MainWindow(QtOpenGL.QGLWidget):
         timer.start()
 
     def _new_frame(self):
-        if self.args.type == "world":
-            return {}
-        elif self.args.type == "bvh":
-            return defaultdict(dict)
+        return [None] * self._hierarchy.get_num_joints()
 
+    def _handle_avatar_begin(self, path, args, types, src, user_data):
+        index = args[0]
+        if index not in self._avatars:
+            self._avatars[index] = Avatar()
+        self._current_avatar = self._avatars[index]
+        self._current_avatar.frame = self._new_frame()
+
+    def _handle_avatar_end(self, path, args, types, src, user_data):
+        if self._current_avatar is None:
+            return
+        self._current_avatar.vertices = copy.copy(self._current_avatar.frame)
+        self._current_avatar.is_renderable = True
+        self._current_avatar.frame = None
+        self._current_avatar = None
+        
     def _received_worldpos(self, path, args, types, src, user_data):
+        if self._current_avatar is None:
+            return
         frame_count, joint_index, x, y, z = args
-        self._on_new_data(frame_count, joint_index)
-        self._next_frame[joint_index] = (x, y, z)
-
-    def _on_new_data(self, frame_count, joint_index):
-        if joint_index == 0:
-            if self._frame_count is None:
-                self._frame_count = frame_count
-            elif frame_count > self._frame_count:
-                self._frame = copy.copy(self._next_frame)
-                self._next_frame = self._new_frame()
-                self._frame_count = frame_count
+        self._current_avatar.frame[joint_index] = (x, y, z)
 
     def _received_translation(self, path, args, types, src, user_data):
+        if self._current_avatar is None:
+            return
         frame_count, joint_index, x, y, z = args
-        self._on_new_data(frame_count, joint_index)
-        self._next_frame[joint_index].update(
+        self._current_avatar.frame[joint_index].update(
             {"Xposition": x,
              "Yposition": y,
              "Zposition": z})
 
     def _received_orientation(self, path, args, types, src, user_data):
+        if self._current_avatar is None:
+            return
         frame_count, joint_index, x, y, z = args
-        self._on_new_data(frame_count, joint_index)
-        self._next_frame[joint_index].update(
+        self._current_avatar.frame[joint_index].update(
             {"Xrotation": math.degrees(x),
              "Yrotation": math.degrees(y),
              "Zrotation": math.degrees(z)})
@@ -89,11 +110,37 @@ class MainWindow(QtOpenGL.QGLWidget):
         self._camera_y_orientation = y_orientation
         self._camera_x_orientation = x_orientation
 
+    def keyPressEvent(self, event):
+        r = math.radians(self._camera_y_orientation)
+        new_position = self._camera_position
+        key = event.key()
+        if key == QtCore.Qt.Key_A:
+            new_position[0] += CAMERA_KEY_SPEED * math.cos(r)
+            new_position[2] += CAMERA_KEY_SPEED * math.sin(r)
+            self._set_camera_position(new_position)
+            return
+        elif key == QtCore.Qt.Key_D:
+            new_position[0] -= CAMERA_KEY_SPEED * math.cos(r)
+            new_position[2] -= CAMERA_KEY_SPEED * math.sin(r)
+            self._set_camera_position(new_position)
+            return
+        elif key == QtCore.Qt.Key_W:
+            new_position[0] += CAMERA_KEY_SPEED * math.cos(r + math.pi/2)
+            new_position[2] += CAMERA_KEY_SPEED * math.sin(r + math.pi/2)
+            self._set_camera_position(new_position)
+            return
+        elif key == QtCore.Qt.Key_S:
+            new_position[0] -= CAMERA_KEY_SPEED * math.cos(r + math.pi/2)
+            new_position[2] -= CAMERA_KEY_SPEED * math.sin(r + math.pi/2)
+            self._set_camera_position(new_position)
+            return
+        QtGui.QWidget.keyPressEvent(self, event)
+
     def sizeHint(self):
         return QtCore.QSize(800, 600)
 
     def initializeGL(self):
-        glClearColor(1.0, 1.0, 1.0, 0.0)
+        glClearColor(0.0, 0.0, 0.0, 0.0)
         glClearAccum(0.0, 0.0, 0.0, 0.0)
         glClearDepth(1.0)
         glShadeModel(GL_SMOOTH)
@@ -147,30 +194,24 @@ class MainWindow(QtOpenGL.QGLWidget):
 
     def render(self):
         self.configure_3d_projection(-100, 0)
-        if self._frame is not None:
-            self._render_frame()
-
-    def _render_frame(self):
-        if self.args.type == "world":
-            self._hierarchy.set_pose_vertices(self._pose, self._frame)
-        elif self.args.type == "bvh":
-            self._hierarchy.set_pose_from_joint_dicts(self._pose, self._frame)
-        self._render_pose()
+        camera_x = self._camera_position[0]
+        camera_z = self._camera_position[2]
+        self._floor.render(0, 0, camera_x, camera_z)
+        for avatar in self._avatars.values():
+            if avatar.is_renderable:
+                self._render_avatar(avatar)
         
-    def _render_pose(self):
-        glColor3f(0, 0, 0)
+    def _render_avatar(self, avatar):
+        glColor3f(1, 1, 1)
         glLineWidth(2.0)
-        self._render_joint(self._pose.get_root_joint())
+        edges = self.bvh_reader.vertices_to_edges(avatar.vertices) # TODO: what if type==bvh?
+        for edge in edges:
+            self._render_edge(edge.v1, edge.v2)
 
-    def _render_joint(self, joint):
-        for child in joint.children:
-            self._render_edge(joint, child)
-            self._render_joint(child)
-
-    def _render_edge(self, joint1, joint2):
+    def _render_edge(self, v1, v2):
         glBegin(GL_LINES)
-        self._vertex(joint1.worldpos)
-        self._vertex(joint2.worldpos)
+        self._vertex(v1)
+        self._vertex(v2)
         glEnd()
 
     def _vertex(self, worldpos):
@@ -179,13 +220,37 @@ class MainWindow(QtOpenGL.QGLWidget):
         else:
             glVertex3f(worldpos[0], worldpos[1], worldpos[2])
 
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self._dragging_orientation = True
+        elif event.button() == QtCore.Qt.RightButton:
+            self._dragging_y_position = True
+
+    def mouseReleaseEvent(self, event):
+        self._dragging_orientation = False
+        self._dragging_y_position = False
+        self._drag_x_previous = event.x()
+        self._drag_y_previous = event.y()
+
+    def mouseMoveEvent(self, event):
+        x = event.x()
+        y = event.y()
+        if self._dragging_orientation:
+            self._set_camera_orientation(
+                self._camera_y_orientation + CAMERA_DRAG_SPEED * (x - self._drag_x_previous),
+                self._camera_x_orientation + CAMERA_DRAG_SPEED * (y - self._drag_y_previous))
+        elif self._dragging_y_position:
+            self._camera_position[1] += CAMERA_Y_SPEED * (y - self._drag_y_previous)
+        self._drag_x_previous = x
+        self._drag_y_previous = y
+        
 parser = ArgumentParser()
 parser.add_argument("bvh", type=str)
 parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
                     default="-3.767,-1.400,-3.485,-55.500,18.500")
 parser.add_argument("--port", type=int, default=10000)
 parser.add_argument("--z-up", action="store_true")
-parser.add_argument("--type", choices=["bvh", "world"], default="bvh")
+parser.add_argument("--type", choices=["world"], default="world")
 args = parser.parse_args()
 
 bvh_reader = bvh_reader_module.BvhReader(args.bvh)

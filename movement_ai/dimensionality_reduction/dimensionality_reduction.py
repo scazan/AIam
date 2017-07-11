@@ -79,3 +79,7 @@ class DimensionalityReduction:
 
     def _persistant_state_path(self, model_path):
         return model_path + ".state"
+
+    def supports_incremental_learning(self):
+        return False
+    

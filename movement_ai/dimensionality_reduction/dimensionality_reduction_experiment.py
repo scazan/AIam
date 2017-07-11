@@ -1,8 +1,7 @@
 from experiment import *
 from dimensionality_reduction_teacher import *
 from component_analysis import ComponentAnalysis
-import pca
-from autoencoder import AutoEncoder
+from factory import DimensionalityReductionFactory
 import random
 import collections
 import modes
@@ -21,10 +20,9 @@ class DimensionalityReductionExperiment(Experiment):
     @staticmethod
     def add_parser_arguments(parser):
         Experiment.add_parser_arguments(parser)
-        parser.add_argument("--pca-type",
-                            choices=["LinearPCA", "KernelPCA"],
+        parser.add_argument("--reduction-type",
+                            choices=DimensionalityReductionFactory.TYPES,
                             default="LinearPCA")
-        parser.add_argument("--incremental", action="store_true")
         parser.add_argument("--num-components", "-n", type=int, default=4)
         parser.add_argument("--explore-beyond-observations", type=float, default=0.2)
         parser.add_argument("--mode",
@@ -53,6 +51,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--memory-size", type=int, default=1000)
         parser.add_argument("--enable-io-blending", action="store_true")
         parser.add_argument("--io-blending", type=float)
+        parser.add_argument("--target-training-loss", type=float)
         ImproviseParameters().add_parser_arguments(parser)
         FlaneurParameters().add_parser_arguments(parser)
         HybridParameters().add_parser_arguments(parser)
@@ -75,8 +74,9 @@ class DimensionalityReductionExperiment(Experiment):
         self._mode = self.args.mode
 
         if self.args.enable_io_blending:
-            self._io_blending_entity = self.entity_class(self)
-            self._io_blending_entity.pose = self.bvh_reader.get_hierarchy().create_pose()
+            io_blending_pose = self.bvh_reader.get_hierarchy().create_pose()
+            self._io_blending_entity = self.entity_class(
+                self.bvh_reader, io_blending_pose, self.args.floor, self.args.z_up, self.args)
             self._io_blending = self.args.io_blending
             self._io_blending_use_entity_specific_interpolation = True
             if self.args.entity == "hierarchical" and self.args.friction:
@@ -137,7 +137,7 @@ class DimensionalityReductionExperiment(Experiment):
         self._update_entity_root_vertical_orientation_using_behavior(behavior)
 
     def _potentially_update_reduction_using_behavior(self, behavior):
-        new_reduction = behavior.get_reduction()
+        new_reduction = behavior.get_reduction(self.input)
         if new_reduction is not None and (
                 self.reduction is None or not numpy.array_equal(new_reduction, self.reduction)):
             self.reduction = new_reduction
@@ -150,19 +150,13 @@ class DimensionalityReductionExperiment(Experiment):
         self.entity.modified_root_vertical_orientation = behavior.get_root_vertical_orientation()
 
     def add_parser_arguments_second_pass(self, parser, args):
-        if args.incremental:
-            dimensionality_reduction_class = AutoEncoder
-        else:
-            dimensionality_reduction_class = getattr(pca, args.pca_type)
+        dimensionality_reduction_class = DimensionalityReductionFactory.get_class(args.reduction_type)
         dimensionality_reduction_class.add_parser_arguments(parser)
 
     def run(self):
         teacher = Teacher(self.entity, self.args.training_data_frame_rate)
 
-        if self.args.incremental:
-            dimensionality_reduction_class = AutoEncoder
-        else:
-            dimensionality_reduction_class = getattr(pca, self.args.pca_type)
+        dimensionality_reduction_class = DimensionalityReductionFactory.get_class(self.args.reduction_type)
         num_input_dimensions = self.entity.get_value_length()
         self.student = dimensionality_reduction_class(
             num_input_dimensions, self.args.num_components, self.args)
@@ -211,7 +205,7 @@ class DimensionalityReductionExperiment(Experiment):
         else:
             self._load_model()
             if not self.args.ui_only:
-                if self.args.incremental:
+                if self.student.supports_incremental_learning():
                     self._training_data = collections.deque([], maxlen=self.args.memory_size)
                 else:
                     self._training_data = storage.load(self._training_data_path)
@@ -234,28 +228,43 @@ class DimensionalityReductionExperiment(Experiment):
                     self._hybrid = self._create_hybrid_behavior()
                     self._behaviors.append(self._hybrid)
 
+                for behaviour in self._behaviors:
+                    behaviour.add_observer(lambda event: self.send_event_to_ui(event))
+
             self.run_backend_and_or_ui()
 
     def _create_follow_behavior(self):
-        return Follow(self)
+        return Follow(self.student, self.entity, self.bvh_reader)
 
     def _create_explore_behavior(self):
-        return Explore(self)
+        return Explore(self.student, self.args.num_components)
 
     def _create_imitate_behavior(self):
         self._imitate_params = ImitateParameters()
         self._imitate_params.set_values_from_args(self.args)
         self._add_parameter_set(self._imitate_params)
-        return Imitate(self, self._feature_matcher, self._sampled_reductions, self._imitate_params)
+        return Imitate(
+            self.student,
+            self.entity,
+            self._feature_matcher,
+            self._sampled_reductions,
+            self.args.num_components,
+            self._imitate_params,
+            self.args.show_all_feature_matches)
 
     def _create_hybrid_behavior(self):
         self._hybrid_params = HybridParameters()
         self._hybrid_params.set_values_from_args(self.args)
         self._add_parameter_set(self._hybrid_params)
         return Hybrid(
-            self, self._feature_matcher, self._sampled_reductions,
+            self.student,
+            self.entity,
+            self._feature_matcher,
+            self._sampled_reductions,
+            self.args.num_components,
             self.student.normalized_observed_reductions,
-            self._hybrid_params)
+            self._hybrid_params,
+            self.args.show_all_feature_matches)
 
     def _create_improvise_behavior(self):
         if self.args.preferred_location:
@@ -267,8 +276,11 @@ class DimensionalityReductionExperiment(Experiment):
         self._improvise_params.set_values_from_args(self.args)
         self._add_parameter_set(self._improvise_params)
         return Improvise(
-            self, self._improvise_params,
+            self.student,
+            self.args.num_components,
+            self._improvise_params,
             preferred_location,
+            self.args.max_novelty,
             on_changed_path=lambda: \
                 self.send_event_to_ui(Event(Event.IMPROVISE_PATH, self._improvise.path())))
 
@@ -276,7 +288,7 @@ class DimensionalityReductionExperiment(Experiment):
         self._flaneur_params = FlaneurParameters()
         self._flaneur_params.set_values_from_args(self.args)
         self._add_parameter_set(self._flaneur_params)
-        return FlaneurBehavior(self, self._flaneur_params, self.student.normalized_observed_reductions)
+        return FlaneurBehavior(self.student, self._flaneur_params, self.student.normalized_observed_reductions)
 
     def _add_parameter_set(self, parameters):
         self._parameter_sets[parameters.__class__.__name__] = parameters
@@ -327,8 +339,17 @@ class DimensionalityReductionExperiment(Experiment):
             print "ok"
 
         print "training model..."
-        if self.args.incremental:
-            self.student.batch_train(self._training_data, self.args.num_training_epochs)
+        if self.student.supports_incremental_learning():
+            if self.args.target_training_loss:
+                epoch = 0
+                while True:
+                    loss = self.student.train(self._training_data)
+                    if loss <= self.args.target_training_loss:
+                        print "Stopping at epoch %d (%s <= %s)" % (epoch, loss, self.args.target_training_loss)
+                        break
+                    epoch += 1
+            else:
+                self.student.batch_train(self._training_data, self.args.num_training_epochs)
         else:
             self.student.fit(self._training_data)
         print "ok"
@@ -358,7 +379,7 @@ class DimensionalityReductionExperiment(Experiment):
             else:
                 self.input = self._follow.get_input()
             
-            if self.input is not None and self.args.incremental:
+            if self.input is not None and self.student.supports_incremental_learning():
                 self.student.train([self.input])
                 self._training_data.append(self.input)
                 self.student.probe(self._training_data)
@@ -484,7 +505,7 @@ class DimensionalityReductionExperiment(Experiment):
         return features
 
     def should_read_bvh_frames(self):
-        return self.args.train or self.args.mode or self.args.incremental
+        return self.args.train or self.args.mode or self.student.supports_incremental_learning()
 
     def _handle_target_root_vertical_orientation(self, event):
         orientation = event.content

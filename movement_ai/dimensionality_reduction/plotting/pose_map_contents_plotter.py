@@ -43,7 +43,8 @@ class PoseMapContentsPlotter:
         if self._experiment.student.num_reduced_dimensions > 2:
             print "WARNING: model has %d dimensions, but %s only considers the first 2" % \
                 (self._experiment.student.num_reduced_dimensions, self.__class__.__name__)
-        if len(self._experiment.entity._unnormalized_constrainers) > 0:
+        contrainers = self._experiment.entity._unnormalized_constrainers
+        if contrainers.enable_friction or contrainers.enable_floor:
             print "WARNING: constrainers applied in entity, but this may not be handled properly by %s " \
                 "since a single pose object is used throughout the grid" % self.__class__.__name__
 

@@ -14,8 +14,9 @@ class FlaneurParameters(Parameters):
                            choices=ParameterFloatRange(0., 1.))
 
 class FlaneurBehavior(Behavior):
-    def __init__(self, experiment, parameters, normalized_observed_reductions):
-        self._experiment = experiment
+    def __init__(self, student, parameters, normalized_observed_reductions):
+        Behavior.__init__(self)
+        self._student = student
         self._parameters = parameters
         parameters.add_listener(self._parameter_changed)
         self._flaneur = Flaneur(normalized_observed_reductions)
@@ -33,12 +34,11 @@ class FlaneurBehavior(Behavior):
 
     def proceed(self, time_increment):
         self._flaneur.proceed(time_increment)
-        self._experiment.send_event_to_ui(
-            Event(Event.NEIGHBORS_CENTER, self._flaneur.get_neighbors_center()))
+        self.notify(Event(Event.NEIGHBORS_CENTER, self._flaneur.get_neighbors_center()))
 
-    def get_reduction(self):
+    def get_reduction(self, _input):
         normalized_position = self._flaneur.get_position()
-        return self._experiment.student.unnormalize_reduction(normalized_position)
+        return self._student.unnormalize_reduction(normalized_position)
 
     def set_reduction(self, reduction):
         pass
