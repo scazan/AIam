@@ -22,13 +22,16 @@ class AutoEncoder(DimensionalityReduction):
         self._set_up_logging()
         init = tf.initialize_all_variables()
         self._sess.run(init)
-        self._train_step = tf.train.GradientDescentOptimizer(self.args.learning_rate).minimize(self._cost)
+        self.set_learning_rate(args.learning_rate)
 
     def _set_up_logging(self):
         with tf.name_scope("summaries"):
             tf.summary.scalar("cost", self._cost)
         self._merged = tf.summary.merge_all()
         self._train_writer = tf.summary.FileWriter("logs/train", self._sess.graph)
+
+    def set_learning_rate(self, learning_rate):
+        self._train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(self._cost)
 
     def batch_train(self, training_data, num_training_epochs):
         try:

@@ -133,6 +133,7 @@ class Experiment(EventListener):
             Event.SAVE_STUDENT: self._save_student,
             Event.LOAD_STUDENT: self._load_student,
             Event.SET_FRICTION: lambda event: self.set_friction(event.content),
+            Event.SET_LEARNING_RATE: lambda event: self.student.set_learning_rate(event.content),
         })
         EventListener.__init__(self, handlers=event_handlers)
 

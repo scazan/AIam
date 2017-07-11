@@ -35,6 +35,7 @@ class Event:
     SET_IO_BLENDING_CONTROL_FRICTION = "SET_IO_BLENDING_CONTROL_FRICTION"
     FRAME_COUNT = "FRAME_COUNT"
     SET_FRICTION = "SET_FRICTION"
+    SET_LEARNING_RATE = "SET_LEARNING_RATE"
 
     def __init__(self, type_, content=None):
         self.type = type_

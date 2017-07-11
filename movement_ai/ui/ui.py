@@ -292,6 +292,35 @@ class ExperimentToolbar(QtGui.QWidget):
         self.parent().send_event(Event(Event.SET_FRICTION,
                                        self.enable_friction_checkbox.isChecked()))
 
+    def add_learning_tab_widget(self, parent):
+        if self.parent().student.supports_incremental_learning():
+            learning_tab_widget = QtGui.QTabWidget()
+            learning_tab = QtGui.QWidget()
+            layout = QtGui.QVBoxLayout()
+            layout.setSpacing(0)
+            layout.setMargin(0)
+            learning_tab.setLayout(layout)
+
+            default_learning_rate = self.args.learning_rate
+            
+            class LearningParameters(Parameters):
+                def __init__(self):
+                    Parameters.__init__(self)
+                    self.add_parameter("rate", type=float, default=default_learning_rate,
+                                       choices=ParameterFloatRange(0., 1.))
+
+            learning_params = LearningParameters()
+            learning_params.add_listener(self._send_changed_learning_param)
+            learning_params_form = self.add_parameter_fields(learning_params, layout)
+            
+            layout.addStretch(1)
+            learning_tab_widget.addTab(learning_tab, "Learning")
+            parent.addWidget(learning_tab_widget)
+
+    def _send_changed_learning_param(self, parameter):
+        if parameter.name == "rate":
+            self.parent().client.send_event(Event(Event.SET_LEARNING_RATE, parameter.value()))
+
 class MainWindow(Window, EventListener):
     @staticmethod
     def add_parser_arguments(parser):
