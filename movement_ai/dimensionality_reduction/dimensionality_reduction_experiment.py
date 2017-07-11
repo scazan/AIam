@@ -207,6 +207,7 @@ class DimensionalityReductionExperiment(Experiment):
             if not self.args.ui_only:
                 if self.student.supports_incremental_learning():
                     self._training_data = collections.deque([], maxlen=self.args.memory_size)
+                    self.model_noise_to_add = 0
                 else:
                     self._training_data = storage.load(self._training_data_path)
 
@@ -380,6 +381,8 @@ class DimensionalityReductionExperiment(Experiment):
                 self.input = self._follow.get_input()
             
             if self.input is not None and self.student.supports_incremental_learning():
+                if self.model_noise_to_add > 0:
+                    self.student.add_noise(self.model_noise_to_add)
                 self.student.train([self.input])
                 self._training_data.append(self.input)
                 self.student.probe(self._training_data)

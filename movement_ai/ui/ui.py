@@ -308,6 +308,8 @@ class ExperimentToolbar(QtGui.QWidget):
                     Parameters.__init__(self)
                     self.add_parameter("rate", type=float, default=default_learning_rate,
                                        choices=ParameterFloatRange(0., 1.))
+                    self.add_parameter("add_noise", type=float, default=0,
+                                       choices=ParameterFloatRange(0., 1.))
 
             learning_params = LearningParameters()
             learning_params.add_listener(self._send_changed_learning_param)
@@ -320,6 +322,8 @@ class ExperimentToolbar(QtGui.QWidget):
     def _send_changed_learning_param(self, parameter):
         if parameter.name == "rate":
             self.parent().client.send_event(Event(Event.SET_LEARNING_RATE, parameter.value()))
+        elif parameter.name == "add_noise":
+            self.parent().client.send_event(Event(Event.SET_MODEL_NOISE_TO_ADD, parameter.value()))
 
 class MainWindow(Window, EventListener):
     @staticmethod

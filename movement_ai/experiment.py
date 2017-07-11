@@ -134,6 +134,7 @@ class Experiment(EventListener):
             Event.LOAD_STUDENT: self._load_student,
             Event.SET_FRICTION: lambda event: self.set_friction(event.content),
             Event.SET_LEARNING_RATE: lambda event: self.student.set_learning_rate(event.content),
+            Event.SET_MODEL_NOISE_TO_ADD: self._set_model_noise_to_add,
         })
         EventListener.__init__(self, handlers=event_handlers)
 
@@ -492,6 +493,9 @@ class Experiment(EventListener):
     def _receive_from_pn(self):
         for frame in self._pn_receiver.get_frames():
             self._input_from_pn = self._pn_entity.get_value_from_frame(frame)
+
+    def _set_model_noise_to_add(self, event):
+        self.model_noise_to_add = event.content / 100
         
 class SingleProcessUiHandler:
     def __init__(self, client, experiment):
