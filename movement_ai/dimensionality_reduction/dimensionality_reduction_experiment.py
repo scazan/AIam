@@ -51,6 +51,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--memory-size", type=int, default=1000)
         parser.add_argument("--enable-io-blending", action="store_true")
         parser.add_argument("--io-blending", type=float)
+        parser.add_argument("--target-training-loss", type=float)
         ImproviseParameters().add_parser_arguments(parser)
         FlaneurParameters().add_parser_arguments(parser)
         HybridParameters().add_parser_arguments(parser)
@@ -339,7 +340,16 @@ class DimensionalityReductionExperiment(Experiment):
 
         print "training model..."
         if self.student.supports_incremental_learning():
-            self.student.batch_train(self._training_data, self.args.num_training_epochs)
+            if self.args.target_training_loss:
+                epoch = 0
+                while True:
+                    loss = self.student.train(self._training_data)
+                    if loss <= self.args.target_training_loss:
+                        print "Stopping at epoch %d (%s <= %s)" % (epoch, loss, self.args.target_training_loss)
+                        break
+                    epoch += 1
+            else:
+                self.student.batch_train(self._training_data, self.args.num_training_epochs)
         else:
             self.student.fit(self._training_data)
         print "ok"
