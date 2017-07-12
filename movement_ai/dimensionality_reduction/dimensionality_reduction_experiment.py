@@ -154,8 +154,6 @@ class DimensionalityReductionExperiment(Experiment):
         dimensionality_reduction_class.add_parser_arguments(parser)
 
     def run(self):
-        teacher = Teacher(self.entity, self.args.training_data_frame_rate)
-
         dimensionality_reduction_class = DimensionalityReductionFactory.get_class(self.args.reduction_type)
         num_input_dimensions = self.entity.get_value_length()
         self.student = dimensionality_reduction_class(
@@ -166,12 +164,13 @@ class DimensionalityReductionExperiment(Experiment):
             self._print_training_data_stats()
 
         if self.args.train:
+            teacher = Teacher(self.training_entity, self.args.training_data_frame_rate)
             self._training_data = teacher.create_training_data(self._training_duration())
             self._train_model()
             print "saving %s..." % self._student_model_path
             self.student.save(self._student_model_path)
             print "ok"
-            storage.save(self.entity.model, self._entity_model_path)
+            storage.save(self.training_entity.model, self._entity_model_path)
             storage.save(self._training_data, self._training_data_path)
 
         elif self.args.analyze_components:
@@ -212,7 +211,8 @@ class DimensionalityReductionExperiment(Experiment):
                     self._training_data = storage.load(self._training_data_path)
 
                 self._parameter_sets = {}
-                self._follow = self._create_follow_behavior()
+                if self.args.mode == modes.FOLLOW:
+                    self._follow = self._create_follow_behavior()
                 self._explore = self._create_explore_behavior()
                 self._improvise = self._create_improvise_behavior()
                 self._flaneur_behavior = self._create_flaneur_behavior()
@@ -235,7 +235,7 @@ class DimensionalityReductionExperiment(Experiment):
             self.run_backend_and_or_ui()
 
     def _create_follow_behavior(self):
-        return Follow(self.student, self.entity, self.bvh_reader)
+        return Follow(self.student, self.training_entity, self.bvh_reader)
 
     def _create_explore_behavior(self):
         return Explore(self.student, self.args.num_components)
@@ -333,10 +333,10 @@ class DimensionalityReductionExperiment(Experiment):
         entity_model = storage.load(self._entity_model_path)
 
     def _train_model(self):
-        if hasattr(self.entity, "probe"):
+        if hasattr(self.training_entity, "probe"):
             print "probing entity..."
-            self.entity.probe(self._training_data)
-            self._training_data = map(self.entity.adapt_value_to_model, self._training_data)
+            self.training_entity.probe(self._training_data)
+            self._training_data = map(self.training_entity.adapt_value_to_model, self._training_data)
             print "ok"
 
         print "training model..."
@@ -344,7 +344,7 @@ class DimensionalityReductionExperiment(Experiment):
             if self.args.target_training_loss:
                 epoch = 0
                 while True:
-                    loss = self.student.train(self._training_data)
+                    loss = self.student.train(self._training_data, return_loss=True)
                     if loss <= self.args.target_training_loss:
                         print "Stopping at epoch %d (%s <= %s)" % (epoch, loss, self.args.target_training_loss)
                         break
@@ -363,7 +363,7 @@ class DimensionalityReductionExperiment(Experiment):
         format = "%-5s%-20s%-8s%-8s%-8s%-8s"
         print format % ("n", "descr", "min", "max", "mean", "var")
         for n in range(len(self._training_data[0])):
-            parameter_info = self.entity.parameter_info(n)
+            parameter_info = self.training_entity.parameter_info(n)
             col = self._training_data[:,n]
             stats = ["%.2f" % v for v in [min(col), max(col), numpy.mean(col), numpy.var(col)]]
             print format % (

@@ -87,10 +87,13 @@ class Experiment(EventListener):
         parser.add_argument("-profile", "-p")
         parser.add_argument("-entity", type=str)
         parser.add_argument("-train", action="store_true")
+        parser.add_argument("-training-data", type=str)
         parser.add_argument("-training-duration", type=float)
         parser.add_argument("-training-data-frame-rate", type=int, default=50)
-        parser.add_argument("-bvh", type=str)
+        parser.add_argument("-bvh", type=str,
+                            help="If provided, this specifies both the skeleton and the training data.")
         parser.add_argument("-bvh-speed", type=float, default=1.0)
+        parser.add_argument("-skeleton", type=str)
         parser.add_argument("-joint")
         parser.add_argument("-frame-rate", type=float, default=50.0)
         parser.add_argument("-unit-cube", action="store_true")
@@ -176,19 +179,31 @@ class Experiment(EventListener):
             self._output_sender = None
 
         self.args = args
-        if args.bvh:
-            bvh_filenames = glob.glob(args.bvh)
-            if len(bvh_filenames) == 0:
-                raise Exception("no files found matching the pattern %s" % args.bvh)
-            print "loading BVHs from %s..." % args.bvh
-            self.bvh_reader = BvhCollection(bvh_filenames)
-            self.bvh_reader.read(read_frames=self.should_read_bvh_frames())
-            print "ok"
-            self.bvh_writer = BvhWriter(self.bvh_reader.get_hierarchy(), self.bvh_reader.get_frame_time())
+
+        skeleton_bvh_path = self._get_skeleton_bvh_path()
+        if skeleton_bvh_path:
+            self.bvh_reader = self._create_bvh_reader(skeleton_bvh_path)
             self.pose = self.bvh_reader.get_hierarchy().create_pose()
         else:
             self.bvh_reader = None
             self.pose = None
+
+        training_data_bvh_path = self._get_training_data_bvh_path()
+        if training_data_bvh_path:
+            if training_data_bvh_path == skeleton_bvh_path:
+                self.training_data_bvh_reader = self.bvh_reader
+            else:
+                self.training_data_bvh_reader = self._create_bvh_reader(
+                    training_data_bvh_path,
+                    read_frames=self.should_read_bvh_frames())
+        else:
+            self.training_data_bvh_reader = self.bvh_reader
+        self.training_entity = self.entity_class(
+            self.training_data_bvh_reader, self.pose, self.args.floor, self.args.z_up, self.args)
+
+        if self.bvh_reader:
+            self.bvh_writer = BvhWriter(self.bvh_reader.get_hierarchy(), self.bvh_reader.get_frame_time())
+                 
         self.input = None
         self.output = None
         self.entity = self.entity_class(self.bvh_reader, self.pose, self.args.floor, self.args.z_up, self.args)
@@ -219,6 +234,30 @@ class Experiment(EventListener):
 
         self._send_joint_ids()
 
+    def _get_skeleton_bvh_path(self):
+        if self.args.bvh:
+            if self.args.skeleton:
+                raise Exception("Cannot provide both -bvh and -skeleton")
+            return self.args.bvh
+        return self.args.skeleton
+
+    def _get_training_data_bvh_path(self):
+        if self.args.bvh:
+            if self.args.training_data:
+                raise Exception("Cannot provide both -bvh and -training-data")
+            return self.args.bvh
+        return self.args.training_data
+
+    def _create_bvh_reader(self, pattern, read_frames=True):
+        bvh_filenames = glob.glob(pattern)
+        if len(bvh_filenames) == 0:
+            raise Exception("no files found matching the pattern %s" % pattern)
+        print "loading BVHs from %s..." % pattern
+        bvh_reader = BvhCollection(bvh_filenames)
+        bvh_reader.read(read_frames=read_frames)
+        print "ok"
+        return bvh_reader
+        
     def _save_student(self, event):
         filename = event.content
         print "saving %s..." % filename
@@ -387,12 +426,12 @@ class Experiment(EventListener):
     def _training_duration(self):
         if self.args.training_duration:
             return self.args.training_duration
-        elif hasattr(self.entity, "get_duration"):
-            return self.entity.get_duration()
+        elif hasattr(self.training_entity, "get_duration"):
+            return self.training_entity.get_duration()
         else:
             raise Exception(
                 "training duration specified in neither arguments nor the %s class" % \
-                    self.entity.__class__.__name__)
+                    self.training_entity.__class__.__name__)
 
     def _create_single_process_server(self):
         return SingleProcessServer(SingleProcessUiHandler, experiment=self)

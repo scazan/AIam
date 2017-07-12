@@ -46,10 +46,15 @@ class AutoEncoder(DimensionalityReduction):
             except KeyboardInterrupt:
                 print "Training stopped at epoch %d" % i
 
-    def train(self, training_data):
+    def train(self, training_data, return_loss=False):
         with self._graph.as_default():
-            self._sess.run(self._train_step, feed_dict={self._input_layer: training_data})
-        
+            if return_loss:
+                loss, _ = self._sess.run(
+                    [self._cost, self._train_step], feed_dict={self._input_layer: training_data})
+                return loss
+            else:
+                self._sess.run(self._train_step, feed_dict={self._input_layer: training_data})
+                
     def _create_layers(self, num_input_dimensions):
         self._input_layer = tf.placeholder("float", [None, num_input_dimensions])
         # Build the encoding layers
