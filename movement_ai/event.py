@@ -37,6 +37,8 @@ class Event:
     SET_FRICTION = "SET_FRICTION"
     SET_LEARNING_RATE = "SET_LEARNING_RATE"
     SET_MODEL_NOISE_TO_ADD = "SET_MODEL_NOISE_TO_ADD"
+    SET_MEMORIZE = "SET_MEMORIZE"
+    RECALL = "RECALL"
 
     def __init__(self, type_, content=None):
         self.type = type_

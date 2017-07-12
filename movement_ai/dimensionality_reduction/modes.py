@@ -1,3 +1,4 @@
+MEMORY = "memory"
 IMPROVISE = "improvise"
 FOLLOW = "follow"
 EXPLORE = "explore"

@@ -15,6 +15,7 @@ from behaviors.hybrid import Hybrid, HybridParameters
 import sampling
 import sklearn.neighbors
 from transformations import euler_from_quaternion
+from memory import Memory
 
 class DimensionalityReductionExperiment(Experiment):
     @staticmethod
@@ -26,7 +27,8 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--num-components", "-n", type=int, default=4)
         parser.add_argument("--explore-beyond-observations", type=float, default=0.2)
         parser.add_argument("--mode",
-                            choices=[modes.FOLLOW,
+                            choices=[modes.MEMORY,
+                                     modes.FOLLOW,
                                      modes.IMPROVISE,
                                      modes.EXPLORE,
                                      modes.IMITATE,
@@ -69,7 +71,9 @@ class DimensionalityReductionExperiment(Experiment):
             Event.SET_IO_BLENDING_AMOUNT: self._set_io_blending_amount,
             Event.SET_IO_BLENDING_USE_ENTITY_SPECIFIC_INTERPOLATION: self._set_io_blending_use_entity_specific_interpolation,
             Event.SET_IO_BLENDING_CONTROL_FRICTION: self._set_io_blending_control_friction,
-                })
+            Event.SET_MEMORIZE: self._set_memorize,
+            Event.RECALL: lambda event: self._memory.begin_recalling(),
+        })
         self.reduction = None
         self._mode = self.args.mode
 
@@ -232,6 +236,8 @@ class DimensionalityReductionExperiment(Experiment):
                 for behaviour in self._behaviors:
                     behaviour.add_observer(lambda event: self.send_event_to_ui(event))
 
+                self._memory = Memory()
+                
             self.run_backend_and_or_ui()
 
     def _create_follow_behavior(self):
@@ -393,22 +399,27 @@ class DimensionalityReductionExperiment(Experiment):
                 self.send_event_to_ui(Event(Event.REDUCTION_RANGE, self.student.reduction_range))
                 self.send_event_to_ui(
                     Event(Event.NORMALIZED_OBSERVED_REDUCTIONS, self.student.normalized_observed_reductions))
-            
-        if self._mode == modes.FOLLOW:
-            self._update_using_behavior(self._follow)
-        elif self._mode == modes.IMPROVISE:
-            self._update_using_behavior(self._improvise)
-        elif self._mode == modes.EXPLORE:
-            self._update_using_behavior(self._explore)
-        elif self._mode == modes.IMITATE:
-            self._update_using_behavior(self._imitate)
-        elif self._mode == modes.FLANEUR:
-            self._update_using_behavior(self._flaneur_behavior)
-        elif self._mode == modes.HYBRID:
-            self._update_using_behavior(self._hybrid)
 
-        if self.reduction is not None:
-            self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
+            self._memory.notify_input(self.input)
+            
+        if self._mode == modes.MEMORY:
+            self.output = self._memory.get_output()
+        else:
+            if self._mode == modes.FOLLOW:
+                self._update_using_behavior(self._follow)
+            elif self._mode == modes.IMPROVISE:
+                self._update_using_behavior(self._improvise)
+            elif self._mode == modes.EXPLORE:
+                self._update_using_behavior(self._explore)
+            elif self._mode == modes.IMITATE:
+                self._update_using_behavior(self._imitate)
+            elif self._mode == modes.FLANEUR:
+                self._update_using_behavior(self._flaneur_behavior)
+            elif self._mode == modes.HYBRID:
+                self._update_using_behavior(self._hybrid)
+
+            if self.reduction is not None:
+                self.output = self.student.inverse_transform(numpy.array([self.reduction]))[0]
 
         if self.args.enable_io_blending:
             self._update_io_blend_and_broadcast_it_to_ui()
@@ -525,7 +536,13 @@ class DimensionalityReductionExperiment(Experiment):
 
     def _set_io_blending_control_friction(self, event):
         self._io_blending_control_friction = event.content
-        
+
+    def _set_memorize(self, event):
+        if event.content == True:
+            self._memory.begin_memorizing()
+        else:
+            self._memory.end_memorizing()
+            
     def _plot_model(self):
         from plotting.model_plotter import ModelPlotter
         parser = ArgumentParser()

@@ -195,6 +195,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         self._parameter_sets = {}
         self.tabs = QtGui.QTabWidget()
         self._mode_tabs = {}
+        self._add_memory_tab()
         if self.args.mode == modes.FOLLOW:
             self._add_follow_tab()
         self._add_explore_tab()
@@ -219,6 +220,40 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
             tab = self._reduction_tabs.widget(n)
             tab.set_enabled(exploring)
 
+    def _add_memory_tab(self):
+        self.memory_tab = ModeTab(modes.MEMORY)
+        self._memory_tab_layout = QtGui.QVBoxLayout()
+        memorize_checkbox_layout = self._add_memorize_checkbox_layout()
+        self._memory_tab_layout.addLayout(memorize_checkbox_layout)
+        self._add_recall_button()
+        self._memory_tab_layout.addStretch(1)
+        self.memory_tab.setLayout(self._memory_tab_layout)
+        self.tabs.addTab(self.memory_tab, "Memory")
+        self._mode_tabs[modes.MEMORY] = self.memory_tab
+
+    def _add_memorize_checkbox_layout(self):
+        layout = QtGui.QHBoxLayout()
+        layout.setMargin(5)
+        self._memorize_checkbox = QtGui.QCheckBox()
+        self._memorize_checkbox.setChecked(self.parent().split_output_and_io_blend)
+        self._memorize_checkbox.stateChanged.connect(self._memorize_checkbox_changed)
+        label = QtGui.QLabel("Memorize")
+        layout.addWidget(self._memorize_checkbox)
+        layout.addWidget(label)
+        layout.addStretch(1)
+        return layout
+
+    def _memorize_checkbox_changed(self, event):
+        self.parent().client.send_event(Event(Event.SET_MEMORIZE, self._memorize_checkbox.isChecked()))
+        
+    def _add_recall_button(self):
+        button = QtGui.QPushButton("Recall", self)
+        button.clicked.connect(self._recall)
+        self._memory_tab_layout.addWidget(button)
+
+    def _recall(self):
+        self.parent().client.send_event(Event(Event.RECALL))
+        
     def _add_follow_tab(self):
         self.follow_tab = ModeTab(modes.FOLLOW)
         if not self.args.receive_from_pn:
