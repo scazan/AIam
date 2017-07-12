@@ -188,18 +188,19 @@ class Experiment(EventListener):
             self.bvh_reader = None
             self.pose = None
 
-        training_data_bvh_path = self._get_training_data_bvh_path()
-        if training_data_bvh_path:
-            if training_data_bvh_path == skeleton_bvh_path:
-                self.training_data_bvh_reader = self.bvh_reader
+        if self.args.train:
+            training_data_bvh_path = self._get_training_data_bvh_path()
+            if training_data_bvh_path:
+                if training_data_bvh_path == skeleton_bvh_path:
+                    self.training_data_bvh_reader = self.bvh_reader
+                else:
+                    self.training_data_bvh_reader = self._create_bvh_reader(
+                        training_data_bvh_path,
+                        read_frames=self.should_read_bvh_frames())
             else:
-                self.training_data_bvh_reader = self._create_bvh_reader(
-                    training_data_bvh_path,
-                    read_frames=self.should_read_bvh_frames())
-        else:
-            self.training_data_bvh_reader = self.bvh_reader
-        self.training_entity = self.entity_class(
-            self.training_data_bvh_reader, self.pose, self.args.floor, self.args.z_up, self.args)
+                self.training_data_bvh_reader = self.bvh_reader
+            self.training_entity = self.entity_class(
+                self.training_data_bvh_reader, self.pose, self.args.floor, self.args.z_up, self.args)
 
         if self.bvh_reader:
             self.bvh_writer = BvhWriter(self.bvh_reader.get_hierarchy(), self.bvh_reader.get_frame_time())
