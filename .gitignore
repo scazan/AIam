@@ -10,6 +10,7 @@ config.log
 # emacs
 *~
 *#
+.#*
 
 *.oni
 *.mov
