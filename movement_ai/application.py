@@ -66,9 +66,16 @@ class Application:
                 avatar.behavior.set_normalized_observed_reductions(self._student.normalized_observed_reductions)
             avatar.behavior.proceed(self._desired_frame_duration)
             avatar.entity.update()
-            reduction = avatar.behavior.get_reduction(self._input)
-            if reduction is not None:
-                output = self._student.inverse_transform(numpy.array([reduction]))[0]
+            if self._input is not None:
+                avatar.behavior.on_input(self._input)
+            output = None
+            if avatar.behavior.sends_output():
+                output = avatar.behavior.get_output()
+            else:
+                reduction = avatar.behavior.get_reduction()
+                if reduction is not None:
+                    output = self._student.inverse_transform(numpy.array([reduction]))[0]
+            if output is not None:
                 processed_output = avatar.entity.process_output(output)
                 if self._output_sender is not None:
                     self._send_output(avatar.index, processed_output)

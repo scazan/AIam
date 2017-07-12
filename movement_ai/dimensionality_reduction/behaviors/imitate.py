@@ -55,7 +55,7 @@ class Imitate(Behavior):
         self._potentially_process_new_target_features()
         return self._target_normalized_reduction
 
-    def get_reduction(self, _input):
+    def get_reduction(self):
         return self._student.unnormalize_reduction(self._normalized_reduction)
 
     def set_reduction(self, reduction):

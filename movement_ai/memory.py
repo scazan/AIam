@@ -22,7 +22,7 @@ class Memory:
     def _add_new_sequence_to_memory(self):
         self._memories.append(self._new_sequence)
 
-    def notify_input(self, input_):
+    def on_input(self, input_):
         if self._memorizing:
             self._new_sequence.append(input_)
 

@@ -12,11 +12,8 @@ class Follow(Behavior):
     def get_input(self):
         return self._entity.adapt_value_to_model(self._entity.get_value())
 
-    def get_reduction(self, input):
-        if input is None:
-            return None
-        else:
-            return self._student.transform(numpy.array([input]))[0]
+    def on_input(self, input_):
+        self._reduction = self._student.transform(numpy.array([input_]))[0]
 
     def proceed(self, time_increment):
         self._entity.proceed(time_increment)

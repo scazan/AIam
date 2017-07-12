@@ -36,7 +36,7 @@ class FlaneurBehavior(Behavior):
         self._flaneur.proceed(time_increment)
         self.notify(Event(Event.NEIGHBORS_CENTER, self._flaneur.get_neighbors_center()))
 
-    def get_reduction(self, _input):
+    def get_reduction(self):
         normalized_position = self._flaneur.get_position()
         return self._student.unnormalize_reduction(normalized_position)
 

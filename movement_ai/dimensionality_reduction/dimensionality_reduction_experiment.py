@@ -141,7 +141,8 @@ class DimensionalityReductionExperiment(Experiment):
         self._update_entity_root_vertical_orientation_using_behavior(behavior)
 
     def _potentially_update_reduction_using_behavior(self, behavior):
-        new_reduction = behavior.get_reduction(self.input)
+        behavior.on_input(self.input)
+        new_reduction = behavior.get_reduction()
         if new_reduction is not None and (
                 self.reduction is None or not numpy.array_equal(new_reduction, self.reduction)):
             self.reduction = new_reduction
@@ -400,7 +401,7 @@ class DimensionalityReductionExperiment(Experiment):
                 self.send_event_to_ui(
                     Event(Event.NORMALIZED_OBSERVED_REDUCTIONS, self.student.normalized_observed_reductions))
 
-            self._memory.notify_input(self.input)
+            self._memory.on_input(self.input)
             
         if self._mode == modes.MEMORY:
             self.output = self._memory.get_output()

@@ -3,7 +3,7 @@ class Behavior:
         self._target_root_vertical_orientation = None
         self._observers = set()
 
-    def get_reduction(self, input):
+    def get_reduction(self):
         return self._reduction
 
     def set_reduction(self, reduction):
@@ -21,3 +21,16 @@ class Behavior:
     def notify(self, message):
         for observer in self._observers:
             observer(message)
+
+    def sends_output(self):
+        return False
+
+    def on_input(self, input_):
+        pass
+    
+    def proceed(self, time_increment):
+        pass
+
+    def set_normalized_observed_reductions(self, normalized_observed_reductions):
+        pass
+    
