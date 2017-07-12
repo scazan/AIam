@@ -49,6 +49,9 @@ class EulerTo3Vectors(RotationParameterization):
     def parameters_to_rotation(parameters, axes):
         return vector6d_to_euler(parameters)
 
+class ZeroNormedQuaternion(Exception):
+    pass
+
 class EulerToQuaternion(RotationParameterization):
     num_parameters = 4
 
@@ -66,17 +69,16 @@ class EulerToQuaternion(RotationParameterization):
     def interpolate(q0, q1, amount):
         q0_norm = numpy.linalg.norm(q0)
         if q0_norm == 0:
-            print "WARNING: q0_norm == 0"
-            return q1
-
+            raise ZeroNormedQuaternion(
+                "First quaternion passed to interpolate() is zero and cannot be normalized.")
         q0 /= q0_norm
 
         q1_norm = numpy.linalg.norm(q1)
         if q1_norm == 0:
-            print "WARNING: q1_norm == 0"
-            return q0
-        
+            raise ZeroNormedQuaternion(
+                "Second quaternion passed to interpolate() is zero and cannot be normalized.")
         q1 /= q1_norm
+        
         ca = numpy.dot(q0, q1)
         if ca<0:
             ca = -ca

@@ -1,5 +1,5 @@
 from experiment import *
-from angle_parameters import EulerTo3Vectors, EulerToQuaternion
+from angle_parameters import EulerTo3Vectors, EulerToQuaternion, ZeroNormedQuaternion
 from numpy import array, dot
 from transformations import euler_matrix, quaternion_from_euler, euler_from_quaternion
 import random
@@ -270,7 +270,11 @@ class Entity(BaseEntity):
         vector1 = parameters1[parameter_index:parameter_index + self.rotation_parametrization.num_parameters]
         vector2 = parameters2[parameter_index:parameter_index + self.rotation_parametrization.num_parameters]
         parameter_index += self.rotation_parametrization.num_parameters
-        result = list(self.rotation_parametrization.interpolate(vector1, vector2, amount))
+        try:
+            result = list(self.rotation_parametrization.interpolate(vector1, vector2, amount))
+        except ZeroNormedQuaternion as exception:
+            print "WARNING: %s (joint: %s)" % (exception, joint.definition.name)
+            result = vector1
         return result, parameter_index
 
     def set_friction(self, enable_friction):
