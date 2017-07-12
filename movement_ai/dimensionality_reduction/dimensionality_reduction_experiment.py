@@ -50,7 +50,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--plot-args")
         parser.add_argument("--memory-size", type=int, default=1000)
         parser.add_argument("--enable-io-blending", action="store_true")
-        parser.add_argument("--io-blending", type=float)
+        parser.add_argument("--io-blending-amount", type=float, default=0)
         parser.add_argument("--target-training-loss", type=float)
         ImproviseParameters().add_parser_arguments(parser)
         FlaneurParameters().add_parser_arguments(parser)
@@ -66,7 +66,7 @@ class DimensionalityReductionExperiment(Experiment):
             Event.SYSTEM_STATE_CHANGED: self._abort_path,
             Event.TARGET_FEATURES: self._handle_target_features,
             Event.TARGET_ROOT_VERTICAL_ORIENTATION: self._handle_target_root_vertical_orientation,
-            Event.SET_IO_BLENDING: self._set_io_blending,
+            Event.SET_IO_BLENDING_AMOUNT: self._set_io_blending_amount,
             Event.SET_IO_BLENDING_USE_ENTITY_SPECIFIC_INTERPOLATION: self._set_io_blending_use_entity_specific_interpolation,
             Event.SET_IO_BLENDING_CONTROL_FRICTION: self._set_io_blending_control_friction,
                 })
@@ -77,7 +77,7 @@ class DimensionalityReductionExperiment(Experiment):
             io_blending_pose = self.bvh_reader.get_hierarchy().create_pose()
             self._io_blending_entity = self.entity_class(
                 self.bvh_reader, io_blending_pose, self.args.floor, self.args.z_up, self.args)
-            self._io_blending = self.args.io_blending
+            self._io_blending_amount = self.args.io_blending_amount
             self._io_blending_use_entity_specific_interpolation = True
             if self.args.entity == "hierarchical" and self.args.friction:
                 self._io_blending_control_friction = True
@@ -97,7 +97,7 @@ class DimensionalityReductionExperiment(Experiment):
         if self.reduction is not None:
             handler.send_event(Event(Event.REDUCTION, self.reduction))
         if self.args.enable_io_blending:
-            handler.send_event(Event(Event.IO_BLENDING, self._io_blending))
+            handler.send_event(Event(Event.IO_BLENDING_AMOUNT, self._io_blending_amount))
         self._add_parameters_listener(self._improvise_params)
         if self.args.enable_features:
             self._add_parameters_listener(self._imitate_params)
@@ -421,11 +421,11 @@ class DimensionalityReductionExperiment(Experiment):
     def _update_io_blend_and_broadcast_it_to_ui(self):
         if self.input is not None and self.output is not None:
             if self.args.entity == "hierarchical" and self.args.friction and self._io_blending_control_friction:
-                self.set_friction(self._io_blending > 0.5, inform_ui=True)
+                self.set_friction(self._io_blending_amount > 0.5, inform_ui=True)
             if self._io_blending_use_entity_specific_interpolation:
-                io_blend = self.entity.interpolate(self.input, self.output, self._io_blending)
+                io_blend = self.entity.interpolate(self.input, self.output, self._io_blending_amount)
             else:
-                io_blend = self._linear_interpolation(self.input, self.output, self._io_blending)
+                io_blend = self._linear_interpolation(self.input, self.output, self._io_blending_amount)
             processed_io_blend = self._io_blending_entity.process_io_blend(io_blend)
             self.send_event_to_ui(Event(Event.IO_BLEND, processed_io_blend))
 
@@ -515,8 +515,8 @@ class DimensionalityReductionExperiment(Experiment):
         for behavior in self._behaviors:
             behavior.set_target_root_vertical_orientation(orientation)
 
-    def _set_io_blending(self, event):
-        self._io_blending = event.content
+    def _set_io_blending_amount(self, event):
+        self._io_blending_amount = event.content
         self._update_io_blend_and_broadcast_it_to_ui()
 
     def _set_io_blending_use_entity_specific_interpolation(self, event):

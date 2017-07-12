@@ -29,7 +29,7 @@ class DimensionalityReductionMainWindow(MainWindow):
             Event.TARGET_ROOT_VERTICAL_ORIENTATION: self._handle_target_root_vertical_orientation,
             Event.REDUCTION_RANGE: self._handle_reduction_range,
             Event.NORMALIZED_OBSERVED_REDUCTIONS: self._handle_normalized_observed_reductions,
-            Event.IO_BLENDING: self._set_io_blending,
+            Event.IO_BLENDING_AMOUNT: self._set_io_blending_amount,
         }, **kwargs)
         self._add_toggleable_action(
             '&Plot reduction', self._start_plot_reduction,
@@ -139,7 +139,7 @@ class DimensionalityReductionMainWindow(MainWindow):
     def _handle_normalized_observed_reductions(self, event):
         self.toolbar.set_normalized_observed_reductions(event.content)
 
-    def _set_io_blending(self, event):
+    def _set_io_blending_amount(self, event):
         self.toolbar.io_blending_slider.setValue(event.content * SLIDER_PRECISION)
 
 class DimensionalityReductionToolbar(ExperimentToolbar):
@@ -492,11 +492,11 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         slider.setRange(0, SLIDER_PRECISION)
         slider.setSingleStep(1)
         slider.setValue(0.0)
-        slider.valueChanged.connect(self._io_blending_changed_interactively)
+        slider.valueChanged.connect(self._io_blending_amount_changed_interactively)
         return slider
 
-    def _io_blending_changed_interactively(self, value):
-        self.parent().send_event(Event(Event.SET_IO_BLENDING, float(value) / SLIDER_PRECISION))
+    def _io_blending_amount_changed_interactively(self, value):
+        self.parent().send_event(Event(Event.SET_IO_BLENDING_AMOUNT, float(value) / SLIDER_PRECISION))
 
     def _create_io_blending_use_entity_specific_interpolation_checkbox_layout(self):
         layout = QtGui.QHBoxLayout()
