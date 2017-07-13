@@ -1,10 +1,16 @@
 #!/usr/bin/env python
 
-STUDENT_MODEL_PATH = "profiles/dimensionality_reduction/valencia_pn_autoencoder.model"
+# STUDENT_MODEL_PATH = "profiles/dimensionality_reduction/valencia_pn_autoencoder.model"
+# SKELETON_DEFINITION = "scenes/pn-01.22_skeleton.bvh"
+# DIMENSIONALITY_REDUCTION_TYPE = "AutoEncoder"
+# DIMENSIONALITY_REDUCTION_ARGS = "--num-hidden-nodes=0 --learning-rate=0.005"
+# ENTITY_ARGS = "-r quaternion --friction --translate"
+
+STUDENT_MODEL_PATH = "profiles/dimensionality_reduction/valencia_pn.model"
 SKELETON_DEFINITION = "scenes/pn-01.22_skeleton.bvh"
-DIMENSIONALITY_REDUCTION_TYPE = "AutoEncoder"
-DIMENSIONALITY_REDUCTION_ARGS = "--num-hidden-nodes=0 --learning-rate=0.005"
-ENTITY_ARGS = "-r quaternion --friction --translate"
+DIMENSIONALITY_REDUCTION_TYPE = "KernelPCA"
+DIMENSIONALITY_REDUCTION_ARGS = ""
+ENTITY_ARGS = "-r quaternion --friction"
 
 NUM_REDUCED_DIMENSIONS = 7
 Z_UP = False
@@ -40,7 +46,6 @@ entity_args = parser.parse_args(entity_args_strings)
 
 pose = bvh_reader.get_hierarchy().create_pose()
 entity = Entity(bvh_reader, pose, FLOOR, Z_UP, entity_args)
-entity.set_friction(False) # TODO: set to True when in improvise
 
 num_input_dimensions = entity.get_value_length()
 student = DimensionalityReductionFactory.create(
@@ -73,6 +78,7 @@ class MetaBehaviour(Behavior):
         else:
             input_amount = (PERIOD * 2 - time_within_period) / PERIOD
         improvise_amount = 1 - input_amount
+        entity.set_friction(improvise_amount > 0.5)
         output = entity.interpolate(self._input, self._get_improvise_output(), improvise_amount)
         return output
 
