@@ -26,6 +26,7 @@ class DimensionalityReductionExperiment(Experiment):
                             default="LinearPCA")
         parser.add_argument("--num-components", "-n", type=int, default=4)
         parser.add_argument("--explore-beyond-observations", type=float, default=0.2)
+        parser.add_argument("--enable-follow", action="store_true")
         parser.add_argument("--mode",
                             choices=[modes.MEMORY,
                                      modes.FOLLOW,
@@ -158,6 +159,9 @@ class DimensionalityReductionExperiment(Experiment):
         dimensionality_reduction_class = DimensionalityReductionFactory.get_class(args.reduction_type)
         dimensionality_reduction_class.add_parser_arguments(parser)
 
+    def needs_training_data(self):
+        return self.args.enable_follow
+    
     def run(self):
         dimensionality_reduction_class = DimensionalityReductionFactory.get_class(self.args.reduction_type)
         num_input_dimensions = self.entity.get_value_length()
@@ -216,7 +220,7 @@ class DimensionalityReductionExperiment(Experiment):
                     self._training_data = storage.load(self._training_data_path)
 
                 self._parameter_sets = {}
-                if self.args.mode == modes.FOLLOW:
+                if self.args.enable_follow:
                     self._follow = self._create_follow_behavior()
                 self._explore = self._create_explore_behavior()
                 self._improvise = self._create_improvise_behavior()
@@ -381,7 +385,7 @@ class DimensionalityReductionExperiment(Experiment):
                 stats[3])
 
     def update(self):
-        if self.args.enable_io_blending or self._mode == modes.FOLLOW or self.args.receive_from_pn:
+        if self.args.enable_follow or self.args.receive_from_pn:
             if self.args.receive_from_pn:
                 self.input = self._input_from_pn
             else:

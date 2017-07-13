@@ -188,7 +188,7 @@ class Experiment(EventListener):
             self.bvh_reader = None
             self.pose = None
 
-        if self.args.train:
+        if self.args.train or self.needs_training_data():
             training_data_bvh_path = self._get_training_data_bvh_path()
             if training_data_bvh_path:
                 if training_data_bvh_path == skeleton_bvh_path:
@@ -235,6 +235,9 @@ class Experiment(EventListener):
 
         self._send_joint_ids()
 
+    def needs_training_data(self):
+        return False
+    
     def _get_skeleton_bvh_path(self):
         if self.args.bvh:
             if self.args.skeleton:
