@@ -66,7 +66,7 @@ class EulerToQuaternion(RotationParameterization):
         return euler_from_quaternion(normalized_quaternion, axes)
 
     @staticmethod
-    def interpolate(q0, q1, amount):
+    def interpolate(q0, q1, amount, shortest_path=True):
         q0_norm = numpy.linalg.norm(q0)
         if q0_norm == 0:
             raise ZeroNormedQuaternion(
@@ -80,7 +80,7 @@ class EulerToQuaternion(RotationParameterization):
         q1 /= q1_norm
         
         ca = numpy.dot(q0, q1)
-        if ca<0:
+        if shortest_path and ca<0:
             ca = -ca
             neg_q1 = True
         else:
