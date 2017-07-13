@@ -173,8 +173,11 @@ class Entity(BaseEntity):
     def _parameters_to_joint_translation(self, parameters, joint, parameter_index):
         weighted_vector = parameters[parameter_index:parameter_index+3]
         parameter_index += 3
-        normalized_vector = numpy.array(weighted_vector) / self.args.translation_weight
-        joint.translation = self.bvh_reader.skeleton_scale_vector(normalized_vector)
+        if self.args.translation_weight == 0:
+            joint.translation = [0, 0, 0]
+        else:
+            normalized_vector = numpy.array(weighted_vector) / self.args.translation_weight
+            joint.translation = self.bvh_reader.skeleton_scale_vector(normalized_vector)
         return parameter_index
 
     def _parameters_to_joint_rotation(self, parameters, joint, parameter_index):

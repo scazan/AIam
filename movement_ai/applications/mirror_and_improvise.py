@@ -10,7 +10,7 @@ STUDENT_MODEL_PATH = "profiles/dimensionality_reduction/valencia_pn.model"
 SKELETON_DEFINITION = "scenes/pn-01.22_skeleton.bvh"
 DIMENSIONALITY_REDUCTION_TYPE = "KernelPCA"
 DIMENSIONALITY_REDUCTION_ARGS = ""
-ENTITY_ARGS = "-r quaternion --friction"
+ENTITY_ARGS = "-r quaternion --friction --translate"
 
 NUM_REDUCED_DIMENSIONS = 7
 Z_UP = False
