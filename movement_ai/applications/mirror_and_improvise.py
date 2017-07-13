@@ -52,18 +52,79 @@ student = DimensionalityReductionFactory.create(
     DIMENSIONALITY_REDUCTION_TYPE, num_input_dimensions, NUM_REDUCED_DIMENSIONS, DIMENSIONALITY_REDUCTION_ARGS)
 student.load(STUDENT_MODEL_PATH)
 
-PERIOD = 3.0
-
 class MetaBehaviour(Behavior):
+    MIRROR = "MIRROR"
+    IMPROVISE = "IMPROVISE"
+    
+    normal_duration = 3.0
+    interpolation_duration = 1.0
+    
     def __init__(self, improvise):
         Behavior.__init__(self)
         self._improvise = improvise
         self._input = None
-        self._t = 0
+        self._output = None
+        self._initialize_state(self.MIRROR)
+
+    def _initialize_state(self, state):
+        self._current_state = state
+        self._state_time = 0
+        self._interpolating = False
 
     def proceed(self, time_increment):
-        self._t += time_increment
-        self._improvise.proceed(time_increment)
+        self._remaining_time_to_process = time_increment
+        while self._remaining_time_to_process > 0:
+            self._proceed_within_state()
+
+    def _proceed_within_state(self):
+        if self._interpolating:
+            return self._proceed_within_interpolation()
+        else:
+            return self._proceed_within_normal_state()
+
+    def _switch_to_next_state(self):
+        next_state = self._select_next_state()
+        self._initialize_state(next_state)
+
+    def _select_next_state(self):
+        if self._current_state == self.MIRROR:
+            return self.IMPROVISE
+        else:
+            return self.MIRROR
+        
+    def _proceed_within_interpolation(self):
+        remaining_time_in_state = self.interpolation_duration - self._state_time
+        if remaining_time_in_state == 0:
+            self._switch_to_next_state()
+            return
+        time_to_process = min(self._remaining_time_to_process, remaining_time_in_state)
+        self._improvise.proceed(time_to_process)
+        if self._current_state == self.MIRROR:
+            input_amount = 1 - self._state_time / self.interpolation_duration
+        else:
+            input_amount = self._state_time / self.interpolation_duration
+        improvise_amount = 1 - input_amount
+        entity.set_friction(improvise_amount > 0.5)
+        self._output = entity.interpolate(self._input, self._get_improvise_output(), improvise_amount)
+        self._state_time += time_to_process
+        self._remaining_time_to_process -= time_to_process
+                
+    def _proceed_within_normal_state(self):
+        remaining_time_in_state = self.normal_duration - self._state_time
+        if remaining_time_in_state == 0:
+            self._interpolating = True
+            self._state_time = 0
+            return
+        time_to_process = min(self._remaining_time_to_process, remaining_time_in_state)
+        self._improvise.proceed(time_to_process)
+        if self._current_state == self.IMPROVISE:
+            entity.set_friction(True)
+            self._output = self._get_improvise_output()
+        elif self._current_state == self.MIRROR:
+            entity.set_friction(False)
+            self._output = self._input
+        self._state_time += time_to_process
+        self._remaining_time_to_process -= time_to_process
 
     def sends_output(self):
         return True
@@ -72,15 +133,7 @@ class MetaBehaviour(Behavior):
         self._input = input_
         
     def get_output(self):
-        time_within_period = self._t % (PERIOD * 2)
-        if time_within_period < PERIOD:
-            input_amount = time_within_period / PERIOD
-        else:
-            input_amount = (PERIOD * 2 - time_within_period) / PERIOD
-        improvise_amount = 1 - input_amount
-        entity.set_friction(improvise_amount > 0.5)
-        output = entity.interpolate(self._input, self._get_improvise_output(), improvise_amount)
-        return output
+        return self._output
 
     def _get_improvise_output(self):
         reduction = self._improvise.get_reduction()
