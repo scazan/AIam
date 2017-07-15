@@ -25,6 +25,7 @@ openni::Status Tracker::init(int argc, char **argv) {
   bool overrideSmoothingFactor = false;
   float smoothingFactor = 0;
   int fps = 30;
+  bool listDevices = false;
   skipEmptySegments = false;
   fastForwarding = false;
   viewerEnabled = false;
@@ -41,6 +42,10 @@ openni::Status Tracker::init(int argc, char **argv) {
   for (int i = 1; i < argc; ++i) {
     if (strcmp(argv[i], "-device") == 0) {
       deviceUri = argv[++i];
+    }
+
+    else if(strcmp(argv[i], "-list-devices") == 0) {
+      listDevices = true;
     }
 
     else if(strcmp(argv[i], "-record") == 0) {
@@ -83,6 +88,22 @@ openni::Status Tracker::init(int argc, char **argv) {
     else {
       printf("failed to parse argument: %s\n", argv[i]);
       return openni::STATUS_ERROR;
+    }
+  }
+
+  if(listDevices) {
+    openni::Array<openni::DeviceInfo> deviceInfoList;
+    openni::OpenNI::enumerateDevices(&deviceInfoList);
+    printf("Number of available devices: %d\n", deviceInfoList.getSize());
+    for(int i = 0; i < deviceInfoList.getSize(); i++) {
+      openni::DeviceInfo deviceInfo = deviceInfoList[i];
+      printf("Device %d\n", i);
+      printf("  Name: %s\n", deviceInfo.getName());
+      printf("  URI: %s\n", deviceInfo.getUri());
+      printf("  USB Product ID: %04x\n", deviceInfo.getUsbProductId());
+      printf("  USB Vendor ID: %04x\n", deviceInfo.getUsbVendorId());
+      printf("  Vendor: %s\n", deviceInfo.getVendor());
+      printf("\n");
     }
   }
 
