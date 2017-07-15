@@ -221,12 +221,6 @@ class MainWindow(QtOpenGL.QGLWidget):
         for edge in screen_edges:
             self._render_edge_2d(edge.v1, edge.v2)
 
-    def _render_edge_2d(self, v1, v2):
-        glBegin(GL_LINES)
-        glVertex2f(v1[0] * self.width, v1[1] * self.height)
-        glVertex2f(v2[0] * self.width, v2[1] * self.height)
-        glEnd()
-
     def _world_to_screen(self, world):
         x = (self._eye[2] * (world[0]-self._eye[0])) / (self._eye[2] + world[2]) + self._eye[0];
         y = (self._eye[2] * (world[1]-self._eye[1])) / (self._eye[2] + world[2]) + self._eye[1];
@@ -236,8 +230,14 @@ class MainWindow(QtOpenGL.QGLWidget):
     def _adjust_screen_vertices(self, vertices, x_offset, y_offset):
         hip_x = vertices[0][0]
         return [
-            ((vertex[0] - hip_x + 0.5), (vertex[1] + y_offset))
+            ((vertex[0] - hip_x + x_offset), (vertex[1] + y_offset))
             for vertex in vertices]         
+
+    def _render_edge_2d(self, v1, v2):
+        glBegin(GL_LINES)
+        glVertex2f(v1[0] * self.width, v1[1] * self.height)
+        glVertex2f(v2[0] * self.width, v2[1] * self.height)
+        glEnd()
     
     def configure_2d_projection(self, left, right, bottom, top):
         glMatrixMode(GL_PROJECTION)
