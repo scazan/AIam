@@ -19,6 +19,8 @@ MAX_NOVELTY = 1.4
 
 from argparse import ArgumentParser
 import threading
+from PyQt4 import QtGui, QtCore, QtOpenGL
+import numpy
 
 import sys
 import os
@@ -84,4 +86,56 @@ pn_receiver_thread = threading.Thread(target=lambda: receive_from_pn(pn_entity))
 pn_receiver_thread.daemon = True
 pn_receiver_thread.start()
 
-application.run()
+class ControlWidget(QtOpenGL.QGLWidget):
+    def __init__(self, parent):
+        QtOpenGL.QGLWidget.__init__(self, parent)
+        self._dragging = False
+        self.setMouseTracking(True)
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self._dragging = True
+            self._previous_position = numpy.array([event.x(), event.y()])
+        else:
+            QtOpenGL.QGLWidget.mousePressEvent(self, event)
+
+    def mouseReleaseEvent(self, event):
+        self._dragging = False
+        QtOpenGL.QGLWidget.mouseReleaseEvent(self, event)
+            
+    def mouseMoveEvent(self, event):
+        if self._dragging:
+            position = numpy.array([event.x(), event.y()])
+            energy = numpy.linalg.norm(position - self._previous_position)
+            self._previous_position = position
+        
+class UiWindow(QtGui.QWidget):
+    def __init__(self):
+        QtGui.QWidget.__init__(self)
+        self._layout = QtGui.QVBoxLayout()
+        self._layout.setSpacing(0)
+        self._layout.setMargin(0)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self._layout)
+
+        self._control_widget = ControlWidget(self)
+        size_policy = QtGui.QSizePolicy(
+            QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
+        size_policy.setVerticalStretch(2)
+        size_policy.setHorizontalStretch(2)
+        self._control_widget.setSizePolicy(size_policy)
+
+        self._layout.addWidget(self._control_widget)
+        
+        timer = QtCore.QTimer(self)
+        timer.setInterval(1000. / args.frame_rate)
+        QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), application.update)
+        timer.start()
+
+    def sizeHint(self):
+        return QtCore.QSize(300, 300)
+
+qt_app = QtGui.QApplication(sys.argv)
+ui_window = UiWindow()
+ui_window.show()
+qt_app.exec_()

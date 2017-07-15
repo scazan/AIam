@@ -191,19 +191,64 @@ class MainWindow(QtOpenGL.QGLWidget):
         glRotatef(self._camera_x_orientation, 1.0, 0.0, 0.0)
         glRotatef(self._camera_y_orientation, 0.0, 1.0, 0.0)
         glTranslatef(*self._camera_position)
+        
+        self._eye = (self.width / 2, self.height/2, 5000)
 
     def render(self):
         self.configure_3d_projection(-100, 0)
         camera_x = self._camera_position[0]
         camera_z = self._camera_position[2]
-        self._floor.render(0, 0, camera_x, camera_z)
+        # self._floor.render(0, 0, camera_x, camera_z)
         for avatar in self._avatars.values():
             if avatar.is_renderable:
                 self._render_avatar(avatar)
-        
+
+        self.configure_2d_projection(0, self.width, 0, self.height)
+        glColor3f(1,0,1)
+        for avatar in self._avatars.values():
+            if avatar.is_renderable:
+                self._render_avatar_2d(avatar)
+                
+    def _render_avatar_2d(self, avatar):
+        screen_vertices = [
+            self._world_to_screen(world_vertex)
+            for world_vertex in avatar.vertices]
+        screen_vertices = self._adjust_screen_vertices(
+            screen_vertices,
+            x_offset=0.5,
+            y_offset=0)
+        screen_edges = self.bvh_reader.vertices_to_edges(screen_vertices)
+        for edge in screen_edges:
+            self._render_edge_2d(edge.v1, edge.v2)
+
+    def _render_edge_2d(self, v1, v2):
+        glBegin(GL_LINES)
+        glVertex2f(v1[0] * self.width, v1[1] * self.height)
+        glVertex2f(v2[0] * self.width, v2[1] * self.height)
+        glEnd()
+
+    def _world_to_screen(self, world):
+        x = (self._eye[2] * (world[0]-self._eye[0])) / (self._eye[2] + world[2]) + self._eye[0];
+        y = (self._eye[2] * (world[1]-self._eye[1])) / (self._eye[2] + world[2]) + self._eye[1];
+        screen = (x, y)
+        return screen
+
+    def _adjust_screen_vertices(self, vertices, x_offset, y_offset):
+        hip_x = vertices[0][0]
+        return [
+            ((vertex[0] - hip_x + 0.5), (vertex[1] + y_offset))
+            for vertex in vertices]         
+    
+    def configure_2d_projection(self, left, right, bottom, top):
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        glOrtho(left, right, bottom, top, -1.0, 1.0)
+        glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
+    
     def _render_avatar(self, avatar):
         glColor3f(1, 1, 1)
-        glLineWidth(2.0)
+        glLineWidth(5.0)
         edges = self.bvh_reader.vertices_to_edges(avatar.vertices) # TODO: what if type==bvh?
         for edge in edges:
             self._render_edge(edge.v1, edge.v2)
