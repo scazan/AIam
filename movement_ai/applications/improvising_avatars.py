@@ -36,6 +36,7 @@ parser = ArgumentParser()
 parser.add_argument("--num-avatars", type=int, default=1)
 parser.add_argument("--pn-host", default="localhost")
 parser.add_argument("--pn-port", type=int, default=tracking.pn.receiver.SERVER_PORT_BVH)
+parser.add_argument("--with-ui", action="store_true")
 Application.add_parser_arguments(parser)
 ImproviseParameters().add_parser_arguments(parser)
 args = parser.parse_args()
@@ -135,7 +136,11 @@ class UiWindow(QtGui.QWidget):
     def sizeHint(self):
         return QtCore.QSize(300, 300)
 
-qt_app = QtGui.QApplication(sys.argv)
-ui_window = UiWindow()
-ui_window.show()
-qt_app.exec_()
+if args.with_ui:
+    qt_app = QtGui.QApplication(sys.argv)
+    ui_window = UiWindow()
+    ui_window.show()
+    qt_app.exec_()
+else:
+    application.run()
+    
