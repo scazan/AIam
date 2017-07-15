@@ -216,7 +216,8 @@ class MainWindow(QtOpenGL.QGLWidget):
         screen_vertices = self._adjust_screen_vertices(
             screen_vertices,
             x_offset=0.5,
-            y_offset=0)
+            y_offset=0.2,
+            scale=0.5)
         screen_edges = self.bvh_reader.vertices_to_edges(screen_vertices)
         for edge in screen_edges:
             self._render_edge_2d(edge.v1, edge.v2)
@@ -227,11 +228,11 @@ class MainWindow(QtOpenGL.QGLWidget):
         screen = (x, y)
         return screen
 
-    def _adjust_screen_vertices(self, vertices, x_offset, y_offset):
+    def _adjust_screen_vertices(self, vertices, x_offset, y_offset, scale):
         hip_x = vertices[0][0]
         return [
-            ((vertex[0] - hip_x + x_offset), (vertex[1] + y_offset))
-            for vertex in vertices]         
+            ((vertex[0] - hip_x) * scale + x_offset, (vertex[1] + y_offset) * scale)
+            for vertex in vertices]
 
     def _render_edge_2d(self, v1, v2):
         glBegin(GL_LINES)
