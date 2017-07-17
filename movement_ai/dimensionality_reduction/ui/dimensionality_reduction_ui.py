@@ -147,6 +147,7 @@ class DimensionalityReductionToolbar(ExperimentToolbar):
         ExperimentToolbar.__init__(self, *args)
         self.set_reduction_range(self.parent().student.reduction_range)
         self._layout = QtGui.QHBoxLayout()
+        self.add_input_tab_widget(self._layout)
         self._add_mode_tabs()
         self._add_reduction_tabs()
         if self.args.enable_io_blending:

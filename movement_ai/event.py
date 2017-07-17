@@ -39,6 +39,7 @@ class Event:
     SET_MODEL_NOISE_TO_ADD = "SET_MODEL_NOISE_TO_ADD"
     SET_MEMORIZE = "SET_MEMORIZE"
     RECALL = "RECALL"
+    SET_INPUT_DELAY = "SET_INPUT_DELAY"
 
     def __init__(self, type_, content=None):
         self.type = type_

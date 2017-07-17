@@ -258,6 +258,33 @@ class ExperimentToolbar(QtGui.QWidget):
     def get_event_handlers(self):
         return {}
 
+    def add_input_tab_widget(self, parent):
+        if self.args.enable_follow or self.args.receive_from_pn:
+            input_tab_widget = QtGui.QTabWidget()
+            input_tab = QtGui.QWidget()
+            layout = QtGui.QVBoxLayout()
+            layout.setSpacing(0)
+            layout.setMargin(0)
+            input_tab.setLayout(layout)
+
+            class InputParameters(Parameters):
+                def __init__(self):
+                    Parameters.__init__(self)
+                    self.add_parameter("delay", type=float, default=0,
+                                       choices=ParameterFloatRange(0., 5.))
+
+            input_params = InputParameters()
+            input_params.add_listener(self._send_changed_input_param)
+            input_params_form = self.add_parameter_fields(input_params, layout)
+            
+            layout.addStretch(1)
+            input_tab_widget.addTab(input_tab, "Input")
+            parent.addWidget(input_tab_widget)
+
+    def _send_changed_input_param(self, parameter):
+        if parameter.name == "delay":
+            self.parent().client.send_event(Event(Event.SET_INPUT_DELAY, parameter.value()))
+        
     def add_physics_tab_widget(self, parent):
         if self.args.entity == "hierarchical":
             physics_tab_widget = QtGui.QTabWidget()

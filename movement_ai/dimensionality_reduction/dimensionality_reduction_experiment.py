@@ -74,6 +74,7 @@ class DimensionalityReductionExperiment(Experiment):
             Event.SET_IO_BLENDING_CONTROL_FRICTION: self._set_io_blending_control_friction,
             Event.SET_MEMORIZE: self._set_memorize,
             Event.RECALL: lambda event: self._memory.begin_recalling(),
+            Event.SET_INPUT_DELAY: lambda event: self._set_input_delay(event.content)
         })
         self.reduction = None
         self._mode = self.args.mode
@@ -95,6 +96,20 @@ class DimensionalityReductionExperiment(Experiment):
 
             self._pose_for_feature_extraction = self.bvh_reader.get_hierarchy().create_pose()
             self._feature_matcher_path = "%s/%s.features" % (self.profiles_dir, self.args.profile)
+
+        self._set_input_delay(0)
+
+    def _set_input_delay(self, seconds):
+        self._input_queue_num_frames = int(seconds * self.args.frame_rate)
+        self._input_queue = collections.deque(
+            [None] * self._input_queue_num_frames, maxlen=self._input_queue_num_frames)
+
+    def _enqueue_and_deque_input(self, new_input):
+        if self._input_queue_num_frames == 0:
+            return new_input
+        else:
+            self._input_queue.append(new_input)
+            return self._input_queue.popleft()
 
     def ui_connected(self, handler):
         Experiment.ui_connected(self, handler)
@@ -387,10 +402,11 @@ class DimensionalityReductionExperiment(Experiment):
     def update(self):
         if self.args.enable_follow or self.args.receive_from_pn:
             if self.args.receive_from_pn:
-                self.input = self._input_from_pn
+                self.input = self._enqueue_and_deque_input(self._input_from_pn)
             else:
-                self.input = self._follow.get_input()
-            
+                self.input = self._enqueue_and_deque_input(self._follow.get_input())
+                
+                
             if self.input is not None and self.student.supports_incremental_learning():
                 if self.model_noise_to_add > 0:
                     self.student.add_noise(self.model_noise_to_add)
