@@ -65,7 +65,8 @@ class OscReceiver:
         elif self._proto == osc.UDP:
             self._data, addr = self._socket.recvfrom(1024)
         address_pattern = self._consume_osc_string()
-        assert address_pattern.startswith("/")
+        if not address_pattern.startswith("/"):
+            raise Exception('Expected pattern to start with "/". Actual pattern: "%s".' % address_pattern)
 
         try:
             handler = self._handlers[address_pattern]

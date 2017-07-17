@@ -37,7 +37,6 @@ class OscReceiver(liblo.Server):
         while self._running:
             self.recv()
             self._serve_from_queue()
-            time.sleep(0.001)
         self.free()
         self._freed = True
 

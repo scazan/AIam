@@ -11,7 +11,7 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/..")
 from bvh import bvh_reader as bvh_reader_module
-from connectivity.simple_osc_receiver import OscReceiver
+from connectivity.osc_receiver import OscReceiver
 from floor_checkerboard import FloorCheckerboard
 
 FLOOR_ARGS = {"num_cells": 26, "size": 26,
@@ -23,6 +23,8 @@ CAMERA_Y_SPEED = .01
 CAMERA_KEY_SPEED = .1
 CAMERA_DRAG_SPEED = .1
 FRAME_RATE = 50
+NUM_TRACKED_JOINTS = 15
+JOINTS_DETERMNING_INTENSITY = ["left_hand", "right_hand"]
 
 class Avatar:
     def __init__(self):
@@ -45,11 +47,19 @@ class MainWindow(QtOpenGL.QGLWidget):
         self.setMouseTracking(True)
         self._floor = FloorCheckerboard(**FLOOR_ARGS)
 
-        self._osc_receiver = OscReceiver(args.port)
-        self._osc_receiver.add_method("/avatar_begin", "i", self._handle_avatar_begin)
-        self._osc_receiver.add_method("/avatar_end", "", self._handle_avatar_end)
-        self._osc_receiver.add_method("/world", "iifff", self._received_worldpos)
-        self._osc_receiver.start(auto_serve=True)
+        ai_osc_receiver = OscReceiver(args.port)
+        ai_osc_receiver.add_method("/avatar_begin", "i", self._handle_avatar_begin)
+        ai_osc_receiver.add_method("/avatar_end", "", self._handle_avatar_end)
+        ai_osc_receiver.add_method("/world", "iifff", self._received_worldpos)
+        ai_osc_receiver.start()
+
+        self._frame = None
+        self._users = {}
+        skeleton_osc_receiver = OscReceiver(args.skeleton_osc_port)
+        skeleton_osc_receiver.add_method("/begin_frame", "f", self._handle_begin_frame)
+        skeleton_osc_receiver.add_method("/joint", "isfffffffff", self._handle_joint_data)
+        skeleton_osc_receiver.add_method("/state", "is", self._handle_user_state)
+        skeleton_osc_receiver.start()
 
         timer = QtCore.QTimer(self)
         timer.setInterval(1000. / FRAME_RATE)
@@ -97,6 +107,23 @@ class MainWindow(QtOpenGL.QGLWidget):
             {"Xrotation": math.degrees(x),
              "Yrotation": math.degrees(y),
              "Zrotation": math.degrees(z)})
+
+    def _handle_begin_frame(self, path, values, types, src, user_data):
+        (timestamp,) = values
+        if self._frame is not None:
+            self._process_frame()
+        self._frame = {"timestamp": timestamp,
+                       "user_states": [],
+                       "joint_data": []}
+
+    def _handle_joint_data(self, path, values, types, src, user_data):
+        if self._frame is not None:
+            self._frame["joint_data"].append(values)
+
+    def _handle_user_state(self, path, values, types, src, user_data):
+        user_id, state = values
+        if self._frame is not None:
+            self._frame["user_states"].append((user_id, state))
 
     def _set_camera_from_arg(self, arg):
         pos_x, pos_y, pos_z, orient_y, orient_z = map(float, arg.split(","))
@@ -289,7 +316,73 @@ class MainWindow(QtOpenGL.QGLWidget):
             self._camera_position[1] += CAMERA_Y_SPEED * (y - self._drag_y_previous)
         self._drag_x_previous = x
         self._drag_y_previous = y
+
+    def _process_frame(self):
+        for values in self._frame["user_states"]:
+            self._process_user_state(*values)
+
+    def _process_user_state(self, user_id, state):
+        if user_id not in self._users:
+            self._users[user_id] = User(user_id)
+        user = self._users[user_id]
+        if state == "lost":
+            try:
+                del self._users[user_id]
+            except KeyError:
+                pass
         
+class User:
+    def __init__(self, user_id):
+        self._user_id = user_id
+        self._joints = {}
+        self._num_updated_joints = 0
+        self._intensity = 0
+
+    def handle_joint_data(self, joint_name, *args):
+        self._process_joint_data(joint_name, *args)
+
+    def _process_joint_data(self, joint_name,
+                            position_x, position_y, position_z,
+                            position_confidence,
+                            orientation_w, orientation_x, orientation_y, orientation_z,
+                            orientation_confidence):
+        self._ensure_joint_exists(joint_name)
+        joint = self._joints[joint_name]
+        joint.set_position(position_x, position_y, position_z)
+        joint.set_position_confidence(position_confidence)
+        joint.set_orientation(orientation_w, orientation_x, orientation_y, orientation_z)
+        joint.set_orientation_confidence(orientation_confidence)
+        self._last_updated_joint = joint_name
+        self._num_updated_joints += 1
+        if self._num_updated_joints >= NUM_TRACKED_JOINTS:
+            self._process_frame()
+
+    def _ensure_joint_exists(self, joint_name):
+        if joint_name not in self._joints:
+            self._joints[joint_name] = Joint()
+
+    def _process_frame(self):
+        self._intensity = self._measure_intensity()
+        self._num_updated_joints = 0
+
+    def _measure_intensity(self):
+        return sum([
+            self.get_joint(joint_name).get_intensity()
+            for joint_name in JOINTS_DETERMNING_INTENSITY]) / \
+                len(JOINTS_DETERMNING_INTENSITY)
+
+    def get_intensity(self):
+        return self._intensity
+    
+    def get_id(self):
+        return self._user_id
+
+    def get_joint(self, name):
+        return self._joints[name]
+
+    def has_complete_joint_data(self):
+        return len(self._joints) >= NUM_TRACKED_JOINTS
+    
 parser = ArgumentParser()
 parser.add_argument("bvh", type=str)
 parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
@@ -297,6 +390,7 @@ parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
 parser.add_argument("--port", type=int, default=10000)
 parser.add_argument("--z-up", action="store_true")
 parser.add_argument("--type", choices=["world"], default="world")
+parser.add_argument("--skeleton-osc-port", type=int, default=15002)
 args = parser.parse_args()
 
 bvh_reader = bvh_reader_module.BvhReader(args.bvh)
