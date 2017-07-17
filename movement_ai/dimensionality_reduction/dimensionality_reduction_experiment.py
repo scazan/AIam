@@ -231,6 +231,8 @@ class DimensionalityReductionExperiment(Experiment):
                 if self.student.supports_incremental_learning():
                     self._training_data = collections.deque([], maxlen=self.args.memory_size)
                     self.model_noise_to_add = 0
+                    self.min_training_loss = self.args.target_training_loss
+                    self._training_loss = None
                 else:
                     self._training_data = storage.load(self._training_data_path)
 
@@ -408,18 +410,20 @@ class DimensionalityReductionExperiment(Experiment):
                 
                 
             if self.input is not None and self.student.supports_incremental_learning():
+                self._training_data.append(self.input)
                 if self.model_noise_to_add > 0:
                     self.student.add_noise(self.model_noise_to_add)
-                self.student.train([self.input])
-                self._training_data.append(self.input)
-                self.student.probe(self._training_data)
-                self._improvise.set_normalized_observed_reductions(self.student.normalized_observed_reductions)
-                self._flaneur_behavior.set_normalized_observed_reductions(self.student.normalized_observed_reductions)
-                if self.args.enable_features:
-                    self._hybrid.set_normalized_observed_reductions(self.student.normalized_observed_reductions)
-                self.send_event_to_ui(Event(Event.REDUCTION_RANGE, self.student.reduction_range))
-                self.send_event_to_ui(
-                    Event(Event.NORMALIZED_OBSERVED_REDUCTIONS, self.student.normalized_observed_reductions))
+                if self._training_loss is None or self._training_loss >= self.min_training_loss:
+                    self._training_loss = self.student.train([self.input], return_loss=True)
+                    self.send_event_to_ui(Event(Event.TRAINING_LOSS, self._training_loss))
+                    self.student.probe(self._training_data)
+                    self._improvise.set_normalized_observed_reductions(self.student.normalized_observed_reductions)
+                    self._flaneur_behavior.set_normalized_observed_reductions(self.student.normalized_observed_reductions)
+                    if self.args.enable_features:
+                        self._hybrid.set_normalized_observed_reductions(self.student.normalized_observed_reductions)
+                    self.send_event_to_ui(Event(Event.REDUCTION_RANGE, self.student.reduction_range))
+                    self.send_event_to_ui(
+                        Event(Event.NORMALIZED_OBSERVED_REDUCTIONS, self.student.normalized_observed_reductions))
 
             self._memory.on_input(self.input)
             

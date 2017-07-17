@@ -30,6 +30,7 @@ class DimensionalityReductionMainWindow(MainWindow):
             Event.REDUCTION_RANGE: self._handle_reduction_range,
             Event.NORMALIZED_OBSERVED_REDUCTIONS: self._handle_normalized_observed_reductions,
             Event.IO_BLENDING_AMOUNT: self._set_io_blending_amount,
+            Event.TRAINING_LOSS: self._handle_training_loss,
         }, **kwargs)
         self._add_toggleable_action(
             '&Plot reduction', self._start_plot_reduction,
@@ -141,6 +142,9 @@ class DimensionalityReductionMainWindow(MainWindow):
 
     def _set_io_blending_amount(self, event):
         self.toolbar.io_blending_slider.setValue(event.content * SLIDER_PRECISION)
+
+    def _handle_training_loss(self, event):
+        self.toolbar.training_loss_value.setText("%.2f" % event.content)
 
 class DimensionalityReductionToolbar(ExperimentToolbar):
     def __init__(self, *args):

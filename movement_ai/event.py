@@ -40,6 +40,8 @@ class Event:
     SET_MEMORIZE = "SET_MEMORIZE"
     RECALL = "RECALL"
     SET_INPUT_DELAY = "SET_INPUT_DELAY"
+    SET_MIN_TRAINING_LOSS = "SET_MIN_TRAINING_LOSS"
+    TRAINING_LOSS = "TRAINING_LOSS"
 
     def __init__(self, type_, content=None):
         self.type = type_

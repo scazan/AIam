@@ -329,6 +329,7 @@ class ExperimentToolbar(QtGui.QWidget):
             learning_tab.setLayout(layout)
 
             default_learning_rate = self.args.learning_rate
+            default_min_loss = self.args.target_training_loss
             
             class LearningParameters(Parameters):
                 def __init__(self):
@@ -337,10 +338,19 @@ class ExperimentToolbar(QtGui.QWidget):
                                        choices=ParameterFloatRange(0., 1.))
                     self.add_parameter("add_noise", type=float, default=0,
                                        choices=ParameterFloatRange(0., 1.))
+                    self.add_parameter("min_loss", type=float, default=default_min_loss,
+                                       choices=ParameterFloatRange(0., 1.))
 
             learning_params = LearningParameters()
             learning_params.add_listener(self._send_changed_learning_param)
             learning_params_form = self.add_parameter_fields(learning_params, layout)
+
+            loss_layout = QtGui.QHBoxLayout()
+            loss_label = QtGui.QLabel("Loss")
+            self.training_loss_value = QtGui.QLabel("")
+            loss_layout.addWidget(loss_label)
+            loss_layout.addWidget(self.training_loss_value)
+            layout.addLayout(loss_layout)
             
             layout.addStretch(1)
             learning_tab_widget.addTab(learning_tab, "Learning")
@@ -351,6 +361,8 @@ class ExperimentToolbar(QtGui.QWidget):
             self.parent().client.send_event(Event(Event.SET_LEARNING_RATE, parameter.value()))
         elif parameter.name == "add_noise":
             self.parent().client.send_event(Event(Event.SET_MODEL_NOISE_TO_ADD, parameter.value()))
+        elif parameter.name == "min_loss":
+            self.parent().client.send_event(Event(Event.SET_MIN_TRAINING_LOSS, parameter.value()))
 
 class MainWindow(Window, EventListener):
     @staticmethod

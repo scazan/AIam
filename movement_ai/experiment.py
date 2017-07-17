@@ -138,6 +138,7 @@ class Experiment(EventListener):
             Event.SET_FRICTION: lambda event: self.set_friction(event.content),
             Event.SET_LEARNING_RATE: lambda event: self.student.set_learning_rate(event.content),
             Event.SET_MODEL_NOISE_TO_ADD: self._set_model_noise_to_add,
+            Event.SET_MIN_TRAINING_LOSS: self._set_min_training_loss,
         })
         EventListener.__init__(self, handlers=event_handlers)
 
@@ -539,6 +540,9 @@ class Experiment(EventListener):
 
     def _set_model_noise_to_add(self, event):
         self.model_noise_to_add = event.content / 100
+
+    def _set_min_training_loss(self, event):
+        self.min_training_loss = 0
         
 class SingleProcessUiHandler:
     def __init__(self, client, experiment):
