@@ -539,17 +539,23 @@ void Viewer::InitOpenGLHooks()
 
 void Viewer::DrawStatusLabel(const nite::UserData& user)
 {
-	int color = user.getId() % colorCount;
-	glColor3f(1.0f - Colors[color][0], 1.0f - Colors[color][1], 1.0f - Colors[color][2]);
+  int color = user.getId() % colorCount;
+  glColor3f(1.0f - Colors[color][0], 1.0f - Colors[color][1], 1.0f - Colors[color][2]);
 
-	float x,y;
-	m_pUserTracker->convertJointCoordinatesToDepth(user.getCenterOfMass().x, user.getCenterOfMass().y, user.getCenterOfMass().z, &x, &y);
-	x /= (float)g_nXRes;
-	y /= (float)g_nYRes;
-	char *msg = g_userStatusLabels[user.getId()];
-	glRasterPos2f(x - float((strlen(msg)/2)*8)/g_nXRes, y);
-	glPrintString(GLUT_BITMAP_HELVETICA_18, msg);
-	checkGlErrors();
+  float x,y;
+  m_pUserTracker->convertJointCoordinatesToDepth(user.getCenterOfMass().x, user.getCenterOfMass().y, user.getCenterOfMass().z, &x, &y);
+  x /= (float)g_nXRes;
+  y /= (float)g_nYRes;
+  char *userStatus = g_userStatusLabels[user.getId()];
+  glRasterPos2f(x - float((strlen(userStatus)/2)*8)/g_nXRes, y);
+  glPrintString(GLUT_BITMAP_HELVETICA_18, userStatus);
+  if(g_drawCenterOfMass) {
+    char positionString[1024];
+    sprintf(positionString, "[%.1f,%.1f,%.1f]\n", user.getCenterOfMass().x, user.getCenterOfMass().y, user.getCenterOfMass().z);
+    glRasterPos2f(x - float((strlen(positionString)/2)*8)/g_nXRes, y + 20.0/g_nYRes);
+    glPrintString(GLUT_BITMAP_HELVETICA_18, positionString);
+  }
+  checkGlErrors();
 }
 
 void Viewer::DrawCenterOfMass(const nite::UserData& user)
