@@ -40,6 +40,7 @@ import tracking.pn.receiver
 parser = ArgumentParser()
 parser.add_argument("--pn-host", default="localhost")
 parser.add_argument("--pn-port", type=int, default=tracking.pn.receiver.SERVER_PORT_BVH)
+parser.add_argument("--pn-translation-offset")
 parser.add_argument("--with-ui", action="store_true")
 parser.add_argument("--mirror-weight", type=float, default=1.0)
 parser.add_argument("--improvise-weight", type=float, default=1.0)
@@ -336,6 +337,7 @@ application = Application(student, avatars, args)
 def receive_from_pn(pn_entity):
     for frame in pn_receiver.get_frames():
         input_from_pn = pn_entity.get_value_from_frame(frame)
+        input_from_pn[0:3] += pn_translation_offset
         application.set_input(input_from_pn)
         
 pn_receiver = tracking.pn.receiver.PnReceiver()
@@ -344,6 +346,11 @@ pn_receiver.connect(args.pn_host, args.pn_port)
 print "ok"
 pn_pose = bvh_reader.get_hierarchy().create_pose()
 pn_entity = Entity(bvh_reader, pn_pose, FLOOR, Z_UP, entity_args)
+if args.pn_translation_offset:
+    pn_translation_offset = numpy.array(
+        [float(string) for string in args.pn_translation_offset.split(",")])
+else:
+    pn_translation_offset = numpy.array([0,0,0])
 pn_receiver_thread = threading.Thread(target=lambda: receive_from_pn(pn_entity))
 pn_receiver_thread.daemon = True
 pn_receiver_thread.start()
