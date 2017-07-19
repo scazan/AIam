@@ -123,6 +123,7 @@ class MetaBehaviour(Behavior):
         self._input_buffer = collections.deque(
             [None] * self._input_buffer_num_frames, maxlen=self._input_buffer_num_frames)
         self.set_mirror_delay_seconds(0)
+        self._translation_offset = numpy.zeros(3)
 
     def _choose_initial_state(self):
         if args.mirror_weight > 0:
@@ -179,6 +180,7 @@ class MetaBehaviour(Behavior):
         if remaining_frames_in_state == 0:
             self._initialize_state(self._next_state)
             return
+                
         frames_to_process = min(self._remaining_frames_to_process, remaining_frames_in_state)
         self._improvise.proceed(float(frames_to_process) / args.frame_rate)
         current_and_next_state = set([self._current_state, self._next_state])
@@ -188,34 +190,40 @@ class MetaBehaviour(Behavior):
                 input_amount = 1 - float(self._state_frames) / self._interpolation_num_frames
             else:
                 input_amount = float(self._state_frames) / self._interpolation_num_frames
-            improvise_amount = 1 - input_amount
-            entity.set_friction(improvise_amount > 0.5)
-            self._output = entity.interpolate(
-                self._delayed_input, self._get_improvise_output(), improvise_amount)
-            
+            from_output = self._delayed_input
+            to_output = self._get_improvise_output()
+            amount = 1 - input_amount
+            entity.set_friction(amount > 0.5)
+                        
         elif current_and_next_state == set([self.MIRROR, self.MEMORY]):
             if self._current_state == self.MIRROR:
                 input_amount = 1 - float(self._state_frames) / self._interpolation_num_frames
             else:
                 input_amount = float(self._state_frames) / self._interpolation_num_frames
-            memory_amount = 1 - input_amount
-            self._output = entity.interpolate(
-                self._delayed_input, self._memory.get_output(), memory_amount)
+            from_output = self._delayed_input
+            to_output = self._memory.get_output()
+            amount = 1 - input_amount
 
         elif current_and_next_state == set([self.IMPROVISE, self.MEMORY]):
             if self._current_state == self.MEMORY:
                 memory_amount = 1 - float(self._state_frames) / self._interpolation_num_frames
             else:
                 memory_amount = float(self._state_frames) / self._interpolation_num_frames
-            improvise_amount = 1 - memory_amount
-            entity.set_friction(improvise_amount > 0.5)
-            self._output = entity.interpolate(
-                self._memory.get_output(), self._get_improvise_output(), improvise_amount)
+            from_output = self._memory.get_output()
+            to_output = self._get_improvise_output()
+            amount = 1 - memory_amount
+            entity.set_friction(amount > 0.5)
             
         else:
             raise Exception("interpolation between %s and %s not supported" % (
                 self._current_state, self._next_state))
-                            
+            
+        if self._state_frames == 0:
+            self._translation_offset = numpy.array(to_output[0:3]) - numpy.array(from_output[0:3])
+
+        to_output[0:3] -= self._translation_offset
+        self._output = entity.interpolate(from_output, to_output, amount)
+
         self._state_frames += frames_to_process
         self._remaining_frames_to_process -= frames_to_process
 
@@ -244,17 +252,13 @@ class MetaBehaviour(Behavior):
             entity.set_friction(False)
             self._memory.proceed(frames_to_process)
             self._output = self._memory.get_output()
+            
         self._state_frames += frames_to_process
         self._remaining_frames_to_process -= frames_to_process
 
     def _prepare_state(self, state):
         if state == self.MEMORY:
             self._memory.begin_random_recall(self._state_num_frames(state) + self._interpolation_num_frames)
-        elif state == self.IMPROVISE:
-            if self._delayed_input is None:
-                self._translation_offset = [0,0,0]
-            else:
-                self._translation_offset = self._delayed_input[0:3]
 
     def _state_num_frames(self, state):
         if state == self.MIRROR:
@@ -277,9 +281,7 @@ class MetaBehaviour(Behavior):
 
     def _get_improvise_output(self):
         reduction = self._improvise.get_reduction()
-        output = student.inverse_transform(numpy.array([reduction]))[0]
-        output[0:3] += self._translation_offset
-        return output
+        return student.inverse_transform(numpy.array([reduction]))[0]
     
 class UiWindow(QtGui.QWidget):
     def __init__(self, meta_behavior):
