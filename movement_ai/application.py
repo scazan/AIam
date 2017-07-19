@@ -40,22 +40,23 @@ class Application:
         if self._student.supports_incremental_learning():
             self._training_data = collections.deque([], maxlen=args.memory_size)
         
-    def run(self):
         self._input = None
         self._now = None
         self._desired_frame_duration = 1.0 / self._args.frame_rate
         self._frame_count = 0
         if self._args.show_fps:
             self._fps_meter = FpsMeter()
+            
+    def run(self):
         while True:
             self._frame_start_time = time.time()
-            self._update_and_send_output()
+            self.update()
             self._wait_until_next_frame_is_timely()
 
     def set_input(self, input_):
         self._input = input_
 
-    def _update_and_send_output(self):
+    def update(self):
         if self._input is not None and self._student.supports_incremental_learning():
             self._student.train([self._input])
             self._training_data.append(self._input)

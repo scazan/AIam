@@ -16,11 +16,14 @@ NUM_REDUCED_DIMENSIONS = 7
 Z_UP = False
 FLOOR = True
 MAX_NOVELTY = 1.4
+SLIDER_PRECISION = 1000
 
 from argparse import ArgumentParser
 import threading
 import numpy
 import random
+import collections
+from PyQt4 import QtGui, QtCore
 
 import sys
 import os
@@ -36,6 +39,7 @@ import tracking.pn.receiver
 parser = ArgumentParser()
 parser.add_argument("--pn-host", default="localhost")
 parser.add_argument("--pn-port", type=int, default=tracking.pn.receiver.SERVER_PORT_BVH)
+parser.add_argument("--with-ui", action="store_true")
 parser.add_argument("--mirror-weight", type=float, default=1.0)
 parser.add_argument("--improvise-weight", type=float, default=1.0)
 parser.add_argument("--memory-weight", type=float, default=1.0)
@@ -116,7 +120,13 @@ class MetaBehaviour(Behavior):
         self._interpolation_num_frames = int(round(self.interpolation_duration * args.frame_rate))
         self._memory = Memory()
         self._initialize_state(self.MIRROR)
+        self.set_mirror_delay_seconds(0)
 
+    def set_mirror_delay_seconds(self, seconds):
+        self._input_queue_num_frames = int(seconds * args.frame_rate)
+        self._input_queue = collections.deque(
+            [None] * self._input_queue_num_frames, maxlen=self._input_queue_num_frames)
+        
     def _create_weighted_shuffler(self):
         available_modes = [
             mode for mode in [self.MIRROR, self.IMPROVISE, self.MEMORY]
@@ -139,7 +149,8 @@ class MetaBehaviour(Behavior):
         self._interpolating = False
             
     def proceed(self, time_increment):
-        if self._input is None:
+        self._delayed_input = self._get_delayed_input()
+        if self._delayed_input is None:
             return
         self._remaining_frames_to_process = int(round(time_increment * args.frame_rate))
         while self._remaining_frames_to_process > 0:
@@ -158,7 +169,7 @@ class MetaBehaviour(Behavior):
             return
         frames_to_process = min(self._remaining_frames_to_process, remaining_frames_in_state)
         self._improvise.proceed(float(frames_to_process) / args.frame_rate)
-
+        
         if set([self._current_state, self._next_state]) == set([self.MIRROR, self.IMPROVISE]):
             if self._current_state == self.MIRROR:
                 input_amount = 1 - float(self._state_frames) / self._interpolation_num_frames
@@ -166,15 +177,17 @@ class MetaBehaviour(Behavior):
                 input_amount = float(self._state_frames) / self._interpolation_num_frames
             improvise_amount = 1 - input_amount
             entity.set_friction(improvise_amount > 0.5)
-            self._output = entity.interpolate(self._input, self._get_improvise_output(), improvise_amount)
-
+            self._output = entity.interpolate(
+                self._delayed_input, self._get_improvise_output(), improvise_amount)
+            
         elif set([self._current_state, self._next_state]) == set([self.MIRROR, self.MEMORY]):
             if self._current_state == self.MIRROR:
                 input_amount = 1 - float(self._state_frames) / self._interpolation_num_frames
             else:
                 input_amount = float(self._state_frames) / self._interpolation_num_frames
             memory_amount = 1 - input_amount
-            self._output = entity.interpolate(self._input, self._memory.get_output(), memory_amount)
+            self._output = entity.interpolate(
+                self._delayed_input, self._memory.get_output(), memory_amount)
 
         else:
             raise Exception("interpolation between %s and %s not supported" % (
@@ -182,7 +195,13 @@ class MetaBehaviour(Behavior):
                             
         self._state_frames += frames_to_process
         self._remaining_frames_to_process -= frames_to_process
-        
+
+    def _get_delayed_input(self):
+        if self._input_queue_num_frames == 0:
+            return self._input
+        else:
+            return self._input_queue.popleft()
+            
     def _proceed_within_normal_state(self):        
         remaining_frames_in_state = self._state_num_frames(self._current_state) - self._state_frames
         if remaining_frames_in_state == 0:
@@ -199,7 +218,7 @@ class MetaBehaviour(Behavior):
             self._output = self._get_improvise_output()
         elif self._current_state == self.MIRROR:
             entity.set_friction(False)
-            self._output = self._input
+            self._output = self._delayed_input
         elif self._current_state == self.MEMORY:
             entity.set_friction(False)
             self._memory.proceed(frames_to_process)
@@ -211,7 +230,7 @@ class MetaBehaviour(Behavior):
         if state == self.MEMORY:
             self._memory.begin_random_recall(self._state_num_frames(state) + self._interpolation_num_frames)
         elif state == self.IMPROVISE:
-            self._translation_offset = self._input[0:3]
+            self._translation_offset = self._delayed_input[0:3]
 
     def _state_num_frames(self, state):
         if state == self.MIRROR:
@@ -226,6 +245,8 @@ class MetaBehaviour(Behavior):
 
     def on_input(self, input_):
         self._input = input_
+        if self._input_queue_num_frames > 0:
+            self._input_queue.append(input_)
         self._memory.on_input(input_)
         
     def get_output(self):
@@ -237,6 +258,43 @@ class MetaBehaviour(Behavior):
         output[0:3] += self._translation_offset
         return output
     
+class UiWindow(QtGui.QWidget):
+    def __init__(self, meta_behavior):
+        QtGui.QWidget.__init__(self)
+        self._meta_behavior = meta_behavior
+        self._layout = QtGui.QVBoxLayout()
+        self.setLayout(self._layout)
+
+        delay_layout = self._create_delay_layout()
+        self._layout.addLayout(delay_layout)
+        
+        timer = QtCore.QTimer(self)
+        timer.setInterval(1000. / args.frame_rate)
+        QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), application.update)
+        timer.start()
+
+    def _create_delay_layout(self):
+        layout = QtGui.QHBoxLayout()
+        self._delay_slider = self._create_delay_slider()
+        layout.addWidget(self._delay_slider)
+        self._delay_label = QtGui.QLabel("")
+        layout.addWidget(self._delay_label)
+        self._on_changed_delay_slider()
+        return layout
+
+    def _create_delay_slider(self):
+        slider = QtGui.QSlider(QtCore.Qt.Horizontal)
+        slider.setRange(0, SLIDER_PRECISION)
+        slider.setSingleStep(1)
+        slider.setValue(0.0)
+        slider.valueChanged.connect(lambda value: self._on_changed_delay_slider())
+        return slider
+
+    def _on_changed_delay_slider(self):
+        delay_seconds = float(self._delay_slider.value()) / SLIDER_PRECISION * 10
+        self._delay_label.setText("%.1f" % delay_seconds)
+        self._meta_behavior.set_mirror_delay_seconds(delay_seconds)
+
 improvise_params = ImproviseParameters()
 preferred_location = None
 improvise = Improvise(
@@ -246,7 +304,8 @@ improvise = Improvise(
     preferred_location,
     MAX_NOVELTY)
 index = 0
-avatar = Avatar(index, entity, MetaBehaviour(improvise))
+meta_behavior = MetaBehaviour(improvise)
+avatar = Avatar(index, entity, meta_behavior)
 
 avatars = [avatar]
 
@@ -267,4 +326,10 @@ pn_receiver_thread = threading.Thread(target=lambda: receive_from_pn(pn_entity))
 pn_receiver_thread.daemon = True
 pn_receiver_thread.start()
 
-application.run()
+if args.with_ui:
+    qt_app = QtGui.QApplication(sys.argv)
+    ui_window = UiWindow(meta_behavior)
+    ui_window.show()
+    qt_app.exec_()
+else:
+    application.run()
