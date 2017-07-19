@@ -203,7 +203,7 @@ class MainWindow(QtOpenGL.QGLWidget):
         
     def _render_avatar(self, avatar):
         glColor3f(1, 1, 1)
-        glLineWidth(2.0)
+        glLineWidth(5.0)
         edges = self.bvh_reader.vertices_to_edges(avatar.vertices) # TODO: what if type==bvh?
         for edge in edges:
             self._render_edge(edge.v1, edge.v2)
