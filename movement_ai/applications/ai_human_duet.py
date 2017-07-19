@@ -17,6 +17,7 @@ Z_UP = False
 FLOOR = True
 MAX_NOVELTY = 1.4
 SLIDER_PRECISION = 1000
+MAX_DELAY_SECONDS = 10
 
 from argparse import ArgumentParser
 import threading
@@ -120,12 +121,13 @@ class MetaBehaviour(Behavior):
         self._interpolation_num_frames = int(round(self.interpolation_duration * args.frame_rate))
         self._memory = Memory()
         self._initialize_state(self.MIRROR)
+        self._input_buffer_num_frames = int(MAX_DELAY_SECONDS * args.frame_rate)
+        self._input_buffer = collections.deque(
+            [None] * self._input_buffer_num_frames, maxlen=self._input_buffer_num_frames)
         self.set_mirror_delay_seconds(0)
 
     def set_mirror_delay_seconds(self, seconds):
-        self._input_queue_num_frames = int(seconds * args.frame_rate)
-        self._input_queue = collections.deque(
-            [None] * self._input_queue_num_frames, maxlen=self._input_queue_num_frames)
+        self._input_buffer_read_cursor = self._input_buffer_num_frames - 1 - int(seconds * args.frame_rate)
         
     def _create_weighted_shuffler(self):
         available_modes = [
@@ -197,10 +199,7 @@ class MetaBehaviour(Behavior):
         self._remaining_frames_to_process -= frames_to_process
 
     def _get_delayed_input(self):
-        if self._input_queue_num_frames == 0:
-            return self._input
-        else:
-            return self._input_queue.popleft()
+        return self._input_buffer[self._input_buffer_read_cursor]
             
     def _proceed_within_normal_state(self):        
         remaining_frames_in_state = self._state_num_frames(self._current_state) - self._state_frames
@@ -245,8 +244,7 @@ class MetaBehaviour(Behavior):
 
     def on_input(self, input_):
         self._input = input_
-        if self._input_queue_num_frames > 0:
-            self._input_queue.append(input_)
+        self._input_buffer.append(input_)
         self._memory.on_input(input_)
         
     def get_output(self):
@@ -291,7 +289,7 @@ class UiWindow(QtGui.QWidget):
         return slider
 
     def _on_changed_delay_slider(self):
-        delay_seconds = float(self._delay_slider.value()) / SLIDER_PRECISION * 10
+        delay_seconds = float(self._delay_slider.value()) / SLIDER_PRECISION * MAX_DELAY_SECONDS
         self._delay_label.setText("%.1f" % delay_seconds)
         self._meta_behavior.set_mirror_delay_seconds(delay_seconds)
 
