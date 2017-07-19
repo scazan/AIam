@@ -70,13 +70,7 @@ class WeightedShuffler:
         self._weights = weights
         self._weights_sum = sum(weights)
 
-    def choose_other_than(self, not_choosable):
-        while True:
-            candidate = self._get_candidate()
-            if candidate != not_choosable:
-                return candidate
-
-    def _get_candidate(self):
+    def choice(self):
         r = random.random() * self._weights_sum
         for index, weight in enumerate(self._weights):
             r -= weight
@@ -114,31 +108,46 @@ class MetaBehaviour(Behavior):
         Behavior.__init__(self)
         self._improvise = improvise
         self._input = None
+        self._delayed_input = None
         self._output = None
         self._mirror_num_frames = int(round(args.mirror_duration * args.frame_rate))
         self._improvise_num_frames = int(round(args.improvise_duration * args.frame_rate))
         self._memory_num_frames = int(round(args.memory_duration * args.frame_rate))
         self._interpolation_num_frames = int(round(self.interpolation_duration * args.frame_rate))
         self._memory = Memory()
-        self._initialize_state(self.MIRROR)
+        initial_state = self._choose_initial_state()
+        self._prepare_state(initial_state)
+        self._initialize_state(initial_state)
         self._input_buffer_num_frames = int(MAX_DELAY_SECONDS * args.frame_rate)
         self._input_buffer = collections.deque(
             [None] * self._input_buffer_num_frames, maxlen=self._input_buffer_num_frames)
         self.set_mirror_delay_seconds(0)
 
+    def _choose_initial_state(self):
+        if args.mirror_weight > 0:
+            return self.MIRROR
+        elif args.improvise_weight > 0:
+            return self.IMPROVISE
+        elif args.memory_weight > 0:
+            return self.MEMORY
+        else:
+            raise Exception("couldn't choose initial state")
+        
     def set_mirror_delay_seconds(self, seconds):
         self._input_buffer_read_cursor = self._input_buffer_num_frames - 1 - int(seconds * args.frame_rate)
         
     def _create_weighted_shuffler(self):
+        non_current_modes = set([self.MIRROR, self.IMPROVISE, self.MEMORY]) - set([self._current_state])
         available_modes = [
-            mode for mode in [self.MIRROR, self.IMPROVISE, self.MEMORY]
+            mode for mode in non_current_modes
             if self._mode_is_available(mode)]
+        print "available modes:", available_modes
         weights = [self._get_weight(mode) for mode in available_modes]
         return WeightedShuffler(available_modes, weights)
 
     def _mode_is_available(self, mode):
-        if mode == self.MEMORY and self._memory.get_num_frames() < self._memory_num_frames:
-            return False
+        if mode == self.MEMORY:
+            return self._memory.get_num_frames() >= self._memory_num_frames
         return self._get_weight(mode) > 0
     
     def _get_weight(self, mode):
@@ -171,8 +180,9 @@ class MetaBehaviour(Behavior):
             return
         frames_to_process = min(self._remaining_frames_to_process, remaining_frames_in_state)
         self._improvise.proceed(float(frames_to_process) / args.frame_rate)
+        current_and_next_state = set([self._current_state, self._next_state])
         
-        if set([self._current_state, self._next_state]) == set([self.MIRROR, self.IMPROVISE]):
+        if current_and_next_state == set([self.MIRROR, self.IMPROVISE]):
             if self._current_state == self.MIRROR:
                 input_amount = 1 - float(self._state_frames) / self._interpolation_num_frames
             else:
@@ -182,7 +192,7 @@ class MetaBehaviour(Behavior):
             self._output = entity.interpolate(
                 self._delayed_input, self._get_improvise_output(), improvise_amount)
             
-        elif set([self._current_state, self._next_state]) == set([self.MIRROR, self.MEMORY]):
+        elif current_and_next_state == set([self.MIRROR, self.MEMORY]):
             if self._current_state == self.MIRROR:
                 input_amount = 1 - float(self._state_frames) / self._interpolation_num_frames
             else:
@@ -191,6 +201,16 @@ class MetaBehaviour(Behavior):
             self._output = entity.interpolate(
                 self._delayed_input, self._memory.get_output(), memory_amount)
 
+        elif current_and_next_state == set([self.IMPROVISE, self.MEMORY]):
+            if self._current_state == self.MEMORY:
+                memory_amount = 1 - float(self._state_frames) / self._interpolation_num_frames
+            else:
+                memory_amount = float(self._state_frames) / self._interpolation_num_frames
+            improvise_amount = 1 - memory_amount
+            entity.set_friction(improvise_amount > 0.5)
+            self._output = entity.interpolate(
+                self._memory.get_output(), self._get_improvise_output(), improvise_amount)
+            
         else:
             raise Exception("interpolation between %s and %s not supported" % (
                 self._current_state, self._next_state))
@@ -207,7 +227,8 @@ class MetaBehaviour(Behavior):
             self._interpolating = True
             self._state_frames = 0
             shuffler = self._create_weighted_shuffler()
-            self._next_state = shuffler.choose_other_than(self._current_state)
+            self._next_state = shuffler.choice()
+            print "%s => %s" % (self._current_state, self._next_state)
             self._prepare_state(self._next_state)
             return
         frames_to_process = min(self._remaining_frames_to_process, remaining_frames_in_state)
@@ -229,7 +250,10 @@ class MetaBehaviour(Behavior):
         if state == self.MEMORY:
             self._memory.begin_random_recall(self._state_num_frames(state) + self._interpolation_num_frames)
         elif state == self.IMPROVISE:
-            self._translation_offset = self._delayed_input[0:3]
+            if self._delayed_input is None:
+                self._translation_offset = [0,0,0]
+            else:
+                self._translation_offset = self._delayed_input[0:3]
 
     def _state_num_frames(self, state):
         if state == self.MIRROR:
