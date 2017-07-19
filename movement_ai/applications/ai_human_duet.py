@@ -39,6 +39,9 @@ parser.add_argument("--pn-port", type=int, default=tracking.pn.receiver.SERVER_P
 parser.add_argument("--mirror-weight", type=float, default=1.0)
 parser.add_argument("--improvise-weight", type=float, default=1.0)
 parser.add_argument("--memory-weight", type=float, default=1.0)
+parser.add_argument("--mirror-duration", type=float, default=3)
+parser.add_argument("--improvise-duration", type=float, default=3)
+parser.add_argument("--memory-duration", type=float, default=3)
 Application.add_parser_arguments(parser)
 ImproviseParameters().add_parser_arguments(parser)
 args = parser.parse_args()
@@ -100,7 +103,6 @@ class MetaBehaviour(Behavior):
     IMPROVISE = "improvise"
     MEMORY = "memory"
     
-    normal_duration = 3.0
     interpolation_duration = 1.0
     
     def __init__(self, improvise):
@@ -108,7 +110,9 @@ class MetaBehaviour(Behavior):
         self._improvise = improvise
         self._input = None
         self._output = None
-        self._normal_num_frames = int(round(self.normal_duration * args.frame_rate))
+        self._mirror_num_frames = int(round(args.mirror_duration * args.frame_rate))
+        self._improvise_num_frames = int(round(args.improvise_duration * args.frame_rate))
+        self._memory_num_frames = int(round(args.memory_duration * args.frame_rate))
         self._interpolation_num_frames = int(round(self.interpolation_duration * args.frame_rate))
         self._memory = Memory()
         self._initialize_state(self.MIRROR)
@@ -121,7 +125,7 @@ class MetaBehaviour(Behavior):
         return WeightedShuffler(available_modes, weights)
 
     def _mode_is_available(self, mode):
-        if mode == self.MEMORY and self._memory.get_num_frames() < self._normal_num_frames:
+        if mode == self.MEMORY and self._memory.get_num_frames() < self._memory_num_frames:
             return False
         return self._get_weight(mode) > 0
     
@@ -133,8 +137,10 @@ class MetaBehaviour(Behavior):
         self._current_state = state
         self._state_frames = 0
         self._interpolating = False
-
+            
     def proceed(self, time_increment):
+        if self._input is None:
+            return
         self._remaining_frames_to_process = int(round(time_increment * args.frame_rate))
         while self._remaining_frames_to_process > 0:
             self._proceed_within_state()
@@ -177,15 +183,14 @@ class MetaBehaviour(Behavior):
         self._state_frames += frames_to_process
         self._remaining_frames_to_process -= frames_to_process
         
-    def _proceed_within_normal_state(self):
-        remaining_frames_in_state = self._normal_num_frames - self._state_frames
+    def _proceed_within_normal_state(self):        
+        remaining_frames_in_state = self._state_num_frames(self._current_state) - self._state_frames
         if remaining_frames_in_state == 0:
             self._interpolating = True
             self._state_frames = 0
             shuffler = self._create_weighted_shuffler()
             self._next_state = shuffler.choose_other_than(self._current_state)
-            if self._next_state == self.MEMORY:
-                self._memory.begin_random_recall(self._normal_num_frames + self._interpolation_num_frames)
+            self._prepare_state(self._next_state)
             return
         frames_to_process = min(self._remaining_frames_to_process, remaining_frames_in_state)
         self._improvise.proceed(float(frames_to_process) / args.frame_rate)
@@ -202,6 +207,20 @@ class MetaBehaviour(Behavior):
         self._state_frames += frames_to_process
         self._remaining_frames_to_process -= frames_to_process
 
+    def _prepare_state(self, state):
+        if state == self.MEMORY:
+            self._memory.begin_random_recall(self._state_num_frames(state) + self._interpolation_num_frames)
+        elif state == self.IMPROVISE:
+            self._translation_offset = self._input[0:3]
+
+    def _state_num_frames(self, state):
+        if state == self.MIRROR:
+            return self._mirror_num_frames
+        elif state == self.IMPROVISE:
+            return self._improvise_num_frames
+        elif state == self.MEMORY:
+            return self._memory_num_frames
+        
     def sends_output(self):
         return True
 
@@ -214,7 +233,9 @@ class MetaBehaviour(Behavior):
 
     def _get_improvise_output(self):
         reduction = self._improvise.get_reduction()
-        return student.inverse_transform(numpy.array([reduction]))[0]
+        output = student.inverse_transform(numpy.array([reduction]))[0]
+        output[0:3] += self._translation_offset
+        return output
     
 improvise_params = ImproviseParameters()
 preferred_location = None
