@@ -36,6 +36,7 @@ from dimensionality_reduction.behavior import Behavior
 from dimensionality_reduction.behaviors.improvise import ImproviseParameters, Improvise
 from dimensionality_reduction.factory import DimensionalityReductionFactory
 import tracking.pn.receiver
+from delay_shift import SmoothedDelayShift
 
 parser = ArgumentParser()
 parser.add_argument("--pn-host", default="localhost")
@@ -48,6 +49,7 @@ parser.add_argument("--memory-weight", type=float, default=1.0)
 parser.add_argument("--mirror-duration", type=float, default=3)
 parser.add_argument("--improvise-duration", type=float, default=3)
 parser.add_argument("--memory-duration", type=float, default=3)
+parser.add_argument("--enable-delay-shift", action="store_true")
 Application.add_parser_arguments(parser)
 ImproviseParameters().add_parser_arguments(parser)
 args = parser.parse_args()
@@ -124,6 +126,9 @@ class MetaBehaviour(Behavior):
             [None] * self._input_buffer_num_frames, maxlen=self._input_buffer_num_frames)
         self.set_mirror_delay_seconds(0)
         self._translation_offset = numpy.zeros(3)
+        if args.enable_delay_shift:
+            self._delay_shift = SmoothedDelayShift(
+                period_duration=5, peak_duration=2, magnitude=1, smoothing=50)
 
     def _choose_initial_state(self):
         if args.mirror_weight > 0:
@@ -162,6 +167,11 @@ class MetaBehaviour(Behavior):
         self._interpolating = False
             
     def proceed(self, time_increment):
+        if args.enable_delay_shift:
+            delay_seconds = self._delay_shift.get_value()
+            self.set_mirror_delay_seconds(delay_seconds)
+            self._delay_shift.proceed(time_increment)
+        
         self._delayed_input = self._get_delayed_input()
         if self._delayed_input is None:
             return
