@@ -50,6 +50,7 @@ parser.add_argument("--mirror-duration", type=float, default=3)
 parser.add_argument("--improvise-duration", type=float, default=3)
 parser.add_argument("--memory-duration", type=float, default=3)
 parser.add_argument("--enable-delay-shift", action="store_true")
+parser.add_argument("--reverse-recall-probability", type=float, default=0)
 Application.add_parser_arguments(parser)
 ImproviseParameters().add_parser_arguments(parser)
 args = parser.parse_args()
@@ -91,11 +92,25 @@ class Memory:
         return len(self._frames)
 
     def begin_random_recall(self, num_frames_to_recall):
+        if random.uniform(0.0, 1.0) < args.reverse_recall_probability:
+            self._begin_reverse_recall(num_frames_to_recall)
+        else:
+            self._begin_normal_recall(num_frames_to_recall)
+
+    def _begin_normal_recall(self, num_frames_to_recall):
         max_cursor = self.get_num_frames() - num_frames_to_recall
         self._cursor = int(random.random() * max_cursor)
+        self._time_direction = 1
+        print "normal recall from %s" % self._cursor
 
+    def _begin_reverse_recall(self, num_frames_to_recall):
+        max_cursor = self.get_num_frames() - num_frames_to_recall
+        self._cursor = int(random.random() * max_cursor) + num_frames_to_recall
+        print "reverse recall from %s" % self._cursor
+        self._time_direction = -1
+        
     def proceed(self, num_frames):
-        self._cursor += num_frames
+        self._cursor += num_frames * self._time_direction
 
     def get_output(self):
         return self._frames[self._cursor]
