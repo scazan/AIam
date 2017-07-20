@@ -3,6 +3,13 @@
 
 #include "OpenNI.h"
 #include <opencv2/imgproc/imgproc.hpp>
+#include "TextureRenderer.hpp"
+#include "oscpack/osc/OscOutboundPacketStream.h"
+#include "oscpack/ip/UdpSocket.h"
+
+#define DEFAULT_OSC_HOST "127.0.0.1"
+#define OSC_PORT 15002
+#define OSC_BUFFER_SIZE 4096
 
 #define MAX_DEPTH 10000
 
@@ -40,7 +47,11 @@ public:
   int getResolutionX() { return resolutionX; }
   int getResolutionY() { return resolutionY; }
   const WorldRange& getWorldRange() { return worldRange; }
-  void drawCvImage(const Mat &image, const Scalar &color=Scalar(1,1,1));
+  TextureRenderer* getTextureRenderer() { return textureRenderer; }
+  openni::VideoStream& getDepthStream() { return depthStream; }
+  UdpTransmitSocket* transmitSocket;
+  bool depthAsPoints;
+  int zThreshold;
 
 private:
   void processOniDepthFrame();
@@ -54,8 +65,6 @@ private:
   static void glutDisplay();
   static void glutKeyboard(unsigned char key, int x, int y);
   void drawDepthFrame();
-  void drawTextureMapAsTexture();
-  void drawTextureMapAsPoints();
   void calculateWorldRange();
 
   static Tracker* self;
@@ -66,17 +75,15 @@ private:
   Mat zThresholdedDepthFrame;
   int oniWidth, oniHeight;
   int resolutionX, resolutionY;
-  bool depthAsPoints;
-  openni::RGB888Pixel* textureMap;
-  unsigned int textureMapWidth;
-  unsigned int textureMapHeight;
+  TextureRenderer *textureRenderer;
   uint64_t previousDisplayTime;
   int windowWidth, windowHeight;
-  int zThreshold;
   bool processingEnabled;
   ProcessingMethod *processingMethod;
   WorldRange worldRange;
+  bool displayDepth;
   bool displayZThresholding;
+  bool paused;
 };
 
 

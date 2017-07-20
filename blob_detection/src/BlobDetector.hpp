@@ -19,6 +19,8 @@ public:
     float worldHeight = tracker->getWorldRange().yMax - tracker->getWorldRange().yMin;
     worldArea = worldWidth * worldHeight;
     resolutionArea = width * height;
+    orientationEstimationEnabled = false;
+    displayBlobs = true;
   }
 
   void processDepthFrame(Mat& depthFrame) {
@@ -28,7 +30,7 @@ public:
     findContours(binaryImage, unfilteredContours, RETR_LIST, CHAIN_APPROX_NONE);
     filterContours(unfilteredContours);
 
-    blobImages.clear();
+    blobs.clear();
     for (vector<vector<Point> >::iterator i = contours.begin();
         i != contours.end(); i++) {
       processContour(*i);
@@ -53,22 +55,41 @@ public:
         i++) {
       blobImage.at < uchar > (i->y, i->x) = 0;
     }
-
     floodFill(blobImage, Point(0, 0), 0);
-    blobImages.push_back(blobImage);
+
+    Blob blob;
+    blob.image = blobImage;
+    Moments m = moments(contour);
+    blob.centroidX = (int) (m.m10 / m.m00);
+    blob.centroidY = (int) (m.m01 / m.m00);
+    sendCentroid(blob.centroidX, blob.centroidY);
+    blobs.push_back(blob);
   }
 
   void render() {
-    for (vector<vector<Point> >::iterator i = contours.begin();
-        i != contours.end(); i++) {
-      drawContour(*i);
-      drawEstimatedOrientation(*i);
-    }
+    if(displayBlobs) {
+      glDisable(GL_BLEND);
+      for (vector<vector<Point> >::iterator i = contours.begin();
+	   i != contours.end(); i++) {
+	drawContour(*i);
+	if(orientationEstimationEnabled)
+	  drawEstimatedOrientation(*i);
+      }
 
-    Scalar color = Scalar(1, 0, 0);
-    for (vector<Mat>::iterator i = blobImages.begin(); i != blobImages.end();
-        i++) {
-      tracker->drawCvImage(*i, color);
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_COLOR, GL_DST_COLOR);
+
+      Scalar color = Scalar(1, 0, 0);
+      for (vector<Blob>::iterator i = blobs.begin(); i != blobs.end();
+	   i++) {
+	tracker->getTextureRenderer()->drawCvImage(i->image, 0, 0, 1, 1, color);
+      }
+
+      glDisable(GL_BLEND);
+      for (vector<Blob>::iterator i = blobs.begin(); i != blobs.end();
+	   i++) {
+	drawCentroid(i->centroidX, i->centroidY);
+      }
     }
   }
 
@@ -99,12 +120,53 @@ public:
     glEnd();
   }
 
+  void drawCentroid(int x, int y) {
+    glColor3f(0, 0, 1);
+    glPointSize(5);
+    glBegin(GL_POINTS);
+    glVertex2i(x, y);
+    glEnd();
+  }
+
+  void sendCentroid(int depthX, int depthY) {
+    int userId = 0;
+    float depthZ = 0;
+    float x, y, z;
+    openni::CoordinateConverter::convertDepthToWorld(tracker->getDepthStream(),
+						     depthX, depthY, tracker->zThreshold,
+						     &x, &y, &z);
+    osc::OutboundPacketStream stream(oscBuffer, OSC_BUFFER_SIZE);
+    stream << osc::BeginBundleImmediate
+	   << osc::BeginMessage("/center") << userId << x << y << z
+	   << osc::EndMessage
+	   << osc::EndBundle;
+    tracker->transmitSocket->Send(stream.Data(), stream.Size());
+  }
+
   void onKey(unsigned char key) {
+    switch(key) {
+    case 'o':
+      orientationEstimationEnabled = !orientationEstimationEnabled;
+      break;
+
+    case 'b':
+      displayBlobs = !displayBlobs;
+      break;
+    }
   }
 
 private:
+  class Blob {
+  public:
+    Mat image;
+    int centroidX, centroidY;
+  };
+
   float worldArea;
   float resolutionArea;
   std::vector<std::vector<Point> > contours;
-  vector<Mat> blobImages;
+  vector<Blob> blobs;
+  bool orientationEstimationEnabled;
+  bool displayBlobs;
+  char oscBuffer[OSC_BUFFER_SIZE];
 };

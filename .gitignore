@@ -37,3 +37,7 @@ tracking/Bin
 tracking/NiTE2
 tracking/libs/oscpack/bin
 tracking/libs/oscpack/liboscpack.so.*
+
+blob_detection/build
+blob_detection/Tracker
+
