@@ -8,8 +8,8 @@ using namespace std;
 #include <GL/glut.h>
 #endif
 
-#define MIN_BLOB_AREA 50000
-#define MAX_BLOB_AREA 1000000
+#define DEFAULT_MIN_BLOB_AREA 50000
+#define DEFAULT_MAX_BLOB_AREA 1000000
 
 class BlobDetector: public ProcessingMethod {
 public:
@@ -43,7 +43,7 @@ public:
         i != unfilteredContours.end(); i++) {
       float pixelArea = contourArea(*i);
       float area = pixelArea / resolutionArea * worldArea;
-      if (area >= MIN_BLOB_AREA && area <= MAX_BLOB_AREA) {
+      if (area >= tracker->minBlobArea && area <= tracker->maxBlobArea) {
         contours.push_back(*i);
       }
     }

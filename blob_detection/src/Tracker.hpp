@@ -52,6 +52,7 @@ public:
   UdpTransmitSocket* transmitSocket;
   bool depthAsPoints;
   int zThreshold;
+  float minBlobArea, maxBlobArea;
 
 private:
   void processOniDepthFrame();

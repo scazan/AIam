@@ -59,6 +59,8 @@ openni::Status Tracker::init(int argc, char **argv) {
   resolutionX = resolutionY = 0;
   depthAsPoints = false;
   zThreshold = 0;
+  minBlobArea = DEFAULT_MIN_BLOB_AREA;
+  maxBlobArea = DEFAULT_MAX_BLOB_AREA;
   paused = false;
 
   openni::Status status = openni::OpenNI::initialize();
@@ -95,6 +97,14 @@ openni::Status Tracker::init(int argc, char **argv) {
 
     else if(strcmp(argv[i], "-ry") == 0) {
       resolutionY = atoi(argv[++i]);
+    }
+
+    else if(strcmp(argv[i], "-min-area") == 0) {
+      minBlobArea = atof(argv[++i]);
+    }
+
+    else if(strcmp(argv[i], "-max-area") == 0) {
+      maxBlobArea = atof(argv[++i]);
     }
 
     else {
