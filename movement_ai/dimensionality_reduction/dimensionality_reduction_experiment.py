@@ -54,7 +54,7 @@ class DimensionalityReductionExperiment(Experiment):
         parser.add_argument("--memory-size", type=int, default=1000)
         parser.add_argument("--enable-io-blending", action="store_true")
         parser.add_argument("--io-blending-amount", type=float, default=0)
-        parser.add_argument("--target-training-loss", type=float)
+        parser.add_argument("--target-training-loss", type=float, default=0)
         ImproviseParameters().add_parser_arguments(parser)
         FlaneurParameters().add_parser_arguments(parser)
         HybridParameters().add_parser_arguments(parser)
