@@ -33,11 +33,11 @@ AIamCaptureTest/scons/AIamCaptureTest.app/
 
 logs
 
-tracking/Bin
-tracking/NiTE2
-tracking/libs/oscpack/bin
-tracking/libs/oscpack/liboscpack.so.*
+tracking/nite2/Bin
+tracking/nite2/NiTE2
+tracking/nite2/libs/oscpack/bin
+tracking/nite2/libs/oscpack/liboscpack.so.*
 
-blob_detection/build
-blob_detection/Tracker
+tracking/opencv/build
+tracking/opencv/Tracker
 
