@@ -6,7 +6,7 @@
 #endif
 
 #include "Tracker.hpp"
-#include "BlobDetector.hpp"
+#include "BlobTracker.hpp"
 #include <sys/time.h>
 #include <stdarg.h>
 
@@ -153,7 +153,7 @@ openni::Status Tracker::init(int argc, char **argv) {
   textureRenderer = NULL;
   initOpenGL(argc, argv);
   processingEnabled = true;
-  processingMethod = new BlobDetector(this);
+  processingMethod = new BlobTracker(this);
   depthFrame.create(resolutionY, resolutionX, CV_8UC1);
   zThresholdedDepthFrame.create(resolutionY, resolutionX, CV_8UC1);
   displayDepth = true;

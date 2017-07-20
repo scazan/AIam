@@ -20,7 +20,7 @@ void glPrintString(void *font, const char *str) {
 }
 #endif
 
-class BlobDetector: public ProcessingMethod {
+class BlobTracker: public ProcessingMethod {
 private:
   class Blob {
   public:
@@ -41,7 +41,7 @@ private:
   int idCount;
 
 public:
-  BlobDetector(Tracker *tracker) :
+  BlobTracker(Tracker *tracker) :
       ProcessingMethod(tracker) {
     float worldWidth = tracker->getWorldRange().xMax - tracker->getWorldRange().xMin;
     float worldHeight = tracker->getWorldRange().yMax - tracker->getWorldRange().yMin;
