@@ -93,7 +93,6 @@ public:
     Moments m = moments(contour);
     blob.centroidX = (int) (m.m10 / m.m00);
     blob.centroidY = (int) (m.m01 / m.m00);
-    sendCentroid(blob.centroidX, blob.centroidY);
     blobsInFrame.push_back(blob);
   }
 
@@ -114,6 +113,7 @@ public:
       else {
 	nearestTrackedBlob->centroidX = blobInFrame->centroidX;
 	nearestTrackedBlob->centroidY = blobInFrame->centroidY;
+	sendCenter(*nearestTrackedBlob);
       }
     }
 
@@ -167,11 +167,11 @@ public:
     trackedBlob.paired = true;
     trackedBlob.id = idCount++;
     trackedBlobs.push_back(trackedBlob);
-    printf("found %d\n", trackedBlob.id);
+    sendState(trackedBlob.id, "new");
   }
 
   void deleteTrackedBlob(vector<Blob>::iterator blob) {
-    printf("lost %d\n", blob->id);
+    sendState(blob->id, "lost");
     trackedBlobs.erase(blob);
   }
   
@@ -249,17 +249,26 @@ public:
     glRasterPos2f(x, y);
     glPrintString(GLUT_BITMAP_HELVETICA_18, string);
   }
+
+  void sendState(int id, const char *state) {
+    printf("%s %d\n", state, id);
+    osc::OutboundPacketStream stream(oscBuffer, OSC_BUFFER_SIZE);
+    stream << osc::BeginBundleImmediate
+	   << osc::BeginMessage("/state") << id << state
+	   << osc::EndMessage
+	   << osc::EndBundle;
+    tracker->transmitSocket->Send(stream.Data(), stream.Size());
+  }
   
-  void sendCentroid(int depthX, int depthY) {
-    int userId = 0;
+  void sendCenter(const Blob& blob) {
     float depthZ = 0;
     float x, y, z;
     openni::CoordinateConverter::convertDepthToWorld(tracker->getDepthStream(),
-						     depthX, depthY, tracker->zThreshold,
+						     blob.centroidX, blob.centroidY, tracker->zThreshold,
 						     &x, &y, &z);
     osc::OutboundPacketStream stream(oscBuffer, OSC_BUFFER_SIZE);
     stream << osc::BeginBundleImmediate
-	   << osc::BeginMessage("/center") << userId << x << y << z
+	   << osc::BeginMessage("/center") << blob.id << x << y << z
 	   << osc::EndMessage
 	   << osc::EndBundle;
     tracker->transmitSocket->Send(stream.Data(), stream.Size());
