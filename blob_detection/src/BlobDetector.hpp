@@ -8,10 +8,38 @@ using namespace std;
 #include <GL/glut.h>
 #endif
 
-#define DEFAULT_MIN_BLOB_AREA 50000
+#define DEFAULT_MIN_BLOB_AREA 100000
 #define DEFAULT_MAX_BLOB_AREA 1000000
 
+#ifndef USE_GLES
+void glPrintString(void *font, const char *str) {
+  int i, l = (int)strlen(str);
+  for(i=0; i<l; i++) {   
+    glutBitmapCharacter(font,*str++);
+  }   
+}
+#endif
+
 class BlobDetector: public ProcessingMethod {
+private:
+  class Blob {
+  public:
+    int id;
+    bool paired;
+    Mat image;
+    int centroidX, centroidY;
+  };
+
+  float worldArea;
+  float resolutionArea;
+  std::vector<std::vector<Point> > contours;
+  vector<Blob> blobsInFrame;
+  vector<Blob> trackedBlobs;
+  bool orientationEstimationEnabled;
+  bool displayBlobs;
+  char oscBuffer[OSC_BUFFER_SIZE];
+  int idCount;
+
 public:
   BlobDetector(Tracker *tracker) :
       ProcessingMethod(tracker) {
@@ -21,6 +49,7 @@ public:
     resolutionArea = width * height;
     orientationEstimationEnabled = false;
     displayBlobs = true;
+    idCount = 0;
   }
 
   void processDepthFrame(Mat& depthFrame) {
@@ -30,11 +59,13 @@ public:
     findContours(binaryImage, unfilteredContours, RETR_LIST, CHAIN_APPROX_NONE);
     filterContours(unfilteredContours);
 
-    blobs.clear();
+    blobsInFrame.clear();
     for (vector<vector<Point> >::iterator i = contours.begin();
         i != contours.end(); i++) {
       processContour(*i);
     }
+
+    updateTrackedBlobs();
   }
 
   void filterContours(std::vector<std::vector<Point> > &unfilteredContours) {
@@ -63,9 +94,87 @@ public:
     blob.centroidX = (int) (m.m10 / m.m00);
     blob.centroidY = (int) (m.m01 / m.m00);
     sendCentroid(blob.centroidX, blob.centroidY);
-    blobs.push_back(blob);
+    blobsInFrame.push_back(blob);
   }
 
+  void updateTrackedBlobs() {
+    for (vector<Blob>::iterator trackedBlob = trackedBlobs.begin();
+	 trackedBlob != trackedBlobs.end();
+	 trackedBlob++) {
+      trackedBlob->paired = false;
+    }
+    
+    for (vector<Blob>::iterator blobInFrame = blobsInFrame.begin();
+	 blobInFrame != blobsInFrame.end();
+	 blobInFrame++) {
+      vector<Blob>::iterator nearestTrackedBlob = getNearestTrackedBlob(*blobInFrame);
+      if(nearestTrackedBlob == trackedBlobs.end()) {
+	addTrackedBlob(*blobInFrame);
+      }
+      else {
+	nearestTrackedBlob->centroidX = blobInFrame->centroidX;
+	nearestTrackedBlob->centroidY = blobInFrame->centroidY;
+      }
+    }
+
+    vector<vector<Blob>::iterator> unpairedTrackedBlobs;
+    for (vector<Blob>::iterator trackedBlob = trackedBlobs.begin();
+	 trackedBlob != trackedBlobs.end();
+	 trackedBlob++) {
+      if(!trackedBlob->paired)
+	unpairedTrackedBlobs.push_back(trackedBlob);
+    }
+    for(vector<vector<Blob>::iterator>::reverse_iterator unpairedTrackedBlob = unpairedTrackedBlobs.rbegin();
+	unpairedTrackedBlob != unpairedTrackedBlobs.rend();
+	unpairedTrackedBlob++) {
+      deleteTrackedBlob(*unpairedTrackedBlob);
+    }
+  }
+
+  vector<Blob>::iterator getNearestTrackedBlob(const Blob& blob) {
+    vector<Blob>::iterator nearestTrackedBlob = trackedBlobs.end();
+    float shortestDistance = 0;
+    for (vector<Blob>::iterator trackedBlob = trackedBlobs.begin();
+	 trackedBlob != trackedBlobs.end();
+	 trackedBlob++) {
+      if(!trackedBlob->paired) {
+	bool isNearest = false;
+	float distance = blobDistance(blob, *trackedBlob);
+	if(nearestTrackedBlob == trackedBlobs.end()) {
+	  isNearest = true;
+	}
+	else if(distance < shortestDistance) {
+	  isNearest = true;
+	}
+	if(isNearest) {
+	  nearestTrackedBlob = trackedBlob;
+	  shortestDistance = distance;
+	  trackedBlob->paired = true;
+	}
+      }
+    }
+    return nearestTrackedBlob;
+  }
+
+  float blobDistance(const Blob& b1, const Blob& b2) {
+    float dx = b1.centroidX - b2.centroidX;
+    float dy = b1.centroidY - b2.centroidY;
+    return sqrt(dx*dx + dy*dy);
+  }
+  
+  void addTrackedBlob(const Blob& blob) {
+    Blob trackedBlob = blob;
+    trackedBlob.paired = true;
+    trackedBlob.id = idCount++;
+    trackedBlobs.push_back(trackedBlob);
+    printf("found %d\n", trackedBlob.id);
+  }
+
+  void deleteTrackedBlob(vector<Blob>::iterator blob) {
+    printf("lost %d\n", blob->id);
+    trackedBlobs.erase(blob);
+  }
+  
   void render() {
     if(displayBlobs) {
       glDisable(GL_BLEND);
@@ -80,15 +189,20 @@ public:
       glBlendFunc(GL_SRC_COLOR, GL_DST_COLOR);
 
       Scalar color = Scalar(1, 0, 0);
-      for (vector<Blob>::iterator i = blobs.begin(); i != blobs.end();
+      for (vector<Blob>::iterator i = blobsInFrame.begin(); i != blobsInFrame.end();
 	   i++) {
 	tracker->getTextureRenderer()->drawCvImage(i->image, 0, 0, 1, 1, color);
       }
 
       glDisable(GL_BLEND);
-      for (vector<Blob>::iterator i = blobs.begin(); i != blobs.end();
+      for (vector<Blob>::iterator i = blobsInFrame.begin(); i != blobsInFrame.end();
 	   i++) {
 	drawCentroid(i->centroidX, i->centroidY);
+      }
+
+      for (vector<Blob>::iterator i = trackedBlobs.begin(); i != trackedBlobs.end();
+	   i++) {
+	drawId(i->centroidX, i->centroidY, i->id);
       }
     }
   }
@@ -128,6 +242,14 @@ public:
     glEnd();
   }
 
+  void drawId(int x, int y, int id) {
+    static char string[1024];
+    sprintf(string, "%d", id);
+    glColor3f(0, 0, 1);
+    glRasterPos2f(x, y);
+    glPrintString(GLUT_BITMAP_HELVETICA_18, string);
+  }
+  
   void sendCentroid(int depthX, int depthY) {
     int userId = 0;
     float depthZ = 0;
@@ -154,19 +276,4 @@ public:
       break;
     }
   }
-
-private:
-  class Blob {
-  public:
-    Mat image;
-    int centroidX, centroidY;
-  };
-
-  float worldArea;
-  float resolutionArea;
-  std::vector<std::vector<Point> > contours;
-  vector<Blob> blobs;
-  bool orientationEstimationEnabled;
-  bool displayBlobs;
-  char oscBuffer[OSC_BUFFER_SIZE];
 };
