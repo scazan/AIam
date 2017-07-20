@@ -143,7 +143,7 @@ class MetaBehaviour(Behavior):
         self._translation_offset = numpy.zeros(3)
         if args.enable_delay_shift:
             self._delay_shift = SmoothedDelayShift(
-                period_duration=5, peak_duration=3, magnitude=1.5, smoothing=10)
+                smoothing=10, period_duration=5, peak_duration=3, magnitude=1.5)
 
     def _choose_initial_state(self):
         if args.mirror_weight > 0:

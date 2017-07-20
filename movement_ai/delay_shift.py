@@ -24,8 +24,8 @@ class DelayShift:
                 return (1 - relative_time_within_peak) * 2 * self._magnitude
             
 class SmoothedDelayShift:
-    def __init__(self, period_duration, peak_duration, magnitude, smoothing):
-        self._delay_shift = DelayShift(period_duration, peak_duration, magnitude)
+    def __init__(self, smoothing, **kwargs):
+        self._delay_shift = DelayShift(**kwargs)
         self._buffer = collections.deque([0] * smoothing, maxlen=smoothing)
 
     def proceed(self, time_increment):
