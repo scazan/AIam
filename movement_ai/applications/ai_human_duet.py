@@ -37,6 +37,7 @@ from dimensionality_reduction.behaviors.improvise import ImproviseParameters, Im
 from dimensionality_reduction.factory import DimensionalityReductionFactory
 import tracking.pn.receiver
 from delay_shift import SmoothedDelayShift
+from chaining import Chainer
 
 parser = ArgumentParser()
 parser.add_argument("--pn-host", default="localhost")
@@ -114,7 +115,7 @@ class Memory:
 
     def get_output(self):
         return self._frames[self._cursor]
-    
+
 class MetaBehaviour(Behavior):
     MIRROR = "mirror"
     IMPROVISE = "improvise"
@@ -140,7 +141,7 @@ class MetaBehaviour(Behavior):
         self._input_buffer = collections.deque(
             [None] * self._input_buffer_num_frames, maxlen=self._input_buffer_num_frames)
         self.set_mirror_delay_seconds(0)
-        self._translation_offset = numpy.zeros(3)
+        self._chainer = Chainer()
         if args.enable_delay_shift:
             self._delay_shift = SmoothedDelayShift(
                 smoothing=10, period_duration=5, peak_duration=3, magnitude=1.5)
@@ -209,50 +210,28 @@ class MetaBehaviour(Behavior):
                 
         frames_to_process = min(self._remaining_frames_to_process, remaining_frames_in_state)
         self._improvise.proceed(float(frames_to_process) / args.frame_rate)
-        current_and_next_state = set([self._current_state, self._next_state])
-        
-        if current_and_next_state == set([self.MIRROR, self.IMPROVISE]):
-            if self._current_state == self.MIRROR:
-                input_amount = 1 - float(self._state_frames) / self._interpolation_num_frames
-            else:
-                input_amount = float(self._state_frames) / self._interpolation_num_frames
-            from_output = self._delayed_input
-            to_output = self._get_improvise_output()
-            amount = 1 - input_amount
-            entity.set_friction(amount > 0.5)
-                        
-        elif current_and_next_state == set([self.MIRROR, self.MEMORY]):
-            if self._current_state == self.MIRROR:
-                input_amount = 1 - float(self._state_frames) / self._interpolation_num_frames
-            else:
-                input_amount = float(self._state_frames) / self._interpolation_num_frames
-            from_output = self._delayed_input
-            to_output = self._memory.get_output()
-            amount = 1 - input_amount
 
-        elif current_and_next_state == set([self.IMPROVISE, self.MEMORY]):
-            if self._current_state == self.MEMORY:
-                memory_amount = 1 - float(self._state_frames) / self._interpolation_num_frames
-            else:
-                memory_amount = float(self._state_frames) / self._interpolation_num_frames
-            from_output = self._memory.get_output()
-            to_output = self._get_improvise_output()
-            amount = 1 - memory_amount
-            entity.set_friction(amount > 0.5)
+        if self.MEMORY in [self._current_state, self._next_state]:
+            self._memory.proceed(frames_to_process)
             
-        else:
-            raise Exception("interpolation between %s and %s not supported" % (
-                self._current_state, self._next_state))
-            
-        if self._state_frames == 0:
-            self._translation_offset = numpy.array(to_output[0:3]) - numpy.array(from_output[0:3])
+        from_output = self._state_output(self._current_state)
+        to_output = self._state_output(self._next_state)
+        amount = float(self._state_frames) / self._interpolation_num_frames
 
-        to_output[0:3] -= self._translation_offset
-        self._output = entity.interpolate(from_output, to_output, amount)
+        if self._current_state == self.IMPROVISE:
+            entity.set_friction(amount <= 0.5)
+        elif self._next_state == self.IMPROVISE:
+            entity.set_friction(amount > 0.5)         
+
+        translation = self._get_translation(from_output)
+        self._chainer.put(translation)
+        translation = self._chainer.get()
+        orientations = self._get_orientations(entity.interpolate(from_output, to_output, amount))
+        self._output = self._combine_translation_and_orientation(translation, orientations)
 
         self._state_frames += frames_to_process
         self._remaining_frames_to_process -= frames_to_process
-
+    
     def _get_delayed_input(self):
         return self._input_buffer[self._input_buffer_read_cursor]
             
@@ -268,20 +247,38 @@ class MetaBehaviour(Behavior):
             return
         frames_to_process = min(self._remaining_frames_to_process, remaining_frames_in_state)
         self._improvise.proceed(float(frames_to_process) / args.frame_rate)
+        
+        if self._state_frames == 0:
+            self._chainer.switch_source()
+
+        if self._current_state == self.MEMORY:
+            self._memory.proceed(frames_to_process)
+            
+        output = self._state_output(self._current_state)
         if self._current_state == self.IMPROVISE:
             entity.set_friction(True)
-            self._output = self._get_improvise_output()
         elif self._current_state == self.MIRROR:
             entity.set_friction(False)
-            self._output = self._delayed_input
         elif self._current_state == self.MEMORY:
             entity.set_friction(False)
-            self._memory.proceed(frames_to_process)
-            self._output = self._memory.get_output()
+
+        translation = self._get_translation(output)
+        orientations = self._get_orientations(output)
+        self._chainer.put(translation)
+        translation = self._chainer.get()
+        self._output = self._combine_translation_and_orientation(translation, orientations)
             
         self._state_frames += frames_to_process
         self._remaining_frames_to_process -= frames_to_process
 
+    def _state_output(self, state):
+        if state == self.IMPROVISE:
+            return self._get_improvise_output()
+        elif state == self.MIRROR:
+            return self._delayed_input
+        elif state == self.MEMORY:
+            return self._memory.get_output()
+            
     def _prepare_state(self, state):
         if state == self.MEMORY:
             self._memory.begin_random_recall(self._state_num_frames(state) + self._interpolation_num_frames)
@@ -308,6 +305,15 @@ class MetaBehaviour(Behavior):
     def _get_improvise_output(self):
         reduction = self._improvise.get_reduction()
         return student.inverse_transform(numpy.array([reduction]))[0]
+
+    def _get_translation(self, parameters):
+        return parameters[0:3]
+
+    def _get_orientations(self, parameters):
+        return parameters[3:]
+
+    def _combine_translation_and_orientation(self, translation, orientations):
+        return numpy.array(list(translation) + list(orientations))
     
 class UiWindow(QtGui.QWidget):
     def __init__(self, meta_behavior):
