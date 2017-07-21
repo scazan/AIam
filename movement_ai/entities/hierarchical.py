@@ -371,10 +371,10 @@ class Entity(BaseEntity):
         return result, parameter_index
 
     def _interpolate_rotation(self, parameters1, parameters2, amount, joint, parameter_index):        
-        rotation_params1 = parameters1[
-            parameter_index:parameter_index + self.rotation_parametrization.num_parameters]
-        rotation_params2 = parameters2[
-            parameter_index:parameter_index + self.rotation_parametrization.num_parameters]
+        rotation_params1 = numpy.array(parameters1[
+            parameter_index:parameter_index + self.rotation_parametrization.num_parameters])
+        rotation_params2 = numpy.array(parameters2[
+            parameter_index:parameter_index + self.rotation_parametrization.num_parameters])
         parameter_index += self.rotation_parametrization.num_parameters
         interpolator = self._get_rotation_interpolator(
             joint.definition.index, rotation_params1, rotation_params2)
