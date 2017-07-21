@@ -217,13 +217,20 @@ class MetaBehaviour(Behavior):
         from_output = self._state_output(self._current_state)
         to_output = self._state_output(self._next_state)
         amount = float(self._state_frames) / self._interpolation_num_frames
+        
+        if amount > 0.5 and not self._interpolation_crossed_halfway:
+            self._chainer.switch_source()
+            self._interpolation_crossed_halfway = True            
 
         if self._current_state == self.IMPROVISE:
             entity.set_friction(amount <= 0.5)
         elif self._next_state == self.IMPROVISE:
             entity.set_friction(amount > 0.5)         
 
-        translation = self._get_translation(from_output)
+        if self._interpolation_crossed_halfway:
+            translation = self._get_translation(to_output)
+        else:
+            translation = self._get_translation(from_output)
         self._chainer.put(translation)
         translation = self._chainer.get()
         orientations = self._get_orientations(entity.interpolate(from_output, to_output, amount))
@@ -239,6 +246,7 @@ class MetaBehaviour(Behavior):
         remaining_frames_in_state = self._state_num_frames(self._current_state) - self._state_frames
         if remaining_frames_in_state == 0:
             self._interpolating = True
+            self._interpolation_crossed_halfway = False
             self._state_frames = 0
             shuffler = self._create_weighted_shuffler()
             self._next_state = shuffler.choice()
@@ -247,9 +255,6 @@ class MetaBehaviour(Behavior):
             return
         frames_to_process = min(self._remaining_frames_to_process, remaining_frames_in_state)
         self._improvise.proceed(float(frames_to_process) / args.frame_rate)
-        
-        if self._state_frames == 0:
-            self._chainer.switch_source()
 
         if self._current_state == self.MEMORY:
             self._memory.proceed(frames_to_process)
