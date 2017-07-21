@@ -1,0 +1,1 @@
+-entity hierarchical --reduction-type=KernelPCA -r quaternion -skeleton scenes/pn-01.22_skeleton.bvh -training-data scenes/pn_2017_07_21/*.bvh -training-data-frame-rate 10 -n 7 --camera=-1.868,-0.480,-1.879,-51.300,0.700 --friction --floor  --enable-shadow --enable-light-source --max-novelty=1.4 --translate --translation-weight=0

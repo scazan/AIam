@@ -6,7 +6,7 @@
 # DIMENSIONALITY_REDUCTION_ARGS = "--num-hidden-nodes=0 --learning-rate=0.005"
 # ENTITY_ARGS = "-r quaternion --friction --translate"
 
-STUDENT_MODEL_PATH = "profiles/dimensionality_reduction/valencia_pn.model"
+STUDENT_MODEL_PATH = "profiles/dimensionality_reduction/valencia_pn_2017_07.model"
 SKELETON_DEFINITION = "scenes/pn-01.22_skeleton.bvh"
 DIMENSIONALITY_REDUCTION_TYPE = "KernelPCA"
 DIMENSIONALITY_REDUCTION_ARGS = ""
