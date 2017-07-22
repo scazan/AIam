@@ -5,6 +5,7 @@ class Chainer:
     def __init__(self):
         self._input_queue = collections.deque()
         self._previous_translated_value = None
+        self._offset = None
 
     def switch_source(self):
         self._offset = None
