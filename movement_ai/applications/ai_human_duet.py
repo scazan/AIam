@@ -360,29 +360,32 @@ class UiWindow(QtGui.QWidget):
     def __init__(self, master_behavior):
         QtGui.QWidget.__init__(self)
         self._master_behavior = master_behavior
-        self._layout = QtGui.QVBoxLayout()
+        self._layout = QtGui.QGridLayout()
+        self._row = 0
         self.setLayout(self._layout)
 
-        io_blending_layout = self._create_io_blending_layout()
-        self._layout.addLayout(io_blending_layout)
-
-        model_combobox = self._create_model_combobox()
-        self._layout.addWidget(model_combobox)
+        self._add_io_blending_control()
+        self._add_model_control()
         
         timer = QtCore.QTimer(self)
         timer.setInterval(1000. / args.frame_rate)
         QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), application.update)
         timer.start()
 
-    def _create_io_blending_layout(self):
-        layout = QtGui.QHBoxLayout()
+    def _add_io_blending_control(self):
+        self._add_label("IO blending")
         self._io_blending_slider = self._create_io_blending_slider()
-        layout.addWidget(self._io_blending_slider)
-        self._io_blending_label = QtGui.QLabel("")
-        layout.addWidget(self._io_blending_label)
+        self._add_control_widget(self._io_blending_slider)
         self._on_changed_io_blending_slider()
-        return layout
 
+    def _add_label(self, string):
+        label = QtGui.QLabel(string)
+        self._layout.addWidget(label, self._row, 0)
+
+    def _add_control_widget(self, widget):
+        self._layout.addWidget(widget, self._row, 1)
+        self._row += 1
+        
     def _create_io_blending_slider(self):
         slider = QtGui.QSlider(QtCore.Qt.Horizontal)
         slider.setRange(0, SLIDER_PRECISION)
@@ -393,9 +396,13 @@ class UiWindow(QtGui.QWidget):
 
     def _on_changed_io_blending_slider(self):
         io_blending_amount = float(self._io_blending_slider.value()) / SLIDER_PRECISION
-        self._io_blending_label.setText("%.1f" % io_blending_amount)
         self._master_behavior.set_io_blending_amount(io_blending_amount)
 
+    def _add_model_control(self):
+        model_combobox = self._create_model_combobox()
+        self._add_label("Model")
+        self._add_control_widget(model_combobox)
+        
     def _create_model_combobox(self):
         combobox = QtGui.QComboBox()
         for model_name in MODELS:
