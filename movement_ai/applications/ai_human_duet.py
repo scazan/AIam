@@ -52,6 +52,7 @@ parser.add_argument("--improvise-duration", type=float, default=3)
 parser.add_argument("--memory-duration", type=float, default=3)
 parser.add_argument("--enable-delay-shift", action="store_true")
 parser.add_argument("--reverse-recall-probability", type=float, default=0)
+parser.add_argument("--io-blending-amount", type=float, default=1)
 Application.add_parser_arguments(parser)
 ImproviseParameters().add_parser_arguments(parser)
 args = parser.parse_args()
@@ -61,10 +62,13 @@ bvh_reader.read()
 entity_args_strings = ENTITY_ARGS.split()
 entity_args = parser.parse_args(entity_args_strings)
 
-pose = bvh_reader.get_hierarchy().create_pose()
-entity = Entity(bvh_reader, pose, FLOOR, Z_UP, entity_args)
+def create_entity():
+    return Entity(bvh_reader, bvh_reader.get_hierarchy().create_pose(), FLOOR, Z_UP, entity_args)
 
-num_input_dimensions = entity.get_value_length()
+behavior_entity = create_entity()
+master_entity = create_entity()
+
+num_input_dimensions = master_entity.get_value_length()
 student = DimensionalityReductionFactory.create(
     DIMENSIONALITY_REDUCTION_TYPE, num_input_dimensions, NUM_REDUCED_DIMENSIONS, DIMENSIONALITY_REDUCTION_ARGS)
 student.load(STUDENT_MODEL_PATH)
@@ -116,15 +120,14 @@ class Memory:
     def get_output(self):
         return self._frames[self._cursor]
 
-class MetaBehaviour(Behavior):
+class SwitchingBehavior(Behavior):
     MIRROR = "mirror"
     IMPROVISE = "improvise"
     MEMORY = "memory"
     
     interpolation_duration = 1.0
     
-    def __init__(self, improvise):
-        Behavior.__init__(self)
+    def __init__(self):
         self._improvise = improvise
         self._input = None
         self._delayed_input = None
@@ -223,9 +226,9 @@ class MetaBehaviour(Behavior):
             self._interpolation_crossed_halfway = True            
 
         if self._current_state == self.IMPROVISE:
-            entity.set_friction(amount <= 0.5)
+            behavior_entity.set_friction(amount <= 0.5)
         elif self._next_state == self.IMPROVISE:
-            entity.set_friction(amount > 0.5)         
+            behavior_entity.set_friction(amount > 0.5)         
 
         if self._interpolation_crossed_halfway:
             translation = self._get_translation(to_output)
@@ -233,7 +236,7 @@ class MetaBehaviour(Behavior):
             translation = self._get_translation(from_output)
         self._chainer.put(translation)
         translation = self._chainer.get()
-        orientations = self._get_orientations(entity.interpolate(from_output, to_output, amount))
+        orientations = self._get_orientations(behavior_entity.interpolate(from_output, to_output, amount))
         self._output = self._combine_translation_and_orientation(translation, orientations)
 
         self._state_frames += frames_to_process
@@ -261,11 +264,11 @@ class MetaBehaviour(Behavior):
             
         output = self._state_output(self._current_state)
         if self._current_state == self.IMPROVISE:
-            entity.set_friction(True)
+            behavior_entity.set_friction(True)
         elif self._current_state == self.MIRROR:
-            entity.set_friction(False)
+            behavior_entity.set_friction(False)
         elif self._current_state == self.MEMORY:
-            entity.set_friction(False)
+            behavior_entity.set_friction(False)
 
         translation = self._get_translation(output)
         orientations = self._get_orientations(output)
@@ -321,41 +324,67 @@ class MetaBehaviour(Behavior):
         return numpy.array(list(translation) + list(orientations))
     
 class UiWindow(QtGui.QWidget):
-    def __init__(self, meta_behavior):
+    def __init__(self, master_behavior):
         QtGui.QWidget.__init__(self)
-        self._meta_behavior = meta_behavior
+        self._master_behavior = master_behavior
         self._layout = QtGui.QVBoxLayout()
         self.setLayout(self._layout)
 
-        delay_layout = self._create_delay_layout()
-        self._layout.addLayout(delay_layout)
+        io_blending_layout = self._create_io_blending_layout()
+        self._layout.addLayout(io_blending_layout)
         
         timer = QtCore.QTimer(self)
         timer.setInterval(1000. / args.frame_rate)
         QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), application.update)
         timer.start()
 
-    def _create_delay_layout(self):
+    def _create_io_blending_layout(self):
         layout = QtGui.QHBoxLayout()
-        self._delay_slider = self._create_delay_slider()
-        layout.addWidget(self._delay_slider)
-        self._delay_label = QtGui.QLabel("")
-        layout.addWidget(self._delay_label)
-        self._on_changed_delay_slider()
+        self._io_blending_slider = self._create_io_blending_slider()
+        layout.addWidget(self._io_blending_slider)
+        self._io_blending_label = QtGui.QLabel("")
+        layout.addWidget(self._io_blending_label)
+        self._on_changed_io_blending_slider()
         return layout
 
-    def _create_delay_slider(self):
+    def _create_io_blending_slider(self):
         slider = QtGui.QSlider(QtCore.Qt.Horizontal)
         slider.setRange(0, SLIDER_PRECISION)
         slider.setSingleStep(1)
-        slider.setValue(0.0)
-        slider.valueChanged.connect(lambda value: self._on_changed_delay_slider())
+        slider.setValue(args.io_blending_amount * SLIDER_PRECISION)
+        slider.valueChanged.connect(lambda value: self._on_changed_io_blending_slider())
         return slider
 
-    def _on_changed_delay_slider(self):
-        delay_seconds = float(self._delay_slider.value()) / SLIDER_PRECISION * MAX_DELAY_SECONDS
-        self._delay_label.setText("%.1f" % delay_seconds)
-        self._meta_behavior.set_mirror_delay_seconds(delay_seconds)
+    def _on_changed_io_blending_slider(self):
+        io_blending_amount = float(self._io_blending_slider.value()) / SLIDER_PRECISION
+        self._io_blending_label.setText("%.1f" % io_blending_amount)
+        self._master_behavior.set_io_blending_amount(io_blending_amount)
+
+class MasterBehavior(Behavior):
+    def __init__(self):
+        Behavior.__init__(self)
+        self._io_blending_amount = args.io_blending_amount
+        self._input = None
+        self._switching_behavior = SwitchingBehavior()
+
+    def proceed(self, time_increment):
+        self._switching_behavior.proceed(time_increment)
+        
+    def sends_output(self):
+        return True
+    
+    def get_output(self):
+        switching_behavior_output = self._switching_behavior.get_output()
+        if self._input is None or switching_behavior_output is None:
+            return None
+        return master_entity.interpolate(self._input, switching_behavior_output, self._io_blending_amount)
+
+    def on_input(self, input_):
+        self._input = input_
+        self._switching_behavior.on_input(input_)
+
+    def set_io_blending_amount(self, amount):
+        self._io_blending_amount = amount
 
 improvise_params = ImproviseParameters()
 preferred_location = None
@@ -366,8 +395,8 @@ improvise = Improvise(
     preferred_location,
     MAX_NOVELTY)
 index = 0
-meta_behavior = MetaBehaviour(improvise)
-avatar = Avatar(index, entity, meta_behavior)
+master_behavior = MasterBehavior()
+avatar = Avatar(index, master_entity, master_behavior)
 
 avatars = [avatar]
 
@@ -383,8 +412,7 @@ pn_receiver = tracking.pn.receiver.PnReceiver()
 print "connecting to PN server..."
 pn_receiver.connect(args.pn_host, args.pn_port)
 print "ok"
-pn_pose = bvh_reader.get_hierarchy().create_pose()
-pn_entity = Entity(bvh_reader, pn_pose, FLOOR, Z_UP, entity_args)
+pn_entity = create_entity()
 if args.pn_translation_offset:
     pn_translation_offset = numpy.array(
         [float(string) for string in args.pn_translation_offset.split(",")])
@@ -396,7 +424,7 @@ pn_receiver_thread.start()
 
 if args.with_ui:
     qt_app = QtGui.QApplication(sys.argv)
-    ui_window = UiWindow(meta_behavior)
+    ui_window = UiWindow(master_behavior)
     ui_window.show()
     qt_app.exec_()
 else:
