@@ -65,7 +65,7 @@ entity_args = parser.parse_args(entity_args_strings)
 def create_entity():
     return Entity(bvh_reader, bvh_reader.get_hierarchy().create_pose(), FLOOR, Z_UP, entity_args)
 
-behavior_entity = create_entity()
+switching_behavior_entity = create_entity()
 master_entity = create_entity()
 
 num_input_dimensions = master_entity.get_value_length()
@@ -226,9 +226,11 @@ class SwitchingBehavior(Behavior):
             self._interpolation_crossed_halfway = True            
 
         if self._current_state == self.IMPROVISE:
-            behavior_entity.set_friction(amount <= 0.5)
+            switching_behavior_entity.set_friction(amount <= 0.5)
         elif self._next_state == self.IMPROVISE:
-            behavior_entity.set_friction(amount > 0.5)         
+            switching_behavior_entity.set_friction(amount > 0.5)
+        else:
+            switching_behavior_entity.set_friction(False)
 
         if self._interpolation_crossed_halfway:
             translation = self._get_translation(to_output)
@@ -236,7 +238,7 @@ class SwitchingBehavior(Behavior):
             translation = self._get_translation(from_output)
         self._chainer.put(translation)
         translation = self._chainer.get()
-        orientations = self._get_orientations(behavior_entity.interpolate(from_output, to_output, amount))
+        orientations = self._get_orientations(switching_behavior_entity.interpolate(from_output, to_output, amount))
         self._output = self._combine_translation_and_orientation(translation, orientations)
 
         self._state_frames += frames_to_process
@@ -264,11 +266,11 @@ class SwitchingBehavior(Behavior):
             
         output = self._state_output(self._current_state)
         if self._current_state == self.IMPROVISE:
-            behavior_entity.set_friction(True)
+            switching_behavior_entity.set_friction(True)
         elif self._current_state == self.MIRROR:
-            behavior_entity.set_friction(False)
+            switching_behavior_entity.set_friction(False)
         elif self._current_state == self.MEMORY:
-            behavior_entity.set_friction(False)
+            switching_behavior_entity.set_friction(False)
 
         translation = self._get_translation(output)
         orientations = self._get_orientations(output)
@@ -369,6 +371,10 @@ class MasterBehavior(Behavior):
 
     def proceed(self, time_increment):
         self._switching_behavior.proceed(time_increment)
+        if self._io_blending_amount < 0.5:
+            master_entity.set_friction(True)
+        else:
+            master_entity.set_friction(switching_behavior_entity.get_friction())
         
     def sends_output(self):
         return True

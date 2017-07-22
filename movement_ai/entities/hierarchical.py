@@ -132,6 +132,7 @@ class Entity(BaseEntity):
         self._last_root_vertical_orientation = None
         self._interpolation_state = InterpolationState.IDLE
         self._rotation_interpolators = {}
+        self._enable_friction = self.args.friction
         if hasattr(self.args, "enable_features") and self.args.enable_features:
             self.feature_extractor = FeatureExtractor(self._coordinate_up)
 
@@ -398,6 +399,10 @@ class Entity(BaseEntity):
             return linear_interpolator
             
     def set_friction(self, enable_friction):
+        self._enable_friction = enable_friction
         self._normalized_constrainers.set_friction(enable_friction)
         self._unnormalized_constrainers.set_friction(enable_friction)
         
+    def get_friction(self):
+        return self._enable_friction
+    
