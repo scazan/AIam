@@ -161,19 +161,25 @@ class SwitchingBehavior(Behavior):
         
     def set_mirror_delay_seconds(self, seconds):
         self._input_buffer_read_cursor = self._input_buffer_num_frames - 1 - int(seconds * args.frame_rate)
-        
-    def _create_weighted_shuffler(self):
-        non_current_modes = set([self.MIRROR, self.IMPROVISE, self.MEMORY]) - set([self._current_state])
-        available_modes = [
-            mode for mode in non_current_modes
+
+    def _select_next_state(self):
+        other_modes = set([self.MIRROR, self.IMPROVISE, self.MEMORY]) - set([self._current_state])
+        available_other_modes = [
+            mode for mode in other_modes
             if self._mode_is_available(mode)]
-        print "available modes:", available_modes
-        weights = [self._get_weight(mode) for mode in available_modes]
-        return WeightedShuffler(available_modes, weights)
+        if len(available_other_modes) == 0:
+            print "no other mode available"
+            return self._current_state
+        else:
+            print "available modes:", available_other_modes
+            weights = [self._get_weight(mode) for mode in available_other_modes]
+            shuffler = WeightedShuffler(available_other_modes, weights)
+            return shuffler.choice()
 
     def _mode_is_available(self, mode):
         if mode == self.MEMORY:
-            return self._memory.get_num_frames() >= self._memory_num_frames
+            return self._get_weight(self.MEMORY) > 0 and \
+                self._memory.get_num_frames() >= self._memory_num_frames
         return self._get_weight(mode) > 0
     
     def _get_weight(self, mode):
@@ -253,8 +259,7 @@ class SwitchingBehavior(Behavior):
             self._interpolating = True
             self._interpolation_crossed_halfway = False
             self._state_frames = 0
-            shuffler = self._create_weighted_shuffler()
-            self._next_state = shuffler.choice()
+            self._next_state = self._select_next_state()
             print "%s => %s" % (self._current_state, self._next_state)
             self._prepare_state(self._next_state)
             return
@@ -288,6 +293,8 @@ class SwitchingBehavior(Behavior):
             return self._delayed_input
         elif state == self.MEMORY:
             return self._memory.get_output()
+        else:
+            raise Exception("unknown state %r" % state)
             
     def _prepare_state(self, state):
         if state == self.MEMORY:
