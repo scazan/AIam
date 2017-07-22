@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-MODELS = {
+MODELS = ["autoencoder", "pca"]
+MODELS_INFO = {
     "autoencoder": {
         "path": "profiles/dimensionality_reduction/valencia_pn_autoencoder.model",
         "dimensionality_reduction_type": "AutoEncoder",
@@ -46,7 +47,7 @@ from chaining import Chainer
 parser = ArgumentParser()
 parser.add_argument("--pn-host", default="localhost")
 parser.add_argument("--pn-port", type=int, default=tracking.pn.receiver.SERVER_PORT_BVH)
-parser.add_argument("--model", choices=["autoencoder", "pca"], default="pca")
+parser.add_argument("--model", choices=MODELS, default="pca")
 parser.add_argument("--pn-translation-offset")
 parser.add_argument("--with-ui", action="store_true")
 parser.add_argument("--mirror-weight", type=float, default=1.0)
@@ -74,7 +75,7 @@ switching_behavior_entity = create_entity()
 master_entity = create_entity()
 
 def _create_and_load_student(model_name):
-    model_info = MODELS[model_name]
+    model_info = MODELS_INFO[model_name]
     student = DimensionalityReductionFactory.create(
         model_info["dimensionality_reduction_type"],
         num_input_dimensions,
@@ -87,7 +88,12 @@ num_input_dimensions = master_entity.get_value_length()
 students = {
     model_name: _create_and_load_student(model_name)
     for model_name in ["autoencoder", "pca"]}
-student = students[args.model]
+
+def set_model(model_name):
+    global student
+    application.set_student = students[model_name]
+    student = students[model_name]
+    master_behavior.set_model(model_name)
 
 class WeightedShuffler:
     def __init__(self, options, weights):
@@ -144,7 +150,6 @@ class SwitchingBehavior(Behavior):
     interpolation_duration = 1.0
     
     def __init__(self):
-        self._improvise = improvise
         self._input = None
         self._delayed_input = None
         self._output = None
@@ -164,6 +169,9 @@ class SwitchingBehavior(Behavior):
         if args.enable_delay_shift:
             self._delay_shift = SmoothedDelayShift(
                 smoothing=10, period_duration=5, peak_duration=3, magnitude=1.5)
+
+    def set_model(self, model_name):
+        self._improvise = improvise_behaviors[model_name]
 
     def _choose_initial_state(self):
         if args.mirror_weight > 0:
@@ -357,6 +365,9 @@ class UiWindow(QtGui.QWidget):
 
         io_blending_layout = self._create_io_blending_layout()
         self._layout.addLayout(io_blending_layout)
+
+        model_combobox = self._create_model_combobox()
+        self._layout.addWidget(model_combobox)
         
         timer = QtCore.QTimer(self)
         timer.setInterval(1000. / args.frame_rate)
@@ -385,12 +396,25 @@ class UiWindow(QtGui.QWidget):
         self._io_blending_label.setText("%.1f" % io_blending_amount)
         self._master_behavior.set_io_blending_amount(io_blending_amount)
 
+    def _create_model_combobox(self):
+        combobox = QtGui.QComboBox()
+        for model_name in MODELS:
+            combobox.addItem(model_name)
+        combobox.activated.connect(self._changed_model)
+        return combobox
+
+    def _changed_model(self, value):
+        set_model(MODELS[value])
+
 class MasterBehavior(Behavior):
     def __init__(self):
         Behavior.__init__(self)
         self._io_blending_amount = args.io_blending_amount
         self._input = None
         self._switching_behavior = SwitchingBehavior()
+
+    def set_model(self, model_name):
+        self._switching_behavior.set_model(model_name)
 
     def proceed(self, time_increment):
         self._switching_behavior.proceed(time_increment)
@@ -415,21 +439,30 @@ class MasterBehavior(Behavior):
     def set_io_blending_amount(self, amount):
         self._io_blending_amount = amount
 
-improvise_params = ImproviseParameters()
-preferred_location = None
-improvise = Improvise(
-    student,
-    student.num_reduced_dimensions,
-    improvise_params,
-    preferred_location,
-    MAX_NOVELTY)
+def _create_improvise_behavior(model_name):
+    improvise_params = ImproviseParameters()
+    preferred_location = None
+    student = students[model_name]
+    return Improvise(
+        student,
+        student.num_reduced_dimensions,
+        improvise_params,
+        preferred_location,
+        MAX_NOVELTY)
+
+improvise_behaviors = {
+    model_name: _create_improvise_behavior(model_name)
+    for model_name in MODELS}
+
 index = 0
 master_behavior = MasterBehavior()
 avatar = Avatar(index, master_entity, master_behavior)
 
 avatars = [avatar]
 
-application = Application(student, avatars, args)
+application = Application(students[args.model], avatars, args)
+
+set_model(args.model)
 
 def receive_from_pn(pn_entity):
     for frame in pn_receiver.get_frames():

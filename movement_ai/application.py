@@ -37,9 +37,7 @@ class Application:
         else:
             self._output_sender = None
             
-        if self._student.supports_incremental_learning():
-            self._training_data = collections.deque([], maxlen=args.memory_size)
-        
+        self._training_data = collections.deque([], maxlen=args.memory_size)
         self._input = None
         self._now = None
         self._desired_frame_duration = 1.0 / self._args.frame_rate
@@ -56,6 +54,9 @@ class Application:
     def set_input(self, input_):
         self._input = input_
 
+    def set_student(self, student):
+        self._student = student
+        
     def update(self):
         if self._input is not None and self._student.supports_incremental_learning():
             self._student.train([self._input])
