@@ -1,16 +1,11 @@
-Learning pose map
-
-python dim_reduce.py -p valencia_pn_autoencoder --enable-io-blending --color-scheme=black --floor-renderer=checkerboard --mode=improvise --receive-from-pn --io-blending-amount=0.4 --pn-host=192.168.88.249
-
--------------
-
-Interacting with learned model
+Viewer:
 
 python ui/osc_output_viewer.py scenes/pn-01.22_skeleton.bvh --camera=-1.868,-0.480,-1.879,-51.300,0.700
 
-Mirror with delay shift:
 
-python applications/ai_human_duet.py --memory-weight=0 --output-receiver-host=localhost --mirror-duration=400 --improvise-duration=4 --pn-host=192.168.88.249 --enable-delay-shift
+AI:
+
+python applications/ai_human_duet.py --output-receiver-host=localhost --enable-improvise --with-ui --model=autoencoder --pn-host=192.168.88.249 --enable-delay-shift
 
 ----------
 
@@ -19,11 +14,11 @@ SCRIPT
 Phase A: Learn pose map
 
 - Behavior: Mirror without delay
-- Model: valencia_pn_autoencoder
+- Model: autoencoder
 - IO blending: Shifts slowly from 1 to approx 0.4 as learning improves
 
 Phase B: ?
 
 - Behaviors: Mirror with delay shift, memory
-- Model: valencia_pn_2017_07
+- Model: pca
 - IO blending: 1

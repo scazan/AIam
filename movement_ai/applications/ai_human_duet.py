@@ -50,6 +50,9 @@ parser.add_argument("--pn-port", type=int, default=tracking.pn.receiver.SERVER_P
 parser.add_argument("--model", choices=MODELS, default="pca")
 parser.add_argument("--pn-translation-offset")
 parser.add_argument("--with-ui", action="store_true")
+parser.add_argument("--enable-mirror", action="store_true")
+parser.add_argument("--enable-memory", action="store_true")
+parser.add_argument("--enable-improvise", action="store_true")
 parser.add_argument("--mirror-weight", type=float, default=1.0)
 parser.add_argument("--improvise-weight", type=float, default=1.0)
 parser.add_argument("--memory-weight", type=float, default=1.0)
@@ -146,10 +149,14 @@ class SwitchingBehavior(Behavior):
     MIRROR = "mirror"
     IMPROVISE = "improvise"
     MEMORY = "memory"
+    MODES = [MIRROR, IMPROVISE, MEMORY]
     
     interpolation_duration = 1.0
     
     def __init__(self):
+        self._modes_enabled = {
+            mode: self._mode_enabled_in_args(mode) > 0
+            for mode in self.MODES}
         self._input = None
         self._delayed_input = None
         self._output = None
@@ -169,25 +176,30 @@ class SwitchingBehavior(Behavior):
         if args.enable_delay_shift:
             self._delay_shift = SmoothedDelayShift(
                 smoothing=10, period_duration=5, peak_duration=3, magnitude=1.5)
-
+    
+    def _mode_enabled_in_args(self, mode):
+        enabled_arg = "enable_%s" % mode
+        return getattr(args, enabled_arg)
+        
+    def set_mode_enabled(self, mode, enabled):
+        self._modes_enabled[mode] = enabled
+        
     def set_model(self, model_name):
         self._improvise = improvise_behaviors[model_name]
 
     def _choose_initial_state(self):
-        if args.mirror_weight > 0:
-            return self.MIRROR
-        elif args.improvise_weight > 0:
-            return self.IMPROVISE
-        elif args.memory_weight > 0:
-            return self.MEMORY
-        else:
-            raise Exception("couldn't choose initial state")
+        enabled_modes = [
+            mode for mode in self.MODES
+            if self._modes_enabled[mode]]
+        if len(enabled_modes) == 0:
+            raise Exception("at least one mode must be enabled")
+        return enabled_modes[0]
         
     def set_mirror_delay_seconds(self, seconds):
         self._input_buffer_read_cursor = self._input_buffer_num_frames - 1 - int(seconds * args.frame_rate)
 
     def _select_next_state(self):
-        other_modes = set([self.MIRROR, self.IMPROVISE, self.MEMORY]) - set([self._current_state])
+        other_modes = set(self.MODES) - set([self._current_state])
         available_other_modes = [
             mode for mode in other_modes
             if self._mode_is_available(mode)]
@@ -202,9 +214,9 @@ class SwitchingBehavior(Behavior):
 
     def _mode_is_available(self, mode):
         if mode == self.MEMORY:
-            return self._get_weight(self.MEMORY) > 0 and \
+            return self._modes_enabled[self.MEMORY] and \
                 self._memory.get_num_frames() >= self._memory_num_frames
-        return self._get_weight(mode) > 0
+        return self._modes_enabled[mode] > 0
     
     def _get_weight(self, mode):
         weight_arg = "%s_weight" % mode
@@ -366,6 +378,7 @@ class UiWindow(QtGui.QWidget):
 
         self._add_io_blending_control()
         self._add_model_control()
+        self._add_mode_controls()
         
         timer = QtCore.QTimer(self)
         timer.setInterval(1000. / args.frame_rate)
@@ -413,18 +426,39 @@ class UiWindow(QtGui.QWidget):
     def _changed_model(self, value):
         set_model(MODELS[value])
 
+    def _add_mode_controls(self):
+        self._add_mode_control("Mirror", SwitchingBehavior.MIRROR)
+        self._add_mode_control("Memory", SwitchingBehavior.MEMORY)
+        self._add_mode_control("Improvise", SwitchingBehavior.IMPROVISE)
+
+    def _add_mode_control(self, name, mode):
+        self._add_label(name)
+        self._add_control_widget(self._create_mode_checkbox(mode))
+
+    def _create_mode_checkbox(self, mode):
+        checkbox = QtGui.QCheckBox()
+        checkbox.setChecked(self._mode_enabled_in_args(mode) > 0)
+        checkbox.stateChanged.connect(lambda event: self._mode_checkbox_changed(mode, checkbox))
+        return checkbox
+    
+    def _mode_enabled_in_args(self, mode):
+        enabled_arg = "enable_%s" % mode
+        return getattr(args, enabled_arg)
+
+    def _mode_checkbox_changed(self, mode, checkbox):
+        switching_behavior.set_mode_enabled(mode, checkbox.isChecked())
+        
 class MasterBehavior(Behavior):
     def __init__(self):
         Behavior.__init__(self)
         self._io_blending_amount = args.io_blending_amount
         self._input = None
-        self._switching_behavior = SwitchingBehavior()
 
     def set_model(self, model_name):
-        self._switching_behavior.set_model(model_name)
+        switching_behavior.set_model(model_name)
 
     def proceed(self, time_increment):
-        self._switching_behavior.proceed(time_increment)
+        switching_behavior.proceed(time_increment)
         if self._io_blending_amount < 0.5:
             master_entity.set_friction(True)
         else:
@@ -434,14 +468,14 @@ class MasterBehavior(Behavior):
         return True
     
     def get_output(self):
-        switching_behavior_output = self._switching_behavior.get_output()
+        switching_behavior_output = switching_behavior.get_output()
         if self._input is None or switching_behavior_output is None:
             return None
         return master_entity.interpolate(self._input, switching_behavior_output, self._io_blending_amount)
 
     def on_input(self, input_):
         self._input = input_
-        self._switching_behavior.on_input(input_)
+        switching_behavior.on_input(input_)
 
     def set_io_blending_amount(self, amount):
         self._io_blending_amount = amount
@@ -462,6 +496,7 @@ improvise_behaviors = {
     for model_name in MODELS}
 
 index = 0
+switching_behavior = SwitchingBehavior()
 master_behavior = MasterBehavior()
 avatar = Avatar(index, master_entity, master_behavior)
 
