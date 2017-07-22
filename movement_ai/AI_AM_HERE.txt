@@ -12,3 +12,18 @@ Mirror with delay shift:
 
 python applications/ai_human_duet.py --memory-weight=0 --output-receiver-host=localhost --mirror-duration=400 --improvise-duration=4 --pn-host=192.168.88.249 --enable-delay-shift
 
+----------
+
+SCRIPT
+
+Phase A: Learn pose map
+
+- Behavior: Mirror without delay
+- Model: valencia_pn_autoencoder
+- IO blending: Shifts slowly from 1 to approx 0.4 as learning improves
+
+Phase B: ?
+
+- Behaviors: Mirror with delay shift, memory
+- Model: valencia_pn_2017_07
+- IO blending: 1
