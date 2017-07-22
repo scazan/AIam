@@ -19,6 +19,6 @@ Phase A: Learn pose map
 
 Phase B: ?
 
-- Behaviors: Mirror with delay shift, memory
+- Behaviors: Mirror with delay shift, recall
 - Model: pca
 - IO blending: 1

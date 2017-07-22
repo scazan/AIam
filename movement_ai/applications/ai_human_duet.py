@@ -51,14 +51,14 @@ parser.add_argument("--model", choices=MODELS, default="pca")
 parser.add_argument("--pn-translation-offset")
 parser.add_argument("--with-ui", action="store_true")
 parser.add_argument("--enable-mirror", action="store_true")
-parser.add_argument("--enable-memory", action="store_true")
+parser.add_argument("--enable-recall", action="store_true")
 parser.add_argument("--enable-improvise", action="store_true")
 parser.add_argument("--mirror-weight", type=float, default=1.0)
 parser.add_argument("--improvise-weight", type=float, default=1.0)
-parser.add_argument("--memory-weight", type=float, default=1.0)
+parser.add_argument("--recall-weight", type=float, default=1.0)
 parser.add_argument("--mirror-duration", type=float, default=3)
 parser.add_argument("--improvise-duration", type=float, default=3)
-parser.add_argument("--memory-duration", type=float, default=3)
+parser.add_argument("--recall-duration", type=float, default=3)
 parser.add_argument("--enable-delay-shift", action="store_true")
 parser.add_argument("--reverse-recall-probability", type=float, default=0)
 parser.add_argument("--io-blending-amount", type=float, default=1)
@@ -111,7 +111,7 @@ class WeightedShuffler:
             if r < 0:
                 return self._options[index]
 
-class Memory:
+class Recall:
     def __init__(self):
         self._frames = []
 
@@ -148,8 +148,8 @@ class Memory:
 class SwitchingBehavior(Behavior):
     MIRROR = "mirror"
     IMPROVISE = "improvise"
-    MEMORY = "memory"
-    MODES = [MIRROR, IMPROVISE, MEMORY]
+    RECALL = "recall"
+    MODES = [MIRROR, IMPROVISE, RECALL]
     
     interpolation_duration = 1.0
     
@@ -162,9 +162,9 @@ class SwitchingBehavior(Behavior):
         self._output = None
         self._mirror_num_frames = int(round(args.mirror_duration * args.frame_rate))
         self._improvise_num_frames = int(round(args.improvise_duration * args.frame_rate))
-        self._memory_num_frames = int(round(args.memory_duration * args.frame_rate))
+        self._recall_num_frames = int(round(args.recall_duration * args.frame_rate))
         self._interpolation_num_frames = int(round(self.interpolation_duration * args.frame_rate))
-        self._memory = Memory()
+        self._recall = Recall()
         initial_state = self._choose_initial_state()
         self._prepare_state(initial_state)
         self._initialize_state(initial_state)
@@ -213,9 +213,9 @@ class SwitchingBehavior(Behavior):
             return shuffler.choice()
 
     def _mode_is_available(self, mode):
-        if mode == self.MEMORY:
-            return self._modes_enabled[self.MEMORY] and \
-                self._memory.get_num_frames() >= self._memory_num_frames
+        if mode == self.RECALL:
+            return self._modes_enabled[self.RECALL] and \
+                self._recall.get_num_frames() >= self._recall_num_frames
         return self._modes_enabled[mode] > 0
     
     def _get_weight(self, mode):
@@ -256,8 +256,8 @@ class SwitchingBehavior(Behavior):
         frames_to_process = min(self._remaining_frames_to_process, remaining_frames_in_state)
         self._improvise.proceed(float(frames_to_process) / args.frame_rate)
 
-        if self.MEMORY in [self._current_state, self._next_state]:
-            self._memory.proceed(frames_to_process)
+        if self.RECALL in [self._current_state, self._next_state]:
+            self._recall.proceed(frames_to_process)
             
         from_output = self._state_output(self._current_state)
         to_output = self._state_output(self._next_state)
@@ -302,15 +302,15 @@ class SwitchingBehavior(Behavior):
         frames_to_process = min(self._remaining_frames_to_process, remaining_frames_in_state)
         self._improvise.proceed(float(frames_to_process) / args.frame_rate)
 
-        if self._current_state == self.MEMORY:
-            self._memory.proceed(frames_to_process)
+        if self._current_state == self.RECALL:
+            self._recall.proceed(frames_to_process)
             
         output = self._state_output(self._current_state)
         if self._current_state == self.IMPROVISE:
             switching_behavior_entity.set_friction(True)
         elif self._current_state == self.MIRROR:
             switching_behavior_entity.set_friction(False)
-        elif self._current_state == self.MEMORY:
+        elif self._current_state == self.RECALL:
             switching_behavior_entity.set_friction(False)
 
         translation = self._get_translation(output)
@@ -327,22 +327,22 @@ class SwitchingBehavior(Behavior):
             return self._get_improvise_output()
         elif state == self.MIRROR:
             return self._delayed_input
-        elif state == self.MEMORY:
-            return self._memory.get_output()
+        elif state == self.RECALL:
+            return self._recall.get_output()
         else:
             raise Exception("unknown state %r" % state)
             
     def _prepare_state(self, state):
-        if state == self.MEMORY:
-            self._memory.begin_random_recall(self._state_num_frames(state) + self._interpolation_num_frames)
+        if state == self.RECALL:
+            self._recall.begin_random_recall(self._state_num_frames(state) + self._interpolation_num_frames)
 
     def _state_num_frames(self, state):
         if state == self.MIRROR:
             return self._mirror_num_frames
         elif state == self.IMPROVISE:
             return self._improvise_num_frames
-        elif state == self.MEMORY:
-            return self._memory_num_frames
+        elif state == self.RECALL:
+            return self._recall_num_frames
         
     def sends_output(self):
         return True
@@ -350,7 +350,7 @@ class SwitchingBehavior(Behavior):
     def on_input(self, input_):
         self._input = input_
         self._input_buffer.append(input_)
-        self._memory.on_input(input_)
+        self._recall.on_input(input_)
         
     def get_output(self):
         return self._output
@@ -428,7 +428,7 @@ class UiWindow(QtGui.QWidget):
 
     def _add_mode_controls(self):
         self._add_mode_control("Mirror", SwitchingBehavior.MIRROR)
-        self._add_mode_control("Memory", SwitchingBehavior.MEMORY)
+        self._add_mode_control("Recall", SwitchingBehavior.RECALL)
         self._add_mode_control("Improvise", SwitchingBehavior.IMPROVISE)
 
     def _add_mode_control(self, name, mode):
