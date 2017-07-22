@@ -1,17 +1,21 @@
 #!/usr/bin/env python
 
-# STUDENT_MODEL_PATH = "profiles/dimensionality_reduction/valencia_pn_autoencoder.model"
-# SKELETON_DEFINITION = "scenes/pn-01.22_skeleton.bvh"
-# DIMENSIONALITY_REDUCTION_TYPE = "AutoEncoder"
-# DIMENSIONALITY_REDUCTION_ARGS = "--num-hidden-nodes=0 --learning-rate=0.005"
-# ENTITY_ARGS = "-r quaternion --friction --translate"
+MODELS = {
+    "autoencoder": {
+        "path": "profiles/dimensionality_reduction/valencia_pn_autoencoder.model",
+        "dimensionality_reduction_type": "AutoEncoder",
+        "dimensionality_reduction_args": "--num-hidden-nodes=0 --learning-rate=0.005"
+        },
 
-STUDENT_MODEL_PATH = "profiles/dimensionality_reduction/valencia_pn_2017_07.model"
+    "pca": {
+        "path": "profiles/dimensionality_reduction/valencia_pn_2017_07.model",
+        "dimensionality_reduction_type": "KernelPCA",
+        "dimensionality_reduction_args": ""
+        }
+    }
+
+ENTITY_ARGS = "-r quaternion --friction --translate" 
 SKELETON_DEFINITION = "scenes/pn-01.22_skeleton.bvh"
-DIMENSIONALITY_REDUCTION_TYPE = "KernelPCA"
-DIMENSIONALITY_REDUCTION_ARGS = ""
-ENTITY_ARGS = "-r quaternion --friction --translate"
-
 NUM_REDUCED_DIMENSIONS = 7
 Z_UP = False
 FLOOR = True
@@ -42,6 +46,7 @@ from chaining import Chainer
 parser = ArgumentParser()
 parser.add_argument("--pn-host", default="localhost")
 parser.add_argument("--pn-port", type=int, default=tracking.pn.receiver.SERVER_PORT_BVH)
+parser.add_argument("--model", choices=["autoencoder", "pca"], default="pca")
 parser.add_argument("--pn-translation-offset")
 parser.add_argument("--with-ui", action="store_true")
 parser.add_argument("--mirror-weight", type=float, default=1.0)
@@ -68,10 +73,21 @@ def create_entity():
 switching_behavior_entity = create_entity()
 master_entity = create_entity()
 
+def _create_and_load_student(model_name):
+    model_info = MODELS[model_name]
+    student = DimensionalityReductionFactory.create(
+        model_info["dimensionality_reduction_type"],
+        num_input_dimensions,
+        NUM_REDUCED_DIMENSIONS,
+        model_info["dimensionality_reduction_args"])
+    student.load(model_info["path"])
+    return student
+    
 num_input_dimensions = master_entity.get_value_length()
-student = DimensionalityReductionFactory.create(
-    DIMENSIONALITY_REDUCTION_TYPE, num_input_dimensions, NUM_REDUCED_DIMENSIONS, DIMENSIONALITY_REDUCTION_ARGS)
-student.load(STUDENT_MODEL_PATH)
+students = {
+    model_name: _create_and_load_student(model_name)
+    for model_name in ["autoencoder", "pca"]}
+student = students[args.model]
 
 class WeightedShuffler:
     def __init__(self, options, weights):
