@@ -5,7 +5,7 @@ MODELS_INFO = {
     "autoencoder": {
         "path": "profiles/dimensionality_reduction/valencia_pn_autoencoder.model",
         "dimensionality_reduction_type": "AutoEncoder",
-        "dimensionality_reduction_args": "--num-hidden-nodes=0 --learning-rate=0.005"
+        "dimensionality_reduction_args": "--num-hidden-nodes=0 --learning-rate=0.003"
         },
 
     "pca": {
@@ -111,39 +111,46 @@ class WeightedShuffler:
             if r < 0:
                 return self._options[index]
 
-class Recall:
+class Memory:
     def __init__(self):
-        self._frames = []
+        self.frames = []
 
     def on_input(self, input_):
-        self._frames.append(input_)
+        self.frames.append(input_)
 
     def get_num_frames(self):
-        return len(self._frames)
+        return len(self.frames)
 
-    def begin_random_recall(self, num_frames_to_recall):
+    def create_random_recall(self, num_frames_to_recall):
         if random.uniform(0.0, 1.0) < args.reverse_recall_probability:
-            self._begin_reverse_recall(num_frames_to_recall)
+            return self._create_reverse_recall(num_frames_to_recall)
         else:
-            self._begin_normal_recall(num_frames_to_recall)
+            return self._create_normal_recall(num_frames_to_recall)
 
-    def _begin_normal_recall(self, num_frames_to_recall):
+    def _create_normal_recall(self, num_frames_to_recall):
         max_cursor = self.get_num_frames() - num_frames_to_recall
-        self._cursor = int(random.random() * max_cursor)
-        self._time_direction = 1
-        print "normal recall from %s" % self._cursor
+        cursor = int(random.random() * max_cursor)
+        time_direction = 1
+        print "normal recall from %s" % cursor
+        return Recall(cursor, time_direction)
 
-    def _begin_reverse_recall(self, num_frames_to_recall):
+    def _create_reverse_recall(self, num_frames_to_recall):
         max_cursor = self.get_num_frames() - num_frames_to_recall
-        self._cursor = int(random.random() * max_cursor) + num_frames_to_recall
-        print "reverse recall from %s" % self._cursor
-        self._time_direction = -1
+        cursor = int(random.random() * max_cursor) + num_frames_to_recall
+        time_direction = -1
+        print "reverse recall from %s" % cursor
+        return Recall(cursor, time_direction)
+
+class Recall:
+    def __init__(self, cursor, time_direction):
+        self._cursor = cursor
+        self._time_direction = time_direction
         
     def proceed(self, num_frames):
         self._cursor += num_frames * self._time_direction
 
     def get_output(self):
-        return self._frames[self._cursor]
+        return memory.frames[self._cursor]
 
 class SwitchingBehavior(Behavior):
     MIRROR = "mirror"
@@ -164,7 +171,8 @@ class SwitchingBehavior(Behavior):
         self._improvise_num_frames = int(round(args.improvise_duration * args.frame_rate))
         self._recall_num_frames = int(round(args.recall_duration * args.frame_rate))
         self._interpolation_num_frames = int(round(self.interpolation_duration * args.frame_rate))
-        self._recall = Recall()
+        self._recall_num_frames_including_interpolation = self._recall_num_frames + \
+                                                          2 * self._interpolation_num_frames
         initial_state = self._choose_initial_state()
         self._prepare_state(initial_state)
         self._initialize_state(initial_state)
@@ -215,18 +223,20 @@ class SwitchingBehavior(Behavior):
     def _mode_is_available(self, mode):
         if mode == self.RECALL:
             return self._modes_enabled[self.RECALL] and \
-                self._recall.get_num_frames() >= self._recall_num_frames
+                memory.get_num_frames() >= self._recall_num_frames_including_interpolation
         return self._modes_enabled[mode] > 0
-    
+
     def _get_weight(self, mode):
         weight_arg = "%s_weight" % mode
         return getattr(args, weight_arg)
     
     def _initialize_state(self, state):
+        print "initializing %s" % state
         self._current_state = state
         self._state_frames = 0
         self._interpolating = False
-        print "initializing %s" % state
+        if state == self.RECALL:
+            self._current_recall = self._next_recall
             
     def proceed(self, time_increment):
         if args.enable_delay_shift:
@@ -256,11 +266,13 @@ class SwitchingBehavior(Behavior):
         frames_to_process = min(self._remaining_frames_to_process, remaining_frames_in_state)
         self._improvise.proceed(float(frames_to_process) / args.frame_rate)
 
-        if self.RECALL in [self._current_state, self._next_state]:
-            self._recall.proceed(frames_to_process)
+        if self._current_state == self.RECALL:
+            self._current_recall.proceed(frames_to_process)
+        if self._next_state == self.RECALL:
+            self._next_recall.proceed(frames_to_process)
             
-        from_output = self._state_output(self._current_state)
-        to_output = self._state_output(self._next_state)
+        from_output = self._state_output(self._current_state, "current")
+        to_output = self._state_output(self._next_state, "next")
         amount = float(self._state_frames) / self._interpolation_num_frames
         
         if amount > 0.5 and not self._interpolation_crossed_halfway:
@@ -303,9 +315,9 @@ class SwitchingBehavior(Behavior):
         self._improvise.proceed(float(frames_to_process) / args.frame_rate)
 
         if self._current_state == self.RECALL:
-            self._recall.proceed(frames_to_process)
+            self._current_recall.proceed(frames_to_process)
             
-        output = self._state_output(self._current_state)
+        output = self._state_output(self._current_state, "current")
         if self._current_state == self.IMPROVISE:
             switching_behavior_entity.set_friction(True)
         elif self._current_state == self.MIRROR:
@@ -322,19 +334,26 @@ class SwitchingBehavior(Behavior):
         self._state_frames += frames_to_process
         self._remaining_frames_to_process -= frames_to_process
 
-    def _state_output(self, state):
+    def _state_output(self, state, current_or_next):
         if state == self.IMPROVISE:
             return self._get_improvise_output()
         elif state == self.MIRROR:
             return self._delayed_input
         elif state == self.RECALL:
-            return self._recall.get_output()
+            if current_or_next == "current":
+                return self._current_recall.get_output()
+            elif current_or_next == "next":
+                return self._next_recall.get_output()
+            else:
+                raise Exception("expected current or next but got %r" % current_or_next)
         else:
             raise Exception("unknown state %r" % state)
             
     def _prepare_state(self, state):
+        print "preparing %s" % state
         if state == self.RECALL:
-            self._recall.begin_random_recall(self._state_num_frames(state) + self._interpolation_num_frames)
+            self._next_recall = memory.create_random_recall(
+                self._recall_num_frames_including_interpolation)
 
     def _state_num_frames(self, state):
         if state == self.MIRROR:
@@ -350,7 +369,7 @@ class SwitchingBehavior(Behavior):
     def on_input(self, input_):
         self._input = input_
         self._input_buffer.append(input_)
-        self._recall.on_input(input_)
+        memory.on_input(input_)
         
     def get_output(self):
         return self._output
@@ -496,6 +515,7 @@ improvise_behaviors = {
     for model_name in MODELS}
 
 index = 0
+memory = Memory()
 switching_behavior = SwitchingBehavior()
 master_behavior = MasterBehavior()
 avatar = Avatar(index, master_entity, master_behavior)

@@ -5,7 +5,7 @@ python ui/osc_output_viewer.py scenes/pn-01.22_skeleton.bvh --camera=-1.868,-0.4
 
 AI:
 
-python applications/ai_human_duet.py --output-receiver-host=localhost --enable-improvise --with-ui --model=autoencoder --pn-host=192.168.88.249 --enable-delay-shift
+python applications/ai_human_duet.py --output-receiver-host=localhost --enable-improvise --with-ui --model=autoencoder --pn-host=192.168.88.250 --enable-delay-shift --mirror-duration=5 --improvise-duration=5 --recall-duration=5
 
 ----------
 
@@ -13,12 +13,14 @@ SCRIPT
 
 Phase A: Learn pose map
 
-- Behavior: Mirror without delay
+- Behavior: Improvise
 - Model: autoencoder
 - IO blending: Shifts slowly from 1 to approx 0.4 as learning improves
+- Delay shift enabled (but not applied, since only improvise is used)
 
 Phase B: ?
 
-- Behaviors: Mirror with delay shift, recall
-- Model: pca
+- Behaviors: All?
 - IO blending: 1
+- Model: pca
+- Delay shift enabled
