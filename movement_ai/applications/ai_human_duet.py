@@ -59,7 +59,7 @@ parser.add_argument("--recall-weight", type=float, default=1.0)
 parser.add_argument("--mirror-duration", type=float, default=3)
 parser.add_argument("--improvise-duration", type=float, default=3)
 parser.add_argument("--recall-duration", type=float, default=3)
-parser.add_argument("--enable-delay-shift", action="store_true")
+parser.add_argument("--delay-shift", type=float, default=0)
 parser.add_argument("--reverse-recall-probability", type=float, default=0)
 parser.add_argument("--io-blending-amount", type=float, default=1)
 Application.add_parser_arguments(parser)
@@ -181,9 +181,12 @@ class SwitchingBehavior(Behavior):
             [None] * self._input_buffer_num_frames, maxlen=self._input_buffer_num_frames)
         self.set_mirror_delay_seconds(0)
         self._chainer = Chainer()
-        if args.enable_delay_shift:
-            self._delay_shift = SmoothedDelayShift(
-                smoothing=10, period_duration=5, peak_duration=3, magnitude=1.5)
+        self._delay_shift = SmoothedDelayShift(
+            smoothing=10, period_duration=5, peak_duration=3, magnitude=1.5)
+        self.set_delay_shift_amount(args.delay_shift)
+
+    def set_delay_shift_amount(self, amount):
+        self._delay_shift_amount = amount
     
     def _mode_enabled_in_args(self, mode):
         enabled_arg = "enable_%s" % mode
@@ -239,10 +242,9 @@ class SwitchingBehavior(Behavior):
             self._current_recall = self._next_recall
             
     def proceed(self, time_increment):
-        if args.enable_delay_shift:
-            delay_seconds = self._delay_shift.get_value()
-            self.set_mirror_delay_seconds(delay_seconds)
-            self._delay_shift.proceed(time_increment)
+        delay_seconds = self._delay_shift.get_value() * self._delay_shift_amount
+        self.set_mirror_delay_seconds(delay_seconds)
+        self._delay_shift.proceed(time_increment)
         
         self._delayed_input = self._get_delayed_input()
         if self._delayed_input is None:
@@ -398,6 +400,7 @@ class UiWindow(QtGui.QWidget):
         self._add_io_blending_control()
         self._add_model_control()
         self._add_mode_controls()
+        self._add_delay_shift_control()
         
         timer = QtCore.QTimer(self)
         timer.setInterval(1000. / args.frame_rate)
@@ -466,6 +469,24 @@ class UiWindow(QtGui.QWidget):
 
     def _mode_checkbox_changed(self, mode, checkbox):
         switching_behavior.set_mode_enabled(mode, checkbox.isChecked())
+
+    def _add_delay_shift_control(self):
+        self._add_label("Delay shift")
+        self._delay_shift_slider = self._create_delay_shift_slider()
+        self._add_control_widget(self._delay_shift_slider)
+        
+    def _create_delay_shift_slider(self):
+        slider = QtGui.QSlider(QtCore.Qt.Horizontal)
+        slider.setRange(0, SLIDER_PRECISION)
+        slider.setSingleStep(1)
+        slider.setValue(args.delay_shift * SLIDER_PRECISION)
+        slider.valueChanged.connect(lambda value: self._on_changed_delay_shift_slider())
+        return slider
+
+    def _on_changed_delay_shift_slider(self):
+        delay_shift_amount = float(self._delay_shift_slider.value()) / SLIDER_PRECISION
+        switching_behavior.set_delay_shift_amount(delay_shift_amount)
+        
         
 class MasterBehavior(Behavior):
     def __init__(self):
