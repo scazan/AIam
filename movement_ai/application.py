@@ -19,6 +19,7 @@ class Application:
         parser.add_argument("--show-fps", action="store_true")
         parser.add_argument("--output-receiver-host")
         parser.add_argument("--output-receiver-port", type=int, default=10000)
+        parser.add_argument("--output-receiver-type", choices=["bvh", "world"], default="bvh")
         parser.add_argument("--random-seed", type=int)
         parser.add_argument("--memory-size", type=int, default=1000)
         Entity.add_parser_arguments(parser)
@@ -78,22 +79,47 @@ class Application:
                 if reduction is not None:
                     output = self._student.inverse_transform(numpy.array([reduction]))[0]
             if output is not None:
-                processed_output = avatar.entity.process_output(output)
                 if self._output_sender is not None:
-                    self._send_output(avatar.index, processed_output)
+                    self._send_output(avatar, output)
 
         self.previous_frame_time = self._now
         self._frame_count += 1
         if self._args.show_fps:
             self._fps_meter.update()
 
-    def _send_output(self, avatar_index, processed_output):
-        self._output_sender.send("/avatar_begin", avatar_index)
+    def _send_output(self, avatar, output):
+        self._output_sender.send("/avatar_begin", avatar.index)
+        if self._args.output_receiver_type == "bvh":
+            avatar.entity.parameters_to_processed_pose(output, avatar.entity.pose)
+            self._send_output_bvh_recurse(avatar.entity.pose.get_root_joint())
+        elif self._args.output_receiver_type == "world":
+            processed_output = avatar.entity.pose.process_output(output)
+            self._send_output_world(processed_output)
+        self._output_sender.send("/avatar_end")
+
+    def _send_output_bvh_recurse(self, joint):
+        if not joint.definition.has_parent:
+            self._send_output_joint_translation(joint)
+        if joint.definition.has_rotation:
+            self._send_output_joint_orientation(joint)
+        for child in joint.children:
+            self._send_output_bvh_recurse(child)
+
+    def _send_output_joint_translation(self, joint):
+        self._output_sender.send(
+            "/translation", self._frame_count, joint.definition.index,
+            joint.worldpos[0], joint.worldpos[1], joint.worldpos[2])
+
+    def _send_output_joint_orientation(self, joint):
+        self._output_sender.send(
+            "/orientation", self._frame_count, joint.definition.index,
+            *joint.angles)
+
+    def _send_output_world(self, processed_output):
         for index, worldpos in enumerate(processed_output):
             self._output_sender.send(
                 "/world", self._frame_count, index,
                 worldpos[0], worldpos[1], worldpos[2])
-        self._output_sender.send("/avatar_end")
 
     def _wait_until_next_frame_is_timely(self):
         frame_duration = time.time() - self._frame_start_time

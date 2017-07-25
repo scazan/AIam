@@ -1,6 +1,6 @@
 Viewer:
 
-python ui/osc_output_viewer.py scenes/pn-01.22_skeleton.bvh --camera=-1.868,-0.480,-1.879,-51.300,0.700
+python ui/osc_output_viewer.py scenes/pn-01.22_skeleton.bvh --camera=-1.868,-0.480,-1.879,-51.300,0.700 --type=bvh
 
 
 AI:
