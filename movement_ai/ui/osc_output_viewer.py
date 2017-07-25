@@ -44,6 +44,7 @@ class MainWindow(QtOpenGL.QGLWidget):
         QtOpenGL.QGLWidget.__init__(self)
         self.setMouseTracking(True)
         self._floor = FloorCheckerboard(**FLOOR_ARGS)
+        self._in_fullscreen = False
 
         self._osc_receiver = OscReceiver(args.port)
         self._osc_receiver.add_method("/avatar_begin", "i", self._handle_avatar_begin)
@@ -133,6 +134,9 @@ class MainWindow(QtOpenGL.QGLWidget):
             new_position[0] -= CAMERA_KEY_SPEED * math.cos(r + math.pi/2)
             new_position[2] -= CAMERA_KEY_SPEED * math.sin(r + math.pi/2)
             self._set_camera_position(new_position)
+            return
+        elif key == QtCore.Qt.Key_F:
+            self._toggle_fullscreen()
             return
         QtGui.QWidget.keyPressEvent(self, event)
 
@@ -243,6 +247,22 @@ class MainWindow(QtOpenGL.QGLWidget):
             self._camera_position[1] += CAMERA_Y_SPEED * (y - self._drag_y_previous)
         self._drag_x_previous = x
         self._drag_y_previous = y
+
+    def _toggle_fullscreen(self):
+        if self._in_fullscreen:
+            self._leave_fullscreen()
+        else:
+            self._enter_fullscreen()
+        
+    def _enter_fullscreen(self):
+        self.setCursor(QtCore.Qt.BlankCursor)
+        self.showFullScreen()
+        self._in_fullscreen = True
+
+    def _leave_fullscreen(self):
+        self.setCursor(QtCore.Qt.ArrowCursor)
+        self.showNormal()
+        self._in_fullscreen = False
         
 parser = ArgumentParser()
 parser.add_argument("bvh", type=str)
