@@ -172,13 +172,6 @@ class Experiment(EventListener):
         if args.profile:
             args = parser.parse_args(profile_args_strings, namespace=args)
 
-        if args.output_receiver_host:
-            from connectivity.simple_osc_sender import OscSender
-            self._output_sender = OscSender(
-                port=args.output_receiver_port, host=args.output_receiver_host)
-        else:
-            self._output_sender = None
-
         self.args = args
 
         skeleton_bvh_path = self._get_skeleton_bvh_path()
@@ -218,6 +211,17 @@ class Experiment(EventListener):
         self._ui_handlers = set()
         self._ui_handlers_lock = threading.Lock()
         self._exporting_output = False
+
+        if args.output_receiver_host:
+            from connectivity import avatar_osc_sender
+            if args.output_receiver_type == "world":
+                self._output_sender = avatar_osc_sender.AvatarOscWorldSender(
+                    args.output_receiver_port, args.output_receiver_host)
+            elif args.output_receiver_type == "bvh":
+                self._output_sender = avatar_osc_sender.AvatarOscBvhSender(
+                    args.output_receiver_port, args.output_receiver_host)
+        else:
+            self._output_sender = None
             
         if self.args.entity == "hierarchical" and self.args.friction:
             self._enable_friction = True
@@ -233,8 +237,6 @@ class Experiment(EventListener):
             pn_receiver_thread = threading.Thread(target=self._receive_from_pn)
             pn_receiver_thread.daemon = True
             pn_receiver_thread.start()
-
-        self._send_joint_ids()
 
     def needs_training_data(self):
         return False
@@ -486,53 +488,10 @@ class Experiment(EventListener):
             self.entity.parameters_to_processed_pose(self.output, self.pose)
             self.bvh_writer.add_pose_as_frame(self.pose)
 
-    def _send_joint_ids(self):
-        if self._output_sender is not None:
-            self._send_output_joint_id_recurse(self.pose.get_root_joint())
-
     def _send_output(self):
         if self.output is not None:
             avatar_index = 0
-            self._output_sender.send("/avatar_begin", avatar_index)
-            if self.args.output_receiver_type == "bvh":
-                self.entity.parameters_to_processed_pose(self.output, self.pose)
-                self._send_output_bvh_recurse(self.pose.get_root_joint())
-            elif self.args.output_receiver_type == "world":
-                self._send_output_world()
-            self._output_sender.send("/avatar_end")
-
-    def _send_output_bvh_recurse(self, joint):
-        if not joint.definition.has_parent:
-            self._send_output_joint_translation(joint)
-        if joint.definition.has_rotation:
-            self._send_output_joint_orientation(joint)
-        for child in joint.children:
-            self._send_output_bvh_recurse(child)
-
-    def _send_output_joint_id_recurse(self, joint):
-        self._send_output_joint_id(joint)
-        for child in joint.children:
-            self._send_output_joint_id_recurse(child)
-
-    def _send_output_joint_id(self, joint):
-        self._output_sender.send(
-            "/id", joint.definition.name, joint.definition.index)
-
-    def _send_output_joint_translation(self, joint):
-        self._output_sender.send(
-            "/translation", self._frame_count, joint.definition.index,
-            joint.worldpos[0], joint.worldpos[1], joint.worldpos[2])
-
-    def _send_output_joint_orientation(self, joint):
-        self._output_sender.send(
-            "/orientation", self._frame_count, joint.definition.index,
-            *joint.angles)
-
-    def _send_output_world(self):
-        for index, worldpos in enumerate(self.processed_output):
-            self._output_sender.send(
-                "/world", self._frame_count, index,
-                worldpos[0], worldpos[1], worldpos[2])
+            self._output_sender.send_frame(avatar_index, self.output, self.entity)
 
     def _receive_from_pn(self):
         for frame in self._pn_receiver.get_frames():

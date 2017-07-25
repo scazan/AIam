@@ -33,8 +33,13 @@ class Application:
             random.seed(args.random_seed)
 
         if args.output_receiver_host:
-            from connectivity.simple_osc_sender import OscSender
-            self._output_sender = OscSender(port=args.output_receiver_port, host=args.output_receiver_host)
+            from connectivity import avatar_osc_sender
+            if args.output_receiver_type == "world":
+                self._output_sender = avatar_osc_sender.AvatarOscWorldSender(
+                    args.output_receiver_port, args.output_receiver_host)
+            elif args.output_receiver_type == "bvh":
+                self._output_sender = avatar_osc_sender.AvatarOscBvhSender(
+                    args.output_receiver_port, args.output_receiver_host)
         else:
             self._output_sender = None
             
@@ -88,38 +93,7 @@ class Application:
             self._fps_meter.update()
 
     def _send_output(self, avatar, output):
-        self._output_sender.send("/avatar_begin", avatar.index)
-        if self._args.output_receiver_type == "bvh":
-            avatar.entity.parameters_to_processed_pose(output, avatar.entity.pose)
-            self._send_output_bvh_recurse(avatar.entity.pose.get_root_joint())
-        elif self._args.output_receiver_type == "world":
-            processed_output = avatar.entity.pose.process_output(output)
-            self._send_output_world(processed_output)
-        self._output_sender.send("/avatar_end")
-
-    def _send_output_bvh_recurse(self, joint):
-        if not joint.definition.has_parent:
-            self._send_output_joint_translation(joint)
-        if joint.definition.has_rotation:
-            self._send_output_joint_orientation(joint)
-        for child in joint.children:
-            self._send_output_bvh_recurse(child)
-
-    def _send_output_joint_translation(self, joint):
-        self._output_sender.send(
-            "/translation", self._frame_count, joint.definition.index,
-            joint.worldpos[0], joint.worldpos[1], joint.worldpos[2])
-
-    def _send_output_joint_orientation(self, joint):
-        self._output_sender.send(
-            "/orientation", self._frame_count, joint.definition.index,
-            *joint.angles)
-
-    def _send_output_world(self, processed_output):
-        for index, worldpos in enumerate(processed_output):
-            self._output_sender.send(
-                "/world", self._frame_count, index,
-                worldpos[0], worldpos[1], worldpos[2])
+        self._output_sender.send_frame(avatar.index, output, avatar.entity)
 
     def _wait_until_next_frame_is_timely(self):
         frame_duration = time.time() - self._frame_start_time
