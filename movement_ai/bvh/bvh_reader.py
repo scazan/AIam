@@ -90,6 +90,7 @@ class BvhReader(cgkit.bvh.BVHReader):
                 node.channels)
             joint_definition.axes = "r" + "".join([
                     CHANNEL_TO_AXIS[channel] for channel in joint_definition.rotation_channels])
+            joint_definition.rotation_index = self._create_rotation_index(joint_definition.rotation_channels)
             joint_definition.has_rotation = True
         else:
             joint_definition.has_rotation = False
@@ -100,6 +101,12 @@ class BvhReader(cgkit.bvh.BVHReader):
 
         return joint_definition
 
+    def _create_rotation_index(self, rotation_channels):
+        result = {}
+        for index, rotation_channel in enumerate(rotation_channels):
+            result[rotation_channel] = index
+        return result
+    
     def get_duration(self):
         return self._duration
 

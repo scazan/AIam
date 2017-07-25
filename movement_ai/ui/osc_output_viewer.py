@@ -56,6 +56,10 @@ class MainWindow(QtOpenGL.QGLWidget):
             self._osc_receiver.add_method("/world", "iifff", self._handle_world)
         self._osc_receiver.start(auto_serve=True)
 
+        self._x_rotation_index = self._hierarchy.get_rotation_index("x")
+        self._y_rotation_index = self._hierarchy.get_rotation_index("y")
+        self._z_rotation_index = self._hierarchy.get_rotation_index("z")
+        
         timer = QtCore.QTimer(self)
         timer.setInterval(1000. / FRAME_RATE)
         QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), self.updateGL)
@@ -107,12 +111,13 @@ class MainWindow(QtOpenGL.QGLWidget):
     def _handle_orientation(self, path, args, types, src, user_data):
         if self._current_avatar is None:
             return
-        frame_count, joint_index, x, y, z = args
+        frame_count, joint_index, angle0, angle1, angle2 = args
+        angles = [angle0, angle1, angle2]
         self._current_avatar.frame[joint_index].update(
-            {"Xrotation": math.degrees(x),
-             "Yrotation": math.degrees(y),
-             "Zrotation": math.degrees(z)})
-
+            {"Xrotation": math.degrees(angles[self._x_rotation_index]),
+             "Yrotation": math.degrees(angles[self._y_rotation_index]),
+             "Zrotation": math.degrees(angles[self._z_rotation_index])})
+             
     def _set_camera_from_arg(self, arg):
         pos_x, pos_y, pos_z, orient_y, orient_z = map(float, arg.split(","))
         self._set_camera_position([pos_x, pos_y, pos_z])

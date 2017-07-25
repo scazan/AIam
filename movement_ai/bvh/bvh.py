@@ -49,6 +49,9 @@ class JointDefinition:
         for child_definition in self.child_definitions:
             child_definition.populate_edges_from_vertices_recurse(vertices, edgelist)
 
+    def get_rotation_index(self, axis):
+        return self.axes.index(axis) - 1 # skip leading "r" from e.g. "rxyz"
+
 class Joint:
     def __init__(self, definition, parent=None):
         self.definition = definition
@@ -88,14 +91,14 @@ class Joint:
         return self.worldpos[2]
 
     def Xrotation(self):
-        return math.degrees(self.angles[0])
+        return math.degrees(self.angles[self.definition.rotation_index["Xrotation"]])
 
     def Yrotation(self):
-        return math.degrees(self.angles[1])
+        return math.degrees(self.angles[self.definition.rotation_index["Yrotation"]])
 
     def Zrotation(self):
-        return math.degrees(self.angles[2])
-
+        return math.degrees(self.angles[self.definition.rotation_index["Zrotation"]])
+    
     def set_vertices(self, vertices, recurse=True):
         if self.definition.is_end:
             # should not be needed if renderer ignores end nodes?
@@ -325,6 +328,9 @@ class Hierarchy:
                 joints_to_delete, frame, child_definition, result, frame_data_index, skip_children)
 
         return frame_data_index
+
+    def get_rotation_index(self, axis):
+        return self._root_joint_definition.get_rotation_index(axis)
 
 class HierarchyCreator:
     def create_hiearchy_from_dict(self, dict_):
