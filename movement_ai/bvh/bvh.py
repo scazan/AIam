@@ -162,7 +162,7 @@ class Hierarchy:
 
     def _calculate_joint_angles_recurse(self, pose, bvh_joint, parent=None, parent_rotation_matrix=None):
         if parent is None or parent.parent is None:
-            bvh_joint.angles = (0, 0, 0)
+            bvh_joint.angles = (0.0, 0.0, 0.0)
         else:
             b = array(pose.get_joint(parent.parent.definition.name).worldpos[0:3])
             a = array(pose.get_joint(parent.definition.name).worldpos[0:3])
@@ -232,7 +232,11 @@ class Hierarchy:
         self.update_pose_world_positions(pose)
 
     def _set_joint_from_dicts_recurse(self, joint, joint_dicts):
-        self._set_joint_from_dict(joint, joint_dicts[joint.definition.index])
+        try:
+            self._set_joint_from_dict(joint, joint_dicts[joint.definition.index])
+        except Exception as exception:
+            raise Exception("Failed to set joint from dict for joint %r: %s" % (
+                joint.definition.name, exception))
         for child in joint.children:
             self._set_joint_from_dicts_recurse(child, joint_dicts)
 
