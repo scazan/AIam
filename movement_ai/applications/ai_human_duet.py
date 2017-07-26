@@ -3,7 +3,8 @@
 MODELS = ["autoencoder", "pca"]
 MODELS_INFO = {
     "autoencoder": {
-        "path": "profiles/dimensionality_reduction/valencia_pn_autoencoder.model",
+        "path": "profiles/dimensionality_reduction/valencia_pn_autoencoder_z_up.model",
+        "path": "profiles/dimensionality_reduction/valencia_pn_autoencoder_z_up.model",
         "dimensionality_reduction_type": "AutoEncoder",
         "dimensionality_reduction_args": "--num-hidden-nodes=0 --learning-rate=0.003"
         },
@@ -16,9 +17,9 @@ MODELS_INFO = {
     }
 
 ENTITY_ARGS = "-r quaternion --friction --translate" 
-SKELETON_DEFINITION = "scenes/pn-01.22_skeleton.bvh"
+SKELETON_DEFINITION = "scenes/pn-01.22_z_up_skeleton.bvh"
 NUM_REDUCED_DIMENSIONS = 7
-Z_UP = False
+Z_UP = True
 FLOOR = True
 MAX_NOVELTY = 1.4
 SLIDER_PRECISION = 1000
