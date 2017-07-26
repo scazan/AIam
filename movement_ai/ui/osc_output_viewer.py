@@ -43,7 +43,8 @@ class MainWindow(QtOpenGL.QGLWidget):
         self._dragging_y_position = False
         QtOpenGL.QGLWidget.__init__(self)
         self.setMouseTracking(True)
-        self._floor = FloorCheckerboard(**FLOOR_ARGS)
+        if args.enable_floor:
+            self._floor = FloorCheckerboard(**FLOOR_ARGS)
         self._in_fullscreen = False
 
         self._osc_receiver = OscReceiver(args.port)
@@ -219,7 +220,8 @@ class MainWindow(QtOpenGL.QGLWidget):
         self.configure_3d_projection(-100, 0)
         camera_x = self._camera_position[0]
         camera_z = self._camera_position[2]
-        self._floor.render(0, 0, camera_x, camera_z)
+        if args.enable_floor:
+            self._floor.render(0, 0, camera_x, camera_z)
         for avatar in self._avatars.values():
             if avatar.is_renderable:
                 self._render_avatar(avatar)
@@ -306,6 +308,7 @@ parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
 parser.add_argument("--port", type=int, default=10000)
 parser.add_argument("--z-up", action="store_true")
 parser.add_argument("--type", choices=["bvh", "world"], default="bvh")
+parser.add_argument("--enable-floor", action="store_true")
 args = parser.parse_args()
 
 bvh_reader = bvh_reader_module.BvhReader(args.bvh)
