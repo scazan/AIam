@@ -120,8 +120,8 @@ class BvhReader(cgkit.bvh.BVHReader):
         frame_index = self._frame_index(t)
         return self.set_pose_from_frame(pose, self.frames[frame_index])
 
-    def set_pose_from_frame(self, pose, frame):
-        return self.hierarchy.set_pose_from_frame(pose, frame)
+    def set_pose_from_frame(self, pose, frame, **kwargs):
+        return self.hierarchy.set_pose_from_frame(pose, frame, **kwargs)
 
     def normalize_vector(self, v):
         return self.normalize_vector_without_translation(

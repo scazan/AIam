@@ -4,7 +4,6 @@ MODELS = ["autoencoder", "pca"]
 MODELS_INFO = {
     "autoencoder": {
         "path": "profiles/dimensionality_reduction/valencia_pn_autoencoder_z_up.model",
-        "path": "profiles/dimensionality_reduction/valencia_pn_autoencoder_z_up.model",
         "dimensionality_reduction_type": "AutoEncoder",
         "dimensionality_reduction_args": "--num-hidden-nodes=0 --learning-rate=0.003"
         },
@@ -550,7 +549,7 @@ set_model(args.model)
 
 def receive_from_pn(pn_entity):
     for frame in pn_receiver.get_frames():
-        input_from_pn = pn_entity.get_value_from_frame(frame)
+        input_from_pn = pn_entity.get_value_from_frame(frame, convert_to_z_up=Z_UP)
         input_from_pn[0:3] += pn_translation_offset
         application.set_input(input_from_pn)
         

@@ -6,7 +6,9 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/..")
 
 from numpy import array, dot
 import numpy
-from transformations import euler_matrix, euler_from_matrix
+from transformations import euler_matrix, euler_from_matrix, quaternion_from_euler, euler_from_quaternion, quaternion_matrix
+import copy
+
 import math
 from geo import Euler, make_translation_matrix, edge
 
@@ -193,8 +195,8 @@ class Hierarchy:
         for bvh_child in bvh_joint.children:
             self._calculate_joint_angles_recurse(pose, bvh_child, bvh_joint, parent_rotation_matrix)
 
-    def set_pose_from_frame(self, pose, frame):
-        self._set_joint_from_frame_recurse(frame, pose.get_root_joint())
+    def set_pose_from_frame(self, pose, frame, **kwargs):
+        self._set_joint_from_frame_recurse(frame, pose.get_root_joint(), **kwargs)
         self.update_pose_world_positions(pose)
 
     def get_root_joint_definition(self):
@@ -203,23 +205,31 @@ class Hierarchy:
     def get_joint_definition(self, name):
         return self._joint_definitions[name]
 
-    def _set_joint_from_frame_recurse(self, frame, joint, frame_data_index=0):
+    def _set_joint_from_frame_recurse(self, frame, joint, frame_data_index=0, convert_to_z_up=False):
         joint_dict = dict()
         for channel in joint.definition.channels:
             joint_dict[channel] = frame[frame_data_index]
             frame_data_index += 1
-
-        self._set_joint_from_dict(joint, joint_dict)
+            
+        self._set_joint_from_dict(joint, joint_dict, convert_to_z_up)
 
         for child in joint.children:
-            frame_data_index = self._set_joint_from_frame_recurse(frame, child, frame_data_index)
+            frame_data_index = self._set_joint_from_frame_recurse(
+                frame, child, frame_data_index, convert_to_z_up)
             if(frame_data_index == 0):
                 raise Exception("fatal error")
 
         return frame_data_index
-
-    def _set_joint_from_dict(self, joint, joint_dict):
+            
+    def _set_joint_from_dict(self, joint, joint_dict, convert_to_z_up=False):
         if "Xposition" in joint_dict:
+            if convert_to_z_up:
+                if "Yposition" in joint_dict and "Zposition" in joint_dict:
+                    new_z = joint_dict["Yposition"]
+                    new_y = -joint_dict["Zposition"]
+                    joint_dict["Zposition"] = new_z
+                    joint_dict["Yposition"] = new_y
+                    
             joint.translation = array([
                     joint_dict["Xposition"],
                     joint_dict["Yposition"],
@@ -228,8 +238,42 @@ class Hierarchy:
         if joint.definition.has_rotation:
             joint.angles = [math.radians(joint_dict[channel])
                             for channel in joint.definition.rotation_channels]
+            if convert_to_z_up:
+#                 rotation_matrix = euler_matrix(*joint.angles, axes=joint.definition.axes)
+#                 to_z_up = numpy.array([ [1,0,0,0], [0,0,1,0], [0,1,0,0], [0,0,0,1] ])
+#                 rotation_matrix_z_up = dot(rotation_matrix, to_z_up)
+#                 new_angles = list(euler_from_matrix(rotation_matrix_z_up, axes=joint.definition.axes))
+# # print rotation_matrix
+                
+                # quaternion = quaternion_from_euler(*joint.angles, axes=joint.definition.axes)
+                # quaternion[2] = -quaternion[2]
+                # new_angles = list(euler_from_quaternion(quaternion, axes=joint.definition.axes))
+                
+                rotation_matrix = euler_matrix(*joint.angles, axes=joint.definition.axes)
+                rotation_matrix_z_up = self._convert_rotation_matrix_to_z_up(rotation_matrix)
+                new_angles = list(euler_from_matrix(rotation_matrix_z_up, axes=joint.definition.axes))
+# print rotation_matrix
+                
+                joint.angles = new_angles
+            
             joint.rotation = Euler(joint.angles, joint.definition.axes)
 
+    def _convert_rotation_matrix_to_z_up(self, m):
+        r = copy.copy(m)
+
+        r[0][1] = -m[0][2]
+        r[0][2] =  m[0][1]
+
+        r[1][0] = -m[2][0]
+        r[1][1] =  m[2][2]
+        r[1][2] = -m[2][1]
+
+        r[2][0] =  m[1][0]
+        r[2][1] = -m[1][2]
+        r[2][2] =  m[1][1]
+        
+        return r
+    
     def set_pose_from_joint_dicts(self, pose, joint_dicts):
         self._set_joint_from_dicts_recurse(pose.get_root_joint(), joint_dicts)
         self.update_pose_world_positions(pose)
