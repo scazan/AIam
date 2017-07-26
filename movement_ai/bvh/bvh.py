@@ -6,8 +6,7 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/..")
 
 from numpy import array, dot
 import numpy
-from transformations import euler_matrix, euler_from_matrix, quaternion_from_euler, euler_from_quaternion, quaternion_matrix
-import copy
+from transformations import euler_matrix, euler_from_matrix
 
 import math
 from geo import Euler, make_translation_matrix, edge
@@ -239,16 +238,6 @@ class Hierarchy:
             joint.angles = [math.radians(joint_dict[channel])
                             for channel in joint.definition.rotation_channels]
             if convert_to_z_up:
-#                 rotation_matrix = euler_matrix(*joint.angles, axes=joint.definition.axes)
-#                 to_z_up = numpy.array([ [1,0,0,0], [0,0,1,0], [0,1,0,0], [0,0,0,1] ])
-#                 rotation_matrix_z_up = dot(rotation_matrix, to_z_up)
-#                 new_angles = list(euler_from_matrix(rotation_matrix_z_up, axes=joint.definition.axes))
-# # print rotation_matrix
-                
-                # quaternion = quaternion_from_euler(*joint.angles, axes=joint.definition.axes)
-                # quaternion[2] = -quaternion[2]
-                # new_angles = list(euler_from_quaternion(quaternion, axes=joint.definition.axes))
-                
                 rotation_matrix = euler_matrix(*joint.angles, axes=joint.definition.axes)
                 rotation_matrix_z_up = self._convert_rotation_matrix_to_z_up(rotation_matrix)
                 new_angles = list(euler_from_matrix(rotation_matrix_z_up, axes=joint.definition.axes))
@@ -259,7 +248,7 @@ class Hierarchy:
             joint.rotation = Euler(joint.angles, joint.definition.axes)
 
     def _convert_rotation_matrix_to_z_up(self, m):
-        r = copy.copy(m)
+        r = numpy.array(m)
 
         r[0][1] = -m[0][2]
         r[0][2] =  m[0][1]
