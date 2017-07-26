@@ -16,7 +16,7 @@ MODELS_INFO = {
     }
 
 ENTITY_ARGS = "-r quaternion --friction --translate" 
-SKELETON_DEFINITION = "scenes/pn-01.22_z_up_skeleton.bvh"
+SKELETON_DEFINITION = "scenes/pn-01.22_z_up_xyz_skeleton.bvh"
 NUM_REDUCED_DIMENSIONS = 7
 Z_UP = True
 FLOOR = True
