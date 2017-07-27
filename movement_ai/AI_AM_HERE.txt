@@ -5,7 +5,7 @@ python ui/osc_output_viewer.py scenes/pn-01.22_z_up_xyz_skeleton.bvh --camera=-1
 
 AI:
 
-python applications/ai_human_duet.py --output-receiver-host=localhost --enable-improvise --with-ui --model=autoencoder --delay-shift=0 --mirror-duration=5 --improvise-duration=5 --recall-duration=5 --pn-host=192.168.88.250
+python applications/ai_human_duet.py --output-receiver-host=localhost --enable-improvise --with-ui --model=autoencoder --delay-shift=0 --mirror-duration=5 --improvise-duration=5 --recall-duration=5 --pn-host=192.168.88.250 --pn-convert-to-z-up
 
 ----------
 
