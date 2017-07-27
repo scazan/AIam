@@ -212,9 +212,3 @@ class BvhReader(cgkit.bvh.BVHReader):
                     joint_definition = self.hierarchy.get_joint_definition(name)
                     joint_definition.has_static_rotation = True
                     joint_definition.static_angles = list(unique_rotations)[0]
-
-    def delete_joints_from_hierarchy(self, joint_names):
-        self.hierarchy.delete_joints(joint_names)
-
-    def delete_joints_from_frame(self, joint_names, frame):
-        return self.hierarchy.delete_joints_from_frame(joint_names, frame)
