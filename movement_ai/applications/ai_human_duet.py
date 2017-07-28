@@ -5,7 +5,7 @@ MODELS_INFO = {
     "autoencoder": {
         "path": "profiles/dimensionality_reduction/valencia_pn_autoencoder_z_up.model",
         "dimensionality_reduction_type": "AutoEncoder",
-        "dimensionality_reduction_args": "--num-hidden-nodes=0 --learning-rate=0.003"
+        "dimensionality_reduction_args": "--num-hidden-nodes=0"
         },
 
     "pca": {
@@ -27,6 +27,8 @@ FLOOR = True
 MAX_NOVELTY = 4#1.4
 SLIDER_PRECISION = 1000
 MAX_DELAY_SECONDS = 10
+DEFAULT_LEARNING_RATE = 0.0
+MAX_LEARNING_RATE = 0.01
 
 from argparse import ArgumentParser
 import threading
@@ -402,6 +404,7 @@ class UiWindow(QtGui.QWidget):
         self._row = 0
         self.setLayout(self._layout)
 
+        self._add_learning_rate_control()
         self._add_io_blending_control()
         self._add_model_control()
         self._add_mode_controls()
@@ -411,6 +414,24 @@ class UiWindow(QtGui.QWidget):
         timer.setInterval(1000. / args.frame_rate)
         QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), application.update)
         timer.start()
+
+    def _add_learning_rate_control(self):
+        self._add_label("Learning rate")
+        self._learning_rate_slider = self._create_learning_rate_slider()
+        self._add_control_widget(self._learning_rate_slider)
+        self._on_changed_learning_rate_slider()
+        
+    def _create_learning_rate_slider(self):
+        slider = QtGui.QSlider(QtCore.Qt.Horizontal)
+        slider.setRange(0, SLIDER_PRECISION)
+        slider.setSingleStep(1)
+        slider.setValue(DEFAULT_LEARNING_RATE / MAX_LEARNING_RATE * SLIDER_PRECISION)
+        slider.valueChanged.connect(lambda value: self._on_changed_learning_rate_slider())
+        return slider
+
+    def _on_changed_learning_rate_slider(self):
+        learning_rate = float(self._learning_rate_slider.value()) / SLIDER_PRECISION * MAX_LEARNING_RATE
+        students["autoencoder"].set_learning_rate(learning_rate)
 
     def _add_io_blending_control(self):
         self._add_label("IO blending")
