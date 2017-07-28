@@ -191,6 +191,7 @@ class SwitchingBehavior(Behavior):
         self._delay_shift = SmoothedDelayShift(
             smoothing=10, period_duration=5, peak_duration=3, magnitude=1.5)
         self.set_delay_shift_amount(args.delay_shift)
+        self.memorize = False
 
     def set_delay_shift_amount(self, amount):
         self._delay_shift_amount = amount
@@ -378,7 +379,8 @@ class SwitchingBehavior(Behavior):
     def on_input(self, input_):
         self._input = input_
         self._input_buffer.append(input_)
-        memory.on_input(input_)
+        if self.memorize:
+            memory.on_input(input_)
         
     def get_output(self):
         return self._output
@@ -405,6 +407,7 @@ class UiWindow(QtGui.QWidget):
         self.setLayout(self._layout)
 
         self._add_learning_rate_control()
+        self._add_memorize_control()
         self._add_io_blending_control()
         self._add_model_control()
         self._add_mode_controls()
@@ -432,6 +435,22 @@ class UiWindow(QtGui.QWidget):
     def _on_changed_learning_rate_slider(self):
         learning_rate = float(self._learning_rate_slider.value()) / SLIDER_PRECISION * MAX_LEARNING_RATE
         students["autoencoder"].set_learning_rate(learning_rate)
+
+    def _add_memorize_control(self):
+        self._add_label("Memorize")
+        self._memorize_checkbox = QtGui.QCheckBox()
+        self._memorize_checkbox.stateChanged.connect(self._on_changed_memorize)
+        self._add_control_widget(self._memorize_checkbox)
+
+    def _on_changed_memorize(self):
+        switching_behavior.memorize = True
+        
+    def _mode_enabled_in_args(self, mode):
+        enabled_arg = "enable_%s" % mode
+        return getattr(args, enabled_arg)
+
+    def _mode_checkbox_changed(self, mode, checkbox):
+        switching_behavior.set_mode_enabled(mode, checkbox.isChecked())
 
     def _add_io_blending_control(self):
         self._add_label("IO blending")

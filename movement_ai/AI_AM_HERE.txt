@@ -23,6 +23,7 @@ Phase A: Learn pose map
 - Behavior: Improvise
 - Model: autoencoder
 - Delay shift disabled
+- Learning rate: Increase from 0 to around 1/3 to get started
 (- IO blending: Shifts slowly from 1 to approx 0.4 as learning improves)
 
 
@@ -34,7 +35,7 @@ Phase B: Mirror
 Phase C: Mirror with delay shift
 
 - Enable delay shift (full amount)
-
+- Before transition: Enable memorize
 
 Phase D: Recall
 
