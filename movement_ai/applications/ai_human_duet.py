@@ -3,24 +3,28 @@
 MODELS = ["autoencoder", "pca"]
 MODELS_INFO = {
     "autoencoder": {
-        "path": "profiles/dimensionality_reduction/valencia_pn_autoencoder.model",
+        "path": "profiles/dimensionality_reduction/valencia_pn_autoencoder_z_up.model",
         "dimensionality_reduction_type": "AutoEncoder",
         "dimensionality_reduction_args": "--num-hidden-nodes=0 --learning-rate=0.003"
         },
 
     "pca": {
-        "path": "profiles/dimensionality_reduction/valencia_pn_2017_07.model",
+        # "path": "profiles/dimensionality_reduction/valencia_pn_2017_07.model",
+        # "dimensionality_reduction_type": "KernelPCA",
+        # "dimensionality_reduction_args": ""
+
+        "path": "profiles/dimensionality_reduction/valencia_pn_z_up.model",
         "dimensionality_reduction_type": "KernelPCA",
-        "dimensionality_reduction_args": ""
+        "dimensionality_reduction_args": "--pca-kernel=rbf"
         }
     }
 
 ENTITY_ARGS = "-r quaternion --friction --translate" 
-SKELETON_DEFINITION = "scenes/pn-01.22_skeleton.bvh"
+SKELETON_DEFINITION = "scenes/pn-01.22_z_up_xyz_skeleton.bvh"
 NUM_REDUCED_DIMENSIONS = 7
-Z_UP = False
+Z_UP = True
 FLOOR = True
-MAX_NOVELTY = 1.4
+MAX_NOVELTY = 4#1.4
 SLIDER_PRECISION = 1000
 MAX_DELAY_SECONDS = 10
 
@@ -47,6 +51,7 @@ from chaining import Chainer
 parser = ArgumentParser()
 parser.add_argument("--pn-host", default="localhost")
 parser.add_argument("--pn-port", type=int, default=tracking.pn.receiver.SERVER_PORT_BVH)
+parser.add_argument("--pn-convert-to-z-up", action="store_true")
 parser.add_argument("--model", choices=MODELS, default="pca")
 parser.add_argument("--pn-translation-offset")
 parser.add_argument("--with-ui", action="store_true")
@@ -549,7 +554,7 @@ set_model(args.model)
 
 def receive_from_pn(pn_entity):
     for frame in pn_receiver.get_frames():
-        input_from_pn = pn_entity.get_value_from_frame(frame)
+        input_from_pn = pn_entity.get_value_from_frame(frame, convert_to_z_up=args.pn_convert_to_z_up)
         input_from_pn[0:3] += pn_translation_offset
         application.set_input(input_from_pn)
         

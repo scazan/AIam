@@ -173,8 +173,8 @@ class Entity(BaseEntity):
         self.bvh_reader.set_pose_from_time(self.pose, self._t * self.args.bvh_speed)
         return self._joint_to_parameters(self.pose.get_root_joint())
 
-    def get_value_from_frame(self, frame):
-        self.bvh_reader.set_pose_from_frame(self.pose, frame)
+    def get_value_from_frame(self, frame, **kwargs):
+        self.bvh_reader.set_pose_from_frame(self.pose, frame, **kwargs)
         return self._joint_to_parameters(self.pose.get_root_joint())
         
     def get_random_value(self):

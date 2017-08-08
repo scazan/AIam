@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/..")
 from numpy import array, dot
 import numpy
 from transformations import euler_matrix, euler_from_matrix
+
 import math
 from geo import Euler, make_translation_matrix, edge
 
@@ -27,6 +28,17 @@ class JointDefinition:
         self.has_rotation = False
         self.has_static_rotation = False
 
+    def clone(self):
+        result = JointDefinition(self.name, self.index, self.is_end, self.channels)
+        result.offset = self.offset
+        result.has_rotation = self.has_rotation
+        if self.has_rotation:
+            result.axes = self.axes
+        result.child_definitions = []
+        for child_definition in self.child_definitions:
+            result.add_child_definition(child_definition.clone())
+        return result
+    
     def add_child_definition(self, child_definition):
         self.child_definitions.append(child_definition)
         child_definition.has_parent = True
@@ -116,6 +128,9 @@ class Hierarchy:
         self._root_joint_definition = root_node_definition
         self._process_joint_definition(root_node_definition)
 
+    def clone(self):
+        return Hierarchy(self._root_joint_definition.clone())
+    
     def _process_joint_definition(self, joint_definition):
         for child_definition in joint_definition.child_definitions:
             self._process_joint_definition(child_definition)
@@ -193,8 +208,8 @@ class Hierarchy:
         for bvh_child in bvh_joint.children:
             self._calculate_joint_angles_recurse(pose, bvh_child, bvh_joint, parent_rotation_matrix)
 
-    def set_pose_from_frame(self, pose, frame):
-        self._set_joint_from_frame_recurse(frame, pose.get_root_joint())
+    def set_pose_from_frame(self, pose, frame, **kwargs):
+        self._set_joint_from_frame_recurse(frame, pose.get_root_joint(), **kwargs)
         self.update_pose_world_positions(pose)
 
     def get_root_joint_definition(self):
@@ -203,23 +218,31 @@ class Hierarchy:
     def get_joint_definition(self, name):
         return self._joint_definitions[name]
 
-    def _set_joint_from_frame_recurse(self, frame, joint, frame_data_index=0):
+    def _set_joint_from_frame_recurse(self, frame, joint, frame_data_index=0, convert_to_z_up=False):
         joint_dict = dict()
         for channel in joint.definition.channels:
             joint_dict[channel] = frame[frame_data_index]
             frame_data_index += 1
-
-        self._set_joint_from_dict(joint, joint_dict)
+            
+        self._set_joint_from_dict(joint, joint_dict, convert_to_z_up)
 
         for child in joint.children:
-            frame_data_index = self._set_joint_from_frame_recurse(frame, child, frame_data_index)
+            frame_data_index = self._set_joint_from_frame_recurse(
+                frame, child, frame_data_index, convert_to_z_up)
             if(frame_data_index == 0):
                 raise Exception("fatal error")
 
         return frame_data_index
-
-    def _set_joint_from_dict(self, joint, joint_dict):
+            
+    def _set_joint_from_dict(self, joint, joint_dict, convert_to_z_up=False):
         if "Xposition" in joint_dict:
+            if convert_to_z_up:
+                if "Yposition" in joint_dict and "Zposition" in joint_dict:
+                    new_z = joint_dict["Yposition"]
+                    new_y = -joint_dict["Zposition"]
+                    joint_dict["Zposition"] = new_z
+                    joint_dict["Yposition"] = new_y
+                    
             joint.translation = array([
                     joint_dict["Xposition"],
                     joint_dict["Yposition"],
@@ -228,8 +251,30 @@ class Hierarchy:
         if joint.definition.has_rotation:
             joint.angles = [math.radians(joint_dict[channel])
                             for channel in joint.definition.rotation_channels]
+            if convert_to_z_up:
+                rotation_matrix = euler_matrix(*joint.angles, axes=joint.definition.axes)
+                rotation_matrix_z_up = self._convert_rotation_matrix_to_z_up(rotation_matrix)
+                new_angles = list(euler_from_matrix(rotation_matrix_z_up, axes=joint.definition.axes))
+                joint.angles = new_angles
+            
             joint.rotation = Euler(joint.angles, joint.definition.axes)
 
+    def _convert_rotation_matrix_to_z_up(self, m):
+        r = numpy.array(m)
+
+        r[0][1] = -m[0][2]
+        r[0][2] =  m[0][1]
+
+        r[1][0] = -m[2][0]
+        r[1][1] =  m[2][2]
+        r[1][2] = -m[2][1]
+
+        r[2][0] =  m[1][0]
+        r[2][1] = -m[1][2]
+        r[2][2] =  m[1][1]
+        
+        return r
+    
     def set_pose_from_joint_dicts(self, pose, joint_dicts):
         self._set_joint_from_dicts_recurse(pose.get_root_joint(), joint_dicts)
         self.update_pose_world_positions(pose)
@@ -288,46 +333,6 @@ class Hierarchy:
             indent * "  ", joint_definition.name, joint_definition.channels, joint_definition.offset)
         for child_definition in joint_definition.child_definitions:
             self._pretty_print_recurse(child_definition, indent+1)
-
-    def delete_joints(self, joints_to_delete):
-        self._delete_joints_recurse(joints_to_delete, self._root_joint_definition)
-
-    def _delete_joints_recurse(self, joints_to_delete, joint_definition):
-        result_child_definitions = []
-        for child_definition in joint_definition.child_definitions:
-            if child_definition.name not in joints_to_delete:
-                result_child_definitions.append(child_definition)
-            self._delete_joints_recurse(joints_to_delete, child_definition)
-        if len(result_child_definitions) == 0 and len(joint_definition.child_definitions) > 0:
-            result_child_definitions.append(self._create_end_node())
-        joint_definition.child_definitions = result_child_definitions
-
-    def _create_end_node(self):
-        joint_definition = JointDefinition(name="End Site", index=None, channels=[], is_end=True)
-        joint_definition.offset = (0, 0, 0)
-        return joint_definition
-
-    def delete_joints_from_frame(self, joints_to_delete, frame):
-        result = []
-        self._delete_joints_from_frame_recurse(
-            joints_to_delete, frame, self._root_joint_definition, result)
-        return result
-
-    def _delete_joints_from_frame_recurse(self, joints_to_delete, frame, joint_definition, result, frame_data_index=0, skip_children=False):
-        if joint_definition.name in joints_to_delete or skip_children:
-            frame_data_index += len(joint_definition.channels)
-            skip_children = True
-        else:
-            for channel in joint_definition.channels:
-                result.append(frame[frame_data_index])
-                frame_data_index += 1
-            skip_children = False
-
-        for child_definition in joint_definition.child_definitions:
-            frame_data_index = self._delete_joints_from_frame_recurse(
-                joints_to_delete, frame, child_definition, result, frame_data_index, skip_children)
-
-        return frame_data_index
 
     def get_rotation_index(self, axis):
         return self._root_joint_definition.get_rotation_index(axis)
