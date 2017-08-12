@@ -206,7 +206,7 @@ class DimensionalityReductionExperiment(Experiment):
 
         elif self.args.analyze_accuracy:
             self._training_data = storage.load(self._training_data_path)
-            self._train_model()
+            self._load_model()
             self.student.analyze_accuracy(self._training_data)
 
         elif self.args.export_stills:
