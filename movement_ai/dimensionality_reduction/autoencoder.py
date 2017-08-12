@@ -13,6 +13,7 @@ class AutoEncoder(DimensionalityReduction):
         parser.add_argument("--learning-rate", type=float, default=0.1)
         parser.add_argument("--num-hidden-nodes", type=int, default=3)
         parser.add_argument("--num-training-epochs", type=int, default=1000)
+        parser.add_argument("--tied-weights", action="store_true")
 
     def __init__(self, num_input_dimensions, num_reduced_dimensions, args):
         DimensionalityReduction.__init__(self, num_input_dimensions, num_reduced_dimensions, args)
@@ -88,10 +89,15 @@ class AutoEncoder(DimensionalityReduction):
         # build the reconstruction layers by reversing the reductions
         self._layer_sizes.reverse()
         self._encoding_matrices.reverse()
+        self._decoding_matrices = []
 
         for i, dim in enumerate(self._layer_sizes[1:] + [ int(self._input_layer.get_shape()[1])]) :
-            # we are using tied weights, so just lookup the encoding matrix for this step and transpose it
-            W = tf.transpose(self._encoding_matrices[i])
+            input_dim = int(next_layer_input.get_shape()[1])
+            if self.args.tied_weights:
+                W = tf.transpose(self._encoding_matrices[i])
+            else:
+                W = tf.Variable(tf.random_uniform([input_dim, dim], -1.0 / math.sqrt(input_dim), 1.0 / math.sqrt(input_dim)))
+            self._decoding_matrices.append(W)
             b = tf.Variable(tf.zeros([dim]))
             output = tf.nn.tanh(tf.matmul(next_layer_input,W) + b)
             next_layer_input = output
@@ -133,8 +139,15 @@ class AutoEncoder(DimensionalityReduction):
             raise Exception("AutoEncoder.add_noise only supports single-layer networks")
 
         with self._graph.as_default():
-            W = self._encoding_matrices[0]
             input_dim = int(self._input_layer.get_shape()[1])
             dim = self._layer_sizes[0]
+            
+            W = self._encoding_matrices[0]
             op = W.assign_add(tf.random_uniform([input_dim, dim], -amount, amount), use_locking=True)
             self._sess.run(op)
+
+            if not self.args.tied_weights:
+                W = self._decoding_matrices[0]
+                op = W.assign_add(tf.random_uniform([input_dim, dim], -amount, amount), use_locking=True)
+                self._sess.run(op)
+            
