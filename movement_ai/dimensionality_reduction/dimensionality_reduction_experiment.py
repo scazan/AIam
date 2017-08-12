@@ -184,18 +184,17 @@ class DimensionalityReductionExperiment(Experiment):
             num_input_dimensions, self.args.num_components, self.args)
             
         if self.args.training_data_stats:
-            self._training_data = storage.load(self._training_data_path)
+            self._prepare_training_data()
             self._print_training_data_stats()
 
         if self.args.train:
             teacher = Teacher(self.training_entity, self.args.training_data_frame_rate)
-            self._training_data = teacher.create_training_data(self._training_duration())
+            self._prepare_training_data()
             self._train_model()
             print "saving %s..." % self._student_model_path
             self.student.save(self._student_model_path)
             print "ok"
             storage.save(self.training_entity.model, self._entity_model_path)
-            storage.save(self._training_data, self._training_data_path)
 
         elif self.args.analyze_components:
             self._load_model()
@@ -205,7 +204,7 @@ class DimensionalityReductionExperiment(Experiment):
                 parameter_info_getter=self.entity.parameter_info).analyze()
 
         elif self.args.analyze_accuracy:
-            self._training_data = storage.load(self._training_data_path)
+            self._prepare_training_data()
             self._load_model()
             self.student.analyze_accuracy(self._training_data)
 
@@ -215,14 +214,14 @@ class DimensionalityReductionExperiment(Experiment):
 
         elif self.args.train_feature_matcher:
             self._load_model()
-            self._training_data = storage.load(self._training_data_path)
+            self._prepare_training_data()
             self._train_feature_matcher()
 
         elif self.args.plot_model:
             self._plot_model()
 
         elif self.args.plot_pose_map_contents:
-            self._training_data = storage.load(self._training_data_path)
+            self._prepare_training_data()
             self._plot_pose_map_contents()
             
         else:
@@ -234,7 +233,7 @@ class DimensionalityReductionExperiment(Experiment):
                     self.min_training_loss = self.args.target_training_loss
                     self._training_loss = None
                 else:
-                    self._training_data = storage.load(self._training_data_path)
+                    self._prepare_training_data()
 
                 self._parameter_sets = {}
                 if self.args.enable_follow:
@@ -261,6 +260,13 @@ class DimensionalityReductionExperiment(Experiment):
                 self._memory = Memory()
                 
             self.run_backend_and_or_ui()
+
+    def _prepare_training_data(self):
+        if os.path.exists(self._training_data_path):
+            self._training_data = storage.load(self._training_data_path)
+        else:
+            self._training_data = teacher.create_training_data(self._training_duration())
+            storage.save(self._training_data, self._training_data_path)
 
     def _create_follow_behavior(self):
         return Follow(self.student, self.training_entity, self.bvh_reader)
