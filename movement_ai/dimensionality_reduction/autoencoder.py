@@ -68,9 +68,7 @@ class AutoEncoder(DimensionalityReduction):
             self._layer_sizes = [self.num_reduced_dimensions]
         for dim in self._layer_sizes:
             input_dim = int(next_layer_input.get_shape()[1])
-
-            # Initialize W using random values in interval [-1/sqrt(n) , 1/sqrt(n)]
-            W = tf.Variable(tf.random_uniform([input_dim, dim], -1.0 / math.sqrt(input_dim), 1.0 / math.sqrt(input_dim)))
+            W = tf.Variable(self._random_weights(input_dim, dim))
 
             # Initialize b to zero
             b = tf.Variable(tf.zeros([dim]))
@@ -96,7 +94,7 @@ class AutoEncoder(DimensionalityReduction):
             if self.args.tied_weights:
                 W = tf.transpose(self._encoding_matrices[i])
             else:
-                W = tf.Variable(tf.random_uniform([input_dim, dim], -1.0 / math.sqrt(input_dim), 1.0 / math.sqrt(input_dim)))
+                W = tf.Variable(self._random_weights(input_dim, dim))
             self._decoding_matrices.append(W)
             b = tf.Variable(tf.zeros([dim]))
             output = tf.nn.tanh(tf.matmul(next_layer_input,W) + b)
@@ -106,7 +104,13 @@ class AutoEncoder(DimensionalityReduction):
         self._reconstructed_input = next_layer_input
 
         self._cost = tf.sqrt(tf.reduce_mean(tf.square(self._input_layer-self._reconstructed_input)))
-        
+
+    def _random_weights(self, input_dim, output_dim):
+        return tf.random_uniform(
+            [input_dim, output_dim],
+            -1.0 / math.sqrt(input_dim),
+            1.0 / math.sqrt(input_dim))
+
     def transform(self, observations):
         with self._graph.as_default():
             return self._sess.run(self._encoded_x, feed_dict={self._input_layer: observations})
