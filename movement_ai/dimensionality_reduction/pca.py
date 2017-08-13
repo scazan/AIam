@@ -32,7 +32,7 @@ class LinearPCA(PCADimensionalityReduction):
 
     def analyze_accuracy(self, observations):
         print "explained variance ratio: %s (sum %s)" % (
-            self.explained_variance_ratio_, sum(self.explained_variance_ratio_))
+            self.pca.explained_variance_ratio_, sum(self.pca.explained_variance_ratio_))
         DimensionalityReduction.analyze_accuracy(self, observations)
 
 class KernelPCA(PCADimensionalityReduction):
