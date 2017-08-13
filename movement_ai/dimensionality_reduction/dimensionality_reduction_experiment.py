@@ -188,7 +188,6 @@ class DimensionalityReductionExperiment(Experiment):
             self._print_training_data_stats()
 
         if self.args.train:
-            teacher = Teacher(self.training_entity, self.args.training_data_frame_rate)
             self._prepare_training_data()
             self._train_model()
             print "saving %s..." % self._student_model_path
@@ -265,6 +264,7 @@ class DimensionalityReductionExperiment(Experiment):
         if os.path.exists(self._training_data_path):
             self._training_data = storage.load(self._training_data_path)
         else:
+            teacher = Teacher(self.training_entity, self.args.training_data_frame_rate)
             self._training_data = teacher.create_training_data(self._training_duration())
             storage.save(self._training_data, self._training_data_path)
 
