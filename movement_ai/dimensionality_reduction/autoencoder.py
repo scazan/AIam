@@ -55,7 +55,7 @@ class AutoEncoder(DimensionalityReduction):
                         [self._cost, self._merged, self._train_step],
                         feed_dict={self._input_layer: training_data})
                     self._train_writer.add_summary(summary, epoch)
-                    if num_training_epochs and epoch >= num_training_epochs:
+                    if num_training_epochs is not None and epoch >= num_training_epochs:
                         break
                     if target_training_loss and loss <= target_training_loss:
                         print "Stopping at epoch %d (loss %s <= %s)" % (
