@@ -1,0 +1,1 @@
+-entity hierarchical --reduction-type=KernelPCA -r quaternion -bvh scenes/HDM_*.bvh -training-data-frame-rate 10 -n 3 -bvh-speed 5
