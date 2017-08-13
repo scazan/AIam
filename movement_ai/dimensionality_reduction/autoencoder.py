@@ -16,6 +16,7 @@ class AutoEncoder(DimensionalityReduction):
         parser.add_argument("--num-training-epochs", type=int)
         parser.add_argument("--target-loss-slope", type=float)
         parser.add_argument("--tied-weights", action="store_true")
+        parser.add_argument("--activation-function", choices=["tanh"])
 
     def __init__(self, num_input_dimensions, num_reduced_dimensions, args):
         DimensionalityReduction.__init__(self, num_input_dimensions, num_reduced_dimensions, args)
@@ -126,7 +127,11 @@ class AutoEncoder(DimensionalityReduction):
                 W = tf.Variable(self._random_weights(input_dim, dim))
             self._decoding_matrices.append(W)
             b = tf.Variable(tf.zeros([dim]))
-            output = tf.nn.tanh(tf.matmul(next_layer_input,W) + b)
+            summed_inputs = tf.matmul(next_layer_input,W) + b
+            if self.args.activation_function == "tanh":
+                output = tf.nn.tanh(summed_inputs)
+            else:
+                output = summed_inputs
             next_layer_input = output
 
         # the fully encoded and reconstructed value of input_layer is here:
