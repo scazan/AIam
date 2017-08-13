@@ -372,19 +372,14 @@ class DimensionalityReductionExperiment(Experiment):
             self.training_entity.probe(self._training_data)
             self._training_data = map(self.training_entity.adapt_value_to_model, self._training_data)
             print "ok"
-
+        
         print "training model..."
         if self.student.supports_incremental_learning():
-            if self.args.target_training_loss:
-                epoch = 0
-                while True:
-                    loss = self.student.train(self._training_data, return_loss=True)
-                    if loss <= self.args.target_training_loss:
-                        print "Stopping at epoch %d (%s <= %s)" % (epoch, loss, self.args.target_training_loss)
-                        break
-                    epoch += 1
-            else:
-                self.student.batch_train(self._training_data, self.args.num_training_epochs)
+            self.student.batch_train(
+                self._training_data,
+                self.args.num_training_epochs,
+                self.args.target_training_loss,
+                self.args.target_loss_slope)
         else:
             self.student.fit(self._training_data)
         print "ok"
@@ -413,8 +408,7 @@ class DimensionalityReductionExperiment(Experiment):
                 self.input = self._enqueue_and_deque_input(self._input_from_pn)
             else:
                 self.input = self._enqueue_and_deque_input(self._follow.get_input())
-                
-                
+
             if self.input is not None and self.student.supports_incremental_learning():
                 self._training_data.append(self.input)
                 if self.model_noise_to_add > 0:

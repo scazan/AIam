@@ -6,13 +6,15 @@ import random
 from backports import tempfile
 from zipfile import ZipFile
 import os
+import collections
 
 class AutoEncoder(DimensionalityReduction):
     @staticmethod
     def add_parser_arguments(parser):
         parser.add_argument("--learning-rate", type=float, default=0.1)
         parser.add_argument("--num-hidden-nodes", type=int, default=3)
-        parser.add_argument("--num-training-epochs", type=int, default=1000)
+        parser.add_argument("--num-training-epochs", type=int)
+        parser.add_argument("--target-loss-slope", type=float)
         parser.add_argument("--tied-weights", action="store_true")
 
     def __init__(self, num_input_dimensions, num_reduced_dimensions, args):
@@ -37,15 +39,42 @@ class AutoEncoder(DimensionalityReduction):
         with self._graph.as_default():
             self._train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(self._cost)
 
-    def batch_train(self, training_data, num_training_epochs):
+    def batch_train(self,
+                    training_data,
+                    num_training_epochs=None,
+                    target_training_loss=None,
+                    target_loss_slope=None):
+        if target_loss_slope:
+            loss_slope_history = collections.deque(maxlen=10)
+            previous_loss = None
+        epoch = 0
         with self._graph.as_default():
             try:
-                for i in range(num_training_epochs):
-                    summary, _ = self._sess.run(
-                        [self._merged, self._train_step], feed_dict={self._input_layer: training_data})
-                    self._train_writer.add_summary(summary, i)
+                while True:
+                    loss, summary, _ = self._sess.run(
+                        [self._cost, self._merged, self._train_step],
+                        feed_dict={self._input_layer: training_data})
+                    self._train_writer.add_summary(summary, epoch)
+                    if num_training_epochs and epoch >= num_training_epochs:
+                        break
+                    if target_training_loss and loss <= target_training_loss:
+                        print "Stopping at epoch %d (loss %s <= %s)" % (
+                            epoch, loss, target_training_loss)
+                        break
+                    if target_loss_slope:
+                        if previous_loss is not None:
+                            loss_slope = previous_loss - loss
+                            loss_slope_history.append(loss_slope)
+                            if len(loss_slope_history) == 10:
+                                mean_loss_slope = sum(loss_slope_history) / len(loss_slope_history)
+                                if 0 <= mean_loss_slope <= target_loss_slope:
+                                    print "Stopping at epoch %d (loss slope: 0 <= %s <= %s)" % (
+                                        epoch, mean_loss_slope, target_loss_slope)
+                                    break
+                        previous_loss = loss
+                    epoch += 1
             except KeyboardInterrupt:
-                print "Training stopped at epoch %d" % i
+                print "Training stopped at epoch %d" % epoch
 
     def train(self, training_data, return_loss=False):
         with self._graph.as_default():
