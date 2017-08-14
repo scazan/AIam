@@ -64,7 +64,9 @@ class AutoEncoder(DimensionalityReduction):
                 while True:
                     loss, summary, _ = self._sess.run(
                         [self._cost, self._merged, self._train_step],
-                        feed_dict={self._input_layer: training_data})
+                        feed_dict={
+                            self._input_layer: training_data,
+                            self._corrupt_prob: [1.0]})
                     self._train_writer.add_summary(summary, epoch)
                     if num_training_epochs is not None and epoch >= num_training_epochs:
                         break
@@ -91,15 +93,25 @@ class AutoEncoder(DimensionalityReduction):
         with self._graph.as_default():
             if return_loss:
                 loss, _ = self._sess.run(
-                    [self._cost, self._train_step], feed_dict={self._input_layer: training_data})
+                    [self._cost, self._train_step], feed_dict={
+                        self._input_layer: training_data,
+                        self._corrupt_prob: [1.0]})
                 return loss
             else:
-                self._sess.run(self._train_step, feed_dict={self._input_layer: training_data})
+                self._sess.run(self._train_step, feed_dict={
+                    self._input_layer: training_data,
+                    self._corrupt_prob: [1.0]})
+
+    def _corrupt(self, x):
+        noise = tf.random_normal(tf.shape(x))
+        return x + noise
                 
     def _create_layers(self, num_input_dimensions):
+        self._corrupt_prob = tf.placeholder(tf.float32, [1])
         self._input_layer = tf.placeholder("float", [None, num_input_dimensions])
         # Build the encoding layers
-        next_layer_input = self._input_layer
+        next_layer_input = self._corrupt(self._input_layer) * self._corrupt_prob + \
+                           self._input_layer * (1 - self._corrupt_prob)
 
         self._encoding_matrices = []
         if self.args.num_hidden_nodes > 0:
@@ -157,7 +169,9 @@ class AutoEncoder(DimensionalityReduction):
 
     def transform(self, observations):
         with self._graph.as_default():
-            return self._sess.run(self._encoded_x, feed_dict={self._input_layer: observations})
+            return self._sess.run(self._encoded_x, feed_dict={
+                self._input_layer: observations,
+                self._corrupt_prob: [0.0]})
 
     def inverse_transform(self, reductions):
         with self._graph.as_default():
