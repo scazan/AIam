@@ -12,6 +12,7 @@ class AutoEncoder(DimensionalityReduction):
     @staticmethod
     def add_parser_arguments(parser):
         parser.add_argument("--learning-rate", type=float, default=0.1)
+        parser.add_argument("--learning-rate-decay", type=float)
         parser.add_argument("--num-hidden-nodes", type=int, default=3)
         parser.add_argument("--num-training-epochs", type=int)
         parser.add_argument("--target-loss-slope", type=float)
@@ -24,12 +25,20 @@ class AutoEncoder(DimensionalityReduction):
         with self._graph.as_default():
             self._sess = tf.Session()
             self._create_layers(self.num_input_dimensions)
+            self._global_step = tf.Variable(0, trainable=False)
             self._saver = tf.train.Saver()
             self._set_up_logging()
             init = tf.initialize_all_variables()
             self._sess.run(init)
-        self.set_learning_rate(args.learning_rate)
+        self.set_learning_rate(self._get_learning_rate_from_args())
 
+    def _get_learning_rate_from_args(self):
+        if self.args.learning_rate_decay:
+            return tf.train.exponential_decay(
+                self.args.learning_rate, self._global_step, 1, self.args.learning_rate_decay)
+        else:
+            return self.args.learning_rate        
+        
     def _set_up_logging(self):
         with tf.name_scope("summaries"):
             tf.summary.scalar("cost", self._cost)
@@ -38,7 +47,8 @@ class AutoEncoder(DimensionalityReduction):
 
     def set_learning_rate(self, learning_rate):
         with self._graph.as_default():
-            self._train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(self._cost)
+            self._train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(
+                self._cost, global_step=self._global_step)
 
     def batch_train(self,
                     training_data,
