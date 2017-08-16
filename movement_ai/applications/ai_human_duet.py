@@ -5,7 +5,7 @@ MODELS_INFO = {
     "autoencoder": {
         "path": "profiles/dimensionality_reduction/valencia_pn_autoencoder_z_up.model",
         "dimensionality_reduction_type": "AutoEncoder",
-        "dimensionality_reduction_args": "--num-hidden-nodes=0"
+        "dimensionality_reduction_args": "--num-hidden-nodes=0 --tied-weights"
         },
 
     "pca": {
