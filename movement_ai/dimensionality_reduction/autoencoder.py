@@ -13,7 +13,7 @@ class AutoEncoder(DimensionalityReduction):
     def add_parser_arguments(parser):
         parser.add_argument("--learning-rate", type=float, default=0.1)
         parser.add_argument("--learning-rate-decay", type=float)
-        parser.add_argument("--num-hidden-nodes", type=int, default=3)
+        parser.add_argument("--num-hidden-nodes", type=int, nargs="*")
         parser.add_argument("--num-training-epochs", type=int)
         parser.add_argument("--target-loss-slope", type=float)
         parser.add_argument("--tied-weights", action="store_true")
@@ -102,10 +102,10 @@ class AutoEncoder(DimensionalityReduction):
         next_layer_input = self._input_layer
 
         self._encoding_matrices = []
-        if self.args.num_hidden_nodes > 0:
-            self._layer_sizes = [self.args.num_hidden_nodes, self.num_reduced_dimensions]
-        else:
+        if len(self.args.num_hidden_nodes) == 0 or self.args.num_hidden_nodes == [0]:
             self._layer_sizes = [self.num_reduced_dimensions]
+        else:
+            self._layer_sizes = self.args.num_hidden_nodes + [self.num_reduced_dimensions]
         for dim in self._layer_sizes:
             input_dim = int(next_layer_input.get_shape()[1])
             W = tf.Variable(self._random_weights(input_dim, dim))
