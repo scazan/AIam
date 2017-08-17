@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
-STUDENT_MODEL_PATH = "profiles/dimensionality_reduction/valencia_pn_autoencoder.model"
+STUDENT_MODEL_PATH = "profiles/dimensionality_reduction/valencia_pn_autoencoder_2d.model"
 SKELETON_DEFINITION = "scenes/pn-01.22_skeleton.bvh"
 DIMENSIONALITY_REDUCTION_TYPE = "AutoEncoder"
 DIMENSIONALITY_REDUCTION_ARGS = "--num-hidden-nodes=0 --learning-rate=0.006 --tied-weights"
-ENTITY_ARGS = "-r quaternion --translate --translation-weight=0"
+ENTITY_ARGS = "-r quaternion"
 
-NUM_REDUCED_DIMENSIONS = 7
+NUM_REDUCED_DIMENSIONS = 2
 Z_UP = False
 FLOOR = True
 
