@@ -1,5 +1,6 @@
 import math
 from transformations import euler_matrix, euler_from_matrix
+from bvh import JointDefinition
 
 AXIS_TO_CHANNEL = {
     "x": "Xrotation",
@@ -67,5 +68,45 @@ class BvhProcessor:
                 axes, frame, input_child_definition, output_child_definition, result, frame_data_index)
             if(frame_data_index == 0):
                 raise Exception("fatal error")
+
+        return frame_data_index
+
+    def delete_joints_from_hierarchy(self, joints_to_delete, hierarchy):
+        self._delete_joints_recurse(joints_to_delete, hierarchy.get_root_joint_definition())
+
+    def _delete_joints_recurse(self, joints_to_delete, joint_definition):
+        result_child_definitions = []
+        for child_definition in joint_definition.child_definitions:
+            if child_definition.name not in joints_to_delete:
+                result_child_definitions.append(child_definition)
+            self._delete_joints_recurse(joints_to_delete, child_definition)
+        if len(result_child_definitions) == 0 and len(joint_definition.child_definitions) > 0:
+            result_child_definitions.append(self._create_end_node())
+        joint_definition.child_definitions = result_child_definitions
+
+    def _create_end_node(self):
+        joint_definition = JointDefinition(name="End Site", index=None, channels=[], is_end=True)
+        joint_definition.offset = (0, 0, 0)
+        return joint_definition
+
+    def delete_joints_from_frame(self, hierarchy, joints_to_delete, frame):
+        result = []
+        self._delete_joints_from_frame_recurse(
+            joints_to_delete, frame, hierarchy.get_root_joint_definition(), result)
+        return result
+
+    def _delete_joints_from_frame_recurse(self, joints_to_delete, frame, joint_definition, result, frame_data_index=0, skip_children=False):
+        if joint_definition.name in joints_to_delete or skip_children:
+            frame_data_index += len(joint_definition.channels)
+            skip_children = True
+        else:
+            for channel in joint_definition.channels:
+                result.append(frame[frame_data_index])
+                frame_data_index += 1
+            skip_children = False
+
+        for child_definition in joint_definition.child_definitions:
+            frame_data_index = self._delete_joints_from_frame_recurse(
+                joints_to_delete, frame, child_definition, result, frame_data_index, skip_children)
 
         return frame_data_index
