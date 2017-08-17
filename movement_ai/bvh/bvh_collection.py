@@ -21,17 +21,17 @@ class BvhCollection:
 
     def _read_bvhs(self, read_frames):
         self._duration = 0
-        frame_offset = 0
+        self._num_frames = 0
         index = 0
         for reader in self._readers:
             reader.read(read_frames)
             reader.index = index
             reader.start_time = self._duration
             reader.end_time = self._duration + reader.get_duration()
-            reader.start_index = frame_offset
-            reader.end_index = frame_offset + reader.get_num_frames()
+            reader.start_index = self._num_frames
+            reader.end_index = self._num_frames + reader.get_num_frames()
             self._duration += reader.get_duration()
-            frame_offset += reader.get_num_frames()
+            self._num_frames += reader.get_num_frames()
             index += 1
 
     def _set_scale_info(self):
@@ -110,3 +110,11 @@ class BvhCollection:
 
     def get_num_joints(self):
         return self._hierarchy.get_num_joints()
+
+    def get_num_frames(self):
+        return self._num_frames
+
+    def get_frame_by_index(self, index):
+        for reader in self._readers:
+            if reader.start_index <= index < reader.end_index:
+                return reader.get_frame_by_index(index - reader.start_index)

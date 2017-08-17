@@ -39,9 +39,14 @@ class MockHierarchy:
         return self._joint_definitions[name]
 
 class MockBvhReader:
-    def __init__(self, duration=1.0, num_frames=1, joints_with_static_rotation=[], frame_time=50):
+    def __init__(self, duration=1.0, frames=None, num_frames=None, joints_with_static_rotation=[], frame_time=50):
         self._duration = duration
-        self._num_frames = num_frames
+        if frames is None and num_frames is None:
+            self._frames = ["mock_frame"]
+            self._num_frames = 1
+        else:
+            self._frames = frames or ["mock_frame"] * num_frames
+            self._num_frames = num_frames or len(self._frames)
         self._scale_info = MockScaleInfo()
         self._hierarchy = MockHierarchy(joints_with_static_rotation)
         self._frame_time = frame_time
@@ -61,6 +66,9 @@ class MockBvhReader:
     def get_frame_time(self):
         return self._frame_time
 
+    def get_frame_by_index(self, index):
+        return self._frames[index]
+
 class TestedBvhCollection(BvhCollection):
     def __init__(self, bvh_readers):
         self._init_readers(bvh_readers)
@@ -69,8 +77,9 @@ class BvhCollectionTestCase(unittest.TestCase):
     def test_duration_is_sum(self):
         self._given_bvh_reader(duration=10)
         self._given_bvh_reader(duration=5)
-        self._when_creating_bvh_collection()
-        self._then_duration_is(15)
+        self._given_created_bvh_collection()
+        self._when_get_duration()
+        self._then_result_is(15)
 
     def setUp(self):
         self._bvh_readers = []
@@ -78,25 +87,28 @@ class BvhCollectionTestCase(unittest.TestCase):
     def _given_bvh_reader(self, **kwargs):
         self._bvh_readers.append(MockBvhReader(**kwargs))
 
-    def _when_creating_bvh_collection(self):
+    def _given_created_bvh_collection(self):
         self._bvh_collection = TestedBvhCollection(self._bvh_readers)
         self._bvh_collection.read()
 
-    def _then_duration_is(self, expected_duration):
-        self.assertEquals(expected_duration, self._bvh_collection.get_duration())
+    def _when_get_duration(self):
+        self._result = self._bvh_collection.get_duration()
+
+    def _then_result_is(self, expected_value):
+        self.assertEquals(expected_value, self._result)
 
     def test_static_rotation_is_intersection(self):
         self._given_bvh_reader(joints_with_static_rotation=["LArm", "RArm", "Hip"])
         self._given_bvh_reader(joints_with_static_rotation=["LArm", "RArm"])
         self._given_bvh_reader(joints_with_static_rotation=["LArm"])
-        self._when_creating_bvh_collection()
-        self._then_joints_with_static_rotations(["LArm"])
+        self._given_created_bvh_collection()
+        self._when_get_joints_with_static_rotation()
+        self._then_result_items_are(["LArm"])
 
-    def _then_joints_with_static_rotations(self, expected_joints):
+    def _when_get_joints_with_static_rotation(self):
         hierarchy = self._bvh_collection.get_hierarchy()
-        actual_joints = self._get_joints_with_static_rotation(
+        self._result = self._get_joints_with_static_rotation(
             hierarchy.get_root_joint_definition())
-        self.assertItemsEqual(expected_joints, actual_joints)
 
     def _get_joints_with_static_rotation(self, joint_definition):
         result = set()
@@ -107,10 +119,42 @@ class BvhCollectionTestCase(unittest.TestCase):
             result = result.union(child_result)
         return result
 
+    def _then_result_items_are(self, expected_value):
+        self.assertItemsEqual(expected_value, self._result)
+
     def test_frame_time(self):
         self._given_bvh_reader(frame_time=100)
-        self._when_creating_bvh_collection()
-        self._then_frame_time_is(100)
+        self._given_created_bvh_collection()
+        self._when_get_frame_time()
+        self._then_result_is(100)
 
-    def _then_frame_time_is(self, expected_value):
-        self.assertEquals(expected_value, self._bvh_collection.get_frame_time())
+    def _when_get_frame_time(self):
+        self._result = self._bvh_collection.get_frame_time()
+
+    def test_get_num_frames_returns_sum(self):
+        self._given_bvh_reader(num_frames=10)
+        self._given_bvh_reader(num_frames=5)
+        self._given_created_bvh_collection()
+        self._when_get_num_frames()
+        self._then_result_is(15)
+
+    def _when_get_num_frames(self):
+        self._result = self._bvh_collection.get_num_frames()
+        
+    def test_get_frame_by_index_for_last_reader(self):
+        self._given_bvh_reader(frames=["mock_frame_0", "mock_frame_1"])
+        self._given_bvh_reader(frames=["mock_frame_2"])
+        self._given_created_bvh_collection()
+        self._when_get_frame_by_index(2)
+        self._then_result_is("mock_frame_2")
+        
+    def _when_get_frame_by_index(self, index):
+        self._result = self._bvh_collection.get_frame_by_index(index)
+        
+    def test_get_frame_by_index_for_non_last_reader(self):
+        self._given_bvh_reader(frames=["mock_frame_0", "mock_frame_1"])
+        self._given_bvh_reader(frames=["mock_frame_2", "mock_frame_3"])
+        self._given_bvh_reader(frames=["mock_frame_4"])
+        self._given_created_bvh_collection()
+        self._when_get_frame_by_index(2)
+        self._then_result_is("mock_frame_2")

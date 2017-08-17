@@ -2,11 +2,12 @@ from receiver import SERVER_PORT_BVH
 import argparse
 import SocketServer
 import time
+import glob
 
 import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/../../movement_ai")
-from bvh.bvh_reader import BvhReader
+from bvh.bvh_collection import BvhCollection
 
 parser = argparse.ArgumentParser()
 parser.add_argument("bvh")
@@ -15,7 +16,11 @@ parser.add_argument("--speed", type=float, default=1.0)
 parser.add_argument("--ping-pong", action="store_true")
 args = parser.parse_args()
 
-bvh_reader = BvhReader(args.bvh)
+bvh_filenames = glob.glob(args.bvh)
+if len(bvh_filenames) == 0:
+    raise Exception("no files found matching the pattern %s" % args.bvh)
+print "loading BVHs from %s..." % args.bvh
+bvh_reader = BvhCollection(bvh_filenames)
 bvh_reader.read()
     
 class PnSimulatorHandler(SocketServer.BaseRequestHandler):
