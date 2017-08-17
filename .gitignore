@@ -15,6 +15,7 @@ config.log
 *.oni
 *.mov
 *.pyc
+*.prof
 
 *.model*
 *.features
