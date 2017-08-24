@@ -62,6 +62,7 @@ openni::Status Tracker::init(int argc, char **argv) {
   minBlobArea = DEFAULT_MIN_BLOB_AREA;
   maxBlobArea = DEFAULT_MAX_BLOB_AREA;
   paused = false;
+  bool listDevices = false;
 
   openni::Status status = openni::OpenNI::initialize();
   if(status != openni::STATUS_OK) {
@@ -73,6 +74,10 @@ openni::Status Tracker::init(int argc, char **argv) {
   for (int i = 1; i < argc; ++i) {
     if (strcmp(argv[i], "-device") == 0) {
       deviceUri = argv[++i];
+    }
+
+    else if(strcmp(argv[i], "-list-devices") == 0) {
+      listDevices = true;
     }
 
     else if(strcmp(argv[i], "-verbose") == 0) {
@@ -110,6 +115,22 @@ openni::Status Tracker::init(int argc, char **argv) {
     else {
       printf("failed to parse argument: %s\n", argv[i]);
       return openni::STATUS_ERROR;
+    }
+  }
+
+  if(listDevices) {
+    openni::Array<openni::DeviceInfo> deviceInfoList;
+    openni::OpenNI::enumerateDevices(&deviceInfoList);
+    printf("Number of available devices: %d\n", deviceInfoList.getSize());
+    for(int i = 0; i < deviceInfoList.getSize(); i++) {
+      openni::DeviceInfo deviceInfo = deviceInfoList[i];
+      printf("Device %d\n", i);
+      printf("  Name: %s\n", deviceInfo.getName());
+      printf("  URI: %s\n", deviceInfo.getUri());
+      printf("  USB Product ID: %04x\n", deviceInfo.getUsbProductId());
+      printf("  USB Vendor ID: %04x\n", deviceInfo.getUsbVendorId());
+      printf("  Vendor: %s\n", deviceInfo.getVendor());
+      printf("\n");
     }
   }
 
