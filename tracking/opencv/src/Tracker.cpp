@@ -132,6 +132,7 @@ openni::Status Tracker::init(int argc, char **argv) {
       printf("  Vendor: %s\n", deviceInfo.getVendor());
       printf("\n");
     }
+    exit(0);
   }
 
   status = device.open(deviceUri);
