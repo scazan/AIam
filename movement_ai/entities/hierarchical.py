@@ -93,6 +93,7 @@ class Entity(BaseEntity):
     def add_parser_arguments(parser):
         parser.add_argument("--rotation-parametrization", "-r",
                             choices=["vectors", "quaternion"])
+        parser.add_argument("--naive-quaternion-interpolation", action="store_true")
         parser.add_argument("--translate", action="store_true")
         parser.add_argument("--translation-weight", type=float, default=1.)
         parser.add_argument("--friction", action="store_true")
@@ -388,6 +389,14 @@ class Entity(BaseEntity):
 
     def _get_rotation_interpolator(self, joint_index, r1, r2):
         if self.rotation_parametrization == EulerToQuaternion:
+            return self._get_quaternion_interpolator(joint_index, r1, r2)
+        else:
+            return linear_interpolator
+
+    def _get_quaternion_interpolator(self, joint_index, r1, r2):
+        if self.args.naive_quaternion_interpolation:
+            return QuaternionInterpolator(r1, r2)
+        else:
             if self._interpolation_state == InterpolationState.IDLE:
                 return linear_interpolator
             elif self._interpolation_state == InterpolationState.INITIALIZING:
@@ -395,8 +404,6 @@ class Entity(BaseEntity):
                 return self._rotation_interpolators[joint_index]
             elif self._interpolation_state == InterpolationState.IN_PROGRESS:
                 return self._rotation_interpolators[joint_index]
-        else:
-            return linear_interpolator
             
     def set_friction(self, enable_friction):
         self._enable_friction = enable_friction
