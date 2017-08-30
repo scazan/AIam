@@ -28,27 +28,8 @@ linear_interpolator = LinearInterpolator()
 class ZeroNormedQuaternion(Exception):
     pass
     
-class QuaternionInterpolator:
+class StaticQuaternionsInterpolator:
     EPSILON = 1E-12
-
-    def __init__(self, q0, q1, shortest_path=True):
-        q0_norm = numpy.linalg.norm(q0)
-        if q0_norm == 0:
-            raise ZeroNormedQuaternion(
-                "First quaternion is zero and cannot be normalized.")
-        q0 /= q0_norm
-
-        q1_norm = numpy.linalg.norm(q1)
-        if q1_norm == 0:
-            raise ZeroNormedQuaternion(
-                "Second quaternion is zero and cannot be normalized.")
-        q1 /= q1_norm
-        
-        ca = numpy.dot(q0, q1)
-        if shortest_path and ca<0:
-            self._invert = True
-        else:
-            self._invert = False
 
     def interpolate(self, q0, q1, amount, shortest_path=True):
         q0_norm = numpy.linalg.norm(q0)
@@ -64,7 +45,7 @@ class QuaternionInterpolator:
         q1 /= q1_norm
         
         ca = numpy.dot(q0, q1)
-        if self._invert and ca<0:
+        if shortest_path and ca<0:
             ca = -ca
             neg_q1 = True
         else:            
@@ -87,7 +68,76 @@ class QuaternionInterpolator:
             return q0*a - q1*b
         else:
             return q0*a + q1*b
-        
+
+static_quaternions_interpolator = StaticQuaternionsInterpolator()
+
+class DynamicQuaternionsInterpolator:
+    EPSILON = 1E-12
+    
+    def __init__(self, joint_name):
+        self._previous_quaternion = None
+        self._joint_name = joint_name
+
+    def interpolate(self, q0, q1, amount):
+        candidates = self._get_candidates(q0, q1, amount)
+        result = self._pick_nearest_candidate(candidates)
+        self._previous_quaternion = result
+        return result
+
+    def _get_candidates(self, q0, q1, amount):
+        q0_norm = numpy.linalg.norm(q0)
+        if q0_norm == 0:
+            raise ZeroNormedQuaternion(
+                "First quaternion is zero and cannot be normalized.")
+        q0 /= q0_norm
+
+        q1_norm = numpy.linalg.norm(q1)
+        if q1_norm == 0:
+            raise ZeroNormedQuaternion(
+                "Second quaternion is zero and cannot be normalized.")
+        q1 /= q1_norm
+
+        result = []
+        ca = numpy.dot(q0, q1)
+        if ca<0:
+            result.append(self._get_candidate(q0, q1, amount, -ca, neg_q1=True))
+        result.append(self._get_candidate(q0, q1, amount, ca, neg_q1=False))
+        return result
+
+    def _get_candidate(self, q0, q1, amount, ca, neg_q1):
+        if ca>=1.0:
+            o = 0.0
+        else:
+            o = math.acos(ca)
+        so = math.sin(o)
+
+        if (abs(so)<self.EPSILON):
+            return linear_interpolator.interpolate(q0, q1, amount)
+
+        a = math.sin(o*(1.0-amount)) / so
+        b = math.sin(o*amount) / so
+        if neg_q1:
+            return q0*a - q1*b
+        else:
+            return q0*a + q1*b        
+
+    def _pick_nearest_candidate(self, qs):
+        if len(qs) == 1 or self._previous_quaternion is None:
+            return qs[0]
+        else:
+            return min(qs, key=lambda q: self._angular_distance(q, self._previous_quaternion))
+
+    def _angular_distance(self, q0, q1):
+        ca = numpy.dot(q0, q1)
+        if ca<0:
+            ca = -ca
+        if ca>=1.0:
+            o = 0.0
+        else:
+            o = math.acos(ca)
+        so = math.sin(o)
+        return abs(so)
+
 class Entity(BaseEntity):
     @staticmethod
     def add_parser_arguments(parser):
@@ -131,7 +181,6 @@ class Entity(BaseEntity):
         self._unnormalized_constrainers = self._create_constrainers()
         self.modified_root_vertical_orientation = None
         self._last_root_vertical_orientation = None
-        self._interpolation_state = InterpolationState.IDLE
         self._rotation_interpolators = {}
         self._enable_friction = self.args.friction
         if hasattr(self.args, "enable_features") and self.args.enable_features:
@@ -319,34 +368,10 @@ class Entity(BaseEntity):
         return self.feature_extractor.extract_features(*positions)
 
     def interpolate(self, parameters1, parameters2, amount):
-        self._update_interpolation_state(amount)
         result = []
         self._interpolate_recurse(
             parameters1, parameters2, amount, self.pose.get_root_joint(), result)
         return result
-
-    def _update_interpolation_state(self, amount):
-        next_state = self._get_next_interpolation_state(amount)
-        if next_state is not None:
-            self._interpolation_state = next_state
-
-    def _get_next_interpolation_state(self, amount):
-        if self._interpolation_state == InterpolationState.IDLE:
-            if amount > 0 and amount < 1:
-                if amount < 0.5:
-                    self._interpolation_start_amount = 0
-                else:
-                    self._interpolation_start_amount = 1
-                return InterpolationState.INITIALIZING
-        elif self._interpolation_state == InterpolationState.INITIALIZING:
-            return InterpolationState.IN_PROGRESS
-        elif self._interpolation_state == InterpolationState.IN_PROGRESS:
-            if self._interpolation_start_amount == 0 and amount == 1:
-                return InterpolationState.IDLE
-            elif self._interpolation_start_amount == 1 and amount == 0:
-                return InterpolationState.IDLE
-        else:
-            raise Exception("unknown interpolation state %r" % self._interpolation_state)
         
     def _interpolate_recurse(self, parameters1, parameters2, amount, joint, result, parameter_index=0):
         if not joint.definition.has_parent and self.args.translate:
@@ -378,8 +403,7 @@ class Entity(BaseEntity):
         rotation_params2 = numpy.array(parameters2[
             parameter_index:parameter_index + self.rotation_parametrization.num_parameters])
         parameter_index += self.rotation_parametrization.num_parameters
-        interpolator = self._get_rotation_interpolator(
-            joint.definition.index, rotation_params1, rotation_params2)
+        interpolator = self._get_rotation_interpolator(joint, rotation_params1, rotation_params2)
         try:
             result = list(interpolator.interpolate(rotation_params1, rotation_params2, amount))
         except ZeroNormedQuaternion as exception:
@@ -387,24 +411,22 @@ class Entity(BaseEntity):
             result = rotation_params1
         return result, parameter_index
 
-    def _get_rotation_interpolator(self, joint_index, r1, r2):
+    def _get_rotation_interpolator(self, joint, r1, r2):
         if self.rotation_parametrization == EulerToQuaternion:
-            return self._get_quaternion_interpolator(joint_index, r1, r2)
+            return self._get_quaternion_interpolator(joint, r1, r2)
         else:
             return linear_interpolator
 
-    def _get_quaternion_interpolator(self, joint_index, r1, r2):
+    def _get_quaternion_interpolator(self, joint, r1, r2):
         if self.args.naive_quaternion_interpolation:
-            return QuaternionInterpolator(r1, r2)
+            return static_quaternions_interpolator
         else:
-            if self._interpolation_state == InterpolationState.IDLE:
-                return linear_interpolator
-            elif self._interpolation_state == InterpolationState.INITIALIZING:
-                self._rotation_interpolators[joint_index] = QuaternionInterpolator(r1, r2)
-                return self._rotation_interpolators[joint_index]
-            elif self._interpolation_state == InterpolationState.IN_PROGRESS:
-                return self._rotation_interpolators[joint_index]
-            
+            joint_index = joint.definition.index
+            if joint_index not in self._rotation_interpolators:
+                self._rotation_interpolators[joint_index] = DynamicQuaternionsInterpolator(
+                    joint.definition.name)
+            return self._rotation_interpolators[joint_index]
+        
     def set_friction(self, enable_friction):
         self._enable_friction = enable_friction
         self._normalized_constrainers.set_friction(enable_friction)
