@@ -1,7 +1,7 @@
 #ifndef _TRACKER_HPP_
 #define _TRACKER_HPP_
 
-#include "OpenNI.h"
+#include <openni2/OpenNI.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include "TextureRenderer.hpp"
 #include "oscpack/osc/OscOutboundPacketStream.h"
