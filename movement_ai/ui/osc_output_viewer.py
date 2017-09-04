@@ -84,6 +84,10 @@ class MainWindow(Window):
             self.enter_fullscreen()
         else:
             self.leave_fullscreen()
+            
+    def keyPressEvent(self, event):
+        self._scene.keyPressEvent(event)
+        QtGui.QWidget.keyPressEvent(self, event)
         
 class Scene(QtOpenGL.QGLWidget):
     def __init__(self, bvh_reader, args):
@@ -209,7 +213,6 @@ class Scene(QtOpenGL.QGLWidget):
             new_position[2] -= CAMERA_KEY_SPEED * math.sin(r + math.pi/2)
             self._set_camera_position(new_position)
             return
-        QtGui.QWidget.keyPressEvent(self, event)
 
     def sizeHint(self):
         return QtCore.QSize(800, 600)
