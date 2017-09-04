@@ -3,6 +3,7 @@ from PyQt4 import QtCore, QtGui
 class Window(QtGui.QWidget):
     def __init__(self, args):
         QtGui.QWidget.__init__(self)
+        self._args = args
         self._fullscreen_display = args.fullscreen
 
     @staticmethod
@@ -16,7 +17,7 @@ class Window(QtGui.QWidget):
     def enter_fullscreen(self):
         self.setCursor(QtCore.Qt.BlankCursor)
         self.showFullScreen()
-        if self.args.fullscreen_display is not None:
+        if self._args.fullscreen_display is not None:
             geometry = QtGui.QApplication.desktop().screenGeometry(
                 self._fullscreen_display);
             self.move(QtCore.QPoint(geometry.x(), geometry.y()));
