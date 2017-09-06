@@ -45,9 +45,9 @@ class Application:
             
         self._training_data = collections.deque([], maxlen=args.memory_size)
         self._input = None
-        self._now = None
         self._desired_frame_duration = 1.0 / self._args.frame_rate
         self._frame_count = 0
+        self._previous_frame_time = None
         if self._args.show_fps:
             self._fps_meter = FpsMeter()
             
@@ -62,6 +62,12 @@ class Application:
 
     def set_student(self, student):
         self._student = student
+
+    def update_if_timely(self):
+        self._now = time.time()
+        if self._previous_frame_time is None or \
+           self._now - self._previous_frame_time >= self._desired_frame_duration:
+            self.update()
         
     def update(self):
         if self._input is not None and self._student.supports_incremental_learning():
@@ -87,7 +93,7 @@ class Application:
                 if self._output_sender is not None:
                     self._send_output(avatar, output)
 
-        self.previous_frame_time = self._now
+        self._previous_frame_time = self._now
         self._frame_count += 1
         if self._args.show_fps:
             self._fps_meter.update()

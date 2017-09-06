@@ -414,8 +414,7 @@ class UiWindow(QtGui.QWidget):
         self._add_delay_shift_control()
         
         timer = QtCore.QTimer(self)
-        timer.setInterval(1000. / args.frame_rate)
-        QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), application.update)
+        QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), application.update_if_timely)
         timer.start()
 
     def _add_learning_rate_control(self):
