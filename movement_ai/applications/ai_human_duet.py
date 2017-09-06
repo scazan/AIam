@@ -27,7 +27,6 @@ FLOOR = True
 MAX_NOVELTY = 4#1.4
 SLIDER_PRECISION = 1000
 MAX_DELAY_SECONDS = 10
-DEFAULT_LEARNING_RATE = 0.0
 MAX_LEARNING_RATE = 0.01
 
 from argparse import ArgumentParser
@@ -69,6 +68,7 @@ parser.add_argument("--recall-duration", type=float, default=3)
 parser.add_argument("--delay-shift", type=float, default=0)
 parser.add_argument("--reverse-recall-probability", type=float, default=0)
 parser.add_argument("--io-blending-amount", type=float, default=1)
+parser.add_argument("--learning-rate", type=float, default=0.0)
 Application.add_parser_arguments(parser)
 ImproviseParameters().add_parser_arguments(parser)
 args = parser.parse_args()
@@ -428,7 +428,7 @@ class UiWindow(QtGui.QWidget):
         slider = QtGui.QSlider(QtCore.Qt.Horizontal)
         slider.setRange(0, SLIDER_PRECISION)
         slider.setSingleStep(1)
-        slider.setValue(DEFAULT_LEARNING_RATE / MAX_LEARNING_RATE * SLIDER_PRECISION)
+        slider.setValue(args.learning_rate / MAX_LEARNING_RATE * SLIDER_PRECISION)
         slider.valueChanged.connect(lambda value: self._on_changed_learning_rate_slider())
         return slider
 

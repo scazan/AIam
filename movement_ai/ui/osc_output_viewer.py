@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+"/..")
 from bvh import bvh_reader as bvh_reader_module
 from connectivity.simple_osc_receiver import OscReceiver
 from floor_checkerboard import FloorCheckerboard
+from ui.window import Window
 
 FLOOR_ARGS = {"num_cells": 26, "size": 26,
               "board_color1": (.2, .2, .2, 1),
@@ -29,8 +30,66 @@ class Avatar:
         self.pose = bvh_reader.create_pose()
         self.frame = None
         self.is_renderable = False
+
+class MainWindow(Window):
+    def __init__(self, bvh_reader, args):
+        Window.__init__(self, args)
+        self._layout = QtGui.QVBoxLayout()
+        self._layout.setSpacing(0)
+        self._layout.setMargin(0)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._scene = Scene(bvh_reader, args)
+        self._layout.addWidget(self._scene)
+        self._create_menu()
+        self.setLayout(self._layout)
         
-class MainWindow(QtOpenGL.QGLWidget):
+        if args.fullscreen:
+            self.give_keyboard_focus_to_fullscreen_window()
+            self._fullscreen_action.toggle()
+
+    def _create_menu(self):
+        self._menu_bar = QtGui.QMenuBar()
+        self._layout.setMenuBar(self._menu_bar)
+        self._create_main_menu()
+        self._create_view_menu()
+
+    def _create_main_menu(self):
+        self._main_menu = self._menu_bar.addMenu("&Main")
+        self._add_show_camera_settings_action()
+        self._add_quit_action()
+        
+    def _add_show_camera_settings_action(self):
+        action = QtGui.QAction('Show camera settings', self)
+        action.triggered.connect(self._scene.print_camera_settings)
+        self._main_menu.addAction(action)
+        
+    def _add_quit_action(self):
+        action = QtGui.QAction("&Quit", self)
+        action.triggered.connect(QtGui.QApplication.exit)
+        self._main_menu.addAction(action)
+
+    def _create_view_menu(self):
+        self._view_menu = self._menu_bar.addMenu("View")
+        self._add_fullscreen_action()
+
+    def _add_fullscreen_action(self):
+        self._fullscreen_action = QtGui.QAction('Fullscreen', self)
+        self._fullscreen_action.setCheckable(True)
+        self._fullscreen_action.setShortcut('Ctrl+Return')
+        self._fullscreen_action.toggled.connect(self._toggled_fullscreen)
+        self._view_menu.addAction(self._fullscreen_action)
+
+    def _toggled_fullscreen(self):
+        if self._fullscreen_action.isChecked():
+            self.enter_fullscreen()
+        else:
+            self.leave_fullscreen()
+            
+    def keyPressEvent(self, event):
+        self._scene.keyPressEvent(event)
+        QtGui.QWidget.keyPressEvent(self, event)
+        
+class Scene(QtOpenGL.QGLWidget):
     def __init__(self, bvh_reader, args):
         self.bvh_reader = bvh_reader
         self._hierarchy = bvh_reader.get_hierarchy()
@@ -45,7 +104,6 @@ class MainWindow(QtOpenGL.QGLWidget):
         self.setMouseTracking(True)
         if args.enable_floor:
             self._floor = FloorCheckerboard(**FLOOR_ARGS)
-        self._in_fullscreen = False
 
         self._osc_receiver = OscReceiver(args.port)
         self._osc_receiver.add_method("/avatar_begin", "i", self._handle_avatar_begin)
@@ -155,10 +213,6 @@ class MainWindow(QtOpenGL.QGLWidget):
             new_position[2] -= CAMERA_KEY_SPEED * math.sin(r + math.pi/2)
             self._set_camera_position(new_position)
             return
-        elif key == QtCore.Qt.Key_F:
-            self._toggle_fullscreen()
-            return
-        QtGui.QWidget.keyPressEvent(self, event)
 
     def sizeHint(self):
         return QtCore.QSize(800, 600)
@@ -285,23 +339,15 @@ class MainWindow(QtOpenGL.QGLWidget):
         self._drag_x_previous = x
         self._drag_y_previous = y
 
-    def _toggle_fullscreen(self):
-        if self._in_fullscreen:
-            self._leave_fullscreen()
-        else:
-            self._enter_fullscreen()
-        
-    def _enter_fullscreen(self):
-        self.setCursor(QtCore.Qt.BlankCursor)
-        self.showFullScreen()
-        self._in_fullscreen = True
-
-    def _leave_fullscreen(self):
-        self.setCursor(QtCore.Qt.ArrowCursor)
-        self.showNormal()
-        self._in_fullscreen = False
+    def print_camera_settings(self):
+        print "%.3f,%.3f,%.3f,%.3f,%.3f" % (
+            self._camera_position[0],
+            self._camera_position[1],
+            self._camera_position[2],
+            self._camera_y_orientation, self._camera_x_orientation)
         
 parser = ArgumentParser()
+Window.add_parser_arguments(parser)
 parser.add_argument("bvh", type=str)
 parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
                     default="-3.767,-1.400,-3.485,-55.500,18.500")
