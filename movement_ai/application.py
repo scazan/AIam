@@ -64,12 +64,12 @@ class Application:
         self._student = student
 
     def update_if_timely(self):
-        self._now = time.time()
         if self._previous_frame_time is None or \
-           self._now - self._previous_frame_time >= self._desired_frame_duration:
+           time.time() - self._previous_frame_time >= self._desired_frame_duration:
             self.update()
         
     def update(self):
+        now = time.time()
         if self._input is not None and self._student.supports_incremental_learning():
             self._student.train([self._input])
             self._training_data.append(self._input)
@@ -93,7 +93,7 @@ class Application:
                 if self._output_sender is not None:
                     self._send_output(avatar, output)
 
-        self._previous_frame_time = self._now
+        self._previous_frame_time = now
         self._frame_count += 1
         if self._args.show_fps:
             self._fps_meter.update()
