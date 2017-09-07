@@ -98,6 +98,7 @@ num_input_dimensions = master_entity.get_value_length()
 students = {
     model_name: _create_and_load_student(model_name)
     for model_name in ["autoencoder", "pca"]}
+students["autoencoder"].set_learning_rate(args.learning_rate)
 
 def set_model(model_name):
     global student
@@ -421,7 +422,6 @@ class UiWindow(QtGui.QWidget):
         self._add_label("Learning rate")
         self._learning_rate_slider = self._create_learning_rate_slider()
         self._add_control_widget(self._learning_rate_slider)
-        self._on_changed_learning_rate_slider()
         
     def _create_learning_rate_slider(self):
         slider = QtGui.QSlider(QtCore.Qt.Horizontal)
