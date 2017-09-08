@@ -14,6 +14,7 @@ from bvh import bvh_reader as bvh_reader_module
 from connectivity.simple_osc_receiver import OscReceiver
 from floor_checkerboard import FloorCheckerboard
 from ui.window import Window
+from fps_meter import FpsMeter
 
 FLOOR_ARGS = {"num_cells": 26, "size": 26,
               "board_color1": (.2, .2, .2, 1),
@@ -104,8 +105,10 @@ class Scene(QtOpenGL.QGLWidget):
         self.setMouseTracking(True)
         if args.enable_floor:
             self._floor = FloorCheckerboard(**FLOOR_ARGS)
+        if args.show_input_fps:
+            self._input_fps_meter = FpsMeter()
 
-        self._osc_receiver = OscReceiver(args.port)
+        self._osc_receiver = OscReceiver(port=args.port, listen=args.host)
         self._osc_receiver.add_method("/avatar_begin", "i", self._handle_avatar_begin)
         self._osc_receiver.add_method("/avatar_end", "", self._handle_avatar_end)
         if self.args.type == "bvh":
@@ -151,6 +154,8 @@ class Scene(QtOpenGL.QGLWidget):
         self._current_avatar.is_renderable = True
         self._current_avatar.frame = None
         self._current_avatar = None
+        if self.args.show_input_fps:
+            self._input_fps_meter.update()
         
     def _handle_world(self, path, args, types, src, user_data):
         if self._current_avatar is None:
@@ -352,9 +357,11 @@ parser.add_argument("bvh", type=str)
 parser.add_argument("--camera", help="posX,posY,posZ,orientY,orientX",
                     default="-3.767,-1.400,-3.485,-55.500,18.500")
 parser.add_argument("--port", type=int, default=10000)
+parser.add_argument("--host")
 parser.add_argument("--z-up", action="store_true")
 parser.add_argument("--type", choices=["bvh", "world"], default="bvh")
 parser.add_argument("--enable-floor", action="store_true")
+parser.add_argument("--show-input-fps", action="store_true")
 args = parser.parse_args()
 
 bvh_reader = bvh_reader_module.BvhReader(args.bvh)
