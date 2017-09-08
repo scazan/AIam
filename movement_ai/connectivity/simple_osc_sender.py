@@ -9,13 +9,13 @@ class OscSender:
         if log_filename:
             raise Exception("log_filename not supported")
         if host is None:
-            host = "127.0.0.1"
+            host = "localhost"
         if proto == osc.TCP:
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._socket.connect((host, port))
         elif proto == osc.UDP:
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            self._host = host
+            self._host = socket.gethostbyname(host)
             self._port = port
         self._lock = threading.Lock()
 
