@@ -19,7 +19,7 @@ MODELS_INFO = {
         }
     }
 
-ENTITY_ARGS = "-r quaternion --friction --translate" 
+ENTITY_ARGS = "-r quaternion --friction --translate --max-angular-step=0.15"
 SKELETON_DEFINITION = "scenes/pn-01.22_z_up_xyz_skeleton.bvh"
 NUM_REDUCED_DIMENSIONS = 7
 Z_UP = True

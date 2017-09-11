@@ -71,16 +71,40 @@ class StaticQuaternionsInterpolator:
 
 static_quaternions_interpolator = StaticQuaternionsInterpolator()
 
+class Candidate:
+    def __init__(self, quaternion, previous_quaternion):
+        self.quaternion = quaternion
+        if previous_quaternion is not None:
+            self.angular_distance = self._angular_distance(quaternion, previous_quaternion)
+
+    def _angular_distance(self, q0, q1):
+        ca = numpy.dot(q0, q1)
+        if ca<0:
+            ca = -ca
+        if ca>=1.0:
+            o = 0.0
+        else:
+            o = math.acos(ca)
+        so = math.sin(o)
+        return abs(so)
+        
 class DynamicQuaternionsInterpolator:
     EPSILON = 1E-12
     
-    def __init__(self, joint_name):
+    def __init__(self, joint_name, max_angular_step=None):
         self._previous_quaternion = None
         self._joint_name = joint_name
+        self._max_angular_step = max_angular_step
 
     def interpolate(self, q0, q1, amount):
         candidates = self._get_candidates(q0, q1, amount)
-        result = self._pick_nearest_candidate(candidates)
+        nearest_candidate = self._pick_nearest_candidate(candidates)
+        if self._previous_quaternion is None or self._max_angular_step is None or \
+           nearest_candidate.angular_distance < self._max_angular_step:
+            result = nearest_candidate.quaternion
+        else:
+            result = static_quaternions_interpolator.interpolate(
+                self._previous_quaternion, nearest_candidate.quaternion, self._max_angular_step)
         self._previous_quaternion = result
         return result
 
@@ -112,31 +136,22 @@ class DynamicQuaternionsInterpolator:
         so = math.sin(o)
 
         if (abs(so)<self.EPSILON):
-            return linear_interpolator.interpolate(q0, q1, amount)
-
+            quaternion = linear_interpolator.interpolate(q0, q1, amount)
+            return Candidate(quaternion, self._previous_quaternion)
+        
         a = math.sin(o*(1.0-amount)) / so
         b = math.sin(o*amount) / so
         if neg_q1:
-            return q0*a - q1*b
+            quaternion = q0*a - q1*b
         else:
-            return q0*a + q1*b        
+            quaternion = q0*a + q1*b
+        return Candidate(quaternion, self._previous_quaternion)
 
-    def _pick_nearest_candidate(self, qs):
-        if len(qs) == 1 or self._previous_quaternion is None:
-            return qs[0]
+    def _pick_nearest_candidate(self, candidates):
+        if len(candidates) == 1 or self._previous_quaternion is None:
+            return candidates[0]
         else:
-            return min(qs, key=lambda q: self._angular_distance(q, self._previous_quaternion))
-
-    def _angular_distance(self, q0, q1):
-        ca = numpy.dot(q0, q1)
-        if ca<0:
-            ca = -ca
-        if ca>=1.0:
-            o = 0.0
-        else:
-            o = math.acos(ca)
-        so = math.sin(o)
-        return abs(so)
+            return min(candidates, key=lambda candidate: candidate.angular_distance)
 
 class Entity(BaseEntity):
     @staticmethod
@@ -144,6 +159,7 @@ class Entity(BaseEntity):
         parser.add_argument("--rotation-parametrization", "-r",
                             choices=["vectors", "quaternion"])
         parser.add_argument("--naive-quaternion-interpolation", action="store_true")
+        parser.add_argument("--max-angular-step", type=float)
         parser.add_argument("--translate", action="store_true")
         parser.add_argument("--translation-weight", type=float, default=1.)
         parser.add_argument("--friction", action="store_true")
@@ -424,7 +440,7 @@ class Entity(BaseEntity):
             joint_index = joint.definition.index
             if joint_index not in self._rotation_interpolators:
                 self._rotation_interpolators[joint_index] = DynamicQuaternionsInterpolator(
-                    joint.definition.name)
+                    joint.definition.name, self.args.max_angular_step)
             return self._rotation_interpolators[joint_index]
         
     def set_friction(self, enable_friction):
