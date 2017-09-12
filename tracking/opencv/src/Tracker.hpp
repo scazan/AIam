@@ -8,7 +8,7 @@
 #include "oscpack/ip/UdpSocket.h"
 
 #define DEFAULT_OSC_HOST "127.0.0.1"
-#define OSC_PORT 15002
+#define DEFAULT_OSC_PORT 15002
 #define OSC_BUFFER_SIZE 4096
 
 #define MAX_DEPTH 10000
@@ -85,6 +85,8 @@ private:
   bool displayDepth;
   bool displayZThresholding;
   bool paused;
+  const char *oscHost;
+  int oscPort;
 };
 
 
