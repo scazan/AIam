@@ -1,7 +1,7 @@
 #ifndef _TRACKER_HPP_
 #define _TRACKER_HPP_
 
-#include <openni2/OpenNI.h>
+#include "OpenNI.h"
 #include <opencv2/imgproc/imgproc.hpp>
 #include "TextureRenderer.hpp"
 #include "oscpack/osc/OscOutboundPacketStream.h"
@@ -24,6 +24,7 @@ public:
   virtual void processDepthFrame(Mat&)=0;
   virtual void render()=0;
   virtual void onKey(unsigned char key)=0;
+  int IDOffset;
 
 protected:
   int width, height;

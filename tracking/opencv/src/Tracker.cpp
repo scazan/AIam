@@ -62,7 +62,6 @@ openni::Status Tracker::init(int argc, char **argv) {
   minBlobArea = DEFAULT_MIN_BLOB_AREA;
   maxBlobArea = DEFAULT_MAX_BLOB_AREA;
   paused = false;
-  bool listDevices = false;
 
   openni::Status status = openni::OpenNI::initialize();
   if(status != openni::STATUS_OK) {
@@ -70,14 +69,13 @@ openni::Status Tracker::init(int argc, char **argv) {
     return status;
   }
 
+  int IDOffset = 0;
   const char* deviceUri = openni::ANY_DEVICE;
+  //const char* deviceUri = "freenect://0";
+  //const char* deviceUri = "1d27/0601@2/6";
   for (int i = 1; i < argc; ++i) {
     if (strcmp(argv[i], "-device") == 0) {
       deviceUri = argv[++i];
-    }
-
-    else if(strcmp(argv[i], "-list-devices") == 0) {
-      listDevices = true;
     }
 
     else if(strcmp(argv[i], "-verbose") == 0) {
@@ -112,27 +110,13 @@ openni::Status Tracker::init(int argc, char **argv) {
       maxBlobArea = atof(argv[++i]);
     }
 
+    else if(strcmp(argv[i], "-camera-id") == 0) {
+      IDOffset = atof(argv[++i]) * 100;
+    }
     else {
       printf("failed to parse argument: %s\n", argv[i]);
       return openni::STATUS_ERROR;
     }
-  }
-
-  if(listDevices) {
-    openni::Array<openni::DeviceInfo> deviceInfoList;
-    openni::OpenNI::enumerateDevices(&deviceInfoList);
-    printf("Number of available devices: %d\n", deviceInfoList.getSize());
-    for(int i = 0; i < deviceInfoList.getSize(); i++) {
-      openni::DeviceInfo deviceInfo = deviceInfoList[i];
-      printf("Device %d\n", i);
-      printf("  Name: %s\n", deviceInfo.getName());
-      printf("  URI: %s\n", deviceInfo.getUri());
-      printf("  USB Product ID: %04x\n", deviceInfo.getUsbProductId());
-      printf("  USB Vendor ID: %04x\n", deviceInfo.getUsbVendorId());
-      printf("  Vendor: %s\n", deviceInfo.getVendor());
-      printf("\n");
-    }
-    exit(0);
   }
 
   status = device.open(deviceUri);
@@ -176,6 +160,7 @@ openni::Status Tracker::init(int argc, char **argv) {
   initOpenGL(argc, argv);
   processingEnabled = true;
   processingMethod = new BlobTracker(this);
+  processingMethod->IDOffset = IDOffset;
   depthFrame.create(resolutionY, resolutionX, CV_8UC1);
   zThresholdedDepthFrame.create(resolutionY, resolutionX, CV_8UC1);
   displayDepth = true;

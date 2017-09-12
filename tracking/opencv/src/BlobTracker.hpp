@@ -42,20 +42,24 @@ private:
 
 public:
   BlobTracker(Tracker *tracker) :
-      ProcessingMethod(tracker) {
-    float worldWidth = tracker->getWorldRange().xMax - tracker->getWorldRange().xMin;
-    float worldHeight = tracker->getWorldRange().yMax - tracker->getWorldRange().yMin;
-    worldArea = worldWidth * worldHeight;
-    resolutionArea = width * height;
-    orientationEstimationEnabled = false;
-    displayBlobs = true;
-    idCount = 0;
-  }
+	ProcessingMethod(tracker) {
+		float worldWidth = tracker->getWorldRange().xMax - tracker->getWorldRange().xMin;
+		float worldHeight = tracker->getWorldRange().yMax - tracker->getWorldRange().yMin;
+		worldArea = worldWidth * worldHeight;
+		resolutionArea = width * height;
+		orientationEstimationEnabled = false;
+		displayBlobs = true;
+		idCount = 0;
+	  }
+
 
   void processDepthFrame(Mat& depthFrame) {
     std::vector<std::vector<Point> > unfilteredContours;
     Mat binaryImage;
-    threshold(depthFrame, binaryImage, 1, 255, THRESH_BINARY);
+
+	blur(depthFrame, binaryImage, Size(15,15) );
+    //threshold(depthFrame, binaryImage, 1, 255, THRESH_BINARY);
+    threshold(binaryImage, binaryImage, 1, 255, THRESH_BINARY);
     findContours(binaryImage, unfilteredContours, RETR_LIST, CHAIN_APPROX_NONE);
     filterContours(unfilteredContours);
 
@@ -165,13 +169,37 @@ public:
   void addTrackedBlob(const Blob& blob) {
     Blob trackedBlob = blob;
     trackedBlob.paired = true;
-    trackedBlob.id = idCount++;
+
+	int newBlobID = 0;
+	bool foundFreeID = false;
+
+
+	while(foundFreeID == false) {
+		bool idWasFree = true;
+
+		for (vector<Blob>::iterator i = trackedBlobs.begin(); i != trackedBlobs.end(); i++) {
+			if(i->id == newBlobID) {
+				idWasFree = false;
+			}
+		}
+
+		if(idWasFree) {
+			foundFreeID = true;
+		}
+		else {
+			newBlobID++;
+		}
+	}
+
+
+	trackedBlob.id = newBlobID;
+
     trackedBlobs.push_back(trackedBlob);
-    sendState(trackedBlob.id, "new");
+    sendState(trackedBlob.id + IDOffset, "new", blob);
   }
 
   void deleteTrackedBlob(vector<Blob>::iterator blob) {
-    sendState(blob->id, "lost");
+    sendState(blob->id + IDOffset, "lost", *blob);
     trackedBlobs.erase(blob);
   }
   
@@ -250,11 +278,17 @@ public:
     glPrintString(GLUT_BITMAP_HELVETICA_18, string);
   }
 
-  void sendState(int id, const char *state) {
+  void sendState(int id, const char *state, const Blob& blob) {
+    float depthZ = 0;
+    float x, y, z;
+    openni::CoordinateConverter::convertDepthToWorld(tracker->getDepthStream(),
+						     blob.centroidX, blob.centroidY, tracker->zThreshold,
+						     &x, &y, &z);
+
     printf("%s %d\n", state, id);
     osc::OutboundPacketStream stream(oscBuffer, OSC_BUFFER_SIZE);
     stream << osc::BeginBundleImmediate
-	   << osc::BeginMessage("/state") << id << state
+	   << osc::BeginMessage("/state") << id << state << x << y << z
 	   << osc::EndMessage
 	   << osc::EndBundle;
     tracker->transmitSocket->Send(stream.Data(), stream.Size());
@@ -268,7 +302,7 @@ public:
 						     &x, &y, &z);
     osc::OutboundPacketStream stream(oscBuffer, OSC_BUFFER_SIZE);
     stream << osc::BeginBundleImmediate
-	   << osc::BeginMessage("/center") << blob.id << x << y << z
+	   << osc::BeginMessage("/center") << (blob.id + IDOffset) << x << y << z
 	   << osc::EndMessage
 	   << osc::EndBundle;
     tracker->transmitSocket->Send(stream.Data(), stream.Size());
