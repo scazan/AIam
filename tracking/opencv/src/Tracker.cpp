@@ -62,6 +62,9 @@ openni::Status Tracker::init(int argc, char **argv) {
   minBlobArea = DEFAULT_MIN_BLOB_AREA;
   maxBlobArea = DEFAULT_MAX_BLOB_AREA;
   paused = false;
+  bool listDevices = false;
+  oscHost = DEFAULT_OSC_HOST;
+  oscPort = DEFAULT_OSC_PORT;
 
   openni::Status status = openni::OpenNI::initialize();
   if(status != openni::STATUS_OK) {
@@ -113,6 +116,14 @@ openni::Status Tracker::init(int argc, char **argv) {
     else if(strcmp(argv[i], "-camera-id") == 0) {
       IDOffset = atof(argv[++i]) * 100;
     }
+    else if(strcmp(argv[i], "-osc-host") == 0) {
+      oscHost = argv[++i];
+    }
+
+    else if(strcmp(argv[i], "-osc-port") == 0) {
+      oscPort = atoi(argv[++i]);
+    }
+
     else {
       printf("failed to parse argument: %s\n", argv[i]);
       return openni::STATUS_ERROR;
@@ -153,7 +164,7 @@ openni::Status Tracker::init(int argc, char **argv) {
   if(resolutionY == 0)
     resolutionY = oniHeight;
 
-  transmitSocket = new UdpTransmitSocket(IpEndpointName(DEFAULT_OSC_HOST, OSC_PORT));
+  transmitSocket = new UdpTransmitSocket(IpEndpointName(oscHost, oscPort));
 
   calculateWorldRange();
   textureRenderer = NULL;
