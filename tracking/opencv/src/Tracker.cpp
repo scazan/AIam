@@ -65,6 +65,7 @@ openni::Status Tracker::init(int argc, char **argv) {
   bool listDevices = false;
   oscHost = DEFAULT_OSC_HOST;
   oscPort = DEFAULT_OSC_PORT;
+  temporalSmoothingNumFrames = DEFAULT_TEMPORAL_SMOOTHING_NUM_FRAMES;
 
   openni::Status status = openni::OpenNI::initialize();
   if(status != openni::STATUS_OK) {
@@ -111,6 +112,10 @@ openni::Status Tracker::init(int argc, char **argv) {
 
     else if(strcmp(argv[i], "-max-area") == 0) {
       maxBlobArea = atof(argv[++i]);
+    }
+
+    else if(strcmp(argv[i], "-ts") == 0) {
+      temporalSmoothingNumFrames = atoi(argv[++i]);
     }
 
     else if(strcmp(argv[i], "-camera-id") == 0) {
@@ -172,7 +177,14 @@ openni::Status Tracker::init(int argc, char **argv) {
   processingEnabled = true;
   processingMethod = new BlobTracker(this);
   processingMethod->IDOffset = IDOffset;
-  depthFrame.create(resolutionY, resolutionX, CV_8UC1);
+  depthFrame.create(resolutionY, resolutionX, CV_32FC1);
+  for(int i = 0; i < temporalSmoothingNumFrames; i++) {
+    Mat m;
+    m.create(resolutionY, resolutionX, CV_32FC1);
+    depthFrameHistory.push_back(m);
+  }
+  temporallySmoothedDepthFrame.create(resolutionY, resolutionX, CV_32FC1);
+  temporallySmoothedUcharDepthFrame.create(resolutionY, resolutionX, CV_8UC1);
   zThresholdedDepthFrame.create(resolutionY, resolutionX, CV_8UC1);
   displayDepth = true;
   displayZThresholding = true;
@@ -201,21 +213,58 @@ void Tracker::processOniDepthFrame() {
   const openni::DepthPixel* oniData =
     (const openni::DepthPixel*) oniDepthFrame.getData();
   int oniRowSize = oniDepthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
-  uchar depth, zThresholdedDepth;
-  uchar *depthFramePtr, *zThresholdedDepthFramePtr;
-  float worldX, worldY, worldZ;
+  float depth;
+  float *depthFramePtr;
 
   for (int y = 0; y < resolutionY; ++y) {
     size_t oniY = (size_t) y * oniHeight / resolutionY;
     const openni::DepthPixel* pOniRow = oniData + oniY * oniRowSize;
-    depthFramePtr = depthFrame.ptr(y);
-    zThresholdedDepthFramePtr = zThresholdedDepthFrame.ptr(y);
+    depthFramePtr = depthFrame.ptr<float>(y);
     for (int x = 0; x < resolutionX; ++x) {
       size_t oniX = (size_t) x * oniWidth / resolutionX;
       const openni::DepthPixel* pOni = pOniRow + oniX;
       if (*pOni != 0) {
-        depth = (int) (255 * (1 - float(*pOni) / MAX_DEPTH));
-        openni::CoordinateConverter::convertDepthToWorld(depthStream, oniX, oniY, *pOni,
+        depth = 255 * (1 - float(*pOni) / MAX_DEPTH);
+      }
+      else {
+        depth = 0;
+      }
+      *depthFramePtr++ = depth;
+    }
+  }
+}
+
+void Tracker::addDepthFrameToHistory() {
+  depthFrameHistory.pop_front();
+  depthFrameHistory.push_back(depthFrame.clone());
+}
+
+void Tracker::performTemporalSmoothing() {
+  temporallySmoothedDepthFrame.setTo(Scalar(0,0,0,0));
+  for(deque<Mat>::iterator i = depthFrameHistory.begin(); i != depthFrameHistory.end(); i++) {
+    temporallySmoothedDepthFrame += *i;
+  }
+  temporallySmoothedDepthFrame.convertTo(temporallySmoothedUcharDepthFrame, CV_8UC1, 1. / temporalSmoothingNumFrames);
+}
+
+void Tracker::performZThresholding() {
+  float worldX, worldY, worldZ;
+  uchar depth;
+  uchar *depthFramePtr;
+  uchar zThresholdedDepth;
+  uchar *zThresholdedDepthFramePtr;
+  openni::DepthPixel oniDepth;
+
+  for (int y = 0; y < resolutionY; ++y) {
+    size_t oniY = (size_t) y * oniHeight / resolutionY;
+    depthFramePtr = temporallySmoothedUcharDepthFrame.ptr(y);
+    zThresholdedDepthFramePtr = zThresholdedDepthFrame.ptr(y);
+    for (int x = 0; x < resolutionX; ++x) {
+      depth = *depthFramePtr++;
+      if(depth > 0) {
+	size_t oniX = (size_t) x * oniWidth / resolutionX;
+	oniDepth = (openni::DepthPixel) ((1 - float(depth) / 255) * MAX_DEPTH);
+        openni::CoordinateConverter::convertDepthToWorld(depthStream, oniX, oniY, oniDepth,
 							 &worldX, &worldY, &worldZ);
         if(zThreshold > 0 && worldZ > zThreshold)
           zThresholdedDepth = 0;
@@ -223,10 +272,8 @@ void Tracker::processOniDepthFrame() {
           zThresholdedDepth = depth;
       }
       else {
-        depth = 0;
-        zThresholdedDepth = 0;
+	zThresholdedDepth = 0;
       }
-      *depthFramePtr++ = depth;
       *zThresholdedDepthFramePtr++ = zThresholdedDepth;
     }
   }
@@ -261,7 +308,9 @@ void Tracker::display()
       return;
 
     processOniDepthFrame();
-
+    addDepthFrameToHistory();
+    performTemporalSmoothing();
+    performZThresholding();
     if(processingEnabled)
       processingMethod->processDepthFrame(zThresholdedDepthFrame);
   }
@@ -293,7 +342,7 @@ void Tracker::drawDepthFrame() {
   if(displayZThresholding)
     textureRenderer->drawCvImage(zThresholdedDepthFrame);
   else
-    textureRenderer->drawCvImage(depthFrame);
+    textureRenderer->drawCvImage(temporallySmoothedUcharDepthFrame);
 }
 
 void Tracker::glutIdle()

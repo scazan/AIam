@@ -6,14 +6,17 @@
 #include "TextureRenderer.hpp"
 #include "oscpack/osc/OscOutboundPacketStream.h"
 #include "oscpack/ip/UdpSocket.h"
+#include <deque>
 
 #define DEFAULT_OSC_HOST "127.0.0.1"
 #define DEFAULT_OSC_PORT 15002
 #define OSC_BUFFER_SIZE 4096
+#define DEFAULT_TEMPORAL_SMOOTHING_NUM_FRAMES 1
 
 #define MAX_DEPTH 10000
 
 using namespace cv;
+using namespace std;
 
 class Tracker;
 
@@ -57,6 +60,9 @@ public:
 
 private:
   void processOniDepthFrame();
+  void addDepthFrameToHistory();
+  void performTemporalSmoothing();
+  void performZThresholding();
   void display();
   void onWindowResized(int width, int height);
   void onKey(unsigned char key);
@@ -74,6 +80,9 @@ private:
   openni::VideoStream depthStream;
   openni::VideoFrameRef oniDepthFrame;
   Mat depthFrame;
+  deque<Mat> depthFrameHistory;
+  Mat temporallySmoothedDepthFrame;
+  Mat temporallySmoothedUcharDepthFrame;
   Mat zThresholdedDepthFrame;
   int oniWidth, oniHeight;
   int resolutionX, resolutionY;
@@ -88,6 +97,7 @@ private:
   bool paused;
   const char *oscHost;
   int oscPort;
+  int temporalSmoothingNumFrames;
 };
 
 
