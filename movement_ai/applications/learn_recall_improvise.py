@@ -46,7 +46,6 @@ from dimensionality_reduction.behavior import Behavior
 from dimensionality_reduction.behaviors.improvise import ImproviseParameters, Improvise
 from dimensionality_reduction.factory import DimensionalityReductionFactory
 import tracking.pn.receiver
-from chaining import Chainer
 
 parser = ArgumentParser()
 parser.add_argument("--pn-host", default="localhost")
@@ -235,7 +234,7 @@ class MasterBehavior(Behavior):
     def proceed(self, time_increment):
         self._improvise.proceed(time_increment)
         recall_behavior.proceed(time_increment)
-        if self._recall_amount > 0.5:
+        if self._recall_amount < 0.5:
             master_entity.set_friction(True)
         else:
             master_entity.set_friction(False)
@@ -254,13 +253,26 @@ class MasterBehavior(Behavior):
             if self._recall_amount > 0:
                 print "WARNING: recall amount > 0 but no recall output"
             return improvise_output
-        return master_entity.interpolate(improvise_output, recall_output, self._recall_amount)
+        translation = self._get_translation(improvise_output)
+        orientations = self._get_orientations(
+            master_entity.interpolate(improvise_output, recall_output, self._recall_amount))
+        output = self._combine_translation_and_orientation(translation, orientations)
+        return output
 
     def _get_improvise_output(self):
         reduction = self._improvise.get_reduction()
         if reduction is None:
             return None
         return student.inverse_transform(numpy.array([reduction]))[0]
+
+    def _get_translation(self, parameters):
+        return parameters[0:3]
+
+    def _get_orientations(self, parameters):
+        return parameters[3:]
+
+    def _combine_translation_and_orientation(self, translation, orientations):
+        return numpy.array(list(translation) + list(orientations))
 
 class RecallBehavior(Behavior):
     interpolation_duration = 1.0
@@ -275,7 +287,6 @@ class RecallBehavior(Behavior):
                                                           2 * self._interpolation_num_frames
         self._initialize_state(self.IDLE)
         self._output = None
-        self._chainer = Chainer()
 
     def _initialize_state(self, state):
         print state
@@ -334,31 +345,10 @@ class RecallBehavior(Behavior):
         from_output = self._current_recall.get_output()
         to_output = self._next_recall.get_output()
         amount = float(self._state_frames) / self._interpolation_num_frames
-        
-        if amount > 0.5 and not self._interpolation_crossed_halfway:
-            self._chainer.switch_source()
-            self._interpolation_crossed_halfway = True            
-
-        if self._interpolation_crossed_halfway:
-            translation = self._get_translation(to_output)
-        else:
-            translation = self._get_translation(from_output)
-        self._chainer.put(translation)
-        translation = self._chainer.get()
-        orientations = self._get_orientations(master_entity.interpolate(from_output, to_output, amount))
-        self._output = self._combine_translation_and_orientation(translation, orientations)
+        self._output = master_entity.interpolate(from_output, to_output, amount)
 
         self._state_frames += frames_to_process
         self._remaining_frames_to_process -= frames_to_process
-
-    def _get_translation(self, parameters):
-        return parameters[0:3]
-
-    def _get_orientations(self, parameters):
-        return parameters[3:]
-
-    def _combine_translation_and_orientation(self, translation, orientations):
-        return numpy.array(list(translation) + list(orientations))
 
     def get_output(self):
         return self._output
