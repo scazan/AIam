@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
-MODELS = ["autoencoder"
-          #, "pca"
-]
+MODELS = ["autoencoder", "pca"]
 MODELS_INFO = {
     "autoencoder": {
         "path": "profiles/dimensionality_reduction/valencia_pn_autoencoder_z_up.model",
