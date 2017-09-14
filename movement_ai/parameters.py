@@ -56,6 +56,9 @@ class Parameters:
     def __iter__(self):
         return self._parameters.__iter__()
 
+    def __len__(self):
+        return len(self._parameters)
+    
     def notify_changed(self, parameter):
         for listener in self._listeners:
             listener(parameter)
