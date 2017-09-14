@@ -4,11 +4,14 @@ from parameters import *
 SLIDER_PRECISION = 1000
 
 class ParametersForm:
-    def __init__(self, parameters, parent):
-        self._grid_layout = QtGui.QGridLayout()
+    def __init__(self, parameters, parent=None, layout=None, row_offset=0):
+        if layout is None:
+            self._layout = QtGui.QGridLayout()
+        else:
+            self._layout = layout
         self._field_widgets = {}
         self._value_widgets = {}
-        self._row = 0
+        self._row = row_offset
         for parameter in parameters:
             name_widget = QtGui.QLabel(parameter.name)
             field_widget = self._create_parameter_field(parameter)
@@ -24,10 +27,11 @@ class ParametersForm:
             else:
                 self._add_widget(field_widget, 1, column_span=2)                
             self._row += 1
-        parent.addLayout(self._grid_layout)
+        if layout is None:
+            parent.addLayout(self._layout)
 
     def _add_widget(self, widget, column, row_span=1, column_span=1):
-        self._grid_layout.addWidget(widget, self._row, column, row_span, column_span)
+        self._layout.addWidget(widget, self._row, column, row_span, column_span)
 
     def _create_parameter_field(self, parameter):
         if parameter.choices is not None:

@@ -46,6 +46,7 @@ from dimensionality_reduction.behavior import Behavior
 from dimensionality_reduction.behaviors.improvise import ImproviseParameters, Improvise
 from dimensionality_reduction.factory import DimensionalityReductionFactory
 import tracking.pn.receiver
+from ui.parameters_form import ParametersForm
 
 parser = ArgumentParser()
 parser.add_argument("--pn-host", default="localhost")
@@ -147,6 +148,7 @@ class UiWindow(QtGui.QWidget):
         self._add_memorize_control()
         self._add_recall_amount_control()
         self._add_model_control()
+        self._add_improvise_parameters_form()
         
         timer = QtCore.QTimer(self)
         QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'), application.update_if_timely)
@@ -218,6 +220,10 @@ class UiWindow(QtGui.QWidget):
 
     def _changed_model(self, value):
         set_model(MODELS[value])
+
+    def _add_improvise_parameters_form(self):
+        parameters_form = ParametersForm(improvise_params, layout=self._layout, row_offset=self._row)
+        self._row += len(improvise_params)
 
 class MasterBehavior(Behavior):
     def __init__(self):
@@ -354,7 +360,6 @@ class RecallBehavior(Behavior):
         return self._output
         
 def _create_improvise_behavior(model_name):
-    improvise_params = ImproviseParameters()
     preferred_location = None
     student = students[model_name]
     return Improvise(
@@ -364,6 +369,7 @@ def _create_improvise_behavior(model_name):
         preferred_location,
         MAX_NOVELTY)
 
+improvise_params = ImproviseParameters()
 improvise_behaviors = {
     model_name: _create_improvise_behavior(model_name)
     for model_name in MODELS}
