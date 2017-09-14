@@ -71,6 +71,7 @@ def create_entity():
     return Entity(bvh_reader, bvh_reader.get_hierarchy().create_pose(), FLOOR, Z_UP, entity_args)
 
 master_entity = create_entity()
+recall_entity = create_entity()
 
 def _create_and_load_student(model_name):
     model_info = MODELS_INFO[model_name]
@@ -331,10 +332,14 @@ class RecallBehavior(Behavior):
         
         frames_to_process = min(self._remaining_frames_to_process, remaining_frames_in_state)
         self._current_recall.proceed(frames_to_process)
-        self._output = self._current_recall.get_output()
+        self._output = self._pass_through_interpolation_to_update_its_state(
+            self._current_recall.get_output())
         
         self._state_frames += frames_to_process
         self._remaining_frames_to_process -= frames_to_process
+
+    def _pass_through_interpolation_to_update_its_state(self, output):
+        return recall_entity.interpolate(output, output, 0)
 
     def _proceed_in_crossfade(self):
         remaining_frames_in_state = self._interpolation_num_frames - self._state_frames
@@ -349,7 +354,7 @@ class RecallBehavior(Behavior):
         from_output = self._current_recall.get_output()
         to_output = self._next_recall.get_output()
         amount = float(self._state_frames) / self._interpolation_num_frames
-        self._output = master_entity.interpolate(from_output, to_output, amount)
+        self._output = recall_entity.interpolate(from_output, to_output, amount)
 
         self._state_frames += frames_to_process
         self._remaining_frames_to_process -= frames_to_process
